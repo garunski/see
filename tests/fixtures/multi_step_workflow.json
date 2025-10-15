@@ -1,0 +1,16 @@
+{
+  "steps": [
+    {
+      "id": "first_step",
+      "type": "cli",
+      "command": "echo",
+      "args": ["First step executed"]
+    },
+    {
+      "id": "second_step",
+      "type": "cli",
+      "command": "echo",
+      "args": ["Second step should not run"]
+    }
+  ]
+}

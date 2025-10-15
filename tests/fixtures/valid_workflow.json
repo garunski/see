@@ -1,0 +1,10 @@
+{
+  "steps": [
+    {
+      "id": "hello_step",
+      "type": "cli",
+      "command": "echo",
+      "args": ["Hello from workflow!"]
+    }
+  ]
+}

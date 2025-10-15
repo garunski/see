@@ -1,0 +1,10 @@
+{
+  "steps": [
+    {
+      "id": "invalid_step",
+      "type": "cli",
+      "command": "nonexistent_command_12345",
+      "args": ["This should fail"]
+    }
+  ]
+}

@@ -1,0 +1,56 @@
+version: '3'
+
+tasks:
+  # Build the application
+  build:
+    desc: Build the Rust application
+    cmds:
+      - cargo build
+
+  # Run the application
+  run:
+    desc: Run the application
+    cmds:
+      - cargo run
+
+  # Run tests
+  test:
+    desc: Run all tests
+    cmds:
+      - cargo test
+
+  # Run tests with output
+  test-verbose:
+    desc: Run tests with verbose output
+    cmds:
+      - cargo test -- --nocapture
+
+  # Run only integration tests
+  test-integration:
+    desc: Run integration tests only
+    cmds:
+      - cargo test --test integration_test
+
+  # Clean build artifacts
+  clean:
+    desc: Clean build artifacts
+    cmds:
+      - cargo clean
+
+  # Check code without building
+  check:
+    desc: Check code for errors without building
+    cmds:
+      - cargo check
+
+  # Format code
+  fmt:
+    desc: Format Rust code
+    cmds:
+      - cargo fmt
+
+  # Run clippy linter
+  lint:
+    desc: Run clippy linter
+    cmds:
+      - cargo clippy
