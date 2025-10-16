@@ -82,7 +82,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "simple-workflow-app"
+name = "simple_workflow_app"
 version = "0.1.0"
 dependencies = [
  "serde",
