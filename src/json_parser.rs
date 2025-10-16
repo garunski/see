@@ -1,8 +1,7 @@
-use serde_json;
 
 pub fn extract_json_from_text(text: &str) -> Option<serde_json::Value> {
     // Find the start of JSON (first { or [)
-    let start_pos = text.find(|c| c == '{' || c == '[')?;
+    let start_pos = text.find(['{', '['])?;
     
     // Extract JSON using brace matching
     if let Some(json_str) = extract_json_string_from_position(text, start_pos) {
@@ -18,7 +17,7 @@ pub fn extract_all_json_from_text(text: &str) -> Vec<serde_json::Value> {
     
     while pos < text.len() {
         // Find next JSON start
-        if let Some(start_pos) = text[pos..].find(|c| c == '{' || c == '[') {
+        if let Some(start_pos) = text[pos..].find(['{', '[']) {
             let absolute_start = pos + start_pos;
             if let Some(json_str) = extract_json_string_from_position(text, absolute_start) {
                 if let Ok(json_value) = serde_json::from_str(&json_str) {

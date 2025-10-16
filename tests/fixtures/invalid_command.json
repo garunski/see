@@ -1,10 +1,17 @@
 {
-  "steps": [
+  "id": "test_invalid_command",
+  "name": "Invalid Command Test",
+  "tasks": [
     {
       "id": "invalid_step",
-      "type": "cli",
-      "command": "nonexistent_command_12345",
-      "args": ["This should fail"]
+      "name": "Invalid Step",
+      "function": {
+        "name": "cli_command",
+        "input": {
+          "command": "nonexistent_command_xyz",
+          "args": []
+        }
+      }
     }
   ]
 }

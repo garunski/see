@@ -7,19 +7,18 @@ static TEST_MUTEX: Mutex<()> = Mutex::new(());
 
 // Test helper functions
 fn create_test_workflow(content: &str) {
-    // Create workflow.json in the project root (where the binary expects it)
-    fs::write("workflow.json", content).unwrap();
+    fs::write("test_workflow.json", content).unwrap();
 }
 
 fn run_workflow_app() -> std::process::Output {
     Command::new("cargo")
-        .args(["run", "--quiet"])
+        .args(["run", "--quiet", "--", "test_workflow.json"])
         .output()
         .unwrap()
 }
 
 fn cleanup_workflow() {
-    let _ = fs::remove_file("workflow.json");
+    let _ = fs::remove_file("test_workflow.json");
 }
 
 fn load_fixture(fixture_name: &str) -> String {
@@ -35,7 +34,7 @@ fn run_test<F>(test_fn: F) where F: FnOnce() {
 #[test]
 fn test_simple_echo_workflow() {
     run_test(|| {
-        // Create workflow with simple echo command
+        // Create workflow with simple echo command using dataflow-rs format
         create_test_workflow(&load_fixture("valid_workflow"));
         
         let output = run_workflow_app();
@@ -46,7 +45,35 @@ fn test_simple_echo_workflow() {
         // Verify output contains expected text
         let stdout = String::from_utf8_lossy(&output.stdout);
         assert!(stdout.contains("Hello from workflow!"), "Expected 'Hello from workflow!' in output, got: {}", stdout);
-        assert!(stdout.contains("Step 'hello_step' completed successfully"), "Expected success message, got: {}", stdout);
+        assert!(stdout.contains("Workflow execution complete"), "Expected completion message, got: {}", stdout);
+        assert!(stdout.contains("hello_step"), "Expected task ID in audit trail, got: {}", stdout);
+        
+        cleanup_workflow();
+    });
+}
+
+#[test]
+fn test_multi_step_workflow_all_execute() {
+    run_test(|| {
+        // Test that ALL steps execute (not just the first one)
+        create_test_workflow(&load_fixture("multi_step_workflow"));
+        
+        let output = run_workflow_app();
+        
+        assert!(output.status.success(), "Expected successful execution");
+        
+        let stdout = String::from_utf8_lossy(&output.stdout);
+        
+        // Both steps should execute
+        assert!(stdout.contains("First step executed"), "Expected first step output, got: {}", stdout);
+        assert!(stdout.contains("Second step executed"), "Expected second step output, got: {}", stdout);
+        
+        // Check audit trail shows both tasks
+        assert!(stdout.contains("first_step"), "Expected first_step in audit trail");
+        assert!(stdout.contains("second_step"), "Expected second_step in audit trail");
+        
+        // Should show 2 tasks in the audit trail
+        assert!(stdout.contains("Number of tasks: 2"), "Expected 2 tasks message");
         
         cleanup_workflow();
     });
@@ -55,14 +82,21 @@ fn test_simple_echo_workflow() {
 #[test]
 fn test_command_with_multiple_args() {
     run_test(|| {
-        // Test echo with multiple arguments
+        // Test echo with multiple arguments using dataflow-rs format
         let workflow_json = r#"{
-          "steps": [
+          "id": "multi_arg_test",
+          "name": "Multi-Arg Test",
+          "tasks": [
             {
               "id": "multi_arg_step",
-              "type": "cli",
-              "command": "echo",
-              "args": ["Hello", "World", "from", "Rust!"]
+              "name": "Multi Arg Step",
+              "function": {
+                "name": "cli_command",
+                "input": {
+                  "command": "echo",
+                  "args": ["Hello", "World", "from", "Rust!"]
+                }
+              }
             }
           ]
         }"#;
@@ -81,53 +115,42 @@ fn test_command_with_multiple_args() {
 }
 
 #[test]
-fn test_multiple_steps_only_first_executes() {
-    run_test(|| {
-        // Test that only the first step executes even with multiple steps
-        create_test_workflow(&load_fixture("multi_step_workflow"));
-        
-        let output = run_workflow_app();
-        
-        assert!(output.status.success(), "Expected successful execution");
-        
-        let stdout = String::from_utf8_lossy(&output.stdout);
-        assert!(stdout.contains("First step executed"), "Expected first step output, got: {}", stdout);
-        assert!(!stdout.contains("Second step should not run"), "Second step should not have executed, got: {}", stdout);
-        assert!(stdout.contains("Loaded workflow with 2 steps"), "Expected 2 steps loaded message");
-        
-        cleanup_workflow();
-    });
-}
-
-#[test]
 fn test_different_cli_commands() {
     run_test(|| {
         // Test with different commands
-        let commands: Vec<(&str, Vec<&str>, &str)> = vec![
-            ("pwd", vec![], "current directory path"),
-            ("date", vec![], "date output"),
+        let commands: Vec<(&str, &str)> = vec![
+            ("pwd", "pwd_step"),
+            ("date", "date_step"),
         ];
         
-        for (test_name, cmd_args, _expected_content) in commands {
+        for (cmd, step_id) in commands {
             let workflow_json = format!(r#"{{
-              "steps": [
+              "id": "{}_test",
+              "name": "{} Test",
+              "tasks": [
                 {{
-                  "id": "{}_step",
-                  "type": "cli",
-                  "command": "{}",
-                  "args": {:?}
+                  "id": "{}",
+                  "name": "{} Step",
+                  "function": {{
+                    "name": "cli_command",
+                    "input": {{
+                      "command": "{}",
+                      "args": []
+                    }}
+                  }}
                 }}
               ]
-            }}"#, test_name, test_name, cmd_args);
+            }}"#, cmd, cmd, step_id, cmd, cmd);
             
             create_test_workflow(&workflow_json);
             
             let output = run_workflow_app();
             
-            assert!(output.status.success(), "Expected successful execution for {}", test_name);
+            assert!(output.status.success(), "Expected successful execution for {}", cmd);
             
             let stdout = String::from_utf8_lossy(&output.stdout);
-            assert!(!stdout.is_empty(), "Expected non-empty output for {}", test_name);
+            assert!(!stdout.is_empty(), "Expected non-empty output for {}", cmd);
+            assert!(stdout.contains("Workflow execution complete"), "Expected completion message for {}", cmd);
             
             cleanup_workflow();
         }
@@ -149,11 +172,15 @@ fn test_invalid_command_fails() {
         let stdout = String::from_utf8_lossy(&output.stdout);
         
         // Should contain error message about command failure
-        assert!(stderr.contains("Command failed") || stdout.contains("Command failed") || 
-                stderr.contains("not found") || stdout.contains("not found") ||
-                stderr.contains("No such file") || stdout.contains("No such file") ||
-                stderr.contains("Os { code: 2") || stdout.contains("Os { code: 2"), 
-                "Expected error message, stderr: {}, stdout: {}", stderr, stdout);
+        let combined = format!("{}{}", stderr, stdout);
+        assert!(
+            combined.contains("Failed to execute command") || 
+            combined.contains("Workflow execution failed") ||
+            combined.contains("nonexistent_command") ||
+            combined.contains("not found") ||
+            combined.contains("No such file"),
+            "Expected error message about failed command, stderr: {}, stdout: {}", stderr, stdout
+        );
         
         cleanup_workflow();
     });
@@ -174,12 +201,15 @@ fn test_malformed_json() {
         let stdout = String::from_utf8_lossy(&output.stdout);
         
         // Should contain JSON parsing error
-        assert!(stderr.contains("JSON") || stdout.contains("JSON") || 
-                stderr.contains("parse") || stdout.contains("parse") ||
-                stderr.contains("invalid") || stdout.contains("invalid") ||
-                stderr.contains("trailing characters") || stdout.contains("trailing characters") ||
-                stderr.contains("Error(") || stdout.contains("Error("), 
-                "Expected JSON error message, stderr: {}, stdout: {}", stderr, stdout);
+        let combined = format!("{}{}", stderr, stdout);
+        assert!(
+            combined.contains("Failed to parse workflow") || 
+            combined.contains("JSON") ||
+            combined.contains("parse") ||
+            combined.contains("expected") ||
+            combined.contains("EOF"),
+            "Expected JSON error message, stderr: {}, stdout: {}", stderr, stdout
+        );
         
         cleanup_workflow();
     });
@@ -188,10 +218,11 @@ fn test_malformed_json() {
 #[test]
 fn test_missing_workflow_file() {
     run_test(|| {
-        // Ensure workflow.json doesn't exist
-        cleanup_workflow();
-        
-        let output = run_workflow_app();
+        // Test with a non-existent file
+        let output = Command::new("cargo")
+            .args(["run", "--quiet", "--", "nonexistent_workflow.json"])
+            .output()
+            .unwrap();
         
         // Should fail with non-zero exit code
         assert!(!output.status.success(), "Expected failure for missing file, got success");
@@ -200,33 +231,93 @@ fn test_missing_workflow_file() {
         let stdout = String::from_utf8_lossy(&output.stdout);
         
         // Should contain file not found error
-        assert!(stderr.contains("No such file") || stdout.contains("No such file") ||
-                stderr.contains("not found") || stdout.contains("not found") ||
-                stderr.contains("workflow.json") || stdout.contains("workflow.json"), 
-                "Expected file not found error, stderr: {}, stdout: {}", stderr, stdout);
-        
-        // Restore a valid workflow for other tests
-        create_test_workflow(&load_fixture("valid_workflow"));
+        let combined = format!("{}{}", stderr, stdout);
+        assert!(
+            combined.contains("Failed to read workflow file") ||
+            combined.contains("No such file") ||
+            combined.contains("not found") ||
+            combined.contains("nonexistent_workflow.json"),
+            "Expected file not found error, stderr: {}, stdout: {}", stderr, stdout
+        );
     });
 }
 
 #[test]
-fn test_empty_workflow_steps() {
+fn test_empty_workflow_tasks() {
     run_test(|| {
-        // Test with empty steps array
+        // Test with empty tasks array
         let workflow_json = r#"{
-          "steps": []
+          "id": "empty_workflow",
+          "name": "Empty Workflow",
+          "tasks": []
         }"#;
         
         create_test_workflow(workflow_json);
         
         let output = run_workflow_app();
         
-        assert!(output.status.success(), "Expected successful execution with empty steps");
+        // Should succeed even with no tasks
+        assert!(output.status.success(), "Expected successful execution with empty tasks");
         
         let stdout = String::from_utf8_lossy(&output.stdout);
-        assert!(stdout.contains("No steps found in workflow"), "Expected no steps message, got: {}", stdout);
-        assert!(stdout.contains("Loaded workflow with 0 steps"), "Expected 0 steps loaded message");
+        assert!(stdout.contains("Number of tasks: 0"), "Expected 0 tasks message, got: {}", stdout);
+        assert!(stdout.contains("Workflow execution complete"), "Expected completion message");
+        
+        cleanup_workflow();
+    });
+}
+
+#[test]
+fn test_workflow_audit_trail() {
+    run_test(|| {
+        // Test that audit trail is properly generated
+        create_test_workflow(&load_fixture("multi_step_workflow"));
+        
+        let output = run_workflow_app();
+        
+        assert!(output.status.success(), "Expected successful execution");
+        
+        let stdout = String::from_utf8_lossy(&output.stdout);
+        
+        // Check for audit trail section
+        assert!(stdout.contains("Audit Trail"), "Expected 'Audit Trail' section");
+        
+        // Check that both tasks appear in audit trail
+        assert!(stdout.contains("first_step"), "Expected first_step in audit trail");
+        assert!(stdout.contains("second_step"), "Expected second_step in audit trail");
+        
+        // Check for status codes
+        assert!(stdout.contains("Status: 200"), "Expected success status in audit trail");
+        
+        // Check for timestamps
+        assert!(stdout.contains("Timestamp:"), "Expected timestamp in audit trail");
+        
+        // Check for changes tracking
+        assert!(stdout.contains("Changes:"), "Expected changes tracking in audit trail");
+        
+        cleanup_workflow();
+    });
+}
+
+#[test]
+fn test_workflow_context() {
+    run_test(|| {
+        // Test that context is properly maintained
+        create_test_workflow(&load_fixture("valid_workflow"));
+        
+        let output = run_workflow_app();
+        
+        assert!(output.status.success(), "Expected successful execution");
+        
+        let stdout = String::from_utf8_lossy(&output.stdout);
+        
+        // Check for final context section
+        assert!(stdout.contains("Final Context"), "Expected 'Final Context' section");
+        
+        // Context should contain CLI output
+        assert!(stdout.contains("cli_output"), "Expected cli_output in context");
+        assert!(stdout.contains("stdout"), "Expected stdout field in context");
+        assert!(stdout.contains("exit_code"), "Expected exit_code field in context");
         
         cleanup_workflow();
     });

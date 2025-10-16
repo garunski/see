@@ -1,10 +1,17 @@
 {
-  "steps": [
+  "id": "test_simple_workflow",
+  "name": "Simple Test Workflow",
+  "tasks": [
     {
       "id": "hello_step",
-      "type": "cli",
-      "command": "echo",
-      "args": ["Hello from workflow!"]
+      "name": "Hello Step",
+      "function": {
+        "name": "cli_command",
+        "input": {
+          "command": "echo",
+          "args": ["Hello from workflow!"]
+        }
+      }
     }
   ]
 }
