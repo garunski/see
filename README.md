@@ -102,7 +102,13 @@ cargo test -- --nocapture
 ### Test Types
 
 - **CLI Integration Tests** (`tests/integration_test.rs`) - Test the CLI binary by spawning subprocesses
-- **GUI Integration Tests** (`tests/gui_integration_test.rs`) - Test the GUI's backend workflow execution and state management in-process
+- **GUI Integration Tests** (`tests/gui_integration_test.rs`) - Test all Dioxus UI components with VirtualDom rendering
+  - **WorkflowInfoCard** - Tests success/failure states, data rendering, structure
+  - **ErrorsPanel** - Tests error display, empty state, styling
+  - **ContextPanel** - Tests collapsed/expanded states, JSON rendering, copy functionality
+  - **OutputLogsPanel** - Tests log display, collapsed/expanded states, empty handling
+  - **Toast** - Tests message display, empty state, positioning
+  - **Sidebar** - Tests all states (idle/running), theme toggle, file input, structure
 - **JSON Parser Tests** (`tests/json_parser_test.rs`) - Test JSON parsing utilities
 
 ## Development
