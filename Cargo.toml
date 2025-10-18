@@ -20,3 +20,7 @@ path = "src/cli.rs"
 [[bin]]
 name = "gui"
 path = "src/gui.rs"
+
+[dev-dependencies]
+dioxus-ssr = "0.6"
+pretty_assertions = "1.0"

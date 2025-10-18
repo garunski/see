@@ -126,7 +126,8 @@ fn App() -> Element {
 
     rsx! {
         div {
-            class: "min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 text-white",
+            class: format!("min-h-screen bg-white dark:bg-zinc-900 text-zinc-950 dark:text-white {}", 
+                if state.read().dark_mode { "dark" } else { "" }),
             
             // Inject Tailwind CSS
             style {
@@ -157,28 +158,28 @@ fn App() -> Element {
             
             // Main layout
             div {
-                class: "min-h-screen flex",
+                class: "relative isolate flex min-h-svh w-full bg-white max-lg:flex-col lg:bg-zinc-100 dark:bg-zinc-900 dark:lg:bg-zinc-950",
                 
                 // Sidebar
                 aside {
-                    class: "w-80 bg-black/20 backdrop-blur-md border-r border-white/10 p-8",
+                    class: "fixed inset-y-0 left-0 w-64 max-lg:hidden bg-white dark:bg-zinc-900 border-r border-zinc-950/5 dark:border-white/5",
                     
                     // Logo and title
                     div {
-                        class: "mb-12",
+                        class: "flex flex-col border-b border-zinc-950/5 p-4 dark:border-white/5",
                         div {
-                            class: "flex items-center space-x-4 mb-4",
+                            class: "flex items-center space-x-3 mb-4",
                             div {
-                                class: "w-12 h-12 bg-gradient-to-r from-cyan-400 to-blue-500 rounded-2xl flex items-center justify-center text-2xl",
+                                class: "w-8 h-8 bg-zinc-900 dark:bg-white rounded-lg flex items-center justify-center text-white dark:text-zinc-900 text-lg font-semibold",
                                 "⚡"
                             }
                             div {
                                 h1 {
-                                    class: "text-2xl font-bold bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent",
+                                    class: "text-lg font-semibold text-zinc-950 dark:text-white",
                                     "Workflow Executor"
                                 }
                                 p {
-                                    class: "text-white/60 text-sm",
+                                    class: "text-zinc-500 dark:text-zinc-400 text-sm",
                                     "Execute and manage workflows"
                                 }
                             }
@@ -186,7 +187,7 @@ fn App() -> Element {
                         
                         // Theme toggle
                         button {
-                            class: "w-full p-3 bg-white/10 hover:bg-white/20 rounded-xl transition-all duration-200 flex items-center justify-center space-x-2",
+                            class: "flex w-full items-center gap-3 rounded-lg px-2 py-2.5 text-left text-base/6 font-medium text-zinc-950 sm:py-2 sm:text-sm/5 data-hover:bg-zinc-950/5 data-active:bg-zinc-950/5 dark:text-white dark:data-hover:bg-white/5 dark:data-active:bg-white/5",
                             onclick: move |_| toggle_dark_mode(),
                             div {
                                 class: "w-5 h-5",
@@ -200,55 +201,56 @@ fn App() -> Element {
                     
                     // File input section
                     div {
-                        class: "mb-8",
-                        label {
-                            class: "block text-sm font-medium text-white/80 mb-3",
-                            "Workflow File"
-                        }
+                        class: "flex flex-1 flex-col overflow-y-auto p-4",
                         div {
-                            class: "space-y-3",
-                            input {
-                                class: "w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:border-transparent transition-all duration-200",
-                                r#type: "text",
-                                placeholder: "Select workflow file...",
-                                value: state.read().workflow_file.clone(),
-                                oninput: move |evt| {
-                                    state.write().workflow_file = evt.value();
-                                }
+                            class: "flex flex-col gap-0.5",
+                            label {
+                                class: "mb-1 px-2 text-xs/6 font-medium text-zinc-500 dark:text-zinc-400",
+                                "Workflow File"
                             }
-                            button {
-                                class: "w-full p-3 bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 text-white rounded-xl font-medium transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2",
-                                disabled: state.read().is_picking_file,
-                                onclick: move |_| pick_file(),
-                                div {
-                                    class: "w-5 h-5",
-                                    if state.read().is_picking_file {
-                                        "⏳"
-                                    } else {
-                                        "📁"
+                            div {
+                                class: "space-y-3",
+                                input {
+                                    class: "w-full px-3 py-2 bg-white dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-700 rounded-lg text-zinc-950 dark:text-white placeholder-zinc-500 dark:placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200",
+                                    r#type: "text",
+                                    placeholder: "Select workflow file...",
+                                    value: state.read().workflow_file.clone(),
+                                    oninput: move |evt| {
+                                        state.write().workflow_file = evt.value();
                                     }
                                 }
-                                span { "Browse Files" }
+                                button {
+                                    class: "relative isolate inline-flex items-baseline justify-center gap-x-2 rounded-lg border text-base/6 font-semibold px-[calc(--spacing(3.5)-1px)] py-[calc(--spacing(2.5)-1px)] sm:px-[calc(--spacing(3)-1px)] sm:py-[calc(--spacing(1.5)-1px)] sm:text-sm/6 border-zinc-950/10 text-zinc-950 data-active:bg-zinc-950/2.5 data-hover:bg-zinc-950/2.5 dark:border-white/15 dark:text-white dark:data-active:bg-white/5 dark:data-hover:bg-white/5 disabled:opacity-50 disabled:cursor-not-allowed",
+                                    disabled: state.read().is_picking_file,
+                                    onclick: move |_| pick_file(),
+                                    div {
+                                        class: "w-5 h-5",
+                                        if state.read().is_picking_file {
+                                            "⏳"
+                                        } else {
+                                            "📁"
+                                        }
+                                    }
+                                    span { "Browse Files" }
+                                }
                             }
                         }
                     }
                     
                     // Execute button
-                    button {
-                        class: "w-full p-4 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white text-lg font-semibold rounded-xl shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none flex items-center justify-center space-x-3",
-                        onclick: move |_| execute_workflow(),
-                        disabled: matches!(state.read().execution_status, ExecutionStatus::Running),
-                        if matches!(state.read().execution_status, ExecutionStatus::Running) {
-                            div {
-                                class: "animate-spin w-6 h-6 border-2 border-white border-t-transparent rounded-full"
+                    div {
+                        class: "flex flex-col border-t border-zinc-950/5 p-4 dark:border-white/5",
+                        button {
+                            class: "relative isolate inline-flex items-baseline justify-center gap-x-2 rounded-lg border text-base/6 font-semibold px-[calc(--spacing(3.5)-1px)] py-[calc(--spacing(2.5)-1px)] sm:px-[calc(--spacing(3)-1px)] sm:py-[calc(--spacing(1.5)-1px)] sm:text-sm/6 text-white bg-emerald-600 border-emerald-700/90 data-hover:bg-emerald-700 data-active:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed",
+                            onclick: move |_| execute_workflow(),
+                            disabled: matches!(state.read().execution_status, ExecutionStatus::Running),
+                            if matches!(state.read().execution_status, ExecutionStatus::Running) {
+                                div { class: "animate-spin w-5 h-5 border-2 border-white border-t-transparent rounded-full" }
+                                span { "Executing..." }
+                            } else {
+                                div { class: "w-5 h-5", "🚀" }
+                                span { "Execute Workflow" }
                             }
-                            span { "Executing..." }
-                        } else {
-                            div {
-                                class: "w-6 h-6",
-                                "🚀"
-                            }
-                            span { "Execute Workflow" }
                         }
                     }
                     
@@ -282,16 +284,20 @@ fn App() -> Element {
                 
                 // Main content area
                 main {
-                    class: "flex-1 p-8 overflow-y-auto",
+                    class: "flex flex-1 flex-col pb-2 lg:min-w-0 lg:pt-2 lg:pr-2 lg:pl-64",
+                    div {
+                        class: "grow p-6 lg:rounded-lg lg:bg-white lg:p-10 lg:shadow-xs lg:ring-1 lg:ring-zinc-950/5 dark:lg:bg-zinc-900 dark:lg:ring-white/10",
+                        div {
+                            class: "mx-auto max-w-6xl",
                     
                     // Workflow info card
                     if let Some(ref result) = state.read().workflow_result {
                         div {
-                            class: "mb-8 bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-8 animate-fade-in",
+                            class: "mb-8 bg-white dark:bg-zinc-900 shadow-xs ring-1 ring-zinc-950/5 dark:ring-white/10 rounded-2xl p-8 animate-fade-in",
                             div {
                                 class: "flex items-center justify-between mb-6",
                                 h2 {
-                                    class: "text-2xl font-bold text-white",
+                                    class: "text-2xl/8 font-semibold text-zinc-950 sm:text-xl/8 dark:text-white",
                                     "Workflow Results"
                                 }
                                 div {
@@ -489,6 +495,8 @@ fn App() -> Element {
                                     }
                                 }
                             }
+                        }
+                    }
                         }
                     }
                 }

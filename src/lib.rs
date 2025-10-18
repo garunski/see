@@ -1,5 +1,6 @@
 pub mod json_parser;
 pub mod cli_handler;
+pub mod components;
 
 use dataflow_rs::{Engine, Workflow};
 use dataflow_rs::engine::{
