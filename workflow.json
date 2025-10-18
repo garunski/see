@@ -19,9 +19,11 @@
       "function": {
         "name": "cli_command",
         "input": {
-          "command": "cursor",
+          "response_type": "json",
+          "command": "cursor-agent",
           "args": [
-            "agent",
+            "--output-format",
+            "json",
             "-p",
             "give me an example JSON object with user information including name, age, email, and address"
           ]
