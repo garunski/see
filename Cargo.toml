@@ -7,6 +7,16 @@ edition = "2021"
 async-trait = "0.1"
 dataflow-rs = "2.0.0"
 datalogic-rs = "4.0"
+dioxus = { version = "0.6", features = ["desktop"] }
+rfd = "0.14"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 tokio = { version = "1", features = ["full"] }
+
+[[bin]]
+name = "cli"
+path = "src/cli.rs"
+
+[[bin]]
+name = "gui"
+path = "src/gui.rs"

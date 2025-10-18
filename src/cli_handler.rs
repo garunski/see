@@ -8,8 +8,39 @@ use datalogic_rs::DataLogic;
 use serde_json::{json, Value};
 use std::process::Command;
 use std::sync::Arc;
+use std::cell::RefCell;
 
 use crate::json_parser;
+
+// Thread-local storage for output callback
+thread_local! {
+    static OUTPUT_CALLBACK: RefCell<Option<std::sync::Arc<dyn Fn(String) + Send + Sync>>> = RefCell::new(None);
+}
+
+/// Set the output callback for CLI command output
+pub fn set_output_callback(callback: std::sync::Arc<dyn Fn(String) + Send + Sync>) {
+    OUTPUT_CALLBACK.with(|cb| {
+        *cb.borrow_mut() = Some(callback);
+    });
+}
+
+/// Clear the output callback
+pub fn clear_output_callback() {
+    OUTPUT_CALLBACK.with(|cb| {
+        *cb.borrow_mut() = None;
+    });
+}
+
+/// Helper function to output text (uses callback if set, otherwise println!)
+fn output_text(text: &str) {
+    OUTPUT_CALLBACK.with(|cb| {
+        if let Some(ref callback) = *cb.borrow() {
+            callback(text.to_string());
+        } else {
+            println!("{}", text);
+        }
+    });
+}
 
 /// Custom async function handler for CLI commands
 pub struct CliCommandHandler;
@@ -61,7 +92,7 @@ impl AsyncFunctionHandler for CliCommandHandler {
         } else {
             format!("{} {}", command, args.join(" "))
         };
-        println!("Executing CLI command: {} (response_type: {})", formatted_command, response_type);
+        output_text(&format!("Executing CLI command: {} (response_type: {})", formatted_command, response_type));
         
         // Execute the command
         let output = Command::new(command)
@@ -76,11 +107,11 @@ impl AsyncFunctionHandler for CliCommandHandler {
         let stderr = String::from_utf8_lossy(&output.stderr).to_string();
         
         if !stdout.is_empty() {
-            println!("Output: {}", stdout.trim());
+            output_text(&format!("Output: {}", stdout.trim()));
         }
         
         if !stderr.is_empty() {
-            println!("Error: {}", stderr.trim());
+            output_text(&format!("Error: {}", stderr.trim()));
         }
         
         if !output.status.success() {
@@ -103,7 +134,7 @@ impl AsyncFunctionHandler for CliCommandHandler {
                     match serde_json::from_str::<Value>(&stdout) {
                         Ok(json_value) => Some(json_value),
                         Err(e) => {
-                            println!("Warning: Expected JSON output but parsing failed: {}", e);
+                            output_text(&format!("Warning: Expected JSON output but parsing failed: {}", e));
                             None
                         }
                     }
@@ -119,11 +150,11 @@ impl AsyncFunctionHandler for CliCommandHandler {
         
         // Display extracted JSON if found
         if let Some(ref json_val) = extracted_json {
-            println!("\n🔍 Extracted JSON:");
-            println!("{}", serde_json::to_string_pretty(json_val).unwrap_or_else(|_| "{}".to_string()));
+            output_text("\n🔍 Extracted JSON:");
+            output_text(&serde_json::to_string_pretty(json_val).unwrap_or_else(|_| "{}".to_string()));
             
             // Display parsed values
-            println!("\n📋 Parsed Values:");
+            output_text("\n📋 Parsed Values:");
             display_json_values(json_val, "");
         }
         
@@ -168,7 +199,7 @@ fn display_json_values(value: &Value, prefix: &str) {
                         display_json_values(val, &new_prefix);
                     }
                     _ => {
-                        println!("  - {}: {}", new_prefix, format_value(val));
+                        output_text(&format!("  - {}: {}", new_prefix, format_value(val)));
                     }
                 }
             }
@@ -181,13 +212,13 @@ fn display_json_values(value: &Value, prefix: &str) {
                         display_json_values(val, &new_prefix);
                     }
                     _ => {
-                        println!("  - {}: {}", new_prefix, format_value(val));
+                        output_text(&format!("  - {}: {}", new_prefix, format_value(val)));
                     }
                 }
             }
         }
         _ => {
-            println!("  - {}: {}", prefix, format_value(value));
+            output_text(&format!("  - {}: {}", prefix, format_value(value)));
         }
     }
 }
