@@ -1,8 +1,8 @@
 use dioxus::prelude::*;
+use rfd::FileDialog;
 use simple_workflow_app::{execute_workflow, OutputCallback, WorkflowResult};
 use std::sync::Arc;
 use tokio::sync::mpsc;
-use rfd::FileDialog;
 
 // Include the generated Tailwind CSS
 const TAILWIND_CSS: &str = include_str!("../assets/tailwind.css");
@@ -55,21 +55,21 @@ fn App() -> Element {
     let execute_workflow = move || {
         spawn(async move {
             let file_path = state.read().workflow_file.clone();
-            
+
             // Update status to running
             state.write().execution_status = ExecutionStatus::Running;
             state.write().output_logs.clear();
             state.write().workflow_result = None;
-            
+
             // Create a channel for output
             let (tx, mut rx) = mpsc::channel(100);
             let tx_clone = tx.clone();
-            
+
             // Create output callback
             let output_callback: OutputCallback = Arc::new(move |msg| {
                 let _ = tx_clone.try_send(msg);
             });
-            
+
             // Start a task to receive output
             let mut state_clone = state.clone();
             spawn(async move {
@@ -77,13 +77,14 @@ fn App() -> Element {
                     state_clone.write().output_logs.push(msg);
                 }
             });
-            
+
             // Execute workflow
             match execute_workflow(&file_path, Some(output_callback)).await {
                 Ok(result) => {
                     state.write().execution_status = ExecutionStatus::Complete;
                     state.write().workflow_result = Some(result);
-                    state.write().toast_message = Some("Workflow completed successfully!".to_string());
+                    state.write().toast_message =
+                        Some("Workflow completed successfully!".to_string());
                 }
                 Err(e) => {
                     state.write().execution_status = ExecutionStatus::Failed;
@@ -126,14 +127,14 @@ fn App() -> Element {
 
     rsx! {
         div {
-            class: format!("min-h-screen bg-white dark:bg-zinc-900 text-zinc-950 dark:text-white {}", 
+            class: format!("min-h-screen bg-white dark:bg-zinc-900 text-zinc-950 dark:text-white {}",
                 if state.read().dark_mode { "dark" } else { "" }),
-            
+
             // Inject Tailwind CSS
             style {
                 dangerous_inner_html: TAILWIND_CSS
             }
-            
+
             // Toast notification
             if let Some(ref toast) = state.read().toast_message {
                 div {
@@ -155,15 +156,15 @@ fn App() -> Element {
                     }
                 }
             }
-            
+
             // Main layout
             div {
                 class: "relative isolate flex min-h-svh w-full bg-white max-lg:flex-col lg:bg-zinc-100 dark:bg-zinc-900 dark:lg:bg-zinc-950",
-                
+
                 // Sidebar
                 aside {
                     class: "fixed inset-y-0 left-0 w-64 max-lg:hidden bg-white dark:bg-zinc-900 border-r border-zinc-950/5 dark:border-white/5",
-                    
+
                     // Logo and title
                     div {
                         class: "flex flex-col border-b border-zinc-950/5 p-4 dark:border-white/5",
@@ -184,7 +185,7 @@ fn App() -> Element {
                                 }
                             }
                         }
-                        
+
                         // Theme toggle
                         button {
                             class: "flex w-full items-center gap-3 rounded-lg px-2 py-2.5 text-left text-base/6 font-medium text-zinc-950 sm:py-2 sm:text-sm/5 data-hover:bg-zinc-950/5 data-active:bg-zinc-950/5 dark:text-white dark:data-hover:bg-white/5 dark:data-active:bg-white/5",
@@ -198,7 +199,7 @@ fn App() -> Element {
                             }
                         }
                     }
-                    
+
                     // File input section
                     div {
                         class: "flex flex-1 flex-col overflow-y-auto p-4",
@@ -236,7 +237,7 @@ fn App() -> Element {
                             }
                         }
                     }
-                    
+
                     // Execute button
                     div {
                         class: "flex flex-col border-t border-zinc-950/5 p-4 dark:border-white/5",
@@ -253,7 +254,7 @@ fn App() -> Element {
                             }
                         }
                     }
-                    
+
                     // Status indicator
                     if !matches!(state.read().execution_status, ExecutionStatus::Idle) {
                         div {
@@ -281,7 +282,7 @@ fn App() -> Element {
                         }
                     }
                 }
-                
+
                 // Main content area
                 main {
                     class: "flex flex-1 flex-col pb-2 lg:min-w-0 lg:pt-2 lg:pr-2 lg:pl-64",
@@ -289,7 +290,7 @@ fn App() -> Element {
                         class: "grow p-6 lg:rounded-lg lg:bg-white lg:p-10 lg:shadow-xs lg:ring-1 lg:ring-zinc-950/5 dark:lg:bg-zinc-900 dark:lg:ring-white/10",
                         div {
                             class: "mx-auto max-w-6xl",
-                    
+
                     // Workflow info card
                     if let Some(ref result) = state.read().workflow_result {
                         div {
@@ -315,7 +316,7 @@ fn App() -> Element {
                                     }
                                 }
                             }
-                            
+
                             // Stats grid
                             div {
                                 class: "grid grid-cols-1 md:grid-cols-3 gap-6",
@@ -355,11 +356,11 @@ fn App() -> Element {
                             }
                         }
                     }
-                
+
                     // Collapsible sections
                     div {
                         class: "space-y-6",
-                    
+
                         // Output logs section
                         if !state.read().output_logs.is_empty() {
                             div {
@@ -415,7 +416,7 @@ fn App() -> Element {
                                 }
                             }
                         }
-                    
+
                         // Final context section
                         if let Some(ref result) = state.read().workflow_result {
                             div {
@@ -467,7 +468,7 @@ fn App() -> Element {
                                 }
                             }
                         }
-                        
+
                         // Errors section
                         if let Some(ref result) = state.read().workflow_result {
                             if !result.errors.is_empty() {

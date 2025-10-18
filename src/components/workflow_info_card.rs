@@ -1,5 +1,5 @@
-use dioxus::prelude::*;
 use crate::WorkflowResult;
+use dioxus::prelude::*;
 
 #[component]
 pub fn WorkflowInfoCard(result: ReadOnlySignal<WorkflowResult>) -> Element {
@@ -27,7 +27,7 @@ pub fn WorkflowInfoCard(result: ReadOnlySignal<WorkflowResult>) -> Element {
                     }
                 }
             }
-            
+
             // Stats grid
             div {
                 class: "grid grid-cols-1 md:grid-cols-3 gap-6",

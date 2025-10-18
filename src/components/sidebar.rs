@@ -1,5 +1,5 @@
-use dioxus::prelude::*;
 use crate::components::ExecutionStatus;
+use dioxus::prelude::*;
 
 #[component]
 pub fn Sidebar(
@@ -15,7 +15,7 @@ pub fn Sidebar(
     rsx! {
         aside {
             class: "fixed inset-y-0 left-0 w-64 max-lg:hidden bg-white dark:bg-zinc-900 border-r border-zinc-950/5 dark:border-white/5",
-            
+
             // Logo and title
             div {
                 class: "flex flex-col border-b border-zinc-950/5 p-4 dark:border-white/5",
@@ -36,7 +36,7 @@ pub fn Sidebar(
                         }
                     }
                 }
-                
+
                 // Theme toggle
                 button {
                     class: "flex w-full items-center gap-3 rounded-lg px-2 py-2.5 text-left text-base/6 font-medium text-zinc-950 sm:py-2 sm:text-sm/5 data-hover:bg-zinc-950/5 data-active:bg-zinc-950/5 dark:text-white dark:data-hover:bg-white/5 dark:data-active:bg-white/5",
@@ -50,7 +50,7 @@ pub fn Sidebar(
                     }
                 }
             }
-            
+
             // File input section
             div {
                 class: "flex flex-1 flex-col overflow-y-auto p-4",
@@ -88,7 +88,7 @@ pub fn Sidebar(
                     }
                 }
             }
-            
+
             // Execute button
             div {
                 class: "flex flex-col border-t border-zinc-950/5 p-4 dark:border-white/5",
@@ -110,7 +110,7 @@ pub fn Sidebar(
                     }
                 }
             }
-            
+
             // Status indicator
             if !matches!(execution_status, ExecutionStatus::Idle) {
                 div {

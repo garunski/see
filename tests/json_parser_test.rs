@@ -23,7 +23,8 @@ fn test_parse_pure_json_array() {
 
 #[test]
 fn test_extract_json_from_text_with_surrounding_content() {
-    let text = "Here is some text before JSON: {\"name\": \"test\", \"value\": 42} and more text after";
+    let text =
+        "Here is some text before JSON: {\"name\": \"test\", \"value\": 42} and more text after";
     let result = json_parser::extract_json_from_text(text);
     assert!(result.is_some());
     let value = result.unwrap();
@@ -62,7 +63,7 @@ fn test_handle_text_with_no_json() {
     let text = "This is just plain text with no JSON at all";
     let result = json_parser::extract_json_from_text(text);
     assert!(result.is_none());
-    
+
     let results = json_parser::extract_all_json_from_text(text);
     assert!(results.is_empty());
 }
@@ -91,7 +92,7 @@ fn test_handle_escaped_characters_in_json() {
 fn test_handle_empty_string() {
     let result = json_parser::extract_json_from_text("");
     assert!(result.is_none());
-    
+
     let results = json_parser::extract_all_json_from_text("");
     assert!(results.is_empty());
 }
@@ -101,7 +102,7 @@ fn test_handle_whitespace_only() {
     let text = "   \n\t  \n  ";
     let result = json_parser::extract_json_from_text(text);
     assert!(result.is_none());
-    
+
     let results = json_parser::extract_all_json_from_text(text);
     assert!(results.is_empty());
 }

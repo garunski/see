@@ -1,41 +1,40 @@
 version: '3'
 
 tasks:
-  # Build the application
-  build:
-    desc: Build the Rust application
+  # Development workflow
+  dev:
+    desc: Format, lint, and test code
     cmds:
-      - cargo build
+      - cargo fmt
+      - cargo clippy
+      - cargo test
 
-  # Run the application
-  run:
-    desc: Run the application
+  # Run CLI application
+  run-cli:
+    desc: Run CLI with workflow.json
+    deps: [dev]
     cmds:
-      - cargo run
+      - cargo run --bin cli -- workflow.json
 
-  # Run tests
+  # Run GUI application
+  run-gui:
+    desc: Build Tailwind CSS and run GUI
+    deps: [dev, tailwind-build]
+    cmds:
+      - cargo run --bin gui
+
+  # Run all tests
   test:
     desc: Run all tests
     cmds:
       - cargo test
 
-  # Run tests with output
-  test-verbose:
-    desc: Run tests with verbose output
+  # Build release binary
+  build-release:
+    desc: Build optimized release binary
+    deps: [tailwind-build]
     cmds:
-      - cargo test -- --nocapture
-
-  # Run only integration tests
-  test-integration:
-    desc: Run integration tests only
-    cmds:
-      - cargo test --test integration_test
-
-  # Run only GUI integration tests
-  test-gui:
-    desc: Run GUI integration tests only
-    cmds:
-      - cargo test --test gui_integration_test
+      - cargo build --release
 
   # Clean build artifacts
   clean:
@@ -43,27 +42,8 @@ tasks:
     cmds:
       - cargo clean
 
-  # Check code without building
-  check:
-    desc: Check code for errors without building
-    cmds:
-      - cargo check
-
-  # Format code
-  fmt:
-    desc: Format Rust code
-    cmds:
-      - cargo fmt
-
-  # Run clippy linter
-  lint:
-    desc: Run clippy linter
-    cmds:
-      - cargo clippy
-
-  # Download Tailwind CLI (one-time setup)
+  # Internal: Download Tailwind CLI
   tailwind-setup:
-    desc: Download Tailwind standalone CLI
     cmds:
       - curl -sLO https://github.com/tailwindlabs/tailwindcss/releases/latest/download/tailwindcss-macos-arm64
       - mv tailwindcss-macos-arm64 tailwindcss
@@ -71,30 +51,8 @@ tasks:
     status:
       - test -f tailwindcss
 
-  # Build Tailwind CSS
+  # Internal: Build Tailwind CSS
   tailwind-build:
-    desc: Build Tailwind CSS
     deps: [tailwind-setup]
     cmds:
-      - ./tailwindcss-v3 -i ./input.css -o ./assets/tailwind.css --content "./src/**/*.rs" --minify
-
-  # Watch Tailwind CSS during development
-  tailwind-watch:
-    desc: Watch and rebuild Tailwind CSS
-    deps: [tailwind-setup]
-    cmds:
-      - ./tailwindcss-v3 -i ./input.css -o ./assets/tailwind.css --content "./src/**/*.rs" --watch
-
-  # Run GUI with Tailwind build
-  run-gui:
-    desc: Build Tailwind CSS and run GUI
-    deps: [tailwind-build]
-    cmds:
-      - cargo run --bin gui
-
-  # Build release with Tailwind
-  build-gui-release:
-    desc: Build GUI for release with Tailwind CSS
-    deps: [tailwind-build]
-    cmds:
-      - cargo build --release --bin gui
+      - ./tailwindcss -i ./input.css -o ./assets/tailwind.css --content "./src/**/*.rs" --minify

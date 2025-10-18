@@ -1,8 +1,7 @@
-
 pub fn extract_json_from_text(text: &str) -> Option<serde_json::Value> {
     // Find the start of JSON (first { or [)
     let start_pos = text.find(['{', '['])?;
-    
+
     // Extract JSON using brace matching
     if let Some(json_str) = extract_json_string_from_position(text, start_pos) {
         serde_json::from_str(&json_str).ok()
@@ -14,7 +13,7 @@ pub fn extract_json_from_text(text: &str) -> Option<serde_json::Value> {
 pub fn extract_all_json_from_text(text: &str) -> Vec<serde_json::Value> {
     let mut results = Vec::new();
     let mut pos = 0;
-    
+
     while pos < text.len() {
         // Find next JSON start
         if let Some(start_pos) = text[pos..].find(['{', '[']) {
@@ -31,7 +30,7 @@ pub fn extract_all_json_from_text(text: &str) -> Vec<serde_json::Value> {
             break;
         }
     }
-    
+
     results
 }
 
@@ -44,34 +43,34 @@ fn extract_json_string_from_position(text: &str, start_pos: usize) -> Option<Str
     if start_pos >= chars.len() {
         return None;
     }
-    
+
     let start_char = chars[start_pos];
     let end_char = match start_char {
         '{' => '}',
         '[' => ']',
         _ => return None,
     };
-    
+
     let mut brace_count = 0;
     let mut in_string = false;
     let mut escape_next = false;
-    
+
     for (i, &ch) in chars.iter().enumerate().skip(start_pos) {
         if escape_next {
             escape_next = false;
             continue;
         }
-        
+
         if ch == '\\' {
             escape_next = true;
             continue;
         }
-        
+
         if ch == '"' && !escape_next {
             in_string = !in_string;
             continue;
         }
-        
+
         if !in_string {
             if ch == start_char {
                 brace_count += 1;
@@ -83,8 +82,6 @@ fn extract_json_string_from_position(text: &str, start_pos: usize) -> Option<Str
             }
         }
     }
-    
+
     None
 }
-
-
