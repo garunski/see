@@ -81,10 +81,16 @@ Run all tests:
 cargo test
 ```
 
-Run only integration tests:
+Run only CLI integration tests:
 
 ```bash
 cargo test --test integration_test
+```
+
+Run only GUI integration tests:
+
+```bash
+cargo test --test gui_integration_test
 ```
 
 Run tests with output:
@@ -92,6 +98,12 @@ Run tests with output:
 ```bash
 cargo test -- --nocapture
 ```
+
+### Test Types
+
+- **CLI Integration Tests** (`tests/integration_test.rs`) - Test the CLI binary by spawning subprocesses
+- **GUI Integration Tests** (`tests/gui_integration_test.rs`) - Test the GUI's backend workflow execution and state management in-process
+- **JSON Parser Tests** (`tests/json_parser_test.rs`) - Test JSON parsing utilities
 
 ## Development
 
@@ -106,7 +118,8 @@ task build           # Build the application
 task run             # Run the application
 task test            # Run all tests
 task test-verbose    # Run tests with output
-task test-integration # Run integration tests only
+task test-integration # Run CLI integration tests only
+task test-gui        # Run GUI integration tests only
 task check           # Check code without building
 task fmt             # Format code
 task lint            # Run clippy linter

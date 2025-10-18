@@ -31,6 +31,12 @@ tasks:
     cmds:
       - cargo test --test integration_test
 
+  # Run only GUI integration tests
+  test-gui:
+    desc: Run GUI integration tests only
+    cmds:
+      - cargo test --test gui_integration_test
+
   # Clean build artifacts
   clean:
     desc: Clean build artifacts
