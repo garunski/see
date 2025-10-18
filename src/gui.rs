@@ -1,3 +1,4 @@
+use dark_light::Mode;
 use dioxus::prelude::*;
 use rfd::FileDialog;
 use simple_workflow_app::{execute_workflow, OutputCallback, WorkflowResult};
@@ -23,12 +24,18 @@ struct AppState {
 
 impl Default for AppState {
     fn default() -> Self {
+        // Detect system theme preference
+        let dark_mode = match dark_light::detect() {
+            Mode::Dark => true,
+            Mode::Light => false,
+        };
+
         Self {
             workflow_file: "workflow.json".to_string(),
             execution_status: ExecutionStatus::Idle,
             workflow_result: None,
             output_logs: Vec::new(),
-            dark_mode: false,
+            dark_mode,
             show_logs: true,
             show_context: true,
             toast_message: None,
