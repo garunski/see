@@ -2,8 +2,8 @@ use dioxus::prelude::*;
 
 #[component]
 pub fn Toast(message: Option<String>, on_dismiss: EventHandler<()>) -> Element {
-    if let Some(ref toast) = message {
-        rsx! {
+    rsx! {
+        if let Some(toast) = message {
             div {
                 class: "fixed top-6 right-6 z-50 animate-slide-in",
                 div {
@@ -12,7 +12,7 @@ pub fn Toast(message: Option<String>, on_dismiss: EventHandler<()>) -> Element {
                         class: "flex items-center justify-between",
                         span {
                             class: "text-zinc-950 dark:text-white font-medium",
-                            {toast.clone()}
+                            {toast}
                         }
                         button {
                             class: "ml-4 text-zinc-500 dark:text-zinc-400 hover:text-zinc-950 dark:hover:text-white transition-colors",
@@ -23,7 +23,5 @@ pub fn Toast(message: Option<String>, on_dismiss: EventHandler<()>) -> Element {
                 }
             }
         }
-    } else {
-        rsx! { div {} }
     }
 }

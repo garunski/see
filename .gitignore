@@ -28,3 +28,4 @@ target
 # Tailwind CSS
 /assets/tailwind.css
 /tailwindcss
+.DS_Store

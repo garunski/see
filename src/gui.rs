@@ -4,13 +4,10 @@ use simple_workflow_app::{execute_workflow, OutputCallback, WorkflowResult};
 use std::sync::Arc;
 use tokio::sync::mpsc;
 
-mod components;
-use components::{
+use simple_workflow_app::components::{
     ContextPanel, ErrorsPanel, ExecutionStatus, OutputLogsPanel, Sidebar, Toast, WorkflowInfoCard,
 };
 
-// Include the generated Tailwind CSS
-const TAILWIND_CSS: &str = include_str!("../assets/tailwind.css");
 
 #[derive(Debug, Clone)]
 struct AppState {
@@ -48,7 +45,7 @@ fn main() {
 #[component]
 fn App() -> Element {
     let mut state = use_signal(|| AppState::default());
-
+    
     // Create a derived signal for workflow_result that components can use
     let workflow_result_signal = use_memo(move || state.read().workflow_result.clone());
 
@@ -126,25 +123,24 @@ fn App() -> Element {
     };
 
     rsx! {
+        document::Stylesheet {
+            href: asset!("/assets/tailwind.css")
+        }
+        
         div {
             class: format!("min-h-screen bg-white dark:bg-zinc-900 text-zinc-950 dark:text-white {}",
                 if state.read().dark_mode { "dark" } else { "" }),
-
-            // Inject Tailwind CSS
-            style {
-                dangerous_inner_html: TAILWIND_CSS
-            }
-
+            
             // Toast notification
             Toast {
                 message: state.read().toast_message.clone(),
                 on_dismiss: move |_| dismiss_toast(),
             }
-
+            
             // Main layout
             div {
                 class: "relative isolate flex min-h-svh w-full bg-white max-lg:flex-col lg:bg-zinc-100 dark:bg-zinc-900 dark:lg:bg-zinc-950",
-
+                
                 // Sidebar
                 Sidebar {
                     workflow_file: state.read().workflow_file.clone(),
@@ -156,7 +152,7 @@ fn App() -> Element {
                     execution_status: state.read().execution_status.clone(),
                     on_execute: move |_| execute_workflow(),
                 }
-
+                
                 // Main content area
                 main {
                     class: "flex flex-1 flex-col pb-2 lg:min-w-0 lg:pt-2 lg:pr-2 lg:pl-64",
@@ -164,51 +160,51 @@ fn App() -> Element {
                         class: "grow p-6 lg:rounded-lg lg:bg-white lg:p-10 lg:shadow-xs lg:ring-1 lg:ring-zinc-950/5 dark:lg:bg-zinc-900 dark:lg:ring-white/10",
                         div {
                             class: "mx-auto max-w-6xl",
-
-                    // Workflow info card
-                    if let Some(result) = workflow_result_signal.read().clone() {
-                        WorkflowInfoCard {
-                            result: ReadOnlySignal::new(Signal::new(result)),
-                        }
-                    }
-
-                    // Collapsible sections
-                    div {
-                        class: "space-y-6",
-
-                        // Output logs section
-                        OutputLogsPanel {
-                            logs: state.read().output_logs.clone(),
-                            show_logs: state.read().show_logs,
-                            on_toggle: move |_| {
-                                let current = state.read().show_logs;
-                                state.write().show_logs = !current;
-                            },
-                            on_copy: move |text| copy_to_clipboard(text),
-                        }
-
-                        // Final context section
-                        if let Some(ref result) = state.read().workflow_result {
-                            ContextPanel {
-                                context: result.final_context.clone(),
-                                show_context: state.read().show_context,
-                                on_toggle: move |_| {
-                                    let current = state.read().show_context;
-                                    state.write().show_context = !current;
-                                },
-                                on_copy: move |_| {
-                                    println!("Copy context to clipboard");
-                                },
+                            
+                            // Workflow info card
+                            if let Some(result) = workflow_result_signal.read().clone() {
+                                WorkflowInfoCard {
+                                    result: ReadOnlySignal::new(Signal::new(result)),
+                                }
                             }
-                        }
-
-                        // Errors section
-                        if let Some(ref result) = state.read().workflow_result {
-                            ErrorsPanel {
-                                errors: result.errors.clone(),
+                            
+                            // Collapsible sections
+                            div {
+                                class: "space-y-6",
+                                
+                                // Output logs section
+                                OutputLogsPanel {
+                                    logs: state.read().output_logs.clone(),
+                                    show_logs: state.read().show_logs,
+                                    on_toggle: move |_| {
+                                        let current = state.read().show_logs;
+                                        state.write().show_logs = !current;
+                                    },
+                                    on_copy: move |text| copy_to_clipboard(text),
+                                }
+                                
+                                // Final context section
+                                if let Some(ref result) = state.read().workflow_result {
+                                    ContextPanel {
+                                        context: result.final_context.clone(),
+                                        show_context: state.read().show_context,
+                                        on_toggle: move |_| {
+                                            let current = state.read().show_context;
+                                            state.write().show_context = !current;
+                                        },
+                                        on_copy: move |_| {
+                                            println!("Copy context to clipboard");
+                                        },
+                                    }
+                                }
+                                
+                                // Errors section
+                                if let Some(ref result) = state.read().workflow_result {
+                                    ErrorsPanel {
+                                        errors: result.errors.clone(),
+                                    }
+                                }
                             }
-                        }
-                    }
                         }
                     }
                 }

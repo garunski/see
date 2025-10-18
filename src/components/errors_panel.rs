@@ -2,8 +2,8 @@ use dioxus::prelude::*;
 
 #[component]
 pub fn ErrorsPanel(errors: Vec<String>) -> Element {
-    if !errors.is_empty() {
-        rsx! {
+    rsx! {
+        if !errors.is_empty() {
             div {
                 class: "bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-800/30 rounded-2xl p-6 animate-fade-in",
                 div {
@@ -28,7 +28,5 @@ pub fn ErrorsPanel(errors: Vec<String>) -> Element {
                 }
             }
         }
-    } else {
-        rsx! { div {} }
     }
 }

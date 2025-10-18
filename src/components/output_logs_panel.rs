@@ -7,8 +7,8 @@ pub fn OutputLogsPanel(
     on_toggle: EventHandler<()>,
     on_copy: EventHandler<String>,
 ) -> Element {
-    if !logs.is_empty() {
-        rsx! {
+    rsx! {
+        if !logs.is_empty() {
             div {
                 class: "bg-white dark:bg-zinc-900 shadow-xs ring-1 ring-zinc-950/5 dark:ring-white/10 rounded-2xl overflow-hidden",
                 button {
@@ -59,7 +59,5 @@ pub fn OutputLogsPanel(
                 }
             }
         }
-    } else {
-        rsx! { div {} }
     }
 }
