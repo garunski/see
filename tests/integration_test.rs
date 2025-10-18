@@ -12,7 +12,7 @@ fn create_test_workflow(content: &str) {
 
 fn run_workflow_app() -> std::process::Output {
     Command::new("cargo")
-        .args(["run", "--quiet", "--", "test_workflow.json"])
+        .args(["run", "--quiet", "--bin", "cli", "--", "test_workflow.json"])
         .output()
         .unwrap()
 }
@@ -220,7 +220,7 @@ fn test_missing_workflow_file() {
     run_test(|| {
         // Test with a non-existent file
         let output = Command::new("cargo")
-            .args(["run", "--quiet", "--", "nonexistent_workflow.json"])
+            .args(["run", "--quiet", "--bin", "cli", "--", "nonexistent_workflow.json"])
             .output()
             .unwrap();
         

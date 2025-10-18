@@ -70,14 +70,14 @@ tasks:
     desc: Build Tailwind CSS
     deps: [tailwind-setup]
     cmds:
-      - ./tailwindcss -i ./input.css -o ./assets/tailwind.css --minify
+      - ./tailwindcss-v3 -i ./input.css -o ./assets/tailwind.css --content "./src/**/*.rs" --minify
 
   # Watch Tailwind CSS during development
   tailwind-watch:
     desc: Watch and rebuild Tailwind CSS
     deps: [tailwind-setup]
     cmds:
-      - ./tailwindcss -i ./input.css -o ./assets/tailwind.css --watch
+      - ./tailwindcss-v3 -i ./input.css -o ./assets/tailwind.css --content "./src/**/*.rs" --watch
 
   # Run GUI with Tailwind build
   run-gui:

@@ -15,7 +15,7 @@ use std::sync::Arc;
 pub type OutputCallback = Arc<dyn Fn(String) + Send + Sync>;
 
 /// Workflow execution result
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct WorkflowResult {
     pub success: bool,
     pub workflow_name: String,
@@ -27,7 +27,7 @@ pub struct WorkflowResult {
 }
 
 /// Audit trail entry
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct AuditEntry {
     pub task_id: String,
     pub status: String,

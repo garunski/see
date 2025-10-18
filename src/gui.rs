@@ -22,7 +22,6 @@ struct AppState {
     workflow_result: Option<WorkflowResult>,
     output_logs: Vec<String>,
     dark_mode: bool,
-    show_advanced: bool,
     show_logs: bool,
     show_context: bool,
     toast_message: Option<String>,
@@ -37,7 +36,6 @@ impl Default for AppState {
             workflow_result: None,
             output_logs: Vec::new(),
             dark_mode: false,
-            show_advanced: false,
             show_logs: true,
             show_context: true,
             toast_message: None,
@@ -128,8 +126,7 @@ fn App() -> Element {
 
     rsx! {
         div {
-            class: if state.read().dark_mode { "dark" } else { "" },
-            class: "min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-300",
+            class: "min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 text-white",
             
             // Inject Tailwind CSS
             style {
@@ -139,17 +136,17 @@ fn App() -> Element {
             // Toast notification
             if let Some(ref toast) = state.read().toast_message {
                 div {
-                    class: "fixed top-4 right-4 z-50 animate-slide-in",
+                    class: "fixed top-6 right-6 z-50 animate-slide-in",
                     div {
-                        class: "bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg p-4 max-w-sm",
+                        class: "bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl shadow-2xl p-4 max-w-sm",
                         div {
                             class: "flex items-center justify-between",
                             span {
-                                class: "text-gray-900 dark:text-white",
+                                class: "text-white font-medium",
                                 {toast.clone()}
                             }
                             button {
-                                class: "ml-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300",
+                                class: "ml-4 text-white/60 hover:text-white transition-colors",
                                 onclick: move |_| dismiss_toast(),
                                 "✕"
                             }
@@ -158,296 +155,336 @@ fn App() -> Element {
                 }
             }
             
-            // Header
-            header {
-                class: "bg-gradient-to-r from-blue-600 to-purple-600 dark:from-blue-800 dark:to-purple-800 text-white shadow-lg",
-                div {
-                    class: "container mx-auto px-6 py-4",
+            // Main layout
+            div {
+                class: "min-h-screen flex",
+                
+                // Sidebar
+                aside {
+                    class: "w-80 bg-black/20 backdrop-blur-md border-r border-white/10 p-8",
+                    
+                    // Logo and title
                     div {
-                        class: "flex items-center justify-between",
+                        class: "mb-12",
                         div {
-                            class: "flex items-center space-x-3",
+                            class: "flex items-center space-x-4 mb-4",
                             div {
-                                class: "w-8 h-8 bg-white bg-opacity-20 rounded-lg flex items-center justify-center",
+                                class: "w-12 h-12 bg-gradient-to-r from-cyan-400 to-blue-500 rounded-2xl flex items-center justify-center text-2xl",
                                 "⚡"
                             }
-                            h1 {
-                                class: "text-2xl font-bold",
-                                "Workflow Executor"
+                            div {
+                                h1 {
+                                    class: "text-2xl font-bold bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent",
+                                    "Workflow Executor"
+                                }
+                                p {
+                                    class: "text-white/60 text-sm",
+                                    "Execute and manage workflows"
+                                }
                             }
                         }
-                button {
-                            class: "p-2 rounded-lg bg-white bg-opacity-20 hover:bg-opacity-30 transition-all duration-200",
-                            onclick: move |_| toggle_dark_mode(),
-                            if state.read().dark_mode { "Dark" } else { "Light" }
-                        }
-                    }
-                }
-            }
-            
-            // Main content
-            main {
-                class: "container mx-auto px-6 py-8",
-                
-                // File input section
-                div {
-                    class: "bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 mb-6",
-                    label {
-                        class: "block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2",
-                        "Workflow File"
-                    }
-                    div {
-                        class: "flex space-x-3",
-                        input {
-                            class: "flex-1 px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200",
-                            r#type: "text",
-                            placeholder: "Select or enter workflow file path",
-                            value: state.read().workflow_file.clone(),
-                            oninput: move |evt| {
-                                state.write().workflow_file = evt.value();
-                            }
-                        }
+                        
+                        // Theme toggle
                         button {
-                            class: "px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2",
-                            disabled: state.read().is_picking_file,
-                            onclick: move |_| pick_file(),
-                            if state.read().is_picking_file {
-                                "..."
-                            } else {
-                                "📁"
+                            class: "w-full p-3 bg-white/10 hover:bg-white/20 rounded-xl transition-all duration-200 flex items-center justify-center space-x-2",
+                            onclick: move |_| toggle_dark_mode(),
+                            div {
+                                class: "w-5 h-5",
+                                if state.read().dark_mode { "🌙" } else { "☀️" }
                             }
-                            span { "Browse" }
+                            span {
+                                if state.read().dark_mode { "Dark Mode" } else { "Light Mode" }
+                            }
                         }
                     }
-                }
-                
-                // Execute button section
-                div {
-                    class: "text-center mb-8",
+                    
+                    // File input section
+                    div {
+                        class: "mb-8",
+                        label {
+                            class: "block text-sm font-medium text-white/80 mb-3",
+                            "Workflow File"
+                        }
+                        div {
+                            class: "space-y-3",
+                            input {
+                                class: "w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:border-transparent transition-all duration-200",
+                                r#type: "text",
+                                placeholder: "Select workflow file...",
+                                value: state.read().workflow_file.clone(),
+                                oninput: move |evt| {
+                                    state.write().workflow_file = evt.value();
+                                }
+                            }
+                            button {
+                                class: "w-full p-3 bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 text-white rounded-xl font-medium transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2",
+                                disabled: state.read().is_picking_file,
+                                onclick: move |_| pick_file(),
+                                div {
+                                    class: "w-5 h-5",
+                                    if state.read().is_picking_file {
+                                        "⏳"
+                                    } else {
+                                        "📁"
+                                    }
+                                }
+                                span { "Browse Files" }
+                            }
+                        }
+                    }
+                    
+                    // Execute button
                     button {
-                        class: "px-8 py-4 bg-gradient-to-r from-green-500 to-blue-500 hover:from-green-600 hover:to-blue-600 text-white text-lg font-semibold rounded-xl shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none flex items-center space-x-3 mx-auto",
+                        class: "w-full p-4 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white text-lg font-semibold rounded-xl shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none flex items-center justify-center space-x-3",
                         onclick: move |_| execute_workflow(),
                         disabled: matches!(state.read().execution_status, ExecutionStatus::Running),
                         if matches!(state.read().execution_status, ExecutionStatus::Running) {
                             div {
-                                class: "animate-spin w-5 h-5 border-2 border-white border-t-transparent rounded-full"
+                                class: "animate-spin w-6 h-6 border-2 border-white border-t-transparent rounded-full"
                             }
                             span { "Executing..." }
                         } else {
-                            "Execute Workflow"
+                            div {
+                                class: "w-6 h-6",
+                                "🚀"
+                            }
+                            span { "Execute Workflow" }
                         }
                     }
                     
-                    // Status badge
+                    // Status indicator
                     if !matches!(state.read().execution_status, ExecutionStatus::Idle) {
                         div {
-                            class: "mt-4",
-                            if matches!(state.read().execution_status, ExecutionStatus::Running) {
+                            class: "mt-6 p-4 bg-white/10 rounded-xl",
+                            div {
+                                class: "flex items-center space-x-3",
                                 div {
-                                    class: "inline-flex items-center px-4 py-2 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded-full text-sm font-medium animate-pulse",
-                                    "Running"
+                                    class: format!("w-3 h-3 rounded-full {}", match state.read().execution_status {
+                                        ExecutionStatus::Running => "bg-blue-400 animate-pulse",
+                                        ExecutionStatus::Complete => "bg-emerald-400",
+                                        ExecutionStatus::Failed => "bg-red-400",
+                                        _ => "bg-gray-400"
+                                    })
                                 }
-                            } else if matches!(state.read().execution_status, ExecutionStatus::Complete) {
-                                div {
-                                    class: "inline-flex items-center px-4 py-2 bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 rounded-full text-sm font-medium animate-fade-in",
-                                    "Complete"
-                                }
-                            } else if matches!(state.read().execution_status, ExecutionStatus::Failed) {
-                                div {
-                                    class: "inline-flex items-center px-4 py-2 bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200 rounded-full text-sm font-medium animate-fade-in",
-                                    "Failed"
+                                span {
+                                    class: "text-sm font-medium",
+                                    match state.read().execution_status {
+                                        ExecutionStatus::Running => "Running",
+                                        ExecutionStatus::Complete => "Complete",
+                                        ExecutionStatus::Failed => "Failed",
+                                        _ => "Idle"
+                                    }
                                 }
                             }
                         }
                     }
                 }
                 
-                // Workflow info card
-                if let Some(ref result) = state.read().workflow_result {
-                    div {
-                        class: "bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 mb-6 animate-fade-in",
-                        div {
-                            class: "flex items-center justify-between mb-4",
-                            h3 {
-                                class: "text-xl font-semibold text-gray-900 dark:text-white",
-                                "Workflow Information"
-                            }
-                            div {
-                                class: "flex items-center space-x-2",
-                                if result.success {
-                                    div {
-                                        class: "w-6 h-6 bg-green-500 rounded-full flex items-center justify-center text-white text-sm",
-                                        "OK"
-                                    }
-                                } else {
-                                    div {
-                                        class: "w-6 h-6 bg-red-500 rounded-full flex items-center justify-center text-white text-sm",
-                                        "X"
-                                    }
-                                }
-                            }
-                        }
-                        div {
-                            class: "grid grid-cols-1 md:grid-cols-3 gap-4",
-                            div {
-                                class: "bg-gray-50 dark:bg-gray-700 rounded-lg p-4",
-                                div {
-                                    class: "text-sm text-gray-600 dark:text-gray-400 mb-1",
-                                    "Name"
-                                }
-                                div {
-                                    class: "font-medium text-gray-900 dark:text-white",
-                                    {result.workflow_name.clone()}
-                                }
-                            }
-                            div {
-                                class: "bg-gray-50 dark:bg-gray-700 rounded-lg p-4",
-                                div {
-                                    class: "text-sm text-gray-600 dark:text-gray-400 mb-1",
-                                    "Tasks"
-                                }
-                                div {
-                                    class: "font-medium text-gray-900 dark:text-white",
-                                    {result.task_count.to_string()}
-                                }
-                            }
-                            div {
-                                class: "bg-gray-50 dark:bg-gray-700 rounded-lg p-4",
-                                div {
-                                    class: "text-sm text-gray-600 dark:text-gray-400 mb-1",
-                                    "Status"
-                                }
-                                div {
-                                    class: "font-medium text-gray-900 dark:text-white",
-                                    {if result.success { "Success" } else { "Failed" }}
-                                }
-                            }
-                        }
-                    }
-                }
-                
-                // Collapsible sections
-                div {
-                    class: "space-y-6",
+                // Main content area
+                main {
+                    class: "flex-1 p-8 overflow-y-auto",
                     
-                    // Output logs section
-                    if !state.read().output_logs.is_empty() {
-                        div {
-                            class: "bg-white dark:bg-gray-800 rounded-xl shadow-lg overflow-hidden",
-                            button {
-                                class: "w-full px-6 py-4 text-left flex items-center justify-between hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-200",
-                                onclick: move |_| {
-                                    let current_show_logs = state.read().show_logs;
-                                    state.write().show_logs = !current_show_logs;
-                                },
-                                div {
-                                    class: "flex items-center space-x-3",
-                                    "Logs"
-                                    span {
-                                        class: "font-semibold text-gray-900 dark:text-white",
-                                        "Execution Output"
-                                    }
-                                    span {
-                                        class: "text-sm text-gray-500 dark:text-gray-400",
-                                        "({state.read().output_logs.len()} lines)"
-                                    }
-                                }
-                                div {
-                                    class: "transform transition-transform duration-200",
-                                    class: if state.read().show_logs { "rotate-180" } else { "" },
-                                    "▼"
-                                }
-                            }
-                            if state.read().show_logs {
-                                div {
-                                    class: "border-t border-gray-200 dark:border-gray-700",
-                                    div {
-                                        class: "bg-black text-green-400 p-4 font-mono text-sm max-h-80 overflow-y-auto",
-                                        {state.read().output_logs.join("\n")}
-                                    }
-                                    div {
-                                        class: "px-6 py-3 bg-gray-50 dark:bg-gray-700 flex justify-end",
-                                        button {
-                                            class: "px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition-colors duration-200",
-                                            onclick: move |_| {
-                                                println!("Copy output to clipboard");
-                                            },
-                                            "Copy Output"
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                    
-                    // Final context section
+                    // Workflow info card
                     if let Some(ref result) = state.read().workflow_result {
                         div {
-                            class: "bg-white dark:bg-gray-800 rounded-xl shadow-lg overflow-hidden",
-                            button {
-                                class: "w-full px-6 py-4 text-left flex items-center justify-between hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-200",
-                                onclick: move |_| {
-                                    let current_show_context = state.read().show_context;
-                                    state.write().show_context = !current_show_context;
-                                },
-                                div {
-                                    class: "flex items-center space-x-3",
-                                    "Data"
-                                    span {
-                                        class: "font-semibold text-gray-900 dark:text-white",
-                                        "Final Context"
-                                    }
+                            class: "mb-8 bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-8 animate-fade-in",
+                            div {
+                                class: "flex items-center justify-between mb-6",
+                                h2 {
+                                    class: "text-2xl font-bold text-white",
+                                    "Workflow Results"
                                 }
                                 div {
-                                    class: "transform transition-transform duration-200",
-                                    class: if state.read().show_context { "rotate-180" } else { "" },
-                                    "▼"
+                                    class: "flex items-center space-x-2",
+                                    if result.success {
+                                        div {
+                                            class: "w-8 h-8 bg-emerald-500 rounded-full flex items-center justify-center text-white text-sm font-bold",
+                                            "✓"
+                                        }
+                                    } else {
+                                        div {
+                                            class: "w-8 h-8 bg-red-500 rounded-full flex items-center justify-center text-white text-sm font-bold",
+                                            "✕"
+                                        }
+                                    }
                                 }
                             }
-                            if state.read().show_context {
+                            
+                            // Stats grid
+                            div {
+                                class: "grid grid-cols-1 md:grid-cols-3 gap-6",
                                 div {
-                                    class: "border-t border-gray-200 dark:border-gray-700",
+                                    class: "bg-white/5 rounded-xl p-6",
                                     div {
-                                        class: "bg-gray-50 dark:bg-gray-700 p-4",
-                                        pre {
-                                            class: "text-sm text-gray-800 dark:text-gray-200 whitespace-pre-wrap overflow-x-auto",
-                                            {serde_json::to_string_pretty(&result.final_context).unwrap_or_else(|_| "{}".to_string())}
-                                        }
+                                        class: "text-white/60 text-sm mb-2",
+                                        "Workflow Name"
                                     }
                                     div {
-                                        class: "px-6 py-3 bg-gray-50 dark:bg-gray-700 flex justify-end",
-                                        button {
-                                            class: "px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition-colors duration-200",
-                                            onclick: move |_| {
-                                                println!("Copy context to clipboard");
-                                            },
-                                            "Copy Context"
-                                        }
+                                        class: "text-white text-lg font-semibold",
+                                        {result.workflow_name.clone()}
+                                    }
+                                }
+                                div {
+                                    class: "bg-white/5 rounded-xl p-6",
+                                    div {
+                                        class: "text-white/60 text-sm mb-2",
+                                        "Tasks"
+                                    }
+                                    div {
+                                        class: "text-white text-lg font-semibold",
+                                        {result.task_count.to_string()}
+                                    }
+                                }
+                                div {
+                                    class: "bg-white/5 rounded-xl p-6",
+                                    div {
+                                        class: "text-white/60 text-sm mb-2",
+                                        "Status"
+                                    }
+                                    div {
+                                        class: "text-white text-lg font-semibold",
+                                        {if result.success { "Success" } else { "Failed" }}
                                     }
                                 }
                             }
                         }
                     }
-                    
-                    // Errors section
-            if let Some(ref result) = state.read().workflow_result {
-                if !result.errors.is_empty() {
+                
+                    // Collapsible sections
                     div {
-                                class: "bg-red-50 dark:bg-red-900 border border-red-200 dark:border-red-700 rounded-xl p-6 animate-fade-in",
-                                div {
-                                    class: "flex items-center space-x-3 mb-4",
-                                    "Error"
-                                    h3 {
-                                        class: "text-lg font-semibold text-red-800 dark:text-red-200",
-                                        "Errors"
+                        class: "space-y-6",
+                    
+                        // Output logs section
+                        if !state.read().output_logs.is_empty() {
+                            div {
+                                class: "bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl overflow-hidden",
+                                button {
+                                    class: "w-full px-6 py-4 text-left flex items-center justify-between hover:bg-white/5 transition-colors duration-200",
+                                    onclick: move |_| {
+                                        let current_show_logs = state.read().show_logs;
+                                        state.write().show_logs = !current_show_logs;
+                                    },
+                                    div {
+                                        class: "flex items-center space-x-3",
+                                        div {
+                                            class: "w-8 h-8 bg-cyan-500/20 rounded-lg flex items-center justify-center",
+                                            "📋"
+                                        }
+                                        div {
+                                            span {
+                                                class: "font-semibold text-white text-lg",
+                                                "Execution Output"
+                                            }
+                                            span {
+                                                class: "text-sm text-white/60 ml-2",
+                                                "({state.read().output_logs.len()} lines)"
+                                            }
+                                        }
+                                    }
+                                    div {
+                                        class: "transform transition-transform duration-200",
+                                        class: if state.read().show_logs { "rotate-180" } else { "" },
+                                        "▼"
                                     }
                                 }
-                                div {
-                                    class: "space-y-2",
-                                    for error in &result.errors {
+                                if state.read().show_logs {
+                                    div {
+                                        class: "border-t border-white/10",
                                         div {
-                                            class: "text-red-700 dark:text-red-300 font-mono text-sm",
-                                            {error.clone()}
+                                            class: "bg-black/50 text-emerald-400 p-6 font-mono text-sm max-h-80 overflow-y-auto",
+                                            {state.read().output_logs.join("\n")}
+                                        }
+                                        div {
+                                            class: "px-6 py-4 bg-white/5 flex justify-end",
+                                            button {
+                                                class: "px-4 py-2 bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-400 rounded-xl text-sm font-medium transition-colors duration-200 border border-cyan-500/30",
+                                                onclick: move |_| {
+                                                    let logs = state.read().output_logs.join("\n");
+                                                    copy_to_clipboard(logs);
+                                                },
+                                                "Copy Output"
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    
+                        // Final context section
+                        if let Some(ref result) = state.read().workflow_result {
+                            div {
+                                class: "bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl overflow-hidden",
+                                button {
+                                    class: "w-full px-6 py-4 text-left flex items-center justify-between hover:bg-white/5 transition-colors duration-200",
+                                    onclick: move |_| {
+                                        let current_show_context = state.read().show_context;
+                                        state.write().show_context = !current_show_context;
+                                    },
+                                    div {
+                                        class: "flex items-center space-x-3",
+                                        div {
+                                            class: "w-8 h-8 bg-purple-500/20 rounded-lg flex items-center justify-center",
+                                            "📊"
+                                        }
+                                        span {
+                                            class: "font-semibold text-white text-lg",
+                                            "Final Context"
+                                        }
+                                    }
+                                    div {
+                                        class: "transform transition-transform duration-200",
+                                        class: if state.read().show_context { "rotate-180" } else { "" },
+                                        "▼"
+                                    }
+                                }
+                                if state.read().show_context {
+                                    div {
+                                        class: "border-t border-white/10",
+                                        div {
+                                            class: "bg-black/30 p-6",
+                                            pre {
+                                                class: "text-sm text-white/90 whitespace-pre-wrap overflow-x-auto font-mono",
+                                                {serde_json::to_string_pretty(&result.final_context).unwrap_or_else(|_| "{}".to_string())}
+                                            }
+                                        }
+                                        div {
+                                            class: "px-6 py-4 bg-white/5 flex justify-end",
+                                            button {
+                                                class: "px-4 py-2 bg-purple-500/20 hover:bg-purple-500/30 text-purple-400 rounded-xl text-sm font-medium transition-colors duration-200 border border-purple-500/30",
+                                                onclick: move |_| {
+                                                    println!("Copy context to clipboard");
+                                                },
+                                                "Copy Context"
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        
+                        // Errors section
+                        if let Some(ref result) = state.read().workflow_result {
+                            if !result.errors.is_empty() {
+                                div {
+                                    class: "bg-red-500/10 backdrop-blur-md border border-red-500/30 rounded-2xl p-6 animate-fade-in",
+                                    div {
+                                        class: "flex items-center space-x-3 mb-4",
+                                        div {
+                                            class: "w-8 h-8 bg-red-500/20 rounded-lg flex items-center justify-center",
+                                            "⚠️"
+                                        }
+                                        h3 {
+                                            class: "text-lg font-semibold text-red-400",
+                                            "Errors"
+                                        }
+                                    }
+                                    div {
+                                        class: "space-y-3",
+                                        for error in &result.errors {
+                                            div {
+                                                class: "text-red-300 font-mono text-sm bg-red-500/5 p-3 rounded-lg border border-red-500/20",
+                                                {error.clone()}
+                                            }
                                         }
                                     }
                                 }
