@@ -54,3 +54,41 @@ tasks:
     desc: Run clippy linter
     cmds:
       - cargo clippy
+
+  # Download Tailwind CLI (one-time setup)
+  tailwind-setup:
+    desc: Download Tailwind standalone CLI
+    cmds:
+      - curl -sLO https://github.com/tailwindlabs/tailwindcss/releases/latest/download/tailwindcss-macos-arm64
+      - mv tailwindcss-macos-arm64 tailwindcss
+      - chmod +x tailwindcss
+    status:
+      - test -f tailwindcss
+
+  # Build Tailwind CSS
+  tailwind-build:
+    desc: Build Tailwind CSS
+    deps: [tailwind-setup]
+    cmds:
+      - ./tailwindcss -i ./input.css -o ./assets/tailwind.css --minify
+
+  # Watch Tailwind CSS during development
+  tailwind-watch:
+    desc: Watch and rebuild Tailwind CSS
+    deps: [tailwind-setup]
+    cmds:
+      - ./tailwindcss -i ./input.css -o ./assets/tailwind.css --watch
+
+  # Run GUI with Tailwind build
+  run-gui:
+    desc: Build Tailwind CSS and run GUI
+    deps: [tailwind-build]
+    cmds:
+      - cargo run --bin gui
+
+  # Build release with Tailwind
+  build-gui-release:
+    desc: Build GUI for release with Tailwind CSS
+    deps: [tailwind-build]
+    cmds:
+      - cargo build --release --bin gui

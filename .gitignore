@@ -24,3 +24,7 @@ target
 # Added by cargo
 
 /target
+
+# Tailwind CSS
+/assets/tailwind.css
+/tailwindcss
