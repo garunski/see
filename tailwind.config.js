@@ -1,6 +1,5 @@
 module.exports = {
   content: ["./src/**/*.rs"],
-  darkMode: 'class',
   theme: {
     extend: {
       fontFamily: {
