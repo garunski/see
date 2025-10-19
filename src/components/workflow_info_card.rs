@@ -1,6 +1,6 @@
-use crate::{WorkflowResult, TaskInfo};
+use crate::components::{StepNavigator, WorkflowProgress};
+use crate::{TaskInfo, WorkflowResult};
 use dioxus::prelude::*;
-use crate::components::{WorkflowProgress, StepNavigator};
 
 #[component]
 pub fn WorkflowInfoCard(
@@ -14,7 +14,7 @@ pub fn WorkflowInfoCard(
     rsx! {
         div {
             class: "mb-8 bg-white dark:bg-zinc-900 shadow-xs ring-1 ring-zinc-950/5 dark:ring-white/10 rounded-2xl p-8 animate-fade-in",
-            
+
             // Progress visualization
             if !tasks.is_empty() {
                 div {
@@ -26,7 +26,7 @@ pub fn WorkflowInfoCard(
                     }
                 }
             }
-            
+
             // Step navigator
             if !tasks.is_empty() {
                 div {
@@ -41,7 +41,7 @@ pub fn WorkflowInfoCard(
                     }
                 }
             }
-            
+
             div {
                 class: "flex items-center justify-between mb-6",
                 h2 {

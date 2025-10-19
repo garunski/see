@@ -6,10 +6,35 @@ use simple_workflow_app::{AuditEntry, WorkflowResult};
 
 // Helper function to create a mock WorkflowResult for testing
 fn create_mock_workflow_result(success: bool) -> WorkflowResult {
+    use simple_workflow_app::TaskInfo;
+    use std::collections::HashMap;
+
     WorkflowResult {
         success,
         workflow_name: "Test Workflow".to_string(),
         task_count: 3,
+        execution_id: "test_execution_123".to_string(),
+        tasks: vec![
+            TaskInfo {
+                id: "task_1".to_string(),
+                name: "Task 1".to_string(),
+                status: "complete".to_string(),
+            },
+            TaskInfo {
+                id: "task_2".to_string(),
+                name: "Task 2".to_string(),
+                status: "complete".to_string(),
+            },
+            TaskInfo {
+                id: "task_3".to_string(),
+                name: "Task 3".to_string(),
+                status: if success {
+                    "complete".to_string()
+                } else {
+                    "failed".to_string()
+                },
+            },
+        ],
         final_context: serde_json::json!({
             "test_key": "test_value",
             "count": 42
@@ -20,6 +45,13 @@ fn create_mock_workflow_result(success: bool) -> WorkflowResult {
             timestamp: "2024-01-01T00:00:00Z".to_string(),
             changes_count: 2,
         }],
+        per_task_logs: {
+            let mut logs = HashMap::new();
+            logs.insert("task_1".to_string(), vec!["Task 1 output".to_string()]);
+            logs.insert("task_2".to_string(), vec!["Task 2 output".to_string()]);
+            logs.insert("task_3".to_string(), vec!["Task 3 output".to_string()]);
+            logs
+        },
         errors: if success {
             Vec::new()
         } else {
@@ -37,10 +69,21 @@ fn create_mock_workflow_result(success: bool) -> WorkflowResult {
 #[component]
 fn TestWorkflowInfoCardSuccess() -> Element {
     let result = create_mock_workflow_result(true);
+    let tasks = result.tasks.clone();
     let result_signal = use_signal(|| result);
+    let current_step = 0;
+    let on_next_step = move |_| {};
+    let on_prev_step = move |_| {};
+    let on_jump_to_step = move |_| {};
+
     rsx! {
         WorkflowInfoCard {
-            result: result_signal
+            result: result_signal,
+            tasks: tasks,
+            current_step: current_step,
+            on_next_step: on_next_step,
+            on_prev_step: on_prev_step,
+            on_jump_to_step: on_jump_to_step
         }
     }
 }
@@ -48,10 +91,21 @@ fn TestWorkflowInfoCardSuccess() -> Element {
 #[component]
 fn TestWorkflowInfoCardFailure() -> Element {
     let result = create_mock_workflow_result(false);
+    let tasks = result.tasks.clone();
     let result_signal = use_signal(|| result);
+    let current_step = 0;
+    let on_next_step = move |_| {};
+    let on_prev_step = move |_| {};
+    let on_jump_to_step = move |_| {};
+
     rsx! {
         WorkflowInfoCard {
-            result: result_signal
+            result: result_signal,
+            tasks: tasks,
+            current_step: current_step,
+            on_next_step: on_next_step,
+            on_prev_step: on_prev_step,
+            on_jump_to_step: on_jump_to_step
         }
     }
 }
@@ -402,18 +456,46 @@ fn test_context_panel_has_proper_structure() {
 
 #[component]
 fn TestOutputLogsPanelWithLogs() -> Element {
-    let logs = vec![
-        "Loading workflow...".to_string(),
-        "Executing tasks...".to_string(),
-        "Workflow complete!".to_string(),
+    use simple_workflow_app::TaskInfo;
+    use std::collections::HashMap;
+
+    let tasks = vec![
+        TaskInfo {
+            id: "task_1".to_string(),
+            name: "Task 1".to_string(),
+            status: "complete".to_string(),
+        },
+        TaskInfo {
+            id: "task_2".to_string(),
+            name: "Task 2".to_string(),
+            status: "complete".to_string(),
+        },
     ];
+    let per_task_logs = {
+        let mut logs = HashMap::new();
+        logs.insert(
+            "task_1".to_string(),
+            vec!["Loading workflow...".to_string()],
+        );
+        logs.insert(
+            "task_2".to_string(),
+            vec![
+                "Executing tasks...".to_string(),
+                "Workflow complete!".to_string(),
+            ],
+        );
+        logs
+    };
+    let current_step = 1;
     let show_logs = true;
     let on_toggle = move |_| {};
     let on_copy = move |_| {};
 
     rsx! {
         OutputLogsPanel {
-            logs: logs,
+            per_task_logs: per_task_logs,
+            tasks: tasks,
+            current_step: current_step,
             show_logs: show_logs,
             on_toggle: on_toggle,
             on_copy: on_copy
@@ -423,14 +505,29 @@ fn TestOutputLogsPanelWithLogs() -> Element {
 
 #[component]
 fn TestOutputLogsPanelCollapsed() -> Element {
-    let logs = vec!["Test log message".to_string()];
+    use simple_workflow_app::TaskInfo;
+    use std::collections::HashMap;
+
+    let tasks = vec![TaskInfo {
+        id: "task_1".to_string(),
+        name: "Task 1".to_string(),
+        status: "complete".to_string(),
+    }];
+    let per_task_logs = {
+        let mut logs = HashMap::new();
+        logs.insert("task_1".to_string(), vec!["Test log message".to_string()]);
+        logs
+    };
+    let current_step = 0;
     let show_logs = false;
     let on_toggle = move |_| {};
     let on_copy = move |_| {};
 
     rsx! {
         OutputLogsPanel {
-            logs: logs,
+            per_task_logs: per_task_logs,
+            tasks: tasks,
+            current_step: current_step,
             show_logs: show_logs,
             on_toggle: on_toggle,
             on_copy: on_copy
@@ -440,14 +537,21 @@ fn TestOutputLogsPanelCollapsed() -> Element {
 
 #[component]
 fn TestOutputLogsPanelEmpty() -> Element {
-    let logs = vec![];
+    use simple_workflow_app::TaskInfo;
+    use std::collections::HashMap;
+
+    let tasks = vec![];
+    let per_task_logs = HashMap::new();
+    let current_step = 0;
     let show_logs = false;
     let on_toggle = move |_| {};
     let on_copy = move |_| {};
 
     rsx! {
         OutputLogsPanel {
-            logs: logs,
+            per_task_logs: per_task_logs,
+            tasks: tasks,
+            current_step: current_step,
             show_logs: show_logs,
             on_toggle: on_toggle,
             on_copy: on_copy
@@ -462,8 +566,8 @@ fn test_output_logs_panel_renders_with_logs() {
     let html = dioxus_ssr::render(&dom);
 
     assert!(
-        html.contains("Execution Output"),
-        "Should have Execution Output heading, got: {}",
+        html.contains("Step 2 Output: Task 2"),
+        "Should have step output heading, got: {}",
         html
     );
     assert!(
@@ -472,12 +576,12 @@ fn test_output_logs_panel_renders_with_logs() {
         html
     );
     assert!(
-        html.contains("(3 lines)"),
+        html.contains("(2 lines)"),
         "Should show log count, got: {}",
         html
     );
     assert!(
-        html.contains("Loading workflow..."),
+        html.contains("Executing tasks..."),
         "Should show log content, got: {}",
         html
     );
@@ -495,8 +599,8 @@ fn test_output_logs_panel_renders_collapsed() {
     let html = dioxus_ssr::render(&dom);
 
     assert!(
-        html.contains("Execution Output"),
-        "Should have Execution Output heading, got: {}",
+        html.contains("Step 1 Output: Task 1"),
+        "Should have step output heading, got: {}",
         html
     );
     assert!(

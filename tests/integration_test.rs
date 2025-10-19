@@ -432,3 +432,23 @@ fn test_workflow_context() {
         cleanup_workflow();
     });
 }
+
+#[test]
+fn test_per_task_logs_populated() {
+    run_test(|| {
+        create_test_workflow(&load_fixture("multi_step_workflow"));
+        
+        // Execute via library (not CLI binary)
+        let rt = tokio::runtime::Runtime::new().unwrap();
+        let result = rt.block_on(async {
+            simple_workflow_app::execute_workflow("test_workflow.json", None).await
+        }).unwrap();
+        
+        // THIS IS THE CORE BUG FIX - per_task_logs should be populated!
+        assert!(!result.per_task_logs.is_empty(), "per_task_logs should not be empty");
+        assert!(result.per_task_logs.contains_key("first_step"));
+        assert!(result.per_task_logs.contains_key("second_step"));
+        
+        cleanup_workflow();
+    });
+}

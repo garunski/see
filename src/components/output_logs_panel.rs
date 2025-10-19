@@ -13,23 +13,26 @@ pub fn OutputLogsPanel(
 ) -> Element {
     // Get current task logs
     let current_task_logs = if let Some(current_task) = tasks.get(current_step) {
-        per_task_logs.get(&current_task.id).cloned().unwrap_or_default()
+        per_task_logs
+            .get(&current_task.id)
+            .cloned()
+            .unwrap_or_default()
     } else {
         Vec::new()
     };
-    
+
     // Get current task info
     let current_task = tasks.get(current_step);
     let task_name = current_task.map(|t| t.name.clone()).unwrap_or_default();
     let task_status = current_task.map(|t| t.status.clone()).unwrap_or_default();
-    
+
     // Prepare display text
     let display_text = if !tasks.is_empty() {
         format!("Step {} Output: {}", current_step + 1, task_name)
     } else {
         "Execution Output".to_string()
     };
-    
+
     // Prepare line count text
     let line_count_text = if !current_task_logs.is_empty() {
         format!("({} lines)", current_task_logs.len())

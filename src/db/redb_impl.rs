@@ -1,6 +1,6 @@
 use super::{AuditStore, WorkflowExecution, WorkflowExecutionSummary};
 use bincode;
-use redb::{Database, ReadableTable, Table, ReadOnlyTable};
+use redb::{Database, ReadOnlyTable, ReadableTable, Table};
 use std::error::Error;
 use std::path::PathBuf;
 use std::sync::Arc;
@@ -24,24 +24,23 @@ impl RedbAuditStore {
         }
 
         let db = Database::create(db_path)?;
-        
+
         // Define tables
         let write_txn = db.begin_write()?;
         {
-            let _executions_table: Table<&str, &[u8]> = write_txn.open_table(redb::TableDefinition::new(EXECUTIONS_TABLE))?;
-            let _execution_ids_table: Table<&str, &str> = write_txn.open_table(redb::TableDefinition::new(EXECUTION_IDS_TABLE))?;
+            let _executions_table: Table<&str, &[u8]> =
+                write_txn.open_table(redb::TableDefinition::new(EXECUTIONS_TABLE))?;
+            let _execution_ids_table: Table<&str, &str> =
+                write_txn.open_table(redb::TableDefinition::new(EXECUTION_IDS_TABLE))?;
         }
         write_txn.commit()?;
 
-        Ok(Self {
-            db: Arc::new(db),
-        })
+        Ok(Self { db: Arc::new(db) })
     }
 
     /// Get the default database path in user's home directory
     pub fn default_path() -> Result<PathBuf, Box<dyn Error>> {
-        let home_dir = dirs::home_dir()
-            .ok_or("Could not find home directory")?;
+        let home_dir = dirs::home_dir().ok_or("Could not find home directory")?;
         Ok(home_dir.join(".see").join("audit.redb"))
     }
 
@@ -52,7 +51,10 @@ impl RedbAuditStore {
 }
 
 impl AuditStore for RedbAuditStore {
-    fn save_workflow_execution(&self, execution: &WorkflowExecution) -> Result<String, Box<dyn Error + Send + Sync>> {
+    fn save_workflow_execution(
+        &self,
+        execution: &WorkflowExecution,
+    ) -> Result<String, Box<dyn Error + Send + Sync>> {
         let db = Arc::clone(&self.db);
         let execution = execution.clone();
         let id = execution.id.clone();
@@ -61,8 +63,10 @@ impl AuditStore for RedbAuditStore {
         task::block_in_place(|| {
             let write_txn = db.begin_write()?;
             {
-                let mut executions_table: Table<&str, &[u8]> = write_txn.open_table(redb::TableDefinition::new(EXECUTIONS_TABLE))?;
-                let mut execution_ids_table: Table<&str, &str> = write_txn.open_table(redb::TableDefinition::new(EXECUTION_IDS_TABLE))?;
+                let mut executions_table: Table<&str, &[u8]> =
+                    write_txn.open_table(redb::TableDefinition::new(EXECUTIONS_TABLE))?;
+                let mut execution_ids_table: Table<&str, &str> =
+                    write_txn.open_table(redb::TableDefinition::new(EXECUTION_IDS_TABLE))?;
 
                 // Serialize execution data
                 let serialized = bincode::serialize(&execution)?;
@@ -79,15 +83,19 @@ impl AuditStore for RedbAuditStore {
         })
     }
 
-    fn get_workflow_execution(&self, id: &str) -> Result<WorkflowExecution, Box<dyn Error + Send + Sync>> {
+    fn get_workflow_execution(
+        &self,
+        id: &str,
+    ) -> Result<WorkflowExecution, Box<dyn Error + Send + Sync>> {
         let db = Arc::clone(&self.db);
         let id = id.to_string();
 
         task::block_in_place(|| {
             let read_txn = db.begin_read()?;
-            let executions_table: ReadOnlyTable<&str, &[u8]> = read_txn.open_table(redb::TableDefinition::new(EXECUTIONS_TABLE))?;
+            let executions_table: ReadOnlyTable<&str, &[u8]> =
+                read_txn.open_table(redb::TableDefinition::new(EXECUTIONS_TABLE))?;
 
-                if let Some(serialized) = executions_table.get(&*id)? {
+            if let Some(serialized) = executions_table.get(&*id)? {
                 let execution: WorkflowExecution = bincode::deserialize(&serialized.value())?;
                 Ok(execution)
             } else {
@@ -96,13 +104,18 @@ impl AuditStore for RedbAuditStore {
         })
     }
 
-    fn list_workflow_executions(&self, limit: usize) -> Result<Vec<WorkflowExecutionSummary>, Box<dyn Error + Send + Sync>> {
+    fn list_workflow_executions(
+        &self,
+        limit: usize,
+    ) -> Result<Vec<WorkflowExecutionSummary>, Box<dyn Error + Send + Sync>> {
         let db = Arc::clone(&self.db);
 
         task::block_in_place(|| {
             let read_txn = db.begin_read()?;
-            let execution_ids_table: ReadOnlyTable<&str, &str> = read_txn.open_table(redb::TableDefinition::new(EXECUTION_IDS_TABLE))?;
-            let executions_table: ReadOnlyTable<&str, &[u8]> = read_txn.open_table(redb::TableDefinition::new(EXECUTIONS_TABLE))?;
+            let execution_ids_table: ReadOnlyTable<&str, &str> =
+                read_txn.open_table(redb::TableDefinition::new(EXECUTION_IDS_TABLE))?;
+            let executions_table: ReadOnlyTable<&str, &[u8]> =
+                read_txn.open_table(redb::TableDefinition::new(EXECUTIONS_TABLE))?;
 
             let mut summaries = Vec::new();
             let mut count = 0;
@@ -140,14 +153,17 @@ impl AuditStore for RedbAuditStore {
         task::block_in_place(|| {
             let write_txn = db.begin_write()?;
             {
-                let mut executions_table: Table<&str, &[u8]> = write_txn.open_table(redb::TableDefinition::new(EXECUTIONS_TABLE))?;
-                let mut execution_ids_table: Table<&str, &str> = write_txn.open_table(redb::TableDefinition::new(EXECUTION_IDS_TABLE))?;
+                let mut executions_table: Table<&str, &[u8]> =
+                    write_txn.open_table(redb::TableDefinition::new(EXECUTIONS_TABLE))?;
+                let mut execution_ids_table: Table<&str, &str> =
+                    write_txn.open_table(redb::TableDefinition::new(EXECUTION_IDS_TABLE))?;
 
                 // First get the execution to find its timestamp for the ID table
                 let timestamp_key = {
                     let execution_data = executions_table.get(&*id)?;
                     if let Some(serialized) = execution_data {
-                        let execution: WorkflowExecution = bincode::deserialize(&serialized.value())?;
+                        let execution: WorkflowExecution =
+                            bincode::deserialize(&serialized.value())?;
                         format!("{}:{}", execution.timestamp, id)
                     } else {
                         return Err(format!("Workflow execution with id '{}' not found", id).into());

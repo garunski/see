@@ -8,7 +8,7 @@ use tokio::sync::mpsc;
 use simple_workflow_app::components::{
     ContextPanel, ErrorsPanel, ExecutionStatus, OutputLogsPanel, Sidebar, Toast, WorkflowInfoCard,
 };
-use simple_workflow_app::db::{AuditStore, RedbAuditStore, models::WorkflowExecution};
+use simple_workflow_app::db::{models::WorkflowExecution, AuditStore, RedbAuditStore};
 use simple_workflow_app::TaskInfo;
 
 #[derive(Debug, Clone)]
@@ -119,21 +119,28 @@ fn App() -> Element {
                             workflow_name: result.workflow_name,
                             timestamp: chrono::Utc::now().to_rfc3339(),
                             success: result.success,
-                            tasks: result.tasks.into_iter().map(|t| simple_workflow_app::db::models::TaskInfo {
-                        id: t.id,
-                        name: t.name,
-                        status: t.status,
-                    }).collect(),
+                            tasks: result
+                                .tasks
+                                .into_iter()
+                                .map(|t| simple_workflow_app::db::models::TaskInfo {
+                                    id: t.id,
+                                    name: t.name,
+                                    status: t.status,
+                                })
+                                .collect(),
                             audit_trail: result.audit_trail,
                             per_task_logs: result.per_task_logs,
                             errors: result.errors,
                         };
-                        
+
                         let db_store = db_store.clone();
                         spawn(async move {
                             if let Err(e) = tokio::task::spawn_blocking(move || {
                                 db_store.save_workflow_execution(&execution)
-                            }).await.unwrap() {
+                            })
+                            .await
+                            .unwrap()
+                            {
                                 eprintln!("Failed to save workflow execution to database: {}", e);
                             }
                         });
