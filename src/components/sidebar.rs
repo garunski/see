@@ -14,7 +14,7 @@ pub fn Sidebar(
 ) -> Element {
     rsx! {
         aside {
-            class: "fixed inset-y-0 left-0 w-64 bg-white dark:bg-zinc-900 border-r border-zinc-950/5 dark:border-white/5",
+            class: "flex flex-col w-full lg:w-64 bg-white dark:bg-zinc-900 border-r border-zinc-950/5 dark:border-white/5",
 
             // Logo and title
             div {

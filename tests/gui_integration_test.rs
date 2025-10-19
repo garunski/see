@@ -837,13 +837,13 @@ fn test_sidebar_has_proper_structure() {
     let html = dioxus_ssr::render(&dom);
 
     assert!(
-        html.contains("fixed inset-y-0 left-0"),
-        "Should be fixed positioned, got: {}",
+        html.contains("flex flex-col"),
+        "Should be flex column, got: {}",
         html
     );
     assert!(
-        html.contains("w-64"),
-        "Should have fixed width, got: {}",
+        html.contains("lg:w-64"),
+        "Should have fixed width on desktop, got: {}",
         html
     );
     assert!(
