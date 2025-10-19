@@ -1,0 +1,61 @@
+{
+  "id": "step_through_demo",
+  "name": "Step-Through Demo Workflow",
+  "tasks": [
+    {
+      "id": "step_1",
+      "name": "Initialize Environment",
+      "function": {
+        "name": "cli_command",
+        "input": {
+          "command": "echo",
+          "args": ["Step 1: Initializing environment..."]
+        }
+      }
+    },
+    {
+      "id": "step_2", 
+      "name": "Load Configuration",
+      "function": {
+        "name": "cli_command",
+        "input": {
+          "command": "echo",
+          "args": ["Step 2: Loading configuration files..."]
+        }
+      }
+    },
+    {
+      "id": "step_3",
+      "name": "Validate Data",
+      "function": {
+        "name": "cli_command",
+        "input": {
+          "command": "echo",
+          "args": ["Step 3: Validating input data..."]
+        }
+      }
+    },
+    {
+      "id": "step_4",
+      "name": "Process Data",
+      "function": {
+        "name": "cli_command",
+        "input": {
+          "command": "echo",
+          "args": ["Step 4: Processing data with algorithms..."]
+        }
+      }
+    },
+    {
+      "id": "step_5",
+      "name": "Generate Report",
+      "function": {
+        "name": "cli_command",
+        "input": {
+          "command": "echo",
+          "args": ["Step 5: Generating final report..."]
+        }
+      }
+    }
+  ]
+}

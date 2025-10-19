@@ -1,11 +1,47 @@
-use crate::WorkflowResult;
+use crate::{WorkflowResult, TaskInfo};
 use dioxus::prelude::*;
+use crate::components::{WorkflowProgress, StepNavigator};
 
 #[component]
-pub fn WorkflowInfoCard(result: ReadOnlySignal<WorkflowResult>) -> Element {
+pub fn WorkflowInfoCard(
+    result: ReadOnlySignal<WorkflowResult>,
+    tasks: Vec<TaskInfo>,
+    current_step: usize,
+    on_next_step: EventHandler<()>,
+    on_prev_step: EventHandler<()>,
+    on_jump_to_step: EventHandler<usize>,
+) -> Element {
     rsx! {
         div {
             class: "mb-8 bg-white dark:bg-zinc-900 shadow-xs ring-1 ring-zinc-950/5 dark:ring-white/10 rounded-2xl p-8 animate-fade-in",
+            
+            // Progress visualization
+            if !tasks.is_empty() {
+                div {
+                    class: "mb-6",
+                    WorkflowProgress {
+                        tasks: tasks.clone(),
+                        current_step: current_step,
+                        on_step_click: move |step| on_jump_to_step.call(step),
+                    }
+                }
+            }
+            
+            // Step navigator
+            if !tasks.is_empty() {
+                div {
+                    class: "mb-6",
+                    StepNavigator {
+                        current_step: current_step,
+                        total_steps: tasks.len(),
+                        task_name: tasks.get(current_step).map(|t| t.name.clone()).unwrap_or_default(),
+                        task_status: tasks.get(current_step).map(|t| t.status.clone()).unwrap_or_default(),
+                        on_prev: move |_| on_prev_step.call(()),
+                        on_next: move |_| on_next_step.call(()),
+                    }
+                }
+            }
+            
             div {
                 class: "flex items-center justify-between mb-6",
                 h2 {

@@ -8,6 +8,8 @@ use tokio::sync::mpsc;
 use simple_workflow_app::components::{
     ContextPanel, ErrorsPanel, ExecutionStatus, OutputLogsPanel, Sidebar, Toast, WorkflowInfoCard,
 };
+use simple_workflow_app::db::{AuditStore, RedbAuditStore, models::WorkflowExecution};
+use simple_workflow_app::TaskInfo;
 
 #[derive(Debug, Clone)]
 struct AppState {
@@ -20,6 +22,12 @@ struct AppState {
     show_context: bool,
     toast_message: Option<String>,
     is_picking_file: bool,
+    // Step-through functionality
+    current_step: usize,
+    per_task_logs: std::collections::HashMap<String, Vec<String>>,
+    tasks: Vec<TaskInfo>,
+    execution_id: Option<String>,
+    db_store: Option<std::sync::Arc<RedbAuditStore>>,
 }
 
 impl Default for AppState {
@@ -40,6 +48,11 @@ impl Default for AppState {
             show_context: true,
             toast_message: None,
             is_picking_file: false,
+            current_step: 0,
+            per_task_logs: std::collections::HashMap::new(),
+            tasks: Vec::new(),
+            execution_id: None,
+            db_store: None,
         }
     }
 }
@@ -66,6 +79,10 @@ fn App() -> Element {
             state.write().execution_status = ExecutionStatus::Running;
             state.write().output_logs.clear();
             state.write().workflow_result = None;
+            state.write().current_step = 0;
+            state.write().per_task_logs.clear();
+            state.write().tasks.clear();
+            state.write().execution_id = None;
 
             // Create a channel for output
             let (tx, mut rx) = mpsc::channel(100);
@@ -88,9 +105,39 @@ fn App() -> Element {
             match execute_workflow(&file_path, Some(output_callback)).await {
                 Ok(result) => {
                     state.write().execution_status = ExecutionStatus::Complete;
-                    state.write().workflow_result = Some(result);
+                    state.write().workflow_result = Some(result.clone());
+                    state.write().per_task_logs = result.per_task_logs.clone();
+                    state.write().tasks = result.tasks.clone();
+                    state.write().execution_id = Some(result.execution_id.clone());
                     state.write().toast_message =
                         Some("Workflow completed successfully!".to_string());
+
+                    // Save to database
+                    if let Some(db_store) = state.read().db_store.as_ref() {
+                        let execution = WorkflowExecution {
+                            id: result.execution_id,
+                            workflow_name: result.workflow_name,
+                            timestamp: chrono::Utc::now().to_rfc3339(),
+                            success: result.success,
+                            tasks: result.tasks.into_iter().map(|t| simple_workflow_app::db::models::TaskInfo {
+                        id: t.id,
+                        name: t.name,
+                        status: t.status,
+                    }).collect(),
+                            audit_trail: result.audit_trail,
+                            per_task_logs: result.per_task_logs,
+                            errors: result.errors,
+                        };
+                        
+                        let db_store = db_store.clone();
+                        spawn(async move {
+                            if let Err(e) = tokio::task::spawn_blocking(move || {
+                                db_store.save_workflow_execution(&execution)
+                            }).await.unwrap() {
+                                eprintln!("Failed to save workflow execution to database: {}", e);
+                            }
+                        });
+                    }
                 }
                 Err(e) => {
                     state.write().execution_status = ExecutionStatus::Failed;
@@ -131,6 +178,43 @@ fn App() -> Element {
         state.write().toast_message = None;
     };
 
+    // Navigation handlers
+    let mut on_next_step = move || {
+        let current = state.read().current_step;
+        let total = state.read().tasks.len();
+        if current < total.saturating_sub(1) {
+            state.write().current_step = current + 1;
+        }
+    };
+
+    let mut on_prev_step = move || {
+        let current = state.read().current_step;
+        if current > 0 {
+            state.write().current_step = current - 1;
+        }
+    };
+
+    let mut on_jump_to_step = move |step: usize| {
+        let total = state.read().tasks.len();
+        if step < total {
+            state.write().current_step = step;
+        }
+    };
+
+    // Initialize database
+    use_effect(move || {
+        spawn(async move {
+            match RedbAuditStore::new_default() {
+                Ok(db) => {
+                    state.write().db_store = Some(Arc::new(db));
+                }
+                Err(e) => {
+                    eprintln!("Failed to initialize database: {}", e);
+                }
+            }
+        });
+    });
+
     rsx! {
         document::Stylesheet {
             href: asset!("/assets/tailwind.css")
@@ -139,6 +223,13 @@ fn App() -> Element {
         div {
             class: format!("min-h-screen bg-white dark:bg-zinc-900 text-zinc-950 dark:text-white {}",
                 if *dark_mode_signal.read() { "dark" } else { "" }),
+            onkeydown: move |evt| {
+                match evt.key() {
+                    dioxus::events::Key::ArrowLeft | dioxus::events::Key::ArrowUp => on_prev_step(),
+                    dioxus::events::Key::ArrowRight | dioxus::events::Key::ArrowDown => on_next_step(),
+                    _ => {}
+                }
+            },
 
             // Toast notification
             Toast {
@@ -174,6 +265,11 @@ fn App() -> Element {
                             if let Some(result) = workflow_result_signal.read().clone() {
                                 WorkflowInfoCard {
                                     result: ReadOnlySignal::new(Signal::new(result)),
+                                    tasks: state.read().tasks.clone(),
+                                    current_step: state.read().current_step,
+                                    on_next_step: move |_| on_next_step(),
+                                    on_prev_step: move |_| on_prev_step(),
+                                    on_jump_to_step: move |step| on_jump_to_step(step),
                                 }
                             }
 
@@ -183,7 +279,9 @@ fn App() -> Element {
 
                                 // Output logs section
                                 OutputLogsPanel {
-                                    logs: state.read().output_logs.clone(),
+                                    per_task_logs: state.read().per_task_logs.clone(),
+                                    tasks: state.read().tasks.clone(),
+                                    current_step: state.read().current_step,
                                     show_logs: state.read().show_logs,
                                     on_toggle: move |_| {
                                         let current = state.read().show_logs;

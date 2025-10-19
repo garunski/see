@@ -7,7 +7,6 @@ use dataflow_rs::{DataflowError, Result};
 use datalogic_rs::DataLogic;
 use serde_json::{json, Value};
 use std::cell::RefCell;
-use std::process::Command;
 use std::sync::Arc;
 
 use crate::json_parser;
@@ -86,6 +85,15 @@ impl AsyncFunctionHandler for CliCommandHandler {
             .and_then(|v| v.as_str())
             .unwrap_or("text");
 
+        // Extract task ID from config if available
+        let task_id = input
+            .get("task_id")
+            .and_then(|v| v.as_str())
+            .unwrap_or("unknown");
+
+        // Emit task start marker
+        output_text(&format!("[TASK_START:{}]", task_id));
+
         // Format command for easy copy-paste to shell
         let formatted_command = if args.is_empty() {
             command.to_string()
@@ -97,13 +105,17 @@ impl AsyncFunctionHandler for CliCommandHandler {
             formatted_command, response_type
         ));
 
-        // Execute the command
-        let output = Command::new(command).args(&args).output().map_err(|e| {
-            DataflowError::function_execution(
-                format!("Failed to execute command '{}': {}", command, e),
-                None,
-            )
-        })?;
+        // Execute the command asynchronously
+        let output = tokio::process::Command::new(command)
+            .args(&args)
+            .output()
+            .await
+            .map_err(|e| {
+                DataflowError::function_execution(
+                    format!("Failed to execute command '{}': {}", command, e),
+                    None,
+                )
+            })?;
 
         let stdout = String::from_utf8_lossy(&output.stdout).to_string();
         let stderr = String::from_utf8_lossy(&output.stderr).to_string();
@@ -174,9 +186,12 @@ impl AsyncFunctionHandler for CliCommandHandler {
         });
 
         // Store result in message context
-        if let Value::Object(ref mut map) = message.context["data"] {
+        if let Some(Value::Object(ref mut map)) = message.context.get_mut("data") {
             map.insert("cli_output".to_string(), result.clone());
         }
+
+        // Emit task end marker
+        output_text(&format!("[TASK_END:{}]", task_id));
 
         // Return success with changes
         Ok((
