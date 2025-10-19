@@ -1,3 +1,4 @@
+use crate::{execution_context::ExecutionContext, json_parser};
 use async_trait::async_trait;
 use dataflow_rs::engine::{
     message::{Change, Message},
@@ -7,7 +8,6 @@ use dataflow_rs::{DataflowError, Result};
 use datalogic_rs::DataLogic;
 use serde_json::{json, Value};
 use std::sync::{Arc, Mutex};
-use crate::{execution_context::ExecutionContext, json_parser};
 
 pub struct CliCommandHandler {
     context: Arc<Mutex<ExecutionContext>>,
@@ -17,7 +17,7 @@ impl CliCommandHandler {
     pub fn new(context: Arc<Mutex<ExecutionContext>>) -> Self {
         Self { context }
     }
-    
+
     fn log(&self, msg: &str) {
         if let Ok(mut ctx) = self.context.lock() {
             ctx.log(msg);
@@ -36,24 +36,37 @@ impl AsyncFunctionHandler for CliCommandHandler {
         // Extract input from config
         let input = match config {
             FunctionConfig::Custom { input, .. } => input,
-            _ => return Err(DataflowError::Validation("Invalid configuration".to_string())),
+            _ => {
+                return Err(DataflowError::Validation(
+                    "Invalid configuration".to_string(),
+                ))
+            }
         };
 
         // Extract parameters
-        let command = input.get("command")
+        let command = input
+            .get("command")
             .and_then(|v| v.as_str())
             .ok_or_else(|| DataflowError::Validation("Missing 'command' field".to_string()))?;
-        
-        let args: Vec<String> = input.get("args")
+
+        let args: Vec<String> = input
+            .get("args")
             .and_then(|v| v.as_array())
-            .map(|arr| arr.iter().filter_map(|v| v.as_str()).map(String::from).collect())
+            .map(|arr| {
+                arr.iter()
+                    .filter_map(|v| v.as_str())
+                    .map(String::from)
+                    .collect()
+            })
             .unwrap_or_default();
-        
-        let response_type = input.get("response_type")
+
+        let response_type = input
+            .get("response_type")
             .and_then(|v| v.as_str())
             .unwrap_or("text");
-        
-        let task_id = input.get("task_id")
+
+        let task_id = input
+            .get("task_id")
             .and_then(|v| v.as_str())
             .unwrap_or("unknown");
 
@@ -66,17 +79,22 @@ impl AsyncFunctionHandler for CliCommandHandler {
         } else {
             format!("{} {}", command, args.join(" "))
         };
-        self.log(&format!("Executing CLI command: {} (response_type: {})", formatted_command, response_type));
+        self.log(&format!(
+            "Executing CLI command: {} (response_type: {})",
+            formatted_command, response_type
+        ));
 
         // Execute command
         let output = tokio::process::Command::new(command)
             .args(&args)
             .output()
             .await
-            .map_err(|e| DataflowError::function_execution(
-                format!("Failed to execute command '{}': {}", command, e),
-                None,
-            ))?;
+            .map_err(|e| {
+                DataflowError::function_execution(
+                    format!("Failed to execute command '{}': {}", command, e),
+                    None,
+                )
+            })?;
 
         let stdout = String::from_utf8_lossy(&output.stdout).to_string();
         let stderr = String::from_utf8_lossy(&output.stderr).to_string();
@@ -93,7 +111,12 @@ impl AsyncFunctionHandler for CliCommandHandler {
         if !output.status.success() {
             self.log(&format!("[TASK_END:{}]", task_id));
             return Err(DataflowError::function_execution(
-                format!("Command '{}' failed with exit code: {:?}\nstderr: {}", command, output.status.code(), stderr),
+                format!(
+                    "Command '{}' failed with exit code: {:?}\nstderr: {}",
+                    command,
+                    output.status.code(),
+                    stderr
+                ),
                 None,
             ));
         }
@@ -133,11 +156,14 @@ impl AsyncFunctionHandler for CliCommandHandler {
         self.log(&format!("[TASK_END:{}]", task_id));
 
         // Return success
-        Ok((200, vec![Change {
-            path: Arc::from("cli_output"),
-            old_value: Arc::new(Value::Null),
-            new_value: Arc::new(result),
-        }]))
+        Ok((
+            200,
+            vec![Change {
+                path: Arc::from("cli_output"),
+                old_value: Arc::new(Value::Null),
+                new_value: Arc::new(result),
+            }],
+        ))
     }
 }
 
@@ -152,7 +178,9 @@ impl CliCommandHandler {
                         format!("{}.{}", prefix, key)
                     };
                     match val {
-                        Value::Object(_) | Value::Array(_) => self.display_json_values(val, &new_prefix),
+                        Value::Object(_) | Value::Array(_) => {
+                            self.display_json_values(val, &new_prefix)
+                        }
                         _ => self.log(&format!("  - {}: {}", new_prefix, Self::format_value(val))),
                     }
                 }
@@ -161,7 +189,9 @@ impl CliCommandHandler {
                 for (idx, val) in arr.iter().enumerate() {
                     let new_prefix = format!("{}[{}]", prefix, idx);
                     match val {
-                        Value::Object(_) | Value::Array(_) => self.display_json_values(val, &new_prefix),
+                        Value::Object(_) | Value::Array(_) => {
+                            self.display_json_values(val, &new_prefix)
+                        }
                         _ => self.log(&format!("  - {}: {}", new_prefix, Self::format_value(val))),
                     }
                 }

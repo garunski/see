@@ -1,6 +1,6 @@
+use crate::{OutputCallback, TaskInfo};
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
-use crate::{OutputCallback, TaskInfo};
 
 pub struct ExecutionContext {
     current_task_id: Option<String>,
@@ -20,7 +20,7 @@ impl ExecutionContext {
             output_callback,
         }))
     }
-    
+
     pub fn log(&mut self, msg: &str) {
         // Parse task boundary markers
         if msg.starts_with("[TASK_START:") && msg.ends_with("]") {
@@ -29,15 +29,15 @@ impl ExecutionContext {
             self.update_task_status(&task_id, "in-progress");
             return; // Don't add markers to output_logs
         }
-        
+
         if msg.starts_with("[TASK_END:") && msg.ends_with("]") {
             self.current_task_id = None;
             return; // Don't add markers to output_logs
         }
-        
+
         // Add to general logs
         self.output_logs.push(msg.to_string());
-        
+
         // Add to per-task logs if we have a current task
         if let Some(ref task_id) = self.current_task_id {
             self.per_task_logs
@@ -45,13 +45,13 @@ impl ExecutionContext {
                 .or_insert_with(Vec::new)
                 .push(msg.to_string());
         }
-        
+
         // Call output callback if set
         if let Some(ref callback) = self.output_callback {
             callback(msg.to_string());
         }
     }
-    
+
     fn extract_task_id_from_marker(marker: &str) -> String {
         marker
             .trim()
@@ -61,26 +61,26 @@ impl ExecutionContext {
             .unwrap_or("unknown")
             .to_string()
     }
-    
+
     pub fn update_task_status(&mut self, task_id: &str, status: &str) {
         if let Some(task) = self.tasks.iter_mut().find(|t| t.id == task_id) {
             task.status = status.to_string();
         }
     }
-    
+
     pub fn extract_data(self) -> (Vec<String>, HashMap<String, Vec<String>>, Vec<TaskInfo>) {
         (self.output_logs, self.per_task_logs, self.tasks)
     }
-    
+
     // Get snapshots without consuming
     pub fn get_per_task_logs(&self) -> HashMap<String, Vec<String>> {
         self.per_task_logs.clone()
     }
-    
+
     pub fn get_output_logs(&self) -> Vec<String> {
         self.output_logs.clone()
     }
-    
+
     pub fn get_tasks(&self) -> Vec<TaskInfo> {
         self.tasks.clone()
     }

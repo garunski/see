@@ -15,33 +15,7 @@ pub fn WorkflowInfoCard(
         div {
             class: "mb-8 bg-white dark:bg-zinc-900 shadow-xs ring-1 ring-zinc-950/5 dark:ring-white/10 rounded-2xl p-8 animate-fade-in",
 
-            // Progress visualization
-            if !tasks.is_empty() {
-                div {
-                    class: "mb-6",
-                    WorkflowProgress {
-                        tasks: tasks.clone(),
-                        current_step: current_step,
-                        on_step_click: move |step| on_jump_to_step.call(step),
-                    }
-                }
-            }
-
-            // Step navigator
-            if !tasks.is_empty() {
-                div {
-                    class: "mb-6",
-                    StepNavigator {
-                        current_step: current_step,
-                        total_steps: tasks.len(),
-                        task_name: tasks.get(current_step).map(|t| t.name.clone()).unwrap_or_default(),
-                        task_status: tasks.get(current_step).map(|t| t.status.clone()).unwrap_or_default(),
-                        on_prev: move |_| on_prev_step.call(()),
-                        on_next: move |_| on_next_step.call(()),
-                    }
-                }
-            }
-
+            // Workflow Results heading
             div {
                 class: "flex items-center justify-between mb-6",
                 h2 {
@@ -66,7 +40,7 @@ pub fn WorkflowInfoCard(
 
             // Stats grid
             div {
-                class: "grid grid-cols-1 md:grid-cols-3 gap-6",
+                class: "grid grid-cols-1 md:grid-cols-3 gap-6 mb-6",
                 div {
                     class: "bg-zinc-50 dark:bg-zinc-800 rounded-xl p-6",
                     div {
@@ -98,6 +72,33 @@ pub fn WorkflowInfoCard(
                     div {
                         class: "text-zinc-950 dark:text-white text-lg font-semibold",
                         {if result.read().success { "Success" } else { "Failed" }}
+                    }
+                }
+            }
+
+            // Progress visualization
+            if !tasks.is_empty() {
+                div {
+                    class: "mb-6",
+                    WorkflowProgress {
+                        tasks: tasks.clone(),
+                        current_step: current_step,
+                        on_step_click: move |step| on_jump_to_step.call(step),
+                    }
+                }
+            }
+
+            // Step navigator
+            if !tasks.is_empty() {
+                div {
+                    class: "mb-6",
+                    StepNavigator {
+                        current_step: current_step,
+                        total_steps: tasks.len(),
+                        task_name: tasks.get(current_step).map(|t| t.name.clone()).unwrap_or_default(),
+                        task_status: tasks.get(current_step).map(|t| t.status.clone()).unwrap_or_default(),
+                        on_prev: move |_| on_prev_step.call(()),
+                        on_next: move |_| on_next_step.call(()),
                     }
                 }
             }
