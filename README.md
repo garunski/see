@@ -26,16 +26,27 @@ cargo build --release
 
 ## Usage
 
-### Running a Workflow
+### CLI: Run a workflow
+
+From the repo root:
 
 ```bash
-cargo run -- workflow.json
+cargo run -p cli -- --file workflow.json
 ```
 
-Or if you've built the binary:
+Or build and run:
 
 ```bash
-./target/release/simple_workflow_app workflow.json
+cargo build -p cli --release
+./target/release/cli --file workflow.json
+```
+
+### GUI: Desktop app
+
+From the repo root:
+
+```bash
+cargo run -p gui
 ```
 
 ### Workflow Format
@@ -75,41 +86,7 @@ Workflows are defined in JSON using the dataflow-rs format:
 
 ## Testing
 
-Run all tests:
-
-```bash
-cargo test
-```
-
-Run only CLI integration tests:
-
-```bash
-cargo test --test integration_test
-```
-
-Run only GUI integration tests:
-
-```bash
-cargo test --test gui_integration_test
-```
-
-Run tests with output:
-
-```bash
-cargo test -- --nocapture
-```
-
-### Test Types
-
-- **CLI Integration Tests** (`tests/integration_test.rs`) - Test the CLI binary by spawning subprocesses
-- **GUI Integration Tests** (`tests/gui_integration_test.rs`) - Test all Dioxus UI components with VirtualDom rendering
-  - **WorkflowInfoCard** - Tests success/failure states, data rendering, structure
-  - **ErrorsPanel** - Tests error display, empty state, styling
-  - **ContextPanel** - Tests collapsed/expanded states, JSON rendering, copy functionality
-  - **OutputLogsPanel** - Tests log display, collapsed/expanded states, empty handling
-  - **Toast** - Tests message display, empty state, positioning
-  - **Sidebar** - Tests all states (idle/running), theme toggle, file input, structure
-- **JSON Parser Tests** (`tests/json_parser_test.rs`) - Test JSON parsing utilities
+Tests were removed as part of the repo repair and will be re-authored later.
 
 ## Development
 

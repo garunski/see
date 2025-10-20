@@ -1,0 +1,13 @@
+[package]
+name = "gui"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+see_core = { path = "../core" }
+dioxus = { version = "0.6", features = ["desktop"] }
+tracing = "0.1"
+dark-light = "0.2.0"
+rfd = "0.14"
+tokio = { version = "1", features = ["full"] }
+serde_json = "1"

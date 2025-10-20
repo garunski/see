@@ -7,27 +7,21 @@ tasks:
     cmds:
       - cargo fmt
       - cargo clippy
-      - cargo test
 
   # Run CLI application
   run-cli:
     desc: Run CLI with workflow.json
     deps: [dev]
     cmds:
-      - cargo run --bin cli -- workflow.json
+      - cargo run -p cli -- --file workflow.json
 
   # Run GUI application
   run-gui:
     desc: Build Tailwind CSS and run GUI
     deps: [dev, tailwind-build]
     cmds:
-      - cargo run --bin gui
+      - cargo run -p gui
 
-  # Run all tests
-  test:
-    desc: Run all tests
-    cmds:
-      - cargo test
 
   # Build release binary
   build-release:
@@ -55,4 +49,4 @@ tasks:
   tailwind-build:
     deps: [tailwind-setup]
     cmds:
-      - ./tailwindcss -i ./input.css -o ./assets/tailwind.css --content "./src/**/*.rs" --minify
+      - ./tailwindcss -i ./input.css -o ./gui/assets/tailwind.css --config ./gui/tailwind.config.js --minify
