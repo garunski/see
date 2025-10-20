@@ -1,4 +1,4 @@
-use see_core::{execute_workflow, OutputCallback, WorkflowResult};
+use see_core::{execute_workflow, AuditStore, OutputCallback, WorkflowResult};
 use std::sync::Arc;
 use tokio::sync::mpsc;
 
@@ -18,6 +18,7 @@ pub fn create_output_channel() -> (OutputCallback, RunHandles) {
 pub async fn run_workflow(
     file_path: String,
     output: OutputCallback,
+    store: Option<Arc<dyn AuditStore>>,
 ) -> Result<WorkflowResult, Box<dyn std::error::Error>> {
-    execute_workflow(&file_path, Some(output)).await
+    execute_workflow(&file_path, Some(output), store).await
 }

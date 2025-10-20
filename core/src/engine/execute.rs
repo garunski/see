@@ -1,5 +1,6 @@
 use crate::execution::context::ExecutionContext;
-use crate::{AuditEntry, OutputCallback, TaskInfo, WorkflowResult};
+use crate::{AuditEntry, AuditStore, OutputCallback, TaskInfo, WorkflowExecution, WorkflowResult};
+use chrono::Utc;
 use dataflow_rs::engine::{message::Message, AsyncFunctionHandler};
 use dataflow_rs::{Engine, Workflow};
 use serde_json::json;
@@ -13,6 +14,7 @@ use super::handlers::CliCommandHandler;
 pub async fn execute_workflow(
     workflow_file: &str,
     output_callback: Option<OutputCallback>,
+    store: Option<Arc<dyn AuditStore>>,
 ) -> Result<WorkflowResult, Box<dyn std::error::Error>> {
     let workflow_data = fs::read_to_string(workflow_file)
         .map_err(|e| format!("Failed to read workflow file '{}': {}", workflow_file, e))?;
@@ -156,7 +158,7 @@ pub async fn execute_workflow(
                 }
             };
 
-            Ok(WorkflowResult {
+            let result = WorkflowResult {
                 success: errors.is_empty(),
                 workflow_name: workflow.name,
                 task_count: workflow.tasks.len(),
@@ -167,7 +169,31 @@ pub async fn execute_workflow(
                 per_task_logs,
                 errors,
                 output_logs,
-            })
+            };
+
+            // Save to database if store is provided
+            if let Some(store) = store {
+                let execution = WorkflowExecution {
+                    id: result.execution_id.clone(),
+                    workflow_name: result.workflow_name.clone(),
+                    timestamp: Utc::now().to_rfc3339(),
+                    success: result.success,
+                    tasks: result.tasks.clone(),
+                    audit_trail: result.audit_trail.clone(),
+                    per_task_logs: result.per_task_logs.clone(),
+                    errors: result.errors.clone(),
+                };
+
+                if let Err(e) = store.save_workflow_execution(&execution).await {
+                    // Log warning if we can't save to database
+                    println!(
+                        "⚠️  Warning: Failed to save workflow execution to database: {}",
+                        e
+                    );
+                }
+            }
+
+            Ok(result)
         }
         Err(e) => {
             context

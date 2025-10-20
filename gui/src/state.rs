@@ -1,5 +1,14 @@
 use dark_light::Mode;
-use see_core::{TaskInfo, WorkflowResult};
+use see_core::{
+    AuditStore, RedbStore, TaskInfo, WorkflowExecution, WorkflowExecutionSummary, WorkflowResult,
+};
+use std::sync::Arc;
+
+#[derive(Debug, Clone, PartialEq)]
+pub enum SidebarTab {
+    Upload,
+    History,
+}
 
 #[derive(Debug, Clone)]
 pub struct AppState {
@@ -16,6 +25,12 @@ pub struct AppState {
     pub per_task_logs: std::collections::HashMap<String, Vec<String>>,
     pub tasks: Vec<TaskInfo>,
     pub execution_id: Option<String>,
+    pub store: Option<Arc<RedbStore>>,
+    pub workflow_history: Vec<WorkflowExecutionSummary>,
+    pub viewing_history_item: Option<WorkflowExecution>,
+    pub sidebar_tab: SidebarTab,
+    pub needs_history_reload: bool,
+    pub selected_history_id: Option<String>,
 }
 
 impl Default for AppState {
@@ -38,6 +53,12 @@ impl Default for AppState {
             per_task_logs: std::collections::HashMap::new(),
             tasks: Vec::new(),
             execution_id: None,
+            store: None,
+            workflow_history: Vec::new(),
+            viewing_history_item: None,
+            sidebar_tab: SidebarTab::Upload,
+            needs_history_reload: false,
+            selected_history_id: None,
         }
     }
 }
@@ -60,11 +81,75 @@ impl AppState {
         self.tasks = result.tasks.clone();
         self.execution_id = Some(result.execution_id.clone());
         self.toast_message = Some("Workflow completed successfully!".to_string());
+        self.needs_history_reload = true;
     }
 
     pub fn apply_failure(&mut self, err: &str) {
         self.execution_status = crate::components::ExecutionStatus::Failed;
         self.output_logs.push(format!("Error: {}", err));
         self.toast_message = Some(format!("Workflow failed: {}", err));
+    }
+
+    pub async fn load_history(&mut self) {
+        if let Some(store) = &self.store {
+            match store.list_workflow_executions(50).await {
+                Ok(history) => {
+                    self.workflow_history = history;
+                }
+                Err(e) => {
+                    self.toast_message = Some(format!("Failed to load history: {}", e));
+                }
+            }
+        }
+    }
+
+    pub async fn load_execution(&mut self, id: &str) {
+        if let Some(store) = &self.store {
+            match store.get_workflow_execution(id).await {
+                Ok(execution) => {
+                    self.viewing_history_item = Some(execution);
+                    self.selected_history_id = Some(id.to_string());
+                    // Reset current step to 0 when viewing a history item
+                    self.current_step = 0;
+                    // Don't switch tabs - stay on history tab
+                }
+                Err(e) => {
+                    self.toast_message = Some(format!("Failed to load execution: {}", e));
+                }
+            }
+        }
+    }
+
+    pub async fn delete_execution(&mut self, id: &str) {
+        if let Some(store) = &self.store {
+            match store.delete_workflow_execution(id).await {
+                Ok(_) => {
+                    // Remove from history list
+                    self.workflow_history.retain(|item| item.id != id);
+
+                    // If we're viewing this execution, clear the view
+                    if let Some(ref viewing) = self.viewing_history_item {
+                        if viewing.id == id {
+                            self.viewing_history_item = None;
+                            self.selected_history_id = None;
+                        }
+                    }
+
+                    // If this was the selected history item, clear selection
+                    if self
+                        .selected_history_id
+                        .as_ref()
+                        .map_or(false, |selected_id| selected_id == id)
+                    {
+                        self.selected_history_id = None;
+                    }
+
+                    self.toast_message = Some("Workflow execution deleted".to_string());
+                }
+                Err(e) => {
+                    self.toast_message = Some(format!("Failed to delete execution: {}", e));
+                }
+            }
+        }
     }
 }

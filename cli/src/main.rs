@@ -13,7 +13,7 @@ struct Args {
 async fn main() {
     let args = Args::parse();
     let output: OutputCallback = std::sync::Arc::new(|line| println!("{}", line));
-    match execute_workflow(&args.file, Some(output)).await {
+    match execute_workflow(&args.file, Some(output), None).await {
         Ok(result) => {
             println!(
                 "Workflow '{}' completed: success={} tasks={}",

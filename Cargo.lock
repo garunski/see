@@ -2296,6 +2296,7 @@ dependencies = [
 name = "gui"
 version = "0.1.0"
 dependencies = [
+ "chrono",
  "dark-light",
  "dioxus",
  "rfd",
@@ -4105,6 +4106,7 @@ version = "0.1.0"
 dependencies = [
  "async-trait",
  "bincode",
+ "chrono",
  "dataflow-rs",
  "datalogic-rs",
  "dirs 5.0.1",

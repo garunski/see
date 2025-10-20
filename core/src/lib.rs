@@ -29,7 +29,7 @@ pub struct AuditEntry {
 }
 
 /// Workflow execution result
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]
 pub struct WorkflowResult {
     pub success: bool,
     pub workflow_name: String,
@@ -44,3 +44,5 @@ pub struct WorkflowResult {
 }
 
 pub use crate::engine::execute::execute_workflow;
+pub use crate::persistence::models::{WorkflowExecution, WorkflowExecutionSummary};
+pub use crate::persistence::redb_store::{AuditStore, RedbStore};
