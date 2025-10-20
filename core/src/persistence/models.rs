@@ -21,3 +21,21 @@ pub struct WorkflowExecutionSummary {
     pub success: bool,
     pub task_count: usize,
 }
+
+#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
+pub enum Theme {
+    Light,
+    Dark,
+    System,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct AppSettings {
+    pub theme: Theme,
+}
+
+impl Default for AppSettings {
+    fn default() -> Self {
+        Self { theme: Theme::System }
+    }
+}

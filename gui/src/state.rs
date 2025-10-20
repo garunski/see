@@ -1,4 +1,3 @@
-use dark_light::Mode;
 use see_core::{
     AuditStore, RedbStore, TaskInfo, WorkflowExecution, WorkflowExecutionSummary, WorkflowResult,
 };
@@ -16,7 +15,6 @@ pub struct AppState {
     pub execution_status: crate::components::ExecutionStatus,
     pub workflow_result: Option<WorkflowResult>,
     pub output_logs: Vec<String>,
-    pub dark_mode: bool,
     pub show_logs: bool,
     pub show_context: bool,
     pub toast_message: Option<String>,
@@ -25,7 +23,6 @@ pub struct AppState {
     pub per_task_logs: std::collections::HashMap<String, Vec<String>>,
     pub tasks: Vec<TaskInfo>,
     pub execution_id: Option<String>,
-    pub store: Option<Arc<RedbStore>>,
     pub workflow_history: Vec<WorkflowExecutionSummary>,
     pub viewing_history_item: Option<WorkflowExecution>,
     pub sidebar_tab: SidebarTab,
@@ -35,16 +32,11 @@ pub struct AppState {
 
 impl Default for AppState {
     fn default() -> Self {
-        let dark_mode = match dark_light::detect() {
-            Mode::Dark => true,
-            Mode::Light => false,
-        };
         Self {
             workflow_file: "workflow.json".to_string(),
             execution_status: crate::components::ExecutionStatus::Idle,
             workflow_result: None,
             output_logs: Vec::new(),
-            dark_mode,
             show_logs: true,
             show_context: true,
             toast_message: None,
@@ -53,7 +45,6 @@ impl Default for AppState {
             per_task_logs: std::collections::HashMap::new(),
             tasks: Vec::new(),
             execution_id: None,
-            store: None,
             workflow_history: Vec::new(),
             viewing_history_item: None,
             sidebar_tab: SidebarTab::Upload,
@@ -90,65 +81,59 @@ impl AppState {
         self.toast_message = Some(format!("Workflow failed: {}", err));
     }
 
-    pub async fn load_history(&mut self) {
-        if let Some(store) = &self.store {
-            match store.list_workflow_executions(50).await {
-                Ok(history) => {
-                    self.workflow_history = history;
-                }
-                Err(e) => {
-                    self.toast_message = Some(format!("Failed to load history: {}", e));
-                }
+    pub async fn load_history(&mut self, store: &Arc<RedbStore>) {
+        match store.list_workflow_executions(50).await {
+            Ok(history) => {
+                self.workflow_history = history;
+            }
+            Err(e) => {
+                self.toast_message = Some(format!("Failed to load history: {}", e));
             }
         }
     }
 
-    pub async fn load_execution(&mut self, id: &str) {
-        if let Some(store) = &self.store {
-            match store.get_workflow_execution(id).await {
-                Ok(execution) => {
-                    self.viewing_history_item = Some(execution);
-                    self.selected_history_id = Some(id.to_string());
-                    // Reset current step to 0 when viewing a history item
-                    self.current_step = 0;
-                    // Don't switch tabs - stay on history tab
-                }
-                Err(e) => {
-                    self.toast_message = Some(format!("Failed to load execution: {}", e));
-                }
+    pub async fn load_execution(&mut self, id: &str, store: &Arc<RedbStore>) {
+        match store.get_workflow_execution(id).await {
+            Ok(execution) => {
+                self.viewing_history_item = Some(execution);
+                self.selected_history_id = Some(id.to_string());
+                // Reset current step to 0 when viewing a history item
+                self.current_step = 0;
+                // Don't switch tabs - stay on history tab
+            }
+            Err(e) => {
+                self.toast_message = Some(format!("Failed to load execution: {}", e));
             }
         }
     }
 
-    pub async fn delete_execution(&mut self, id: &str) {
-        if let Some(store) = &self.store {
-            match store.delete_workflow_execution(id).await {
-                Ok(_) => {
-                    // Remove from history list
-                    self.workflow_history.retain(|item| item.id != id);
+    pub async fn delete_execution(&mut self, id: &str, store: &Arc<RedbStore>) {
+        match store.delete_workflow_execution(id).await {
+            Ok(_) => {
+                // Remove from history list
+                self.workflow_history.retain(|item| item.id != id);
 
-                    // If we're viewing this execution, clear the view
-                    if let Some(ref viewing) = self.viewing_history_item {
-                        if viewing.id == id {
-                            self.viewing_history_item = None;
-                            self.selected_history_id = None;
-                        }
-                    }
-
-                    // If this was the selected history item, clear selection
-                    if self
-                        .selected_history_id
-                        .as_ref()
-                        .map_or(false, |selected_id| selected_id == id)
-                    {
+                // If we're viewing this execution, clear the view
+                if let Some(ref viewing) = self.viewing_history_item {
+                    if viewing.id == id {
+                        self.viewing_history_item = None;
                         self.selected_history_id = None;
                     }
+                }
 
-                    self.toast_message = Some("Workflow execution deleted".to_string());
+                // If this was the selected history item, clear selection
+                if self
+                    .selected_history_id
+                    .as_ref()
+                    .map_or(false, |selected_id| selected_id == id)
+                {
+                    self.selected_history_id = None;
                 }
-                Err(e) => {
-                    self.toast_message = Some(format!("Failed to delete execution: {}", e));
-                }
+
+                self.toast_message = Some("Workflow execution deleted".to_string());
+            }
+            Err(e) => {
+                self.toast_message = Some(format!("Failed to delete execution: {}", e));
             }
         }
     }

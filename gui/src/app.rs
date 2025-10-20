@@ -1,48 +1,110 @@
 use crate::components::{
-    ContextPanel, ErrorsPanel, OutputLogsPanel, Sidebar, Toast, WorkflowInfoCard,
+    ContextPanel, ErrorsPanel, OutputLogsPanel, SettingsScreen, Sidebar, Toast, WorkflowInfoCard,
 };
 use crate::services::workflow::{create_output_channel, run_workflow};
 use crate::state::{AppState, SidebarTab};
 use dioxus::prelude::*;
 use rfd::FileDialog;
-use see_core::RedbStore;
+use see_core::{AppSettings, AuditStore, RedbStore, Theme};
 use std::sync::Arc;
 
 #[component]
 pub fn App() -> Element {
-    let mut state = use_signal(|| AppState::default());
-
-    // Initialize RedbStore synchronously
-    if state.read().store.is_none() {
-        match RedbStore::new_default() {
-            Ok(store) => {
-                state.write().store = Some(Arc::new(store));
-            }
-            Err(e) => {
-                state.write().toast_message = Some(format!("Failed to initialize database: {}", e));
-            }
+    // 1. Initialize store and provide as context (NOT reactive state)
+    let store = use_hook(|| {
+        RedbStore::new_default()
+            .ok()
+            .map(Arc::new)
+    });
+    
+    // Clone store for use in closures
+    let store_clone = store.clone();
+    let store_clone2 = store.clone();
+    let store_clone3 = store.clone();
+    let store_clone4 = store.clone();
+    let store_clone5 = store.clone();
+    let store_clone6 = store.clone();
+    
+    // Provide store via context so all components can access it
+    use_context_provider(|| store.clone());
+    
+    // 2. Create independent settings signal
+    let mut settings = use_signal(|| {
+        // System-detected default
+        AppSettings {
+            theme: match dark_light::detect() {
+                dark_light::Mode::Dark => Theme::Dark,
+                dark_light::Mode::Light => Theme::Light,
+            },
         }
-    }
-
-    let workflow_result_signal = use_memo(move || state.read().workflow_result.clone());
-    let dark_mode_signal = use_memo(move || state.read().dark_mode);
-
-    // Load initial history asynchronously
+    });
+    
+    // 3. Load settings once on mount
     use_effect(move || {
+        let store = store_clone.clone();
         spawn(async move {
-            state.write().load_history().await;
+            if let Some(ref s) = store {
+                if let Ok(Some(loaded)) = s.load_settings().await {
+                    settings.set(loaded);
+                }
+            }
         });
     });
-
-    // Watch for history reload flag
+    
+    // 4. Keep existing UI state
+    let mut state = use_signal(|| AppState::default());
+    
+    // Load history - pass store directly, don't read from state
     use_effect(move || {
-        if state.read().needs_history_reload {
-            spawn(async move {
-                state.write().load_history().await;
-                state.write().needs_history_reload = false;
-            });
+        let store = store_clone2.clone();
+        spawn(async move {
+            if let Some(s) = store {
+                match s.list_workflow_executions(50).await {
+                    Ok(history) => {
+                        state.write().workflow_history = history;
+                    }
+                    Err(e) => {
+                        state.write().toast_message = Some(format!("Failed to load history: {}", e));
+                    }
+                }
+            }
+        });
+    });
+    
+    // 5. Compute dark mode from settings (for UI classes)
+    let dark_mode_signal = use_memo(move || {
+        match settings.read().theme {
+            Theme::Dark => true,
+            Theme::Light => false,
+            Theme::System => matches!(dark_light::detect(), dark_light::Mode::Dark),
         }
     });
+    
+    // 6. Settings modal state
+    let mut show_settings = use_signal(|| false);
+    
+    // 7. Settings handlers
+    let mut open_settings = move || {
+        show_settings.set(true);
+    };
+
+    let mut close_settings = move || {
+        show_settings.set(false);
+    };
+
+    let mut change_theme = move |new_theme: Theme| {
+        settings.write().theme = new_theme;
+        
+        // Save immediately
+        if let Some(ref s) = store_clone3 {
+            let s = s.clone();
+            spawn(async move {
+                let _ = s.save_settings(&AppSettings { theme: new_theme }).await;
+            });
+        }
+    };
+
+    let workflow_result_signal = use_memo(move || state.read().workflow_result.clone());
 
     let mut on_next_step = move || {
         let current = state.read().current_step;
@@ -72,41 +134,6 @@ pub fn App() -> Element {
         if step < total {
             state.write().current_step = step;
         }
-    };
-
-    let execute_workflow = move || {
-        spawn(async move {
-            let file_path = state.read().workflow_file.clone();
-            state.write().reset_before_run();
-
-            let (output_callback, mut handles) = create_output_channel();
-
-            let mut state_clone = state;
-            spawn(async move {
-                while let Some(msg) = handles.receiver.recv().await {
-                    state_clone.write().output_logs.push(msg);
-                }
-            });
-
-            let store = state
-                .read()
-                .store
-                .clone()
-                .map(|s| s as Arc<dyn see_core::AuditStore>);
-            match run_workflow(file_path, output_callback, store).await {
-                Ok(result) => {
-                    state.write().apply_success(&result);
-                }
-                Err(e) => {
-                    state.write().apply_failure(&e.to_string());
-                }
-            }
-        });
-    };
-
-    let mut toggle_dark_mode = move || {
-        let current_mode = state.read().dark_mode;
-        state.write().dark_mode = !current_mode;
     };
 
     let mut pick_file = move || {
@@ -146,14 +173,20 @@ pub fn App() -> Element {
     };
 
     let load_execution = move |id: String| {
+        let store = store_clone4.clone();
         spawn(async move {
-            state.write().load_execution(&id).await;
+            if let Some(s) = store {
+                state.write().load_execution(&id, &s).await;
+            }
         });
     };
 
     let delete_execution = move |id: String| {
+        let store = store_clone5.clone();
         spawn(async move {
-            state.write().delete_execution(&id).await;
+            if let Some(s) = store {
+                state.write().delete_execution(&id, &s).await;
+            }
         });
     };
 
@@ -176,10 +209,34 @@ pub fn App() -> Element {
                     },
                     is_picking_file: state.read().is_picking_file,
                     on_pick_file: move |_| pick_file(),
-                    dark_mode: *dark_mode_signal.read(),
-                    on_toggle_dark_mode: move |_| toggle_dark_mode(),
+                    on_open_settings: move |_| open_settings(),
                     execution_status: state.read().execution_status.clone(),
-                    on_execute: move |_| execute_workflow(),
+                    on_execute: move |_| {
+                        let store_clone = store_clone6.clone();
+                        let mut state_clone = state;
+                        spawn(async move {
+                            let file_path = state_clone.read().workflow_file.clone();
+                            state_clone.write().reset_before_run();
+
+                            let (output_callback, mut handles) = create_output_channel();
+
+                            let mut state_clone2 = state_clone;
+                            spawn(async move {
+                                while let Some(msg) = handles.receiver.recv().await {
+                                    state_clone2.write().output_logs.push(msg);
+                                }
+                            });
+
+                            match run_workflow(file_path, output_callback, store_clone.map(|s| s as Arc<dyn AuditStore>)).await {
+                                Ok(result) => {
+                                    state_clone.write().apply_success(&result);
+                                }
+                                Err(e) => {
+                                    state_clone.write().apply_failure(&e.to_string());
+                                }
+                            }
+                        });
+                    },
                     is_viewing_history: state.read().viewing_history_item.is_some(),
                     sidebar_tab: state.read().sidebar_tab.clone(),
                     on_tab_change: move |tab| switch_tab(tab),
@@ -244,6 +301,14 @@ pub fn App() -> Element {
                             }
                         }
                     }
+                }
+            }
+            
+            if *show_settings.read() {
+                SettingsScreen {
+                    settings: settings,
+                    on_theme_change: move |theme| change_theme(theme),
+                    on_close: move |_| close_settings(),
                 }
             }
         }

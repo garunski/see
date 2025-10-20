@@ -10,6 +10,7 @@ use tokio::task;
 
 const EXECUTIONS_TABLE: &str = "executions";
 const EXECUTION_IDS_TABLE: &str = "execution_ids";
+const SETTINGS_TABLE: &str = "settings";
 
 #[derive(Debug)]
 pub struct RedbStore {
@@ -28,6 +29,8 @@ impl RedbStore {
                 write_txn.open_table(redb::TableDefinition::new(EXECUTIONS_TABLE))?;
             let _execution_ids_table: Table<&str, &str> =
                 write_txn.open_table(redb::TableDefinition::new(EXECUTION_IDS_TABLE))?;
+            let _settings_table: Table<&str, &[u8]> =
+                write_txn.open_table(redb::TableDefinition::new(SETTINGS_TABLE))?;
         }
         write_txn.commit()?;
         Ok(Self { db: Arc::new(db) })
@@ -41,6 +44,43 @@ impl RedbStore {
 
     pub fn new_default() -> Result<Self, CoreError> {
         Self::new(Self::default_path()?)
+    }
+
+    pub async fn load_settings(&self) -> Result<Option<crate::persistence::models::AppSettings>, CoreError> {
+        let db = Arc::clone(&self.db);
+        task::spawn_blocking(move || -> Result<Option<crate::persistence::models::AppSettings>, CoreError> {
+            let read_txn = db.begin_read()?;
+            let settings_table: ReadOnlyTable<&str, &[u8]> =
+                read_txn.open_table(redb::TableDefinition::new(SETTINGS_TABLE))?;
+            if let Some(serialized) = settings_table.get("app_settings")? {
+                let settings: crate::persistence::models::AppSettings = bincode::deserialize(serialized.value())
+                    .map_err(|e| CoreError::Dataflow(e.to_string()))?;
+                Ok(Some(settings))
+            } else {
+                Ok(None)
+            }
+        })
+        .await
+        .map_err(|e| CoreError::Dataflow(format!("task join error: {}", e)))?
+    }
+
+    pub async fn save_settings(&self, settings: &crate::persistence::models::AppSettings) -> Result<(), CoreError> {
+        let db = Arc::clone(&self.db);
+        let settings = settings.clone();
+        task::spawn_blocking(move || -> Result<(), CoreError> {
+            let write_txn = db.begin_write()?;
+            {
+                let mut settings_table: Table<&str, &[u8]> =
+                    write_txn.open_table(redb::TableDefinition::new(SETTINGS_TABLE))?;
+                let serialized = bincode::serialize(&settings)
+                    .map_err(|e| CoreError::Dataflow(e.to_string()))?;
+                settings_table.insert("app_settings", serialized.as_slice())?;
+            }
+            write_txn.commit()?;
+            Ok(())
+        })
+        .await
+        .map_err(|e| CoreError::Dataflow(format!("task join error: {}", e)))?
     }
 }
 

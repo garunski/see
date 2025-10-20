@@ -61,8 +61,7 @@ pub fn Sidebar(
     on_workflow_file_change: EventHandler<String>,
     is_picking_file: bool,
     on_pick_file: EventHandler<()>,
-    dark_mode: bool,
-    on_toggle_dark_mode: EventHandler<()>,
+    on_open_settings: EventHandler<()>,
     execution_status: ExecutionStatus,
     on_execute: EventHandler<()>,
     is_viewing_history: bool,
@@ -85,9 +84,9 @@ pub fn Sidebar(
                 }
 
                 button { class: "flex w-full items-center gap-3 rounded-lg px-2 py-2.5 text-left text-base/6 font-medium text-zinc-950 sm:py-2 sm:text-sm/5 data-hover:bg-zinc-950/5 data-active:bg-zinc-950/5 dark:text-white dark:data-hover:bg-white/5 dark:data-active:bg-white/5",
-                    onclick: move |_| on_toggle_dark_mode.call(()),
-                    div { class: "w-5 h-5", if dark_mode { "🌙" } else { "☀️" } }
-                    span { if dark_mode { "Dark Mode" } else { "Light Mode" } }
+                    onclick: move |_| on_open_settings.call(()),
+                    div { class: "w-5 h-5", "⚙️" }
+                    span { "Settings" }
                 }
             }
 
