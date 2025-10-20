@@ -3,6 +3,7 @@ pub mod errors;
 pub mod execution;
 pub mod json_parser;
 pub mod persistence;
+pub mod task_executor;
 pub mod utils;
 
 use serde_json::Value;

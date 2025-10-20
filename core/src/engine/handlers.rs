@@ -1,10 +1,11 @@
 use crate::execution::context::ExecutionContext;
+use crate::task_executor::{TaskExecutor, TaskLogger};
 use async_trait::async_trait;
 use dataflow_rs::engine::{
     message::{Change, Message},
     AsyncFunctionHandler, FunctionConfig,
 };
-use dataflow_rs::{DataflowError, Result};
+use dataflow_rs::DataflowError;
 use datalogic_rs::DataLogic;
 use serde_json::{json, Value};
 use std::sync::{Arc, Mutex};
@@ -18,13 +19,8 @@ impl CliCommandHandler {
         Self { context }
     }
 
-    fn log(&self, msg: &str) {
-        if let Ok(mut ctx) = self.context.lock() {
-            ctx.log(msg);
-        }
-    }
-
-    fn display_json_values(&self, value: &Value, prefix: &str) {
+    #[allow(clippy::only_used_in_recursion)]
+    fn display_json_values(&self, value: &Value, prefix: &str, logger: &dyn TaskLogger) {
         match value {
             Value::Object(map) => {
                 for (key, val) in map {
@@ -35,9 +31,11 @@ impl CliCommandHandler {
                     };
                     match val {
                         Value::Object(_) | Value::Array(_) => {
-                            self.display_json_values(val, &new_prefix)
+                            self.display_json_values(val, &new_prefix, logger)
                         }
-                        _ => self.log(&format!("  - {}: {}", new_prefix, Self::format_value(val))),
+                        _ => {
+                            logger.log(&format!("  - {}: {}", new_prefix, Self::format_value(val)))
+                        }
                     }
                 }
             }
@@ -46,13 +44,15 @@ impl CliCommandHandler {
                     let new_prefix = format!("{}[{}]", prefix, idx);
                     match val {
                         Value::Object(_) | Value::Array(_) => {
-                            self.display_json_values(val, &new_prefix)
+                            self.display_json_values(val, &new_prefix, logger)
                         }
-                        _ => self.log(&format!("  - {}: {}", new_prefix, Self::format_value(val))),
+                        _ => {
+                            logger.log(&format!("  - {}: {}", new_prefix, Self::format_value(val)))
+                        }
                     }
                 }
             }
-            _ => self.log(&format!("  - {}: {}", prefix, Self::format_value(value))),
+            _ => logger.log(&format!("  - {}: {}", prefix, Self::format_value(value))),
         }
     }
 
@@ -67,29 +67,18 @@ impl CliCommandHandler {
     }
 }
 
-#[async_trait]
-impl AsyncFunctionHandler for CliCommandHandler {
+impl TaskExecutor for CliCommandHandler {
     async fn execute(
         &self,
-        message: &mut Message,
-        config: &FunctionConfig,
-        _datalogic: Arc<DataLogic>,
-    ) -> Result<(usize, Vec<Change>)> {
-        let input = match config {
-            FunctionConfig::Custom { input, .. } => input,
-            _ => {
-                return Err(DataflowError::Validation(
-                    "Invalid configuration".to_string(),
-                ))
-            }
-        };
-
-        let command = input
+        task_config: &Value,
+        logger: &dyn TaskLogger,
+    ) -> std::result::Result<Value, String> {
+        let command = task_config
             .get("command")
             .and_then(|v| v.as_str())
-            .ok_or_else(|| DataflowError::Validation("Missing 'command' field".to_string()))?;
+            .ok_or_else(|| "Missing 'command' field".to_string())?;
 
-        let args: Vec<String> = input
+        let args: Vec<String> = task_config
             .get("args")
             .and_then(|v| v.as_array())
             .map(|arr| {
@@ -100,23 +89,25 @@ impl AsyncFunctionHandler for CliCommandHandler {
             })
             .unwrap_or_default();
 
-        let response_type = input
+        let response_type = task_config
             .get("response_type")
             .and_then(|v| v.as_str())
             .unwrap_or("text");
-        let task_id = input
+
+        let task_id = task_config
             .get("task_id")
             .and_then(|v| v.as_str())
             .unwrap_or("unknown");
 
-        self.log(&format!("[TASK_START:{}]", task_id));
+        logger.log_task_start(task_id);
 
         let formatted_command = if args.is_empty() {
             command.to_string()
         } else {
             format!("{} {}", command, args.join(" "))
         };
-        self.log(&format!(
+
+        logger.log(&format!(
             "Executing CLI command: {} (response_type: {})",
             formatted_command, response_type
         ));
@@ -125,33 +116,25 @@ impl AsyncFunctionHandler for CliCommandHandler {
             .args(&args)
             .output()
             .await
-            .map_err(|e| {
-                DataflowError::function_execution(
-                    format!("Failed to execute command '{}': {}", command, e),
-                    None,
-                )
-            })?;
+            .map_err(|e| format!("Failed to execute command '{}': {}", command, e))?;
 
         let stdout = String::from_utf8_lossy(&output.stdout).to_string();
         let stderr = String::from_utf8_lossy(&output.stderr).to_string();
 
         if !stdout.is_empty() {
-            self.log(&format!("Output: {}", stdout.trim()));
+            logger.log(&format!("Output: {}", stdout.trim()));
         }
         if !stderr.is_empty() {
-            self.log(&format!("Error: {}", stderr.trim()));
+            logger.log(&format!("Error: {}", stderr.trim()));
         }
 
         if !output.status.success() {
-            self.log(&format!("[TASK_END:{}]", task_id));
-            return Err(DataflowError::function_execution(
-                format!(
-                    "Command '{}' failed with exit code: {:?}\nstderr: {}",
-                    command,
-                    output.status.code(),
-                    stderr
-                ),
-                None,
+            logger.log_task_end(task_id);
+            return Err(format!(
+                "Command '{}' failed with exit code: {:?}\nstderr: {}",
+                command,
+                output.status.code(),
+                stderr
             ));
         }
 
@@ -165,19 +148,53 @@ impl AsyncFunctionHandler for CliCommandHandler {
         };
 
         if let Some(ref json_val) = extracted_json {
-            self.log("\n🔍 Extracted JSON:");
-            self.log(&serde_json::to_string_pretty(json_val).unwrap_or_else(|_| "{}".to_string()));
-            self.log("\n📋 Parsed Values:");
-            self.display_json_values(json_val, "");
+            logger.log("\n🔍 Extracted JSON:");
+            logger
+                .log(&serde_json::to_string_pretty(json_val).unwrap_or_else(|_| "{}".to_string()));
+            logger.log("\n📋 Parsed Values:");
+            self.display_json_values(json_val, "", logger);
         }
 
-        let result = json!({ "stdout": stdout, "stderr": stderr, "exit_code": output.status.code().unwrap_or(0), "extracted_json": extracted_json });
+        let result = json!({
+            "stdout": stdout,
+            "stderr": stderr,
+            "exit_code": output.status.code().unwrap_or(0),
+            "extracted_json": extracted_json
+        });
+
+        logger.log_task_end(task_id);
+        Ok(result)
+    }
+}
+
+#[async_trait]
+impl AsyncFunctionHandler for CliCommandHandler {
+    async fn execute(
+        &self,
+        message: &mut Message,
+        config: &FunctionConfig,
+        _datalogic: Arc<DataLogic>,
+    ) -> dataflow_rs::Result<(usize, Vec<Change>)> {
+        let input = match config {
+            FunctionConfig::Custom { input, .. } => input,
+            _ => {
+                return Err(DataflowError::Validation(
+                    "Invalid configuration".to_string(),
+                ))
+            }
+        };
+
+        // Create a logger that wraps the context
+        let logger = crate::task_executor::ContextTaskLogger::new(self.context.clone());
+
+        // Use the TaskExecutor implementation
+        let result = TaskExecutor::execute(self, input, &logger)
+            .await
+            .map_err(|e| DataflowError::function_execution(e, None))?;
 
         if let Some(Value::Object(ref mut map)) = message.context.get_mut("data") {
             map.insert("cli_output".to_string(), result.clone());
         }
-
-        self.log(&format!("[TASK_END:{}]", task_id));
 
         Ok((
             200,
