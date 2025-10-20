@@ -1,4 +1,4 @@
-use see_core::{execute_workflow, AuditStore, OutputCallback, WorkflowResult};
+use see_core::{errors::CoreError, execute_workflow, AuditStore, OutputCallback, WorkflowResult};
 use std::sync::Arc;
 use tokio::sync::mpsc;
 
@@ -19,6 +19,6 @@ pub async fn run_workflow(
     file_path: String,
     output: OutputCallback,
     store: Option<Arc<dyn AuditStore>>,
-) -> Result<WorkflowResult, Box<dyn std::error::Error>> {
+) -> Result<WorkflowResult, CoreError> {
     execute_workflow(&file_path, Some(output), store).await
 }

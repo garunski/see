@@ -3,6 +3,7 @@ pub mod errors;
 pub mod execution;
 pub mod json_parser;
 pub mod persistence;
+pub mod utils;
 
 use serde_json::Value;
 use std::collections::HashMap;

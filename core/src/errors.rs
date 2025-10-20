@@ -29,4 +29,13 @@ pub enum CoreError {
 
     #[error("io error: {0}")]
     Io(#[from] std::io::Error),
+
+    #[error("execution context error: {0}")]
+    ExecutionContext(String),
+
+    #[error("mutex lock error: {0}")]
+    MutexLock(String),
+
+    #[error("workflow execution error: {0}")]
+    WorkflowExecution(String),
 }

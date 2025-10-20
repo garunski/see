@@ -1,6 +1,7 @@
-use crate::{OutputCallback, TaskInfo};
+#![allow(clippy::result_large_err)]
+use crate::{errors::CoreError, OutputCallback, TaskInfo};
 use std::collections::HashMap;
-use std::sync::{Arc, Mutex};
+use std::sync::{Arc, Mutex, MutexGuard};
 
 pub struct ExecutionContext {
     current_task_id: Option<String>,
@@ -78,5 +79,59 @@ impl ExecutionContext {
 
     pub fn get_tasks(&self) -> Vec<TaskInfo> {
         self.tasks.clone()
+    }
+}
+
+/// Extension trait for Arc<Mutex<ExecutionContext>> to provide safe methods
+pub trait ExecutionContextSafe {
+    /// Safe logging method that handles mutex lock errors
+    fn safe_log(&self, msg: &str) -> Result<(), CoreError>;
+
+    /// Safe task status update method that handles mutex lock errors
+    fn safe_update_task_status(&self, task_id: &str, status: &str) -> Result<(), CoreError>;
+
+    /// Lock with retry logic for high-contention scenarios
+    fn lock_with_retry<F, R>(&self, operation: F, max_retries: usize) -> Result<R, CoreError>
+    where
+        F: Fn(&MutexGuard<ExecutionContext>) -> Result<R, CoreError>;
+}
+
+impl ExecutionContextSafe for Arc<Mutex<ExecutionContext>> {
+    fn safe_log(&self, msg: &str) -> Result<(), CoreError> {
+        let mut ctx = self
+            .lock()
+            .map_err(|e| CoreError::MutexLock(format!("Failed to lock context: {}", e)))?;
+        ctx.log(msg);
+        Ok(())
+    }
+
+    fn safe_update_task_status(&self, task_id: &str, status: &str) -> Result<(), CoreError> {
+        let mut ctx = self
+            .lock()
+            .map_err(|e| CoreError::MutexLock(format!("Failed to lock context: {}", e)))?;
+        ctx.update_task_status(task_id, status);
+        Ok(())
+    }
+
+    fn lock_with_retry<F, R>(&self, operation: F, max_retries: usize) -> Result<R, CoreError>
+    where
+        F: Fn(&MutexGuard<ExecutionContext>) -> Result<R, CoreError>,
+    {
+        for attempt in 0..max_retries {
+            match self.lock() {
+                Ok(guard) => return operation(&guard),
+                Err(e) if attempt == max_retries - 1 => {
+                    return Err(CoreError::MutexLock(format!(
+                        "Failed to acquire lock after {} attempts: {}",
+                        max_retries, e
+                    )));
+                }
+                Err(_) => {
+                    // Brief backoff before retry
+                    std::thread::sleep(std::time::Duration::from_millis(10 * (attempt + 1) as u64));
+                }
+            }
+        }
+        unreachable!()
     }
 }
