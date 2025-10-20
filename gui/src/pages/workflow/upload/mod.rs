@@ -110,7 +110,7 @@ pub fn UploadPage() -> Element {
 
     rsx! {
         div { class: "space-y-8",
-            // Header
+            // Header - using Catalyst typography
             div {
                 h1 { class: "text-2xl font-semibold text-zinc-950 dark:text-white", "Upload Workflow" }
                 p { class: "mt-2 text-sm text-zinc-500 dark:text-zinc-400", "Upload and execute workflow files" }
