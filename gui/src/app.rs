@@ -105,6 +105,7 @@ pub fn App() -> Element {
     };
 
     let workflow_result_signal = use_memo(move || state.read().workflow_result.clone());
+    let current_step_signal = use_memo(move || state.read().current_step);
 
     let mut on_next_step = move || {
         let current = state.read().current_step;
@@ -249,9 +250,7 @@ pub fn App() -> Element {
                 main { class: "flex flex-1 flex-col pb-2 lg:min-w-0 lg:pt-2 lg:pr-2 lg:ml-64",
                     div { class: "grow p-6 lg:rounded-lg lg:bg-white lg:p-10 lg:shadow-xs lg:ring-1 lg:ring-zinc-950/5 dark:lg:bg-zinc-900 dark:lg:ring-white/10",
                         div { class: "mx-auto max-w-6xl",
-                            if let Some(result) = workflow_result_signal.read().clone() {
-                                WorkflowInfoCard { result: ReadOnlySignal::new(Signal::new(result)), tasks: state.read().tasks.clone(), current_step: state.read().current_step, on_next_step: on_next_step, on_prev_step: on_prev_step, on_jump_to_step: on_jump_to_step }
-                            } else if let Some(ref history_item) = state.read().viewing_history_item {
+                            if let Some(ref history_item) = state.read().viewing_history_item {
                                 // Convert WorkflowExecution to WorkflowResult for display
                                 WorkflowInfoCard {
                                     result: ReadOnlySignal::new(Signal::new(see_core::WorkflowResult {
@@ -267,11 +266,13 @@ pub fn App() -> Element {
                                         output_logs: Vec::new(),
                                     })),
                                     tasks: history_item.tasks.clone(),
-                                    current_step: state.read().current_step,
+                                    current_step: current_step_signal(),
                                     on_next_step: on_next_step,
                                     on_prev_step: on_prev_step,
                                     on_jump_to_step: on_jump_to_step
                                 }
+                            } else if let Some(result) = workflow_result_signal.read().clone() {
+                                WorkflowInfoCard { result: ReadOnlySignal::new(Signal::new(result)), tasks: state.read().tasks.clone(), current_step: current_step_signal(), on_next_step: on_next_step, on_prev_step: on_prev_step, on_jump_to_step: on_jump_to_step }
                             }
                             div { class: "space-y-6",
                                 OutputLogsPanel {
@@ -285,7 +286,7 @@ pub fn App() -> Element {
                                     } else {
                                         state.read().tasks.clone()
                                     },
-                                    current_step: state.read().current_step,
+                                    current_step: current_step_signal(),
                                     show_logs: state.read().show_logs,
                                     on_toggle: move |_| { let current = state.read().show_logs; state.write().show_logs = !current; },
                                     on_copy: copy_to_clipboard
