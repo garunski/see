@@ -7,6 +7,7 @@ use redb::{Database, ReadOnlyTable, ReadableTable, Table};
 use std::path::PathBuf;
 use std::sync::Arc;
 use tokio::task;
+use tokio::time::{sleep, Duration};
 
 const EXECUTIONS_TABLE: &str = "executions";
 const EXECUTION_IDS_TABLE: &str = "execution_ids";
@@ -75,20 +76,47 @@ impl RedbStore {
     ) -> Result<(), CoreError> {
         let db = Arc::clone(&self.db);
         let settings = settings.clone();
-        task::spawn_blocking(move || -> Result<(), CoreError> {
-            let write_txn = db.begin_write()?;
-            {
-                let mut settings_table: Table<&str, &[u8]> =
-                    write_txn.open_table(redb::TableDefinition::new(SETTINGS_TABLE))?;
-                let serialized = bincode::serialize(&settings)
-                    .map_err(|e| CoreError::Dataflow(e.to_string()))?;
-                settings_table.insert("app_settings", serialized.as_slice())?;
+
+        let mut last_error = None;
+
+        for attempt in 0..3 {
+            let result = task::spawn_blocking({
+                let db = Arc::clone(&db);
+                let settings = settings.clone();
+                move || -> Result<(), CoreError> {
+                    let write_txn = db.begin_write()?;
+                    {
+                        let mut settings_table: Table<&str, &[u8]> =
+                            write_txn.open_table(redb::TableDefinition::new(SETTINGS_TABLE))?;
+                        let serialized = bincode::serialize(&settings)
+                            .map_err(|e| CoreError::Dataflow(e.to_string()))?;
+                        settings_table.insert("app_settings", serialized.as_slice())?;
+                    }
+                    write_txn.commit()?;
+                    Ok(())
+                }
+            })
+            .await
+            .map_err(|e| CoreError::Dataflow(format!("task join error: {}", e)))?;
+
+            match result {
+                Ok(_) => return Ok(()),
+                Err(error) => {
+                    last_error = Some(error);
+
+                    // Don't retry on the last attempt
+                    if attempt == 2 {
+                        break;
+                    }
+
+                    // Simple exponential backoff: 100ms, 200ms
+                    let delay_ms = 100 * (2_u64.pow(attempt));
+                    sleep(Duration::from_millis(delay_ms)).await;
+                }
             }
-            write_txn.commit()?;
-            Ok(())
-        })
-        .await
-        .map_err(|e| CoreError::Dataflow(format!("task join error: {}", e)))?
+        }
+
+        Err(last_error.unwrap())
     }
 }
 
@@ -115,24 +143,52 @@ impl AuditStore for RedbStore {
         let db = Arc::clone(&self.db);
         let execution = execution.clone();
         let id = execution.id.clone();
-        task::spawn_blocking(move || -> Result<String, CoreError> {
-            let write_txn = db.begin_write()?;
-            {
-                let mut executions_table: Table<&str, &[u8]> =
-                    write_txn.open_table(redb::TableDefinition::new(EXECUTIONS_TABLE))?;
-                let mut execution_ids_table: Table<&str, &str> =
-                    write_txn.open_table(redb::TableDefinition::new(EXECUTION_IDS_TABLE))?;
-                let serialized = bincode::serialize(&execution)
-                    .map_err(|e| CoreError::Dataflow(e.to_string()))?;
-                executions_table.insert(id.as_str(), serialized.as_slice())?;
-                let timestamp_key = format!("{}:{}", execution.timestamp, id);
-                execution_ids_table.insert(timestamp_key.as_str(), id.as_str())?;
+
+        let mut last_error = None;
+
+        for attempt in 0..3 {
+            let result = task::spawn_blocking({
+                let db = Arc::clone(&db);
+                let execution = execution.clone();
+                let id = id.clone();
+                move || -> Result<String, CoreError> {
+                    let write_txn = db.begin_write()?;
+                    {
+                        let mut executions_table: Table<&str, &[u8]> =
+                            write_txn.open_table(redb::TableDefinition::new(EXECUTIONS_TABLE))?;
+                        let mut execution_ids_table: Table<&str, &str> = write_txn
+                            .open_table(redb::TableDefinition::new(EXECUTION_IDS_TABLE))?;
+                        let serialized = bincode::serialize(&execution)
+                            .map_err(|e| CoreError::Dataflow(e.to_string()))?;
+                        executions_table.insert(id.as_str(), serialized.as_slice())?;
+                        let timestamp_key = format!("{}:{}", execution.timestamp, id);
+                        execution_ids_table.insert(timestamp_key.as_str(), id.as_str())?;
+                    }
+                    write_txn.commit()?;
+                    Ok(id)
+                }
+            })
+            .await
+            .map_err(|e| CoreError::Dataflow(format!("task join error: {}", e)))?;
+
+            match result {
+                Ok(id) => return Ok(id),
+                Err(error) => {
+                    last_error = Some(error);
+
+                    // Don't retry on the last attempt
+                    if attempt == 2 {
+                        break;
+                    }
+
+                    // Simple exponential backoff: 100ms, 200ms
+                    let delay_ms = 100 * (2_u64.pow(attempt));
+                    sleep(Duration::from_millis(delay_ms)).await;
+                }
             }
-            write_txn.commit()?;
-            Ok(id)
-        })
-        .await
-        .map_err(|e| CoreError::Dataflow(format!("task join error: {}", e)))?
+        }
+
+        Err(last_error.unwrap())
     }
 
     async fn get_workflow_execution(&self, id: &str) -> Result<WorkflowExecution, CoreError> {

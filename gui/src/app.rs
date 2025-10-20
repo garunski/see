@@ -10,13 +10,30 @@ use std::sync::Arc;
 
 #[component]
 pub fn App() -> Element {
-    // 1. Initialize store and provide as context
-    let store = use_hook(|| RedbStore::new_default().ok().map(Arc::new));
+    // 1. Initialize store and provide as context with proper error handling
+    let store = use_hook(|| match RedbStore::new_default() {
+        Ok(store) => Some(Arc::new(store)),
+        Err(e) => {
+            eprintln!("Failed to initialize database: {}", e);
+            None
+        }
+    });
     use_context_provider(|| store.clone());
 
     // 2. Create state provider with separated state
     let mut state_provider = use_hook(AppStateProvider::new);
     use_context_provider(|| state_provider.clone());
+
+    // 3. Show database initialization error notification if needed
+    let store_clone_for_notification = store.clone();
+    use_effect(move || {
+        if store_clone_for_notification.is_none() {
+            state_provider.ui.write().show_toast(
+                "⚠️ Database unavailable - workflow history and settings will not be saved"
+                    .to_string(),
+            );
+        }
+    });
 
     // 3. Load settings once on mount
     let store_clone = store.clone();
@@ -82,11 +99,23 @@ pub fn App() -> Element {
     let change_theme = move |new_theme: Theme| {
         state_provider.settings.write().change_theme(new_theme);
 
-        // Save immediately
+        // Save immediately with error handling
         let store_clone = store_clone_theme.clone();
+        let mut ui_state = state_provider.ui;
         spawn(async move {
             if let Some(ref s) = store_clone {
-                let _ = s.save_settings(&AppSettings { theme: new_theme }).await;
+                match s.save_settings(&AppSettings { theme: new_theme }).await {
+                    Ok(_) => {
+                        ui_state
+                            .write()
+                            .show_toast("Settings saved successfully".to_string());
+                    }
+                    Err(e) => {
+                        ui_state
+                            .write()
+                            .show_toast(format!("Failed to save settings: {}", e));
+                    }
+                }
             }
         });
     };
