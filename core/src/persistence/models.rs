@@ -36,6 +36,8 @@ pub struct AppSettings {
 
 impl Default for AppSettings {
     fn default() -> Self {
-        Self { theme: Theme::System }
+        Self {
+            theme: Theme::System,
+        }
     }
 }

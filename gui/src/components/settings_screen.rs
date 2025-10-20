@@ -8,16 +8,16 @@ pub fn SettingsScreen(
     on_close: EventHandler<()>,
 ) -> Element {
     let current_theme = settings.read().theme;
-    
+
     rsx! {
         div {
             class: "fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50",
             onclick: move |_| on_close.call(()),
-            
+
             div {
                 class: "bg-white dark:bg-zinc-900 rounded-lg shadow-xl p-6 max-w-md w-full mx-4",
                 onclick: move |evt| evt.stop_propagation(),
-                
+
                 div { class: "flex items-center justify-between mb-6",
                     h2 { class: "text-2xl font-bold text-zinc-950 dark:text-white", "Settings" }
                     button {
@@ -26,7 +26,7 @@ pub fn SettingsScreen(
                         "✕"
                     }
                 }
-                
+
                 div { class: "space-y-6",
                     // Theme Section
                     div {
@@ -43,7 +43,7 @@ pub fn SettingsScreen(
                                         }
                                     ),
                                     onclick: move |_| on_theme_change.call(theme),
-                                    
+
                                     div { class: "flex items-center gap-3",
                                         div { class: "text-2xl",
                                             match theme {
@@ -69,7 +69,7 @@ pub fn SettingsScreen(
                                             }
                                         }
                                     }
-                                    
+
                                     if current_theme == theme {
                                         div { class: "text-blue-500", "✓" }
                                     }

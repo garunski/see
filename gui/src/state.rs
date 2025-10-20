@@ -48,7 +48,7 @@ impl Default for AppState {
             workflow_history: Vec::new(),
             viewing_history_item: None,
             sidebar_tab: SidebarTab::Upload,
-            needs_history_reload: false,
+            needs_history_reload: true,
             selected_history_id: None,
         }
     }
@@ -79,17 +79,6 @@ impl AppState {
         self.execution_status = crate::components::ExecutionStatus::Failed;
         self.output_logs.push(format!("Error: {}", err));
         self.toast_message = Some(format!("Workflow failed: {}", err));
-    }
-
-    pub async fn load_history(&mut self, store: &Arc<RedbStore>) {
-        match store.list_workflow_executions(50).await {
-            Ok(history) => {
-                self.workflow_history = history;
-            }
-            Err(e) => {
-                self.toast_message = Some(format!("Failed to load history: {}", e));
-            }
-        }
     }
 
     pub async fn load_execution(&mut self, id: &str, store: &Arc<RedbStore>) {

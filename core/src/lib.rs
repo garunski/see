@@ -44,5 +44,7 @@ pub struct WorkflowResult {
 }
 
 pub use crate::engine::execute::execute_workflow;
-pub use crate::persistence::models::{WorkflowExecution, WorkflowExecutionSummary, AppSettings, Theme};
+pub use crate::persistence::models::{
+    AppSettings, Theme, WorkflowExecution, WorkflowExecutionSummary,
+};
 pub use crate::persistence::redb_store::{AuditStore, RedbStore};

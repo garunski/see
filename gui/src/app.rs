@@ -11,12 +11,8 @@ use std::sync::Arc;
 #[component]
 pub fn App() -> Element {
     // 1. Initialize store and provide as context (NOT reactive state)
-    let store = use_hook(|| {
-        RedbStore::new_default()
-            .ok()
-            .map(Arc::new)
-    });
-    
+    let store = use_hook(|| RedbStore::new_default().ok().map(Arc::new));
+
     // Clone store for use in closures
     let store_clone = store.clone();
     let store_clone2 = store.clone();
@@ -24,10 +20,10 @@ pub fn App() -> Element {
     let store_clone4 = store.clone();
     let store_clone5 = store.clone();
     let store_clone6 = store.clone();
-    
+
     // Provide store via context so all components can access it
     use_context_provider(|| store.clone());
-    
+
     // 2. Create independent settings signal
     let mut settings = use_signal(|| {
         // System-detected default
@@ -38,7 +34,7 @@ pub fn App() -> Element {
             },
         }
     });
-    
+
     // 3. Load settings once on mount
     use_effect(move || {
         let store = store_clone.clone();
@@ -50,39 +46,43 @@ pub fn App() -> Element {
             }
         });
     });
-    
+
     // 4. Keep existing UI state
     let mut state = use_signal(|| AppState::default());
-    
-    // Load history - pass store directly, don't read from state
+
+    // Load history - reactive to needs_history_reload flag
     use_effect(move || {
-        let store = store_clone2.clone();
-        spawn(async move {
-            if let Some(s) = store {
-                match s.list_workflow_executions(50).await {
-                    Ok(history) => {
-                        state.write().workflow_history = history;
-                    }
-                    Err(e) => {
-                        state.write().toast_message = Some(format!("Failed to load history: {}", e));
+        let needs_reload = state.read().needs_history_reload;
+        if needs_reload {
+            let store = store_clone2.clone();
+            spawn(async move {
+                if let Some(s) = store {
+                    match s.list_workflow_executions(50).await {
+                        Ok(history) => {
+                            state.write().workflow_history = history;
+                            // Reset the flag after successful load
+                            state.write().needs_history_reload = false;
+                        }
+                        Err(e) => {
+                            state.write().toast_message =
+                                Some(format!("Failed to load history: {}", e));
+                        }
                     }
                 }
-            }
-        });
-    });
-    
-    // 5. Compute dark mode from settings (for UI classes)
-    let dark_mode_signal = use_memo(move || {
-        match settings.read().theme {
-            Theme::Dark => true,
-            Theme::Light => false,
-            Theme::System => matches!(dark_light::detect(), dark_light::Mode::Dark),
+            });
         }
     });
-    
+
+    // 5. Compute dark mode from settings (for UI classes)
+    let dark_mode_signal = use_memo(move || match settings.read().theme {
+        Theme::Dark => true,
+        Theme::Light => false,
+        Theme::System => matches!(dark_light::detect(), dark_light::Mode::Dark),
+    });
+
     // 6. Settings modal state
     let mut show_settings = use_signal(|| false);
-    
+
     // 7. Settings handlers
     let mut open_settings = move || {
         show_settings.set(true);
@@ -94,7 +94,7 @@ pub fn App() -> Element {
 
     let mut change_theme = move |new_theme: Theme| {
         settings.write().theme = new_theme;
-        
+
         // Save immediately
         if let Some(ref s) = store_clone3 {
             let s = s.clone();
@@ -303,7 +303,7 @@ pub fn App() -> Element {
                     }
                 }
             }
-            
+
             if *show_settings.read() {
                 SettingsScreen {
                     settings: settings,
