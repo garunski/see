@@ -1,3 +1,4 @@
+use crate::errors::CoreError;
 use crate::execution::context::ExecutionContext;
 use crate::task_executor::{TaskExecutor, TaskLogger};
 use async_trait::async_trait;
@@ -62,7 +63,10 @@ impl CliCommandHandler {
             Value::Number(n) => n.to_string(),
             Value::Bool(b) => b.to_string(),
             Value::Null => "null".to_string(),
-            _ => serde_json::to_string(value).unwrap_or_else(|_| "{}".to_string()),
+            _ => serde_json::to_string(value).unwrap_or_else(|e| {
+                eprintln!("Failed to serialize value: {}", e);
+                "{}".to_string()
+            }),
         }
     }
 }
@@ -72,11 +76,11 @@ impl TaskExecutor for CliCommandHandler {
         &self,
         task_config: &Value,
         logger: &dyn TaskLogger,
-    ) -> std::result::Result<Value, String> {
+    ) -> Result<Value, CoreError> {
         let command = task_config
             .get("command")
             .and_then(|v| v.as_str())
-            .ok_or_else(|| "Missing 'command' field".to_string())?;
+            .ok_or_else(|| CoreError::Validation("Missing 'command' field".to_string()))?;
 
         let args: Vec<String> = task_config
             .get("args")
@@ -116,7 +120,12 @@ impl TaskExecutor for CliCommandHandler {
             .args(&args)
             .output()
             .await
-            .map_err(|e| format!("Failed to execute command '{}': {}", command, e))?;
+            .map_err(|e| {
+                CoreError::CommandExecution(format!(
+                    "Failed to execute command '{}': {}",
+                    command, e
+                ))
+            })?;
 
         let stdout = String::from_utf8_lossy(&output.stdout).to_string();
         let stderr = String::from_utf8_lossy(&output.stderr).to_string();
@@ -130,17 +139,19 @@ impl TaskExecutor for CliCommandHandler {
 
         if !output.status.success() {
             logger.log_task_end(task_id);
-            return Err(format!(
+            return Err(CoreError::CommandExecution(format!(
                 "Command '{}' failed with exit code: {:?}\nstderr: {}",
                 command,
                 output.status.code(),
                 stderr
-            ));
+            )));
         }
 
         let extracted_json = if !stdout.is_empty() {
             match response_type {
-                "json" => serde_json::from_str::<Value>(&stdout).ok(),
+                "json" => Some(serde_json::from_str::<Value>(&stdout).map_err(|e| {
+                    CoreError::Serialization(format!("Failed to parse JSON output: {}", e))
+                })?),
                 _ => crate::json_parser::extract_json_from_text(&stdout),
             }
         } else {
@@ -149,8 +160,10 @@ impl TaskExecutor for CliCommandHandler {
 
         if let Some(ref json_val) = extracted_json {
             logger.log("\n🔍 Extracted JSON:");
-            logger
-                .log(&serde_json::to_string_pretty(json_val).unwrap_or_else(|_| "{}".to_string()));
+            let json_str = serde_json::to_string_pretty(json_val).map_err(|e| {
+                CoreError::Serialization(format!("Failed to serialize JSON: {}", e))
+            })?;
+            logger.log(&json_str);
             logger.log("\n📋 Parsed Values:");
             self.display_json_values(json_val, "", logger);
         }
@@ -190,7 +203,7 @@ impl AsyncFunctionHandler for CliCommandHandler {
         // Use the TaskExecutor implementation
         let result = TaskExecutor::execute(self, input, &logger)
             .await
-            .map_err(|e| DataflowError::function_execution(e, None))?;
+            .map_err(|e| DataflowError::function_execution(e.to_string(), None))?;
 
         if let Some(Value::Object(ref mut map)) = message.context.get_mut("data") {
             map.insert("cli_output".to_string(), result.clone());

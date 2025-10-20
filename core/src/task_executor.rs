@@ -1,10 +1,15 @@
+use crate::errors::CoreError;
 use serde_json::Value;
 use std::sync::Arc;
 
 /// Trait for executing tasks with clean separation from context management
 #[allow(async_fn_in_trait)]
 pub trait TaskExecutor: Send + Sync {
-    async fn execute(&self, task_config: &Value, logger: &dyn TaskLogger) -> Result<Value, String>;
+    async fn execute(
+        &self,
+        task_config: &Value,
+        logger: &dyn TaskLogger,
+    ) -> Result<Value, CoreError>;
 }
 
 /// Trait for logging task events without direct mutex manipulation
@@ -29,8 +34,13 @@ impl ContextTaskLogger {
 
 impl TaskLogger for ContextTaskLogger {
     fn log(&self, message: &str) {
-        if let Ok(mut ctx) = self.context.lock() {
-            ctx.log(message);
+        match self.context.lock() {
+            Ok(mut ctx) => ctx.log(message),
+            Err(e) => {
+                // Fallback to stderr - prevents deadlock
+                eprintln!("Failed to lock context for logging: {}", e);
+                eprintln!("Message: {}", message);
+            }
         }
     }
 

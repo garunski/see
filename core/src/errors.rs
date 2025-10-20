@@ -38,4 +38,16 @@ pub enum CoreError {
 
     #[error("workflow execution error: {0}")]
     WorkflowExecution(String),
+
+    #[error("task execution error: {0}")]
+    TaskExecution(String),
+
+    #[error("command execution error: {0}")]
+    CommandExecution(String),
+
+    #[error("validation error: {0}")]
+    Validation(String),
+
+    #[error("serialization error: {0}")]
+    Serialization(String),
 }

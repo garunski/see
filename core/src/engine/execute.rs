@@ -54,17 +54,15 @@ pub async fn execute_workflow(
 
     let context = ExecutionContext::new(tasks, output_callback);
 
-    context
-        .safe_log(&format!("Loading workflow from: {}\n", workflow_file))
-        .map_err(|e| {
-            CoreError::WorkflowExecution(format!("Failed to log workflow loading: {}", e))
-        })?;
-    context
-        .safe_log(&format!("Loaded workflow: {}\n", workflow.name))
-        .map_err(|e| CoreError::WorkflowExecution(format!("Failed to log workflow name: {}", e)))?;
-    context
-        .safe_log(&format!("Number of tasks: {}\n", workflow.tasks.len()))
-        .map_err(|e| CoreError::WorkflowExecution(format!("Failed to log task count: {}", e)))?;
+    if let Err(e) = context.safe_log(&format!("Loading workflow from: {}\n", workflow_file)) {
+        eprintln!("Failed to log workflow loading: {}", e);
+    }
+    if let Err(e) = context.safe_log(&format!("Loaded workflow: {}\n", workflow.name)) {
+        eprintln!("Failed to log workflow name: {}", e);
+    }
+    if let Err(e) = context.safe_log(&format!("Number of tasks: {}\n", workflow.tasks.len())) {
+        eprintln!("Failed to log task count: {}", e);
+    }
 
     let mut custom_functions: HashMap<String, Box<dyn AsyncFunctionHandler + Send + Sync>> =
         HashMap::new();
@@ -77,20 +75,15 @@ pub async fn execute_workflow(
     let mut message = Message::from_value(&json!({}));
     let execution_id = Uuid::new_v4().to_string();
 
-    context.safe_log("\nExecuting workflow...\n").map_err(|e| {
-        CoreError::WorkflowExecution(format!("Failed to log execution start: {}", e))
-    })?;
+    if let Err(e) = context.safe_log("\nExecuting workflow...\n") {
+        eprintln!("Failed to log execution start: {}", e);
+    }
 
     match engine.process_message(&mut message).await {
         Ok(_) => {
-            context
-                .safe_log("\n✅ Workflow execution complete!")
-                .map_err(|e| {
-                    CoreError::WorkflowExecution(format!(
-                        "Failed to log execution completion: {}",
-                        e
-                    ))
-                })?;
+            if let Err(e) = context.safe_log("\n✅ Workflow execution complete!") {
+                eprintln!("Failed to log execution completion: {}", e);
+            }
 
             let audit_trail: Vec<AuditEntry> = message
                 .audit_trail
@@ -108,43 +101,32 @@ pub async fn execute_workflow(
                     AuditStatus::Success => TaskStatus::Complete,
                     AuditStatus::Failure => TaskStatus::Failed,
                 };
-                context
-                    .safe_update_task_status(&audit.task_id, status)
-                    .map_err(|e| {
-                        CoreError::WorkflowExecution(format!("Failed to update task status: {}", e))
-                    })?;
+                if let Err(e) = context.safe_update_task_status(&audit.task_id, status) {
+                    eprintln!("Failed to update task status: {}", e);
+                }
             }
 
-            context.safe_log("\n📋 Audit Trail:").map_err(|e| {
-                CoreError::WorkflowExecution(format!("Failed to log audit trail header: {}", e))
-            })?;
+            if let Err(e) = context.safe_log("\n📋 Audit Trail:") {
+                eprintln!("Failed to log audit trail header: {}", e);
+            }
             for (i, audit) in audit_trail.iter().enumerate() {
-                context
-                    .safe_log(&format!(
-                        "{}. Task: {} (Status: {})",
-                        i + 1,
-                        audit.task_id,
-                        audit.status
-                    ))
-                    .map_err(|e| {
-                        CoreError::WorkflowExecution(format!("Failed to log audit entry: {}", e))
-                    })?;
-                context
-                    .safe_log(&format!("   Timestamp: {}", audit.timestamp))
-                    .map_err(|e| {
-                        CoreError::WorkflowExecution(format!(
-                            "Failed to log audit timestamp: {}",
-                            e
-                        ))
-                    })?;
-                context
-                    .safe_log(&format!(
-                        "   Changes: {} field(s) modified",
-                        audit.changes_count
-                    ))
-                    .map_err(|e| {
-                        CoreError::WorkflowExecution(format!("Failed to log audit changes: {}", e))
-                    })?;
+                if let Err(e) = context.safe_log(&format!(
+                    "{}. Task: {} (Status: {})",
+                    i + 1,
+                    audit.task_id,
+                    audit.status
+                )) {
+                    eprintln!("Failed to log audit entry: {}", e);
+                }
+                if let Err(e) = context.safe_log(&format!("   Timestamp: {}", audit.timestamp)) {
+                    eprintln!("Failed to log audit timestamp: {}", e);
+                }
+                if let Err(e) = context.safe_log(&format!(
+                    "   Changes: {} field(s) modified",
+                    audit.changes_count
+                )) {
+                    eprintln!("Failed to log audit changes: {}", e);
+                }
             }
 
             let errors: Vec<String> = if message.has_errors() {
@@ -153,20 +135,20 @@ pub async fn execute_workflow(
                     .iter()
                     .map(|error| {
                         format!(
-                            "{}: {}",
+                            "Task {}: {}",
                             error.task_id.as_ref().unwrap_or(&"unknown".to_string()),
                             error.message
                         )
                     })
                     .collect();
 
-                context.safe_log("\n⚠️  Errors encountered:").map_err(|e| {
-                    CoreError::WorkflowExecution(format!("Failed to log errors header: {}", e))
-                })?;
+                if let Err(e) = context.safe_log("\n⚠️  Errors encountered:") {
+                    eprintln!("Failed to log errors header: {}", e);
+                }
                 for error in &error_list {
-                    context.safe_log(&format!("   - {}", error)).map_err(|e| {
-                        CoreError::WorkflowExecution(format!("Failed to log error: {}", e))
-                    })?;
+                    if let Err(e) = context.safe_log(&format!("   - {}", error)) {
+                        eprintln!("Failed to log error: {}", e);
+                    }
                 }
                 error_list
             } else {
@@ -237,11 +219,11 @@ pub async fn execute_workflow(
             Ok(result)
         }
         Err(e) => {
-            context
-                .safe_log(&format!("\n❌ Workflow execution failed: {}", e))
-                .unwrap_or_else(|log_err| {
-                    eprintln!("Failed to log execution failure: {}", log_err)
-                });
+            if let Err(log_err) =
+                context.safe_log(&format!("\n❌ Workflow execution failed: {}", e))
+            {
+                eprintln!("Failed to log execution failure: {}", log_err);
+            }
             Err(CoreError::WorkflowExecution(format!(
                 "Workflow execution failed: {}",
                 e

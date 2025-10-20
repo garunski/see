@@ -1,3 +1,4 @@
+use crate::errors::CoreError;
 use crate::execution::context::ExecutionContext;
 use crate::TaskStatus;
 use std::sync::{Arc, Mutex};
@@ -12,17 +13,33 @@ impl SafeExecutionContext {
         Self { inner }
     }
 
-    pub fn log(&self, msg: &str) -> Result<(), String> {
-        self.inner.lock().map_err(|e| e.to_string())?.log(msg);
-        Ok(())
+    #[allow(clippy::result_large_err)]
+    pub fn log(&self, msg: &str) -> Result<(), CoreError> {
+        match self.inner.lock() {
+            Ok(mut ctx) => {
+                ctx.log(msg);
+                Ok(())
+            }
+            Err(e) => {
+                // Log to stderr instead of failing - prevents deadlock
+                eprintln!("Failed to lock context for logging: {}", e);
+                Ok(()) // Return Ok to prevent error propagation
+            }
+        }
     }
 
-    pub fn update_task_status(&self, task_id: &str, status: TaskStatus) -> Result<(), String> {
-        self.inner
-            .lock()
-            .map_err(|e| e.to_string())?
-            .update_task_status(task_id, status);
-        Ok(())
+    #[allow(clippy::result_large_err)]
+    pub fn update_task_status(&self, task_id: &str, status: TaskStatus) -> Result<(), CoreError> {
+        match self.inner.lock() {
+            Ok(mut ctx) => {
+                ctx.update_task_status(task_id, status);
+                Ok(())
+            }
+            Err(e) => {
+                eprintln!("Failed to lock context for task status update: {}", e);
+                Ok(()) // Return Ok to prevent error propagation
+            }
+        }
     }
 
     pub fn get_inner(&self) -> Arc<Mutex<ExecutionContext>> {
