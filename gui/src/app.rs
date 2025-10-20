@@ -48,7 +48,7 @@ pub fn App() -> Element {
     });
 
     // 4. Keep existing UI state
-    let mut state = use_signal(|| AppState::default());
+    let mut state = use_signal(AppState::default);
 
     // Load history - reactive to needs_history_reload flag
     use_effect(move || {
@@ -92,7 +92,7 @@ pub fn App() -> Element {
         show_settings.set(false);
     };
 
-    let mut change_theme = move |new_theme: Theme| {
+    let change_theme = move |new_theme: Theme| {
         settings.write().theme = new_theme;
 
         // Save immediately
@@ -163,7 +163,7 @@ pub fn App() -> Element {
         state.write().toast_message = None;
     };
 
-    let mut switch_tab = move |tab: SidebarTab| {
+    let switch_tab = move |tab: SidebarTab| {
         let is_upload_tab = matches!(tab, SidebarTab::Upload);
         state.write().sidebar_tab = tab;
         // Clear viewing history item when switching to upload tab
@@ -240,10 +240,10 @@ pub fn App() -> Element {
                     },
                     is_viewing_history: state.read().viewing_history_item.is_some(),
                     sidebar_tab: state.read().sidebar_tab.clone(),
-                    on_tab_change: move |tab| switch_tab(tab),
+                    on_tab_change: switch_tab,
                     workflow_history: state.read().workflow_history.clone(),
-                    on_load_execution: move |id| load_execution(id),
-                    on_delete_execution: move |id| delete_execution(id),
+                    on_load_execution: load_execution,
+                    on_delete_execution: delete_execution,
                     selected_history_id: state.read().selected_history_id.clone(),
                 }
 
@@ -308,7 +308,7 @@ pub fn App() -> Element {
             if *show_settings.read() {
                 SettingsScreen {
                     settings: settings,
-                    on_theme_change: move |theme| change_theme(theme),
+                    on_theme_change: change_theme,
                     on_close: move |_| close_settings(),
                 }
             }

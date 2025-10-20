@@ -114,7 +114,7 @@ impl AppState {
                 if self
                     .selected_history_id
                     .as_ref()
-                    .map_or(false, |selected_id| selected_id == id)
+                    .is_some_and(|selected_id| selected_id == id)
                 {
                     self.selected_history_id = None;
                 }

@@ -148,7 +148,7 @@ pub fn Sidebar(
                                         execution: execution.clone(),
                                         on_load_execution: on_load_execution,
                                         on_delete_execution: on_delete_execution,
-                                        is_selected: selected_history_id.as_ref().map_or(false, |id| id == &execution.id),
+                                        is_selected: selected_history_id.as_ref() == Some(&execution.id),
                                     }
                                 }
                             }
