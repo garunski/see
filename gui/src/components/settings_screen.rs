@@ -1,13 +1,13 @@
 use dioxus::prelude::*;
-use see_core::{AppSettings, Theme};
+use see_core::Theme;
 
 #[component]
 pub fn SettingsScreen(
-    settings: Signal<AppSettings>,
+    settings: Signal<crate::state::SettingsState>,
     on_theme_change: EventHandler<Theme>,
     on_close: EventHandler<()>,
 ) -> Element {
-    let current_theme = settings.read().theme;
+    let current_theme = settings.read().settings.theme;
 
     rsx! {
         div {
