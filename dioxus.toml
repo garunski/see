@@ -1,0 +1,13 @@
+[application]
+name = "see"
+default_platform = "desktop"
+
+[web.app]
+title = "See Workflow Engine"
+
+[web.dev]
+proxy = ""
+
+[bundle]
+identifier = "com.see.workflow-engine"
+publisher = "See"

@@ -17,6 +17,7 @@ A lightweight workflow execution engine built on [dataflow-rs](https://crates.io
 
 - Rust 1.70 or later
 - Cargo
+- Dioxus CLI (`dx`) - Install with: `cargo binstall dioxus-cli`
 
 ### Build
 
@@ -43,7 +44,20 @@ cargo build -p cli --release
 
 ### GUI: Desktop app
 
-From the repo root:
+Using dx CLI (recommended):
+
+```bash
+# Development with hot-reloading
+dx serve --package gui
+
+# Build for production
+dx build --package gui
+
+# Run without hot-reloading
+dx run --package gui
+```
+
+Or using cargo directly:
 
 ```bash
 cargo run -p gui

@@ -17,24 +17,31 @@ tasks:
 
   # Run GUI application
   run-gui:
-    desc: Build Tailwind CSS and run GUI
-    deps: [dev, tailwind-build]
+    desc: Run GUI with dx CLI
+    deps: [dev]
     cmds:
-      - cargo run -p gui
+      - dx run --package gui
 
+  # Development server with hot-reloading
+  serve-gui:
+    desc: Start GUI development server with hot-reloading
+    deps: [dev]
+    cmds:
+      - dx serve --package gui
 
   # Build release binary
   build-release:
-    desc: Build optimized release binary
-    deps: [tailwind-build]
+    desc: Build optimized release binary with dx CLI
+    deps: [dev]
     cmds:
-      - cargo build --release
+      - dx build --package gui
 
   # Clean build artifacts
   clean:
     desc: Clean build artifacts
     cmds:
       - cargo clean
+      - dx clean --package gui
 
   # Internal: Download Tailwind CLI
   tailwind-setup:

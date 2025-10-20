@@ -2299,6 +2299,7 @@ dependencies = [
  "chrono",
  "dark-light",
  "dioxus",
+ "dioxus-desktop",
  "rfd",
  "see_core",
  "serde_json",
