@@ -45,7 +45,7 @@ fn HistoryItem(
                             on_delete_execution.call(execution_id_for_delete.clone());
                         },
                         // TrashIcon SVG
-                        svg { 
+                        svg {
                             class: "w-5 h-5",
                             view_box: "0 0 20 20",
                             fill: "currentColor",

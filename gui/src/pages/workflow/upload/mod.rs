@@ -15,11 +15,12 @@ pub fn UploadPage() -> Element {
     let store = use_context::<Option<Arc<see_core::RedbStore>>>();
 
     let workflow_file = use_memo(move || state_provider.workflow.read().workflow_file.clone());
-    let execution_status = use_memo(move || state_provider.workflow.read().execution_status.clone());
+    let execution_status =
+        use_memo(move || state_provider.workflow.read().execution_status.clone());
     let workflow_result = use_memo(move || state_provider.workflow.read().workflow_result.clone());
     let current_step = use_memo(move || state_provider.workflow.read().current_step);
     let is_picking_file = use_memo(move || state_provider.ui.read().is_picking_file);
-    let is_viewing_history = use_memo(move || state_provider.history.read().viewing_history_item.is_some());
+    let is_viewing_history = use_memo(move || false); // No longer needed with routing
 
     let mut on_workflow_file_change = move |value: String| {
         state_provider.workflow.write().workflow_file = value;
@@ -43,7 +44,7 @@ pub fn UploadPage() -> Element {
         });
     };
 
-    let mut on_execute = move || {
+    let on_execute = move || {
         let store_clone = store.clone();
         let mut workflow_state = state_provider.workflow;
         let mut ui_state = state_provider.ui;
@@ -70,18 +71,22 @@ pub fn UploadPage() -> Element {
             {
                 Ok(result) => {
                     workflow_state.write().apply_success(&result);
-                    ui_state.write().show_toast("Workflow completed successfully!".to_string());
+                    ui_state
+                        .write()
+                        .show_toast("Workflow completed successfully!".to_string());
                     history_state.write().needs_history_reload = true;
                 }
                 Err(e) => {
                     workflow_state.write().apply_failure(&e.to_string());
-                    ui_state.write().show_toast(format!("Workflow failed: {}", e));
+                    ui_state
+                        .write()
+                        .show_toast(format!("Workflow failed: {}", e));
                 }
             }
         });
     };
 
-    let mut on_next_step = move || {
+    let on_next_step = move || {
         let current = state_provider.workflow.read().current_step;
         let total = state_provider.workflow.read().tasks.len();
         if current < total.saturating_sub(1) {
@@ -89,7 +94,7 @@ pub fn UploadPage() -> Element {
         }
     };
 
-    let mut on_prev_step = move || {
+    let on_prev_step = move || {
         let current = state_provider.workflow.read().current_step;
         if current > 0 {
             state_provider.workflow.write().current_step = current - 1;
@@ -125,8 +130,8 @@ pub fn UploadPage() -> Element {
                         onclick: move |_| pick_file(),
                         disabled: is_picking_file(),
                         class: "px-4 py-2 bg-zinc-900 text-white rounded-lg hover:bg-zinc-800 disabled:opacity-50 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-100 transition-colors",
-                        if is_picking_file() { 
-                            svg { 
+                        if is_picking_file() {
+                            svg {
                                 class: "w-4 h-4 animate-spin",
                                 view_box: "0 0 20 20",
                                 fill: "currentColor",

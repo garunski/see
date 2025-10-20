@@ -1,5 +1,5 @@
-pub mod upload;
 pub mod details;
+pub mod upload;
 
-pub use upload::UploadPage;
 pub use details::WorkflowDetailsPage;
+pub use upload::UploadPage;

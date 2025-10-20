@@ -1,6 +1,6 @@
+use crate::components::Sidebar;
 use crate::pages::workflow::{UploadPage, WorkflowDetailsPage};
 use crate::pages::{HistoryPage, SettingsPage};
-use crate::components::Sidebar;
 use dioxus::prelude::*;
 use dioxus_router::prelude::{Link, Outlet, Routable};
 

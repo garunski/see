@@ -47,8 +47,9 @@ pub fn WorkflowDetailsPage(id: String) -> Element {
     let current_task_audit = use_memo(move || {
         if let Some(exec) = execution() {
             let current_task_id = exec.tasks.get(current_step()).map(|t| t.id.clone());
-            exec.audit_trail.iter()
-                .filter(|entry| current_task_id.as_ref().map_or(false, |id| &entry.task_id == id))
+            exec.audit_trail
+                .iter()
+                .filter(|entry| current_task_id.as_ref() == Some(&entry.task_id))
                 .cloned()
                 .collect::<Vec<_>>()
         } else {
@@ -73,7 +74,7 @@ pub fn WorkflowDetailsPage(id: String) -> Element {
                     onclick: move |_| navigator.go_back(),
                     class: "flex items-center gap-2 px-3 py-2 text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white transition-colors rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800",
                     // ChevronLeftIcon SVG
-                    svg { 
+                    svg {
                         class: "w-5 h-5",
                         view_box: "0 0 20 20",
                         fill: "currentColor",
@@ -95,7 +96,7 @@ pub fn WorkflowDetailsPage(id: String) -> Element {
             if let Some(err) = error() {
                 div { class: "bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-6",
                     div { class: "flex items-center gap-3",
-                        svg { 
+                        svg {
                             class: "w-6 h-6 text-red-600 dark:text-red-400",
                             view_box: "0 0 20 20",
                             fill: "currentColor",
@@ -146,14 +147,14 @@ pub fn WorkflowDetailsPage(id: String) -> Element {
                 if !exec.tasks.is_empty() {
                     div { class: "bg-white dark:bg-zinc-900 rounded-lg shadow-sm ring-1 ring-zinc-950/5 dark:ring-white/10 p-6",
                         h3 { class: "text-lg font-semibold text-zinc-950 dark:text-white mb-4", "Current Task" }
-                        
+
                         // Task Progress Overview
-                        WorkflowProgress { 
-                            tasks: exec.tasks.clone(), 
-                            current_step: current_step(), 
-                            on_step_click: move |step| current_step.set(step) 
+                        WorkflowProgress {
+                            tasks: exec.tasks.clone(),
+                            current_step: current_step(),
+                            on_step_click: move |step| current_step.set(step)
                         }
-                        
+
                         // Current Task Information
                         if let Some(task) = exec.tasks.get(current_step()) {
                             div { class: "mt-6 p-4 bg-zinc-50 dark:bg-zinc-800 rounded-lg",
@@ -170,7 +171,7 @@ pub fn WorkflowDetailsPage(id: String) -> Element {
                                         ),
                                         match task.status {
                                             TaskStatus::Complete => "Complete",
-                                            TaskStatus::Failed => "Failed", 
+                                            TaskStatus::Failed => "Failed",
                                             TaskStatus::InProgress => "In Progress",
                                             TaskStatus::Pending => "Pending",
                                         }
@@ -181,26 +182,26 @@ pub fn WorkflowDetailsPage(id: String) -> Element {
                                 }
                             }
                         }
-                        
+
                         // Step Navigator
                         div { class: "mt-4",
-                            StepNavigator { 
-                                current_step: current_step(), 
-                                total_steps: exec.tasks.len(), 
-                                task_name: exec.tasks.get(current_step()).map(|t| t.name.clone()).unwrap_or_default(), 
-                                task_status: exec.tasks.get(current_step()).map(|t| t.status.clone()).unwrap_or(TaskStatus::Pending), 
+                            StepNavigator {
+                                current_step: current_step(),
+                                total_steps: exec.tasks.len(),
+                                task_name: exec.tasks.get(current_step()).map(|t| t.name.clone()).unwrap_or_default(),
+                                task_status: exec.tasks.get(current_step()).map(|t| t.status.clone()).unwrap_or(TaskStatus::Pending),
                                 on_prev: move |_| {
                                     let current = current_step();
                                     if current > 0 {
                                         current_step.set(current - 1);
                                     }
-                                }, 
+                                },
                                 on_next: move |_| {
                                     let current = current_step();
                                     if current < total_tasks().saturating_sub(1) {
                                         current_step.set(current + 1);
                                     }
-                                } 
+                                }
                             }
                         }
                     }
@@ -248,7 +249,7 @@ pub fn WorkflowDetailsPage(id: String) -> Element {
                             for error in exec.errors.iter() {
                                 div { class: "p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg",
                                     div { class: "flex items-start gap-3",
-                                        svg { 
+                                        svg {
                                             class: "w-5 h-5 text-red-600 dark:text-red-400 mt-0.5 flex-shrink-0",
                                             view_box: "0 0 20 20",
                                             fill: "currentColor",
