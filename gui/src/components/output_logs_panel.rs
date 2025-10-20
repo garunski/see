@@ -1,5 +1,5 @@
 use dioxus::prelude::*;
-use see_core::TaskInfo;
+use see_core::{TaskInfo, TaskStatus};
 use std::collections::HashMap;
 
 #[component]
@@ -22,7 +22,9 @@ pub fn OutputLogsPanel(
 
     let current_task = tasks.get(current_step);
     let task_name = current_task.map(|t| t.name.clone()).unwrap_or_default();
-    let task_status = current_task.map(|t| t.status.clone()).unwrap_or_default();
+    let task_status = current_task
+        .map(|t| t.status.clone())
+        .unwrap_or(TaskStatus::Pending);
 
     let display_text = if !tasks.is_empty() {
         format!("Step {} Output: {}", current_step + 1, task_name)
@@ -46,12 +48,12 @@ pub fn OutputLogsPanel(
                             span { class: "text-sm text-zinc-500 dark:text-zinc-400 ml-2", {line_count_text} }
                         }
                         if !tasks.is_empty() {
-                            span { class: match task_status.as_str() {
-                                    "complete" => "inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800 dark:bg-emerald-900/20 dark:text-emerald-400",
-                                    "failed" => "inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400",
-                                    "in-progress" => "inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400",
-                                    _ => "inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800 dark:bg-gray-900/20 dark:text-gray-400",
-                                }, {task_status.clone()} }
+                            span { class: match task_status {
+                                    TaskStatus::Complete => "inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800 dark:bg-emerald-900/20 dark:text-emerald-400",
+                                    TaskStatus::Failed => "inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400",
+                                    TaskStatus::InProgress => "inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400",
+                                    TaskStatus::Pending => "inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800 dark:bg-gray-900/20 dark:text-gray-400",
+                                }, {task_status.to_string()} }
                         }
                     }
                     div { class: "transform transition-transform duration-200", class: if show_logs { "rotate-180" } else { "" }, "▼" }

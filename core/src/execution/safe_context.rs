@@ -1,4 +1,5 @@
 use crate::execution::context::ExecutionContext;
+use crate::TaskStatus;
 use std::sync::{Arc, Mutex};
 
 /// Safe wrapper around ExecutionContext that encapsulates mutex operations
@@ -16,7 +17,7 @@ impl SafeExecutionContext {
         Ok(())
     }
 
-    pub fn update_task_status(&self, task_id: &str, status: &str) -> Result<(), String> {
+    pub fn update_task_status(&self, task_id: &str, status: TaskStatus) -> Result<(), String> {
         self.inner
             .lock()
             .map_err(|e| e.to_string())?

@@ -1,6 +1,6 @@
 use crate::components::{StepNavigator, WorkflowProgress};
 use dioxus::prelude::*;
-use see_core::{TaskInfo, WorkflowResult};
+use see_core::{TaskInfo, TaskStatus, WorkflowResult};
 
 #[component]
 pub fn WorkflowInfoCard(
@@ -41,7 +41,7 @@ pub fn WorkflowInfoCard(
             }
             if !tasks.is_empty() {
                 div { class: "mb-6",
-                    StepNavigator { current_step: current_step, total_steps: tasks.len(), task_name: tasks.get(current_step).map(|t| t.name.clone()).unwrap_or_default(), task_status: tasks.get(current_step).map(|t| t.status.clone()).unwrap_or_default(), on_prev: move |_| on_prev_step.call(()), on_next: move |_| on_next_step.call(()) }
+                    StepNavigator { current_step: current_step, total_steps: tasks.len(), task_name: tasks.get(current_step).map(|t| t.name.clone()).unwrap_or_default(), task_status: tasks.get(current_step).map(|t| t.status.clone()).unwrap_or(TaskStatus::Pending), on_prev: move |_| on_prev_step.call(()), on_next: move |_| on_next_step.call(()) }
                 }
             }
         }

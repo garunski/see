@@ -1,5 +1,5 @@
 #![allow(clippy::result_large_err)]
-use crate::{errors::CoreError, OutputCallback, TaskInfo};
+use crate::{errors::CoreError, OutputCallback, TaskInfo, TaskStatus};
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex, MutexGuard};
 
@@ -26,7 +26,7 @@ impl ExecutionContext {
         if msg.starts_with("[TASK_START:") && msg.ends_with("]") {
             let task_id = Self::extract_task_id_from_marker(msg);
             self.current_task_id = Some(task_id.clone());
-            self.update_task_status(&task_id, "in-progress");
+            self.update_task_status(&task_id, TaskStatus::InProgress);
             return;
         }
 
@@ -59,9 +59,9 @@ impl ExecutionContext {
             .to_string()
     }
 
-    pub fn update_task_status(&mut self, task_id: &str, status: &str) {
+    pub fn update_task_status(&mut self, task_id: &str, status: TaskStatus) {
         if let Some(task) = self.tasks.iter_mut().find(|t| t.id == task_id) {
-            task.status = status.to_string();
+            task.status = status;
         }
     }
 
@@ -88,7 +88,7 @@ pub trait ExecutionContextSafe {
     fn safe_log(&self, msg: &str) -> Result<(), CoreError>;
 
     /// Safe task status update method that handles mutex lock errors
-    fn safe_update_task_status(&self, task_id: &str, status: &str) -> Result<(), CoreError>;
+    fn safe_update_task_status(&self, task_id: &str, status: TaskStatus) -> Result<(), CoreError>;
 
     /// Lock with retry logic for high-contention scenarios
     fn lock_with_retry<F, R>(&self, operation: F, max_retries: usize) -> Result<R, CoreError>
@@ -105,7 +105,7 @@ impl ExecutionContextSafe for Arc<Mutex<ExecutionContext>> {
         Ok(())
     }
 
-    fn safe_update_task_status(&self, task_id: &str, status: &str) -> Result<(), CoreError> {
+    fn safe_update_task_status(&self, task_id: &str, status: TaskStatus) -> Result<(), CoreError> {
         let mut ctx = self
             .lock()
             .map_err(|e| CoreError::MutexLock(format!("Failed to lock context: {}", e)))?;

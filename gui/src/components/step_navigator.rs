@@ -1,11 +1,12 @@
 use dioxus::prelude::*;
+use see_core::TaskStatus;
 
 #[component]
 pub fn StepNavigator(
     current_step: usize,
     total_steps: usize,
     task_name: String,
-    task_status: String,
+    task_status: TaskStatus,
     on_prev: EventHandler<()>,
     on_next: EventHandler<()>,
 ) -> Element {
@@ -13,13 +14,15 @@ pub fn StepNavigator(
     let is_last = current_step >= total_steps - 1;
     let step_display = current_step + 1;
 
-    let status_badge_class = match task_status.as_str() {
-        "complete" => {
+    let status_badge_class = match task_status {
+        TaskStatus::Complete => {
             "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/20 dark:text-emerald-400"
         }
-        "failed" => "bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400",
-        "in-progress" => "bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400",
-        _ => "bg-gray-100 text-gray-800 dark:bg-gray-900/20 dark:text-gray-400",
+        TaskStatus::Failed => "bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400",
+        TaskStatus::InProgress => {
+            "bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400"
+        }
+        TaskStatus::Pending => "bg-gray-100 text-gray-800 dark:bg-gray-900/20 dark:text-gray-400",
     };
 
     rsx! {
@@ -33,7 +36,7 @@ pub fn StepNavigator(
                 div { class: "text-sm font-medium text-gray-700 dark:text-gray-300", "Step {step_display} of {total_steps}" }
                 div { class: "flex items-center space-x-3",
                     div { class: "text-lg font-semibold text-gray-900 dark:text-white", {task_name} }
-                    span { class: "inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {status_badge_class}", {task_status} }
+                    span { class: "inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {status_badge_class}", {task_status.to_string()} }
                 }
             }
 

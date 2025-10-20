@@ -1,7 +1,7 @@
 use crate::execution::context::{ExecutionContext, ExecutionContextSafe};
 use crate::{
-    errors::CoreError, AuditEntry, AuditStore, OutputCallback, TaskInfo, WorkflowExecution,
-    WorkflowResult,
+    errors::CoreError, AuditEntry, AuditStatus, AuditStore, OutputCallback, TaskInfo, TaskStatus,
+    WorkflowExecution, WorkflowResult,
 };
 use chrono::Utc;
 use dataflow_rs::engine::{message::Message, AsyncFunctionHandler};
@@ -48,7 +48,7 @@ pub async fn execute_workflow(
         .map(|task| TaskInfo {
             id: task.id.clone(),
             name: task.name.clone(),
-            status: "pending".to_string(),
+            status: TaskStatus::Pending,
         })
         .collect();
 
@@ -97,17 +97,16 @@ pub async fn execute_workflow(
                 .iter()
                 .map(|audit| AuditEntry {
                     task_id: audit.task_id.to_string(),
-                    status: audit.status.to_string(),
+                    status: AuditStatus::from_http_code(&audit.status.to_string()),
                     timestamp: audit.timestamp.to_string(),
                     changes_count: audit.changes.len(),
                 })
                 .collect();
 
             for audit in &audit_trail {
-                let status = if audit.status == "200" {
-                    "complete"
-                } else {
-                    "failed"
+                let status = match audit.status {
+                    AuditStatus::Success => TaskStatus::Complete,
+                    AuditStatus::Failure => TaskStatus::Failed,
                 };
                 context
                     .safe_update_task_status(&audit.task_id, status)
