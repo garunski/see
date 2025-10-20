@@ -15,8 +15,8 @@ pub trait TaskExecutor: Send + Sync {
 /// Trait for logging task events without direct mutex manipulation
 pub trait TaskLogger: Send + Sync {
     fn log(&self, message: &str);
-    fn log_task_start(&self, task_id: &str);
-    fn log_task_end(&self, task_id: &str);
+    fn start_task(&self, task_id: &str);
+    fn end_task(&self, task_id: &str);
 }
 
 /// Simple implementation of TaskLogger that wraps ExecutionContext
@@ -44,11 +44,23 @@ impl TaskLogger for ContextTaskLogger {
         }
     }
 
-    fn log_task_start(&self, task_id: &str) {
-        self.log(&format!("[TASK_START:{}]", task_id));
+    fn start_task(&self, task_id: &str) {
+        match self.context.lock() {
+            Ok(mut ctx) => ctx.start_task(task_id),
+            Err(e) => {
+                eprintln!("Failed to lock context for task start: {}", e);
+                eprintln!("Task ID: {}", task_id);
+            }
+        }
     }
 
-    fn log_task_end(&self, task_id: &str) {
-        self.log(&format!("[TASK_END:{}]", task_id));
+    fn end_task(&self, task_id: &str) {
+        match self.context.lock() {
+            Ok(mut ctx) => ctx.end_task(task_id),
+            Err(e) => {
+                eprintln!("Failed to lock context for task end: {}", e);
+                eprintln!("Task ID: {}", task_id);
+            }
+        }
     }
 }

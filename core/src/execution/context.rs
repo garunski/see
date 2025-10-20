@@ -23,18 +23,6 @@ impl ExecutionContext {
     }
 
     pub fn log(&mut self, msg: &str) {
-        if msg.starts_with("[TASK_START:") && msg.ends_with("]") {
-            let task_id = Self::extract_task_id_from_marker(msg);
-            self.current_task_id = Some(task_id.clone());
-            self.update_task_status(&task_id, TaskStatus::InProgress);
-            return;
-        }
-
-        if msg.starts_with("[TASK_END:") && msg.ends_with("]") {
-            self.current_task_id = None;
-            return;
-        }
-
         self.output_logs.push(msg.to_string());
 
         if let Some(ref task_id) = self.current_task_id {
@@ -49,14 +37,13 @@ impl ExecutionContext {
         }
     }
 
-    fn extract_task_id_from_marker(marker: &str) -> String {
-        marker
-            .trim()
-            .strip_prefix("[TASK_START:")
-            .or_else(|| marker.trim().strip_prefix("[TASK_END:"))
-            .and_then(|s| s.strip_suffix("]"))
-            .unwrap_or("unknown")
-            .to_string()
+    pub fn start_task(&mut self, task_id: &str) {
+        self.current_task_id = Some(task_id.to_string());
+        self.update_task_status(task_id, TaskStatus::InProgress);
+    }
+
+    pub fn end_task(&mut self, _task_id: &str) {
+        self.current_task_id = None;
     }
 
     pub fn update_task_status(&mut self, task_id: &str, status: TaskStatus) {

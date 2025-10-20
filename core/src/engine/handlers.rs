@@ -103,7 +103,7 @@ impl TaskExecutor for CliCommandHandler {
             .and_then(|v| v.as_str())
             .unwrap_or("unknown");
 
-        logger.log_task_start(task_id);
+        logger.start_task(task_id);
 
         let formatted_command = if args.is_empty() {
             command.to_string()
@@ -138,7 +138,7 @@ impl TaskExecutor for CliCommandHandler {
         }
 
         if !output.status.success() {
-            logger.log_task_end(task_id);
+            logger.end_task(task_id);
             return Err(CoreError::CommandExecution(format!(
                 "Command '{}' failed with exit code: {:?}\nstderr: {}",
                 command,
@@ -175,7 +175,7 @@ impl TaskExecutor for CliCommandHandler {
             "extracted_json": extracted_json
         });
 
-        logger.log_task_end(task_id);
+        logger.end_task(task_id);
         Ok(result)
     }
 }
