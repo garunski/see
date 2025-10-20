@@ -10,12 +10,6 @@ pub use workflow_state::WorkflowState;
 
 use dioxus::prelude::*;
 
-#[derive(Debug, Clone, PartialEq)]
-pub enum SidebarTab {
-    Upload,
-    History,
-}
-
 // State provider for context
 #[derive(Clone)]
 pub struct AppStateProvider {
