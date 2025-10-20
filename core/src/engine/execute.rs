@@ -8,8 +8,8 @@ use dataflow_rs::engine::{message::Message, AsyncFunctionHandler};
 use dataflow_rs::{Engine, Workflow};
 use serde_json::json;
 use std::collections::HashMap;
-use std::fs;
 use std::sync::Arc;
+use tokio::fs;
 use uuid::Uuid;
 
 use super::handlers::CliCommandHandler;
@@ -19,7 +19,7 @@ pub async fn execute_workflow(
     output_callback: Option<OutputCallback>,
     store: Option<Arc<dyn AuditStore>>,
 ) -> Result<WorkflowResult, CoreError> {
-    let workflow_data = fs::read_to_string(workflow_file).map_err(|e| {
+    let workflow_data = fs::read_to_string(workflow_file).await.map_err(|e| {
         CoreError::WorkflowExecution(format!(
             "Failed to read workflow file '{}': {}",
             workflow_file, e
