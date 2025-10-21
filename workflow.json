@@ -3,13 +3,13 @@
   "name": "Cursor Agent JSON Parser Demo",
   "tasks": [
     {
-      "id": "echo_complete",
-      "name": "Echo Complete",
+      "id": "hello_world",
+      "name": "Hello World",
       "function": {
         "name": "cli_command",
         "input": {
           "command": "echo",
-          "args": ["Demo complete!"]
+          "args": ["Hello World!"]
         }
       }
     }
