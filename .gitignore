@@ -30,4 +30,5 @@ target
 /tailwindcss
 .DS_Store
 gui/assets/tailwind.css
-refactor
+examples
+typescript

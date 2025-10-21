@@ -25,6 +25,10 @@ impl SettingsState {
         self.settings.theme = theme;
     }
 
+    pub fn get_theme(&self) -> Theme {
+        self.settings.theme
+    }
+
     pub fn apply_loaded_settings(&mut self, settings: AppSettings) {
         self.settings = settings;
     }

@@ -166,7 +166,7 @@ pub struct WorkflowResult {
     pub output_logs: Vec<String>,
 }
 
-pub use crate::engine::execute::execute_workflow;
+pub use crate::engine::execute::{execute_workflow, execute_workflow_from_content};
 pub use crate::persistence::models::{
     AppSettings, Theme, WorkflowDefinition, WorkflowExecution, WorkflowExecutionSummary,
 };

@@ -14,19 +14,12 @@ use uuid::Uuid;
 
 use super::handlers::CliCommandHandler;
 
-pub async fn execute_workflow(
-    workflow_file: &str,
+pub async fn execute_workflow_from_content(
+    workflow_data: &str,
     output_callback: Option<OutputCallback>,
     store: Option<Arc<dyn AuditStore>>,
 ) -> Result<WorkflowResult, CoreError> {
-    let workflow_data = fs::read_to_string(workflow_file).await.map_err(|e| {
-        CoreError::WorkflowExecution(format!(
-            "Failed to read workflow file '{}': {}",
-            workflow_file, e
-        ))
-    })?;
-
-    let mut workflow = Workflow::from_json(&workflow_data)
+    let mut workflow = Workflow::from_json(workflow_data)
         .map_err(|e| CoreError::WorkflowExecution(format!("Failed to parse workflow: {}", e)))?;
 
     for task in &mut workflow.tasks {
@@ -54,7 +47,7 @@ pub async fn execute_workflow(
 
     let context = ExecutionContext::new(tasks, output_callback);
 
-    if let Err(e) = context.safe_log(&format!("Loading workflow from: {}\n", workflow_file)) {
+    if let Err(e) = context.safe_log("Loading workflow from content\n") {
         eprintln!("Failed to log workflow loading: {}", e);
     }
     if let Err(e) = context.safe_log(&format!("Loaded workflow: {}\n", workflow.name)) {
@@ -230,4 +223,19 @@ pub async fn execute_workflow(
             )))
         }
     }
+}
+
+pub async fn execute_workflow(
+    workflow_file: &str,
+    output_callback: Option<OutputCallback>,
+    store: Option<Arc<dyn AuditStore>>,
+) -> Result<WorkflowResult, CoreError> {
+    let workflow_data = fs::read_to_string(workflow_file).await.map_err(|e| {
+        CoreError::WorkflowExecution(format!(
+            "Failed to read workflow file '{}': {}",
+            workflow_file, e
+        ))
+    })?;
+
+    execute_workflow_from_content(&workflow_data, output_callback, store).await
 }

@@ -3,7 +3,7 @@ use crate::pages::settings::components::{
     WorkflowEditPage, WorkflowEditPageNew, WorkflowsListPage,
 };
 use crate::pages::workflow::{UploadPage, WorkflowDetailsPage};
-use crate::pages::{HistoryPage, SettingsPage};
+use crate::pages::{HistoryPage, HomePage, SettingsPage};
 use dioxus::prelude::*;
 use dioxus_router::prelude::{Link, Outlet, Routable};
 
@@ -12,6 +12,8 @@ use dioxus_router::prelude::{Link, Outlet, Routable};
 pub enum Route {
     #[layout(AppLayout)]
         #[route("/")]
+        HomePage {},
+        #[route("/workflows/upload")]
         UploadPage {},
         #[route("/history")]
         HistoryPage {},
@@ -106,7 +108,7 @@ fn PageNotFound(route: Vec<String>) -> Element {
             div { class: "text-center",
                 h1 { class: "text-2xl font-bold text-zinc-900 dark:text-white mb-4", "Page not found" }
                 p { class: "text-zinc-600 dark:text-zinc-400 mb-2", "The page you're looking for doesn't exist." }
-                Link { to: Route::UploadPage {}, class: "text-blue-600 dark:text-blue-400 hover:underline", "Go Home" }
+                Link { to: Route::HomePage {}, class: "text-blue-600 dark:text-blue-400 hover:underline", "Go Home" }
             }
         }
     }
