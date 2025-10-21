@@ -30,14 +30,49 @@ pub enum Theme {
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct WorkflowDefinition {
+    pub id: String,
+    pub name: String,
+    pub content: String,
+    pub is_default: bool,
+    pub is_edited: bool,
+}
+
+use crate::persistence::default_workflows::DefaultWorkflows;
+
+impl WorkflowDefinition {
+    /// Get all default workflow definitions
+    pub fn get_default_workflows() -> Vec<Self> {
+        vec![
+            WorkflowDefinition {
+                id: "default-echo-workflow-00000001".to_string(),
+                name: "Simple Echo Demo".to_string(),
+                content: DefaultWorkflows::simple_echo(),
+                is_default: true,
+                is_edited: false,
+            },
+            WorkflowDefinition {
+                id: "default-cursor-demo-00000002".to_string(),
+                name: "Cursor Agent Demo".to_string(),
+                content: DefaultWorkflows::cursor_demo(),
+                is_default: true,
+                is_edited: false,
+            },
+        ]
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct AppSettings {
     pub theme: Theme,
+    pub workflows: Vec<WorkflowDefinition>,
 }
 
 impl Default for AppSettings {
     fn default() -> Self {
         Self {
             theme: Theme::System,
+            workflows: Vec::new(),
         }
     }
 }

@@ -1,7 +1,11 @@
+use crate::router::Route;
 use crate::state::AppStateProvider;
 use dioxus::prelude::*;
+use dioxus_router::prelude::Link;
 use see_core::Theme;
 use std::sync::Arc;
+
+pub mod components;
 
 #[component]
 pub fn SettingsPage() -> Element {
@@ -22,7 +26,10 @@ pub fn SettingsPage() -> Element {
             spawn(async move {
                 if let Some(ref s) = store_clone {
                     match s
-                        .save_settings(&see_core::AppSettings { theme: new_theme })
+                        .save_settings(&see_core::AppSettings {
+                            theme: new_theme,
+                            workflows: state_provider.settings.read().settings.workflows.clone(),
+                        })
                         .await
                     {
                         Ok(_) => {
@@ -45,13 +52,13 @@ pub fn SettingsPage() -> Element {
         div { class: "space-y-8",
             // Header
             div {
-                h1 { class: "text-3xl font-bold text-zinc-900 dark:text-white", "Settings" }
+                h1 { class: "text-xl font-bold text-zinc-900 dark:text-white", "Settings" }
                 p { class: "mt-2 text-zinc-600 dark:text-zinc-400", "Customize your application preferences" }
             }
 
             // Theme Section
             div { class: "bg-white dark:bg-zinc-800 rounded-xl border border-zinc-200 dark:border-zinc-700 p-8 shadow-sm",
-                h3 { class: "text-xl font-semibold text-zinc-900 dark:text-white mb-6", "Appearance" }
+                h3 { class: "text-base font-semibold text-zinc-900 dark:text-white mb-6", "Appearance" }
                 div { class: "space-y-4",
                     for theme in [Theme::Light, Theme::Dark, Theme::System] {
                         button {
@@ -77,7 +84,7 @@ pub fn SettingsPage() -> Element {
                                     }
                                 }
                                 div { class: "text-left",
-                                    div { class: "font-semibold text-zinc-900 dark:text-white text-lg",
+                                    div { class: "font-semibold text-zinc-900 dark:text-white text-sm",
                                         match theme {
                                             Theme::Light => "Light",
                                             Theme::Dark => "Dark",
@@ -102,11 +109,22 @@ pub fn SettingsPage() -> Element {
                 }
             }
 
-            // Additional Settings Sections (placeholder for future)
+            // Workflow Settings Section
             div { class: "bg-white dark:bg-zinc-800 rounded-xl border border-zinc-200 dark:border-zinc-700 p-8 shadow-sm",
-                h3 { class: "text-xl font-semibold text-zinc-900 dark:text-white mb-4", "Workflow Settings" }
-                div { class: "text-zinc-500 dark:text-zinc-400",
-                    "Additional workflow configuration options will be available here in future updates."
+                h3 { class: "text-base font-semibold text-zinc-900 dark:text-white mb-4", "Workflow Management" }
+                div { class: "space-y-4",
+                    p { class: "text-zinc-600 dark:text-zinc-400",
+                        "Create, edit, and manage your workflow definitions. Default workflows are provided to get you started."
+                    }
+                    Link {
+                        to: Route::WorkflowsListPage {},
+                        class: "inline-flex items-center gap-x-1.5 rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600",
+                        // Cog icon
+                        svg { class: "-ml-0.5 h-4 w-4", view_box: "0 0 20 20", fill: "currentColor",
+                            path { d: "M10 2a8 8 0 100 16 8 8 0 000-16zM8.5 10a1.5 1.5 0 113 0 1.5 1.5 0 01-3 0zM10 6a4 4 0 100 8 4 4 0 000-8z" }
+                        }
+                        "Manage Workflows"
+                    }
                 }
             }
         }

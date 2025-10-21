@@ -1,3 +1,4 @@
+pub mod default_workflows;
 pub mod models;
 pub mod redb_store;
 

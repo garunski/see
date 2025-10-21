@@ -82,7 +82,7 @@ pub fn WorkflowDetailsPage(id: String) -> Element {
                     }
                     span { "Back to History" }
                 }
-                h1 { class: "text-2xl font-semibold text-zinc-950 dark:text-white", "Workflow Execution Details" }
+                h1 { class: "text-lg font-semibold text-zinc-950 dark:text-white", "Workflow Execution Details" }
             }
 
             // Loading state
@@ -103,7 +103,7 @@ pub fn WorkflowDetailsPage(id: String) -> Element {
                             path { d: "M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" }
                         }
                         div {
-                            h3 { class: "text-lg font-semibold text-red-800 dark:text-red-200", "Error Loading Workflow" }
+                            h3 { class: "text-base font-semibold text-red-800 dark:text-red-200", "Error Loading Workflow" }
                             p { class: "text-red-700 dark:text-red-300 mt-1", "{err}" }
                         }
                     }
@@ -115,7 +115,7 @@ pub fn WorkflowDetailsPage(id: String) -> Element {
                 // Metadata Card
                 div { class: "bg-white dark:bg-zinc-900 rounded-lg shadow-sm ring-1 ring-zinc-950/5 dark:ring-white/10 p-6",
                     div { class: "flex items-center justify-between mb-4",
-                        h2 { class: "text-xl font-semibold text-zinc-950 dark:text-white", "{exec.workflow_name}" }
+                        h2 { class: "text-base font-semibold text-zinc-950 dark:text-white", "{exec.workflow_name}" }
                         div {
                             class: format!("px-3 py-1 text-sm rounded-full font-medium {}",
                                 if exec.success {
@@ -146,7 +146,7 @@ pub fn WorkflowDetailsPage(id: String) -> Element {
                 // Current Task Details
                 if !exec.tasks.is_empty() {
                     div { class: "bg-white dark:bg-zinc-900 rounded-lg shadow-sm ring-1 ring-zinc-950/5 dark:ring-white/10 p-6",
-                        h3 { class: "text-lg font-semibold text-zinc-950 dark:text-white mb-4", "Current Task" }
+                        h3 { class: "text-base font-semibold text-zinc-950 dark:text-white mb-4", "Current Task" }
 
                         // Task Progress Overview
                         WorkflowProgress {
@@ -159,7 +159,7 @@ pub fn WorkflowDetailsPage(id: String) -> Element {
                         if let Some(task) = exec.tasks.get(current_step()) {
                             div { class: "mt-6 p-4 bg-zinc-50 dark:bg-zinc-800 rounded-lg",
                                 div { class: "flex items-center justify-between mb-3",
-                                    h4 { class: "text-lg font-semibold text-zinc-950 dark:text-white", "{task.name}" }
+                                    h4 { class: "text-base font-semibold text-zinc-950 dark:text-white", "{task.name}" }
                                     div {
                                         class: format!("px-3 py-1 text-sm rounded-full font-medium {}",
                                             match task.status {
@@ -210,7 +210,7 @@ pub fn WorkflowDetailsPage(id: String) -> Element {
                 // Current Task Audit Trail
                 if !current_task_audit().is_empty() {
                     div { class: "bg-white dark:bg-zinc-900 rounded-lg shadow-sm ring-1 ring-zinc-950/5 dark:ring-white/10 p-6",
-                        h3 { class: "text-lg font-semibold text-zinc-950 dark:text-white mb-4", "Current Task Audit Trail" }
+                        h3 { class: "text-base font-semibold text-zinc-950 dark:text-white mb-4", "Current Task Audit Trail" }
                         div { class: "space-y-3",
                             for entry in current_task_audit().iter() {
                                 div { class: "flex items-start gap-3 p-3 bg-zinc-50 dark:bg-zinc-800 rounded-lg",
@@ -230,7 +230,7 @@ pub fn WorkflowDetailsPage(id: String) -> Element {
                     if let Some(logs) = exec.per_task_logs.get(&current_task.id) {
                         if !logs.is_empty() {
                             div { class: "bg-white dark:bg-zinc-900 rounded-lg shadow-sm ring-1 ring-zinc-950/5 dark:ring-white/10 p-6",
-                                h3 { class: "text-lg font-semibold text-zinc-950 dark:text-white mb-4", "Current Task Logs" }
+                                h3 { class: "text-base font-semibold text-zinc-950 dark:text-white mb-4", "Current Task Logs" }
                                 div { class: "space-y-2 max-h-64 overflow-y-auto",
                                     for log in logs.iter() {
                                         div { class: "text-sm text-zinc-700 dark:text-zinc-300 font-mono bg-zinc-100 dark:bg-zinc-800 p-2 rounded", "{log}" }
@@ -244,7 +244,7 @@ pub fn WorkflowDetailsPage(id: String) -> Element {
                 // Errors Section
                 if !exec.errors.is_empty() {
                     div { class: "bg-white dark:bg-zinc-900 rounded-lg shadow-sm ring-1 ring-zinc-950/5 dark:ring-white/10 p-6",
-                        h3 { class: "text-lg font-semibold text-red-800 dark:text-red-200 mb-4", "Errors" }
+                        h3 { class: "text-base font-semibold text-red-800 dark:text-red-200 mb-4", "Errors" }
                         div { class: "space-y-3",
                             for error in exec.errors.iter() {
                                 div { class: "p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg",

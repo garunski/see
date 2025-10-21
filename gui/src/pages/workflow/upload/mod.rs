@@ -112,7 +112,7 @@ pub fn UploadPage() -> Element {
         div { class: "space-y-8",
             // Header - using Catalyst typography
             div {
-                h1 { class: "text-2xl font-semibold text-zinc-950 dark:text-white", "Upload Workflow" }
+                h1 { class: "text-lg font-semibold text-zinc-950 dark:text-white", "Upload Workflow" }
                 p { class: "mt-2 text-sm text-zinc-500 dark:text-zinc-400", "Upload and execute workflow files" }
             }
 
@@ -183,7 +183,7 @@ pub fn UploadPage() -> Element {
             // Workflow Results
             if let Some(result) = workflow_result.read().clone() {
                 div { class: "space-y-4",
-                    h2 { class: "text-lg font-semibold text-zinc-950 dark:text-white", "Execution Results" }
+                    h2 { class: "text-base font-semibold text-zinc-950 dark:text-white", "Execution Results" }
                     WorkflowInfoCard {
                         result: ReadOnlySignal::new(Signal::new(result)),
                         tasks: state_provider.workflow.read().tasks.clone(),

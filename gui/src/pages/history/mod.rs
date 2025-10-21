@@ -19,7 +19,7 @@ fn HistoryItem(
                 div { class: "flex items-center justify-between",
                     div { class: "flex-1 min-w-0",
                         div { class: "flex items-center gap-4 mb-3",
-                            h4 { class: "text-xl font-semibold text-zinc-900 dark:text-white truncate", "{execution.workflow_name}" }
+                            h4 { class: "text-base font-semibold text-zinc-900 dark:text-white truncate", "{execution.workflow_name}" }
                             div {
                                 class: format!("px-3 py-1 text-sm rounded-full font-medium {}",
                                     if execution.success {
@@ -96,7 +96,7 @@ pub fn HistoryPage() -> Element {
         div { class: "space-y-8",
             // Header
             div {
-                h1 { class: "text-3xl font-bold text-zinc-900 dark:text-white", "Workflow History" }
+                h1 { class: "text-xl font-bold text-zinc-900 dark:text-white", "Workflow History" }
                 p { class: "mt-2 text-zinc-600 dark:text-zinc-400", "View and manage your previous workflow executions" }
             }
 
@@ -104,7 +104,7 @@ pub fn HistoryPage() -> Element {
             if workflow_history().is_empty() {
                 div { class: "bg-white dark:bg-zinc-800 rounded-xl border border-zinc-200 dark:border-zinc-700 p-16 text-center shadow-sm",
                     div { class: "text-6xl mb-6", "📋" }
-                    h3 { class: "text-xl font-semibold text-zinc-900 dark:text-white mb-3", "No workflow executions yet" }
+                    h3 { class: "text-base font-semibold text-zinc-900 dark:text-white mb-3", "No workflow executions yet" }
                     p { class: "text-zinc-500 dark:text-zinc-400", "Execute your first workflow to see it appear here" }
                 }
             } else {

@@ -2,11 +2,18 @@ use crate::components::Toast;
 use crate::router::Route;
 use crate::state::AppStateProvider;
 use dioxus::prelude::*;
+use dioxus_desktop::use_window;
 use see_core::{AuditStore, RedbStore, Theme};
 use std::sync::Arc;
 
 #[component]
 pub fn App() -> Element {
+    // 0. Configure window behavior - disable "Always on Top"
+    let window = use_window();
+    use_effect(move || {
+        window.set_always_on_top(false);
+    });
+
     // 1. Initialize store and provide as context with proper error handling
     let store = use_hook(|| match RedbStore::new_default() {
         Ok(store) => Some(Arc::new(store)),
@@ -42,6 +49,27 @@ pub fn App() -> Element {
                 if let Ok(Some(loaded)) = s.load_settings().await {
                     settings.write().apply_loaded_settings(loaded);
                 }
+
+                // Load and merge default workflows
+                let default_workflows = see_core::WorkflowDefinition::get_default_workflows();
+                let mut settings_guard = settings.write();
+                for default_workflow in default_workflows {
+                    // Check if this default workflow already exists in settings
+                    let exists = settings_guard
+                        .settings
+                        .workflows
+                        .iter()
+                        .any(|w| w.id == default_workflow.id);
+                    if !exists {
+                        // Add default workflow if it doesn't exist
+                        settings_guard.add_workflow(default_workflow);
+                    }
+                }
+
+                // Save updated settings with default workflows
+                if let Err(e) = s.save_settings(&settings_guard.settings).await {
+                    eprintln!("Failed to save default workflows: {}", e);
+                }
             }
         });
     });
@@ -71,19 +99,13 @@ pub fn App() -> Element {
         }
     });
 
-    // 5. Compute dark mode from settings (for UI classes)
-    let dark_mode_signal = use_memo(
-        move || match state_provider.settings.read().settings.theme {
-            Theme::Dark => true,
-            Theme::Light => false,
-            Theme::System => matches!(dark_light::detect(), dark_light::Mode::Dark),
-        },
-    );
+    // 5. Use system theme detection directly (removed problematic signal access)
+    let is_dark_mode = matches!(dark_light::detect(), dark_light::Mode::Dark);
 
     rsx! {
         document::Stylesheet { href: asset!("/assets/tailwind.css") }
         div {
-            class: format!("min-h-screen bg-white dark:bg-zinc-900 text-zinc-950 dark:text-white {}", if *dark_mode_signal.read() { "dark" } else { "" }),
+            class: format!("min-h-screen bg-white dark:bg-zinc-900 text-zinc-950 dark:text-white {}", if is_dark_mode { "dark" } else { "" }),
             onkeydown: move |evt| {
                 match evt.key() {
                     dioxus::events::Key::ArrowLeft | dioxus::events::Key::ArrowUp => {

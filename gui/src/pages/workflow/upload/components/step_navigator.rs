@@ -35,7 +35,7 @@ pub fn StepNavigator(
             div { class: "flex flex-col items-center space-y-2",
                 div { class: "text-sm font-medium text-gray-700 dark:text-gray-300", "Step {step_display} of {total_steps}" }
                 div { class: "flex items-center space-x-3",
-                    div { class: "text-lg font-semibold text-gray-900 dark:text-white", {task_name} }
+                    div { class: "text-sm font-semibold text-gray-900 dark:text-white", {task_name} }
                     span { class: "inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {status_badge_class}", {task_status.to_string()} }
                 }
             }

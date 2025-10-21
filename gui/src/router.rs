@@ -1,4 +1,7 @@
 use crate::components::Sidebar;
+use crate::pages::settings::components::{
+    WorkflowEditPage, WorkflowEditPageNew, WorkflowsListPage,
+};
 use crate::pages::workflow::{UploadPage, WorkflowDetailsPage};
 use crate::pages::{HistoryPage, SettingsPage};
 use dioxus::prelude::*;
@@ -16,6 +19,12 @@ pub enum Route {
         WorkflowDetailsPage { id: String },
         #[route("/settings")]
         SettingsPage {},
+        #[route("/settings/workflows")]
+        WorkflowsListPage {},
+        #[route("/settings/workflows/new")]
+        WorkflowEditPageNew {},
+        #[route("/settings/workflows/edit/:id")]
+        WorkflowEditPage { id: String },
     #[end_layout]
     #[route("/:..route")]
     PageNotFound { route: Vec<String> },
@@ -26,12 +35,12 @@ pub fn AppLayout() -> Element {
     let mut show_sidebar = use_signal(|| false);
 
     rsx! {
-        div { class: "relative isolate flex min-h-svh w-full bg-white max-lg:flex-col lg:bg-zinc-100 dark:bg-zinc-900 dark:lg:bg-zinc-950",
-            div { class: "fixed inset-y-0 left-0 w-64 max-lg:hidden",
+        div { class: "relative isolate flex min-h-svh w-full bg-white max-sm:flex-col sm:bg-zinc-100 dark:bg-zinc-900 dark:sm:bg-zinc-950",
+            div { class: "fixed inset-y-0 left-0 w-48 max-sm:hidden",
                 Sidebar {}
             }
 
-            header { class: "flex items-center px-4 lg:hidden",
+            header { class: "flex items-center px-4 sm:hidden",
                 div { class: "py-2.5",
                     button {
                         class: "inline-flex items-center justify-center rounded-lg p-2 text-zinc-950 hover:bg-zinc-950/5 dark:text-white dark:hover:bg-white/5",
@@ -50,7 +59,7 @@ pub fn AppLayout() -> Element {
             }
 
             if *show_sidebar.read() {
-                div { class: "lg:hidden",
+                div { class: "sm:hidden",
                     // Backdrop
                     div {
                         class: "fixed inset-0 bg-black/30 transition data-closed:opacity-0 data-enter:duration-300 data-enter:ease-out data-leave:duration-200 data-leave:ease-in",
@@ -79,8 +88,8 @@ pub fn AppLayout() -> Element {
                 }
             }
 
-            main { class: "flex flex-1 flex-col pb-2 lg:min-w-0 lg:pt-2 lg:pr-2 lg:pl-64",
-                div { class: "grow p-6 lg:rounded-lg lg:bg-white lg:p-10 lg:shadow-xs lg:ring-1 lg:ring-zinc-950/5 dark:lg:bg-zinc-900 dark:lg:ring-white/10",
+            main { class: "flex flex-1 flex-col pb-2 sm:min-w-0 sm:pt-2 sm:pr-2 sm:pl-48",
+                div { class: "grow p-6 sm:rounded-lg sm:bg-white sm:p-10 sm:shadow-xs sm:ring-1 sm:ring-zinc-950/5 dark:sm:bg-zinc-900 dark:sm:ring-white/10",
                     div { class: "mx-auto max-w-6xl",
                         Outlet::<Route> {}
                     }
