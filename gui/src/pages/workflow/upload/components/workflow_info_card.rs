@@ -1,4 +1,4 @@
-use super::{StepNavigator, WorkflowProgress};
+use crate::components::{StepNavigator, WorkflowProgress};
 use dioxus::prelude::*;
 use see_core::{TaskInfo, TaskStatus, WorkflowResult};
 

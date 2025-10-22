@@ -16,7 +16,7 @@ tasks:
       - cargo clippy --all-targets --all-features -- -D warnings
       - cargo test
       - |
-        find . -name "*.rs" -not -path "./target/*" | xargs wc -l | awk '$1 > 200 && $2 != "total" {print "⚠️  " $2 " (" $1 " lines) - consider refactoring. create an aggressive plan, it is ok to change the contracts."}' | head -10
+        find . -name "*.rs" -not -path "./target/*" | xargs wc -l | awk '$1 > 200 && $2 != "total" {print "⚠️  " $2 " (" $1 " lines) - create an aggressive refactoring plan that completely eliminates this bloated file by breaking it into focused, single-responsibility modules, removing all legacy patterns, deleting unused code without any #[allow(dead_code)] bullshit, and modernizing the API contracts - I want zero warnings, zero dead code, and a clean architecture that actually makes sense."}' | head -10
 
   # Run CLI application
   run-cli:
