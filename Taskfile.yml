@@ -22,6 +22,8 @@ tasks:
   run-cli:
     desc: Run CLI with workflow.json
     deps: [dev]
+    env:
+      RUST_LOG: see_core=trace
     cmds:
       - cargo run -p cli -- --file workflow.json
 

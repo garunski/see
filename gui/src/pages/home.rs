@@ -1,5 +1,5 @@
 use crate::router::Route;
-use crate::services::workflow::{create_output_channel, run_workflow_from_content};
+use crate::services::workflow::run_workflow_from_content;
 use crate::state::AppStateProvider;
 use dioxus::prelude::*;
 use dioxus_router::prelude::use_navigator;
@@ -16,67 +16,30 @@ fn WorkflowCard(workflow: WorkflowDefinition) -> Element {
             class: "rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 p-4 hover:bg-zinc-50 dark:hover:bg-zinc-700 hover:shadow-md transition-colors cursor-pointer",
             onclick: move |_| {
                 let workflow_content = workflow.content.clone();
-                let _workflow_name = workflow.name.clone();
                 let mut workflow_state = state_provider.workflow;
-                let _ui_state = state_provider.ui;
                 let mut history_state = state_provider.history;
-
-                // Status updates removed
+                let navigator_clone = navigator;
 
                 spawn(async move {
                     workflow_state.write().reset_before_run();
 
-                    // Polling will start once we receive EXECUTION_ID from engine output
-
-                    let (output_callback, mut handles) = create_output_channel();
-
-                    let mut workflow_state_clone = workflow_state;
-                    let navigator_clone_for_start = navigator;
-                    spawn(async move {
-                        while let Some(msg) = handles.receiver.recv().await {
-                            if msg.starts_with("EXECUTION_ID:") {
-                                let execution_id = msg
-                                    .strip_prefix("EXECUTION_ID:")
-                                    .unwrap_or("")
-                                    .trim()
-                                    .to_string();
-                                if !execution_id.is_empty() {
-                                    workflow_state_clone.write().execution_id = Some(execution_id.clone());
-
-                                    // Navigate to workflow details page as soon as execution starts
-                                    navigator_clone_for_start.push(Route::WorkflowDetailsPage {
-                                        id: execution_id.clone()
-                                    });
-
-                                    workflow_state_clone.write().start_polling(execution_id);
-                                }
-                            } else {
-                                workflow_state_clone.write().output_logs.push(msg);
-                            }
-                        }
-                    });
-
                     tracing::info!("About to execute workflow");
 
-                    match run_workflow_from_content(workflow_content.clone(), output_callback).await {
+                    // Execute and wait for result (like CLI)
+                    match run_workflow_from_content(workflow_content, None).await {
                         Ok(result) => {
                             tracing::info!(success = result.success, "Workflow execution completed");
-                            // Stop polling
-                            workflow_state.write().stop_polling();
-
                             workflow_state.write().apply_success(&result);
-                            // Status updates removed
                             history_state.write().needs_history_reload = true;
 
-                            // Navigation already happened when execution started
+                            // Navigate to completed workflow
+                            navigator_clone.push(Route::WorkflowDetailsPage {
+                                id: result.execution_id.clone()
+                            });
                         }
                         Err(e) => {
                             tracing::error!(error = %e, "Workflow execution failed");
-                            // Stop polling on error
-                            workflow_state.write().stop_polling();
-
                             workflow_state.write().apply_failure(&e.to_string());
-                            // Status updates removed
                         }
                     }
                 });

@@ -3,7 +3,7 @@ pub mod components;
 pub use components::WorkflowInfoCard;
 
 use crate::components::ExecutionStatus;
-use crate::services::workflow::{create_output_channel, run_workflow};
+use crate::services::workflow::run_workflow;
 use crate::state::AppStateProvider;
 use dioxus::prelude::*;
 use rfd::FileDialog;
@@ -51,47 +51,19 @@ pub fn UploadPage() -> Element {
 
     let on_execute = move || {
         let mut workflow_state = state_provider.workflow;
-        let _ui_state = state_provider.ui;
         let mut history_state = state_provider.history;
         spawn(async move {
             let file_path = workflow_state.read().workflow_file.clone();
             workflow_state.write().reset_before_run();
-            // Status updates removed
 
-            let (output_callback, mut handles) = create_output_channel();
-
-            let mut workflow_state_clone = workflow_state;
-            spawn(async move {
-                while let Some(msg) = handles.receiver.recv().await {
-                    // Check if this is an execution_id message
-                    if msg.starts_with("EXECUTION_ID:") {
-                        let execution_id = msg
-                            .strip_prefix("EXECUTION_ID:")
-                            .unwrap_or("")
-                            .trim()
-                            .to_string();
-                        if !execution_id.is_empty() {
-                            workflow_state_clone.write().execution_id = Some(execution_id.clone());
-                            workflow_state_clone.write().start_polling(execution_id);
-                        }
-                    } else {
-                        // Regular log message
-                        workflow_state_clone.write().output_logs.push(msg);
-                    }
-                }
-            });
-
-            match run_workflow(file_path, output_callback).await {
+            // Execute and wait for result (like CLI)
+            match run_workflow(file_path, None).await {
                 Ok(result) => {
                     workflow_state.write().apply_success(&result);
-                    workflow_state.write().stop_polling(); // Stop polling when complete
-                                                           // Status updates removed
                     history_state.write().needs_history_reload = true;
                 }
                 Err(e) => {
                     workflow_state.write().apply_failure(&e.to_string());
-                    workflow_state.write().stop_polling(); // Stop polling on failure
-                                                           // Status updates removed
                 }
             }
         });
