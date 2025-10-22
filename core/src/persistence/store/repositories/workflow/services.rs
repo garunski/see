@@ -7,19 +7,26 @@ use crate::persistence::store::keys::workflow_metadata_key;
 use redb::Table;
 use tracing::{instrument, trace};
 
-use super::query_builder::{WorkflowQueryBuilder, WorkflowQueryOptions};
+use super::execution_queries::ExecutionQueryService;
+use super::metadata_queries::MetadataQueryService;
+use super::query_types::WorkflowQueryOptions;
 use super::table_operations::TableOperations;
 use super::types::{TableContext, EXECUTIONS_DEF, TASKS_DEF};
 
 /// Service for workflow metadata operations
 #[derive(Debug)]
 pub struct WorkflowMetadataService {
-    pub db_ops: DatabaseOperations,
+    db_ops: DatabaseOperations,
+    query_service: MetadataQueryService,
 }
 
 impl WorkflowMetadataService {
     pub fn new(db_ops: DatabaseOperations) -> Self {
-        Self { db_ops }
+        let query_service = MetadataQueryService::new(db_ops.clone());
+        Self {
+            db_ops,
+            query_service,
+        }
     }
 
     /// Save workflow metadata with validation
@@ -52,9 +59,7 @@ impl WorkflowMetadataService {
         &self,
         options: WorkflowQueryOptions,
     ) -> Result<Vec<WorkflowMetadata>, CoreError> {
-        let mut query_builder = WorkflowQueryBuilder::new(self.db_ops.clone());
-        query_builder.options = options;
-        query_builder.execute_metadata().await
+        self.query_service.query_metadata(options).await
     }
 
     /// Delete workflow metadata and all associated tasks
@@ -125,12 +130,13 @@ impl WorkflowMetadataService {
 /// Service for workflow execution operations
 #[derive(Debug)]
 pub struct WorkflowExecutionService {
-    pub db_ops: DatabaseOperations,
+    query_service: ExecutionQueryService,
 }
 
 impl WorkflowExecutionService {
     pub fn new(db_ops: DatabaseOperations) -> Self {
-        Self { db_ops }
+        let query_service = ExecutionQueryService::new(db_ops);
+        Self { query_service }
     }
 
     /// Get workflow with tasks reconstructed from metadata and task executions
@@ -145,7 +151,6 @@ impl WorkflowExecutionService {
             ));
         }
 
-        let query_builder = WorkflowQueryBuilder::new(self.db_ops.clone());
-        query_builder.get_with_tasks(execution_id).await
+        self.query_service.get_with_tasks(execution_id).await
     }
 }

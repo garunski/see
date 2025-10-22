@@ -5,8 +5,10 @@ use crate::persistence::models::{WorkflowExecution, WorkflowExecutionSummary, Wo
 use crate::persistence::store::db_ops::DatabaseOperations;
 
 mod execution_ops;
+mod execution_queries;
 mod metadata_ops;
-mod query_builder;
+mod metadata_queries;
+mod query_types;
 mod services;
 mod table_operations;
 mod types;

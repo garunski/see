@@ -8,7 +8,7 @@ use tracing::instrument;
 use super::services::{WorkflowExecutionService, WorkflowMetadataService};
 
 // Re-export only what's actually used
-pub use super::query_builder::WorkflowQueryOptions;
+pub use super::query_types::WorkflowQueryOptions;
 
 /// Modern MetadataOperations using the new service layer architecture
 #[derive(Debug)]
@@ -40,16 +40,13 @@ impl MetadataOperations {
         &self,
         limit: usize,
     ) -> Result<Vec<WorkflowMetadata>, CoreError> {
-        let options = WorkflowQueryOptions {
-            limit: Some(limit),
-            offset: Some(0),
-            status_filter: None,
-            workflow_name_filter: None,
-            start_time_after: None,
-            start_time_before: None,
-            sort_by: super::query_builder::WorkflowSortField::StartTime,
-            sort_order: super::query_builder::SortOrder::Descending,
-        };
+        let options = WorkflowQueryOptions::new()
+            .with_limit(limit)
+            .with_offset(0)
+            .with_sort(
+                super::query_types::WorkflowSortField::StartTime,
+                super::query_types::SortOrder::Descending,
+            );
 
         self.metadata_service.list_metadata(options).await
     }
