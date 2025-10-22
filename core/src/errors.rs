@@ -51,3 +51,9 @@ pub enum CoreError {
     #[error("serialization error: {0}")]
     Serialization(String),
 }
+
+impl From<Box<CoreError>> for CoreError {
+    fn from(err: Box<CoreError>) -> Self {
+        *err
+    }
+}

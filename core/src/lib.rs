@@ -181,8 +181,11 @@ pub fn init_tracing(log_dir: Option<PathBuf>) -> Result<TracingGuard, Box<CoreEr
     let log_dir = match log_dir {
         Some(dir) => dir,
         None => {
-            let home = dirs::home_dir()
-                .ok_or_else(|| CoreError::Dataflow("Could not find home directory".to_string()))?;
+            let home = dirs::home_dir().ok_or_else(|| {
+                Box::new(CoreError::Dataflow(
+                    "Could not find home directory".to_string(),
+                ))
+            })?;
             home.join(".see").join("logs")
         }
     };
@@ -217,7 +220,7 @@ static GLOBAL_STORE: Mutex<Option<Arc<dyn AuditStore + Send + Sync>>> = Mutex::n
 static INIT: Once = Once::new();
 
 /// Get the global store instance, creating it if it doesn't exist
-pub fn get_global_store() -> Result<Arc<dyn AuditStore + Send + Sync>, CoreError> {
+pub fn get_global_store() -> Result<Arc<dyn AuditStore + Send + Sync>, Box<CoreError>> {
     INIT.call_once(|| {
         let store = match RedbStore::new_default() {
             Ok(store) => Some(Arc::new(store) as Arc<dyn AuditStore + Send + Sync>),
@@ -231,13 +234,20 @@ pub fn get_global_store() -> Result<Arc<dyn AuditStore + Send + Sync>, CoreError
         }
     });
 
-    let global_store = GLOBAL_STORE
-        .lock()
-        .map_err(|e| CoreError::MutexLock(format!("Failed to lock global store: {}", e)))?;
+    let global_store = GLOBAL_STORE.lock().map_err(|e| {
+        Box::new(CoreError::MutexLock(format!(
+            "Failed to lock global store: {}",
+            e
+        )))
+    })?;
     global_store
         .as_ref()
-        .ok_or_else(|| CoreError::Dataflow("Global store not initialized".to_string()))
-        .map(|store| store.clone())
+        .ok_or_else(|| {
+            Box::new(CoreError::Dataflow(
+                "Global store not initialized".to_string(),
+            ))
+        })
+        .cloned()
 }
 
 pub use crate::engine::execute::{execute_workflow, execute_workflow_from_content};

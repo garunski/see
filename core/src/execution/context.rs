@@ -53,7 +53,12 @@ impl ExecutionContext {
     }
 
     pub fn start_task(&mut self, task_id: &str) {
-        debug!(task_id = %task_id, "Starting task");
+        debug!(
+            task_id = %task_id,
+            execution_id = %self.execution_id,
+            workflow_name = %self.workflow_name,
+            "Starting task"
+        );
         self.current_task_id = Some(task_id.to_string());
         self.task_start_times
             .insert(task_id.to_string(), chrono::Utc::now().to_rfc3339());
@@ -61,12 +66,23 @@ impl ExecutionContext {
     }
 
     pub fn end_task(&mut self, task_id: &str) {
-        debug!(task_id = %task_id, "Ending task");
+        debug!(
+            task_id = %task_id,
+            execution_id = %self.execution_id,
+            workflow_name = %self.workflow_name,
+            "Ending task"
+        );
         self.current_task_id = None;
     }
 
     pub fn update_task_status(&mut self, task_id: &str, status: TaskStatus) {
-        trace!(task_id = %task_id, status = %status, "Updating task status");
+        trace!(
+            task_id = %task_id,
+            status = %status,
+            execution_id = %self.execution_id,
+            workflow_name = %self.workflow_name,
+            "Updating task status"
+        );
         if let Some(task) = self.tasks.iter_mut().find(|t| t.id == task_id) {
             task.status = status;
         }
@@ -130,7 +146,14 @@ impl ExecutionContextSafe for Arc<Mutex<ExecutionContext>> {
     fn safe_log(&self, msg: &str) -> Result<(), CoreError> {
         let mut ctx = self
             .lock()
-            .map_err(|e| CoreError::MutexLock(format!("Failed to lock context: {}", e)))?;
+            .map_err(|e| {
+                tracing::error!(
+                    error = %e,
+                    message = %msg,
+                    "Failed to lock execution context for logging - this may indicate workflow interruption"
+                );
+                CoreError::MutexLock(format!("Failed to lock context: {}", e))
+            })?;
         ctx.log(msg);
         Ok(())
     }
@@ -138,7 +161,15 @@ impl ExecutionContextSafe for Arc<Mutex<ExecutionContext>> {
     fn safe_update_task_status(&self, task_id: &str, status: TaskStatus) -> Result<(), CoreError> {
         let mut ctx = self
             .lock()
-            .map_err(|e| CoreError::MutexLock(format!("Failed to lock context: {}", e)))?;
+            .map_err(|e| {
+                tracing::error!(
+                    error = %e,
+                    task_id = %task_id,
+                    status = %status,
+                    "Failed to lock execution context for task status update - this may indicate workflow interruption"
+                );
+                CoreError::MutexLock(format!("Failed to lock context: {}", e))
+            })?;
         ctx.update_task_status(task_id, status);
         Ok(())
     }

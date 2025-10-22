@@ -50,7 +50,12 @@ pub async fn execute_workflow_from_content(
 
     let execution_id = Uuid::new_v4().to_string();
     tracing::Span::current().record("execution_id", &execution_id);
-    info!(workflow_name = %workflow.name, task_count = workflow.tasks.len(), "Starting workflow");
+    info!(
+        execution_id = %execution_id,
+        workflow_name = %workflow.name,
+        task_count = workflow.tasks.len(),
+        "Starting workflow execution - this execution will continue even if user navigates away from home page"
+    );
     let workflow_start_time = chrono::Utc::now().to_rfc3339();
 
     let context = ExecutionContext::new(
@@ -120,16 +125,33 @@ pub async fn execute_workflow_from_content(
     let engine = Engine::new(vec![workflow.clone()], Some(custom_functions));
     let mut message = Message::from_value(&json!({}));
 
-    debug!("Executing workflow via dataflow engine");
+    debug!(
+        execution_id = %execution_id,
+        workflow_name = %workflow.name,
+        task_count = workflow.tasks.len(),
+        "Executing workflow via dataflow engine"
+    );
     if let Err(e) = context.safe_log("\nExecuting workflow...\n") {
-        error!(error = %e, "Failed to log execution start");
+        error!(
+            error = %e,
+            execution_id = %execution_id,
+            "Failed to log execution start - context may be lost"
+        );
     }
 
     match engine.process_message(&mut message).await {
         Ok(_) => {
-            info!("Workflow execution completed successfully");
+            info!(
+                execution_id = %execution_id,
+                workflow_name = %workflow.name,
+                "Workflow execution completed successfully"
+            );
             if let Err(e) = context.safe_log("\n✅ Workflow execution complete!") {
-                error!(error = %e, "Failed to log execution completion");
+                error!(
+                    error = %e,
+                    execution_id = %execution_id,
+                    "Failed to log execution completion - context may be lost"
+                );
             }
 
             let audit_trail: Vec<AuditEntry> = message
@@ -203,14 +225,37 @@ pub async fn execute_workflow_from_content(
             };
 
             let (output_logs, per_task_logs, tasks) = match Arc::try_unwrap(context.clone()) {
-                Ok(context) => context
-                    .into_inner()
-                    .map_err(|e| {
-                        CoreError::ExecutionContext(format!("Failed to unwrap context: {:?}", e))
-                    })?
-                    .extract_data(),
+                Ok(context) => {
+                    debug!(
+                        execution_id = %execution_id,
+                        "Successfully unwrapped execution context - single reference"
+                    );
+                    context
+                        .into_inner()
+                        .map_err(|e| {
+                            error!(
+                                error = %e,
+                                execution_id = %execution_id,
+                                "Failed to unwrap context - this may indicate workflow interruption"
+                            );
+                            CoreError::ExecutionContext(format!(
+                                "Failed to unwrap context: {:?}",
+                                e
+                            ))
+                        })?
+                        .extract_data()
+                }
                 Err(context) => {
+                    debug!(
+                        execution_id = %execution_id,
+                        "Multiple references to execution context - using lock"
+                    );
                     let ctx = context.lock().map_err(|e| {
+                        error!(
+                            error = %e,
+                            execution_id = %execution_id,
+                            "Failed to lock context for data extraction - this may indicate workflow interruption"
+                        );
                         CoreError::MutexLock(format!(
                             "Failed to lock context for data extraction: {}",
                             e
@@ -239,6 +284,11 @@ pub async fn execute_workflow_from_content(
 
             // Save workflow completion metadata
             {
+                info!(
+                    execution_id = %execution_id,
+                    workflow_name = %workflow.name,
+                    "Saving successful workflow execution to database"
+                );
                 let metadata = crate::persistence::models::WorkflowMetadata {
                     id: execution_id.clone(),
                     workflow_name: workflow.name.clone(),
@@ -278,17 +328,38 @@ pub async fn execute_workflow_from_content(
                 }
             }
 
+            info!(
+                execution_id = %execution_id,
+                workflow_name = %workflow.name,
+                success = result.success,
+                "Workflow execution completed successfully - returning result"
+            );
             Ok(result)
         }
         Err(e) => {
+            error!(
+                error = %e,
+                execution_id = %execution_id,
+                workflow_name = %workflow.name,
+                "Workflow execution failed - this may be due to navigation away from home page or other interruption"
+            );
             if let Err(log_err) =
                 context.safe_log(&format!("\n❌ Workflow execution failed: {}", e))
             {
-                eprintln!("Failed to log execution failure: {}", log_err);
+                error!(
+                    error = %log_err,
+                    execution_id = %execution_id,
+                    "Failed to log execution failure - context may be lost"
+                );
             }
 
             // Save workflow failure metadata
             {
+                info!(
+                    execution_id = %execution_id,
+                    workflow_name = %workflow.name,
+                    "Saving failed workflow execution to database"
+                );
                 let metadata = crate::persistence::models::WorkflowMetadata {
                     id: execution_id.clone(),
                     workflow_name: workflow.name.clone(),
@@ -302,6 +373,11 @@ pub async fn execute_workflow_from_content(
                 }
             }
 
+            error!(
+                execution_id = %execution_id,
+                workflow_name = %workflow.name,
+                "Workflow execution failed - returning error result"
+            );
             Err(CoreError::WorkflowExecution(format!(
                 "Workflow execution failed: {}",
                 e

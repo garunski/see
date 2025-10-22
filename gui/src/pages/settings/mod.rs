@@ -75,7 +75,7 @@ pub fn SettingsPage() -> Element {
                                 }
                             ),
                             onclick: {
-                                let mut change_theme = change_theme.clone();
+                                let mut change_theme = change_theme;
                                 move |_| change_theme(theme)
                             },
 

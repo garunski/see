@@ -7,39 +7,48 @@ use see_core::WorkflowDefinition;
 
 #[component]
 fn WorkflowCard(workflow: WorkflowDefinition) -> Element {
-    let state_provider = use_context::<AppStateProvider>();
+    let _state_provider = use_context::<AppStateProvider>();
     // Store is now managed internally by core
-    let navigator = use_navigator();
+    let _navigator = use_navigator();
 
     rsx! {
         div {
             class: "rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 p-4 hover:bg-zinc-50 dark:hover:bg-zinc-700 hover:shadow-md transition-colors cursor-pointer",
             onclick: move |_| {
                 let workflow_content = workflow.content.clone();
-                let mut workflow_state = state_provider.workflow;
-                let mut history_state = state_provider.history;
-                let navigator_clone = navigator;
+                let workflow_name = workflow.name.clone();
+                let workflow_id = workflow.id.clone();
 
-                spawn(async move {
-                    workflow_state.write().reset_before_run();
+                tracing::info!(
+                    workflow_name = %workflow_name,
+                    workflow_id = %workflow_id,
+                    "User initiated workflow execution from home page"
+                );
 
-                    tracing::info!("About to execute workflow");
+                // Use tokio::spawn instead of dioxus::spawn to create a truly detached task
+                tokio::spawn(async move {
+                    tracing::info!(
+                        workflow_name = %workflow_name,
+                        "Starting truly detached workflow execution - completely independent of UI lifecycle"
+                    );
 
-                    // Execute and wait for result (like CLI)
+                    // Execute workflow independently - don't update UI state
+                    // The workflow will save to database and UI will poll for updates
                     match run_workflow_from_content(workflow_content, None).await {
                         Ok(result) => {
-                            tracing::info!(success = result.success, "Workflow execution completed");
-                            workflow_state.write().apply_success(&result);
-                            history_state.write().needs_history_reload = true;
-
-                            // Navigate to completed workflow
-                            navigator_clone.push(Route::WorkflowDetailsPage {
-                                id: result.execution_id.clone()
-                            });
+                            tracing::info!(
+                                success = result.success,
+                                execution_id = %result.execution_id,
+                                workflow_name = %result.workflow_name,
+                                "Truly detached workflow execution completed successfully - result saved to database, UI will poll for updates"
+                            );
                         }
                         Err(e) => {
-                            tracing::error!(error = %e, "Workflow execution failed");
-                            workflow_state.write().apply_failure(&e.to_string());
+                            tracing::error!(
+                                error = %e,
+                                workflow_name = %workflow_name,
+                                "Truly detached workflow execution failed - error saved to database, UI will poll for updates"
+                            );
                         }
                     }
                 });

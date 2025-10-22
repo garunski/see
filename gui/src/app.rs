@@ -172,24 +172,6 @@ fn AppContent() -> Element {
                     }
                 }
             ),
-            onkeydown: move |evt| {
-                match evt.key() {
-                    dioxus::events::Key::ArrowLeft | dioxus::events::Key::ArrowUp => {
-                        let current = state_provider.workflow.read().current_step;
-                        if current > 0 {
-                            state_provider.workflow.write().current_step = current - 1;
-                        }
-                    }
-                    dioxus::events::Key::ArrowRight | dioxus::events::Key::ArrowDown => {
-                        let current = state_provider.workflow.read().current_step;
-                        let total = state_provider.workflow.read().tasks.len();
-                        if current < total.saturating_sub(1) {
-                            state_provider.workflow.write().current_step = current + 1;
-                        }
-                    }
-                    _ => {}
-                }
-            },
 
 
             Router::<Route> {}

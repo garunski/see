@@ -396,7 +396,7 @@ pub fn HistoryPage() -> Element {
                             for workflow in running_workflows().iter() {
                                 RunningWorkflowItem {
                                     workflow: workflow.clone(),
-                                    on_delete_workflow: delete_running_workflow.clone(),
+                                    on_delete_workflow: delete_running_workflow,
                                 }
                             }
                         }
@@ -419,7 +419,7 @@ pub fn HistoryPage() -> Element {
                             for execution in workflow_history().iter() {
                                 HistoryItem {
                                     execution: execution.clone(),
-                                    on_delete_execution: delete_execution.clone(),
+                                    on_delete_execution: delete_execution,
                                 }
                             }
                         }
