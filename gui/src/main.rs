@@ -12,7 +12,9 @@ mod app;
 
 fn main() {
     // CRITICAL: Keep guard alive for entire program lifetime
-    let _tracing_guard = see_core::init_tracing(None).expect("Failed to initialize tracing");
+    let _tracing_guard = see_core::init_tracing(None)
+        .map_err(|e| format!("Failed to initialize tracing: {}", e))
+        .expect("Failed to initialize tracing");
 
     tracing::info!("GUI starting");
 

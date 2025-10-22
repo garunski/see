@@ -29,6 +29,8 @@ tasks:
   run-gui:
     desc: Run GUI with dx CLI
     deps: [dev,tailwind-build]
+    env:
+      RUST_LOG: see_core=trace
     cmds:
       - dx run --package gui
 

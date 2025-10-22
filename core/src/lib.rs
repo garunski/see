@@ -175,7 +175,7 @@ pub struct TracingGuard {
 }
 
 /// Initialize tracing with console and file output.
-pub fn init_tracing(log_dir: Option<PathBuf>) -> Result<TracingGuard, CoreError> {
+pub fn init_tracing(log_dir: Option<PathBuf>) -> Result<TracingGuard, Box<CoreError>> {
     use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt, EnvFilter};
 
     let log_dir = match log_dir {
@@ -187,7 +187,7 @@ pub fn init_tracing(log_dir: Option<PathBuf>) -> Result<TracingGuard, CoreError>
         }
     };
 
-    std::fs::create_dir_all(&log_dir)?;
+    std::fs::create_dir_all(&log_dir).map_err(|e| Box::new(CoreError::from(e)))?;
 
     let file_appender = tracing_appender::rolling::daily(log_dir, "see.log");
     let (non_blocking, guard) = tracing_appender::non_blocking(file_appender);

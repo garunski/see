@@ -58,14 +58,18 @@ fn WorkflowCard(workflow: WorkflowDefinition) -> Element {
                         }
                     });
 
+                    let store_for_execution = store_clone.map(|s| s as Arc<dyn see_core::AuditStore>);
+                    tracing::info!(store_available = store_for_execution.is_some(), "About to execute workflow");
+
                     match run_workflow_from_content(
                         workflow_content.clone(),
                         output_callback,
-                        store_clone.map(|s| s as Arc<dyn see_core::AuditStore>),
+                        store_for_execution,
                     )
                     .await
                     {
                         Ok(result) => {
+                            tracing::info!(success = result.success, "Workflow execution completed");
                             // Stop polling
                             workflow_state.write().stop_polling();
 
@@ -76,6 +80,7 @@ fn WorkflowCard(workflow: WorkflowDefinition) -> Element {
                             // Navigation already happened when execution started
                         }
                         Err(e) => {
+                            tracing::error!(error = %e, "Workflow execution failed");
                             // Stop polling on error
                             workflow_state.write().stop_polling();
 
