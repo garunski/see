@@ -12,6 +12,7 @@ use tokio::time::{sleep, Duration};
 const EXECUTIONS_TABLE: &str = "executions";
 const EXECUTION_IDS_TABLE: &str = "execution_ids";
 const SETTINGS_TABLE: &str = "settings";
+const TASKS_TABLE: &str = "tasks";
 
 #[derive(Debug)]
 pub struct RedbStore {
@@ -32,6 +33,8 @@ impl RedbStore {
                 write_txn.open_table(redb::TableDefinition::new(EXECUTION_IDS_TABLE))?;
             let _settings_table: Table<&str, &[u8]> =
                 write_txn.open_table(redb::TableDefinition::new(SETTINGS_TABLE))?;
+            let _tasks_table: Table<&str, &[u8]> =
+                write_txn.open_table(redb::TableDefinition::new(TASKS_TABLE))?;
         }
         write_txn.commit()?;
         Ok(Self { db: Arc::new(db) })
@@ -132,6 +135,18 @@ pub trait AuditStore: Send + Sync {
         limit: usize,
     ) -> Result<Vec<WorkflowExecutionSummary>, CoreError>;
     async fn delete_workflow_execution(&self, id: &str) -> Result<(), CoreError>;
+    async fn save_workflow_metadata(
+        &self,
+        metadata: &crate::persistence::models::WorkflowMetadata,
+    ) -> Result<(), CoreError>;
+    async fn save_task_execution(
+        &self,
+        task: &crate::persistence::models::TaskExecution,
+    ) -> Result<(), CoreError>;
+    async fn get_workflow_with_tasks(
+        &self,
+        execution_id: &str,
+    ) -> Result<WorkflowExecution, CoreError>;
 }
 
 #[async_trait]
@@ -281,6 +296,125 @@ impl AuditStore for RedbStore {
             }
             write_txn.commit()?;
             Ok(())
+        })
+        .await
+        .map_err(|e| CoreError::Dataflow(format!("task join error: {}", e)))?
+    }
+
+    async fn save_workflow_metadata(
+        &self,
+        metadata: &crate::persistence::models::WorkflowMetadata,
+    ) -> Result<(), CoreError> {
+        let db = Arc::clone(&self.db);
+        let metadata = metadata.clone();
+        let key = format!("workflow:{}", metadata.id);
+
+        task::spawn_blocking(move || -> Result<(), CoreError> {
+            let write_txn = db.begin_write()?;
+            {
+                let mut workflows_table: Table<&str, &[u8]> =
+                    write_txn.open_table(redb::TableDefinition::new(EXECUTIONS_TABLE))?;
+                let serialized = bincode::serialize(&metadata)
+                    .map_err(|e| CoreError::Dataflow(e.to_string()))?;
+                workflows_table.insert(key.as_str(), serialized.as_slice())?;
+            }
+            write_txn.commit()?;
+            Ok(())
+        })
+        .await
+        .map_err(|e| CoreError::Dataflow(format!("task join error: {}", e)))?
+    }
+
+    async fn save_task_execution(
+        &self,
+        task: &crate::persistence::models::TaskExecution,
+    ) -> Result<(), CoreError> {
+        let db = Arc::clone(&self.db);
+        let task = task.clone();
+        let key = format!("task:{}:{}", task.execution_id, task.task_id);
+
+        task::spawn_blocking(move || -> Result<(), CoreError> {
+            let write_txn = db.begin_write()?;
+            {
+                let mut tasks_table: Table<&str, &[u8]> =
+                    write_txn.open_table(redb::TableDefinition::new(TASKS_TABLE))?;
+                let serialized =
+                    bincode::serialize(&task).map_err(|e| CoreError::Dataflow(e.to_string()))?;
+                tasks_table.insert(key.as_str(), serialized.as_slice())?;
+            }
+            write_txn.commit()?;
+            Ok(())
+        })
+        .await
+        .map_err(|e| CoreError::Dataflow(format!("task join error: {}", e)))?
+    }
+
+    async fn get_workflow_with_tasks(
+        &self,
+        execution_id: &str,
+    ) -> Result<WorkflowExecution, CoreError> {
+        let db = Arc::clone(&self.db);
+        let execution_id = execution_id.to_string();
+
+        task::spawn_blocking(move || -> Result<WorkflowExecution, CoreError> {
+            let read_txn = db.begin_read()?;
+
+            // Get workflow metadata
+            let workflows_table: ReadOnlyTable<&str, &[u8]> =
+                read_txn.open_table(redb::TableDefinition::new(EXECUTIONS_TABLE))?;
+            let workflow_key = format!("workflow:{}", execution_id);
+            let metadata: crate::persistence::models::WorkflowMetadata =
+                if let Some(serialized) = workflows_table.get(workflow_key.as_str())? {
+                    bincode::deserialize(serialized.value())
+                        .map_err(|e| CoreError::Dataflow(e.to_string()))?
+                } else {
+                    return Err(CoreError::Dataflow(format!(
+                        "Workflow {} not found",
+                        execution_id
+                    )));
+                };
+
+            // Get all tasks for this workflow
+            let tasks_table: ReadOnlyTable<&str, &[u8]> =
+                read_txn.open_table(redb::TableDefinition::new(TASKS_TABLE))?;
+            let task_prefix = format!("task:{}:", execution_id);
+
+            let mut tasks = Vec::new();
+            let mut per_task_logs = std::collections::HashMap::new();
+
+            for item in tasks_table.iter()? {
+                let (key, value) = item?;
+                let key_str = key.value();
+                if key_str.starts_with(&task_prefix) {
+                    let task_exec: crate::persistence::models::TaskExecution =
+                        bincode::deserialize(value.value())
+                            .map_err(|e| CoreError::Dataflow(e.to_string()))?;
+
+                    tasks.push(crate::TaskInfo {
+                        id: task_exec.task_id.clone(),
+                        name: task_exec.task_name.clone(),
+                        status: task_exec.status,
+                    });
+
+                    per_task_logs.insert(task_exec.task_id.clone(), task_exec.logs.clone());
+                }
+            }
+
+            // Reconstruct WorkflowExecution for backward compatibility
+            Ok(WorkflowExecution {
+                id: metadata.id,
+                workflow_name: metadata.workflow_name,
+                timestamp: metadata.start_timestamp,
+                success: metadata.status == crate::persistence::models::WorkflowStatus::Complete,
+                tasks,
+                audit_trail: vec![],
+                per_task_logs,
+                errors: if metadata.status == crate::persistence::models::WorkflowStatus::Failed {
+                    vec!["Workflow failed".to_string()]
+                } else {
+                    vec![]
+                },
+            })
         })
         .await
         .map_err(|e| CoreError::Dataflow(format!("task join error: {}", e)))?

@@ -45,7 +45,16 @@ pub async fn execute_workflow_from_content(
         })
         .collect();
 
-    let context = ExecutionContext::new(tasks, output_callback);
+    let execution_id = Uuid::new_v4().to_string();
+    let workflow_start_time = chrono::Utc::now().to_rfc3339();
+
+    let context = ExecutionContext::new(
+        tasks.clone(),
+        output_callback,
+        store.clone(),
+        execution_id.clone(),
+        workflow.name.clone(),
+    );
 
     if let Err(e) = context.safe_log("Loading workflow from content\n") {
         eprintln!("Failed to log workflow loading: {}", e);
@@ -57,6 +66,21 @@ pub async fn execute_workflow_from_content(
         eprintln!("Failed to log task count: {}", e);
     }
 
+    // Save workflow metadata at start
+    if let Some(ref store) = store {
+        let metadata = crate::persistence::models::WorkflowMetadata {
+            id: execution_id.clone(),
+            workflow_name: workflow.name.clone(),
+            start_timestamp: workflow_start_time.clone(),
+            end_timestamp: None,
+            status: crate::persistence::models::WorkflowStatus::Running,
+            task_ids: tasks.iter().map(|t| t.id.clone()).collect(),
+        };
+        if let Err(e) = store.save_workflow_metadata(&metadata).await {
+            eprintln!("Failed to save workflow metadata: {}", e);
+        }
+    }
+
     let mut custom_functions: HashMap<String, Box<dyn AsyncFunctionHandler + Send + Sync>> =
         HashMap::new();
     custom_functions.insert(
@@ -66,7 +90,6 @@ pub async fn execute_workflow_from_content(
 
     let engine = Engine::new(vec![workflow.clone()], Some(custom_functions));
     let mut message = Message::from_value(&json!({}));
-    let execution_id = Uuid::new_v4().to_string();
 
     if let Err(e) = context.safe_log("\nExecuting workflow...\n") {
         eprintln!("Failed to log execution start: {}", e);
@@ -172,16 +195,31 @@ pub async fn execute_workflow_from_content(
 
             let result = WorkflowResult {
                 success: errors.is_empty(),
-                workflow_name: workflow.name,
+                workflow_name: workflow.name.clone(),
                 task_count: workflow.tasks.len(),
-                execution_id,
-                tasks,
+                execution_id: execution_id.clone(),
+                tasks: tasks.clone(),
                 final_context: message.context["data"].clone(),
-                audit_trail,
-                per_task_logs,
-                errors,
-                output_logs,
+                audit_trail: audit_trail.clone(),
+                per_task_logs: per_task_logs.clone(),
+                errors: errors.clone(),
+                output_logs: output_logs.clone(),
             };
+
+            // Save workflow completion metadata
+            if let Some(ref store) = store {
+                let metadata = crate::persistence::models::WorkflowMetadata {
+                    id: execution_id.clone(),
+                    workflow_name: workflow.name.clone(),
+                    start_timestamp: workflow_start_time.clone(),
+                    end_timestamp: Some(chrono::Utc::now().to_rfc3339()),
+                    status: crate::persistence::models::WorkflowStatus::Complete,
+                    task_ids: tasks.iter().map(|t| t.id.clone()).collect(),
+                };
+                if let Err(e) = store.save_workflow_metadata(&metadata).await {
+                    eprintln!("Failed to update workflow completion: {}", e);
+                }
+            }
 
             // Save to database if store is provided
             if let Some(store) = store {
@@ -217,6 +255,22 @@ pub async fn execute_workflow_from_content(
             {
                 eprintln!("Failed to log execution failure: {}", log_err);
             }
+
+            // Save workflow failure metadata
+            if let Some(ref store) = store {
+                let metadata = crate::persistence::models::WorkflowMetadata {
+                    id: execution_id.clone(),
+                    workflow_name: workflow.name.clone(),
+                    start_timestamp: workflow_start_time.clone(),
+                    end_timestamp: Some(chrono::Utc::now().to_rfc3339()),
+                    status: crate::persistence::models::WorkflowStatus::Failed,
+                    task_ids: tasks.iter().map(|t| t.id.clone()).collect(),
+                };
+                if let Err(e) = store.save_workflow_metadata(&metadata).await {
+                    eprintln!("Failed to update workflow failure: {}", e);
+                }
+            }
+
             Err(CoreError::WorkflowExecution(format!(
                 "Workflow execution failed: {}",
                 e

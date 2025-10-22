@@ -9,16 +9,30 @@ pub struct ExecutionContext {
     output_logs: Vec<String>,
     tasks: Vec<TaskInfo>,
     output_callback: Option<OutputCallback>,
+    audit_store: Option<Arc<dyn crate::AuditStore>>,
+    execution_id: String,
+    workflow_name: String,
+    task_start_times: HashMap<String, String>,
 }
 
 impl ExecutionContext {
-    pub fn new(tasks: Vec<TaskInfo>, output_callback: Option<OutputCallback>) -> Arc<Mutex<Self>> {
+    pub fn new(
+        tasks: Vec<TaskInfo>,
+        output_callback: Option<OutputCallback>,
+        audit_store: Option<Arc<dyn crate::AuditStore>>,
+        execution_id: String,
+        workflow_name: String,
+    ) -> Arc<Mutex<Self>> {
         Arc::new(Mutex::new(Self {
             current_task_id: None,
             per_task_logs: HashMap::new(),
             output_logs: Vec::new(),
             tasks,
             output_callback,
+            audit_store,
+            execution_id,
+            workflow_name,
+            task_start_times: HashMap::new(),
         }))
     }
 
@@ -39,6 +53,8 @@ impl ExecutionContext {
 
     pub fn start_task(&mut self, task_id: &str) {
         self.current_task_id = Some(task_id.to_string());
+        self.task_start_times
+            .insert(task_id.to_string(), chrono::Utc::now().to_rfc3339());
         self.update_task_status(task_id, TaskStatus::InProgress);
     }
 
@@ -66,6 +82,29 @@ impl ExecutionContext {
 
     pub fn get_tasks(&self) -> Vec<TaskInfo> {
         self.tasks.clone()
+    }
+
+    pub fn get_execution_id(&self) -> String {
+        self.execution_id.clone()
+    }
+
+    pub fn get_workflow_name(&self) -> String {
+        self.workflow_name.clone()
+    }
+
+    pub fn get_task_logs(&self, task_id: &str) -> Vec<String> {
+        self.per_task_logs.get(task_id).cloned().unwrap_or_default()
+    }
+
+    pub fn get_task_start_time(&self, task_id: &str) -> String {
+        self.task_start_times
+            .get(task_id)
+            .cloned()
+            .unwrap_or_else(|| chrono::Utc::now().to_rfc3339())
+    }
+
+    pub fn get_store(&self) -> Option<Arc<dyn crate::AuditStore>> {
+        self.audit_store.clone()
     }
 }
 

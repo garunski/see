@@ -76,3 +76,31 @@ impl Default for AppSettings {
         }
     }
 }
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct WorkflowMetadata {
+    pub id: String,
+    pub workflow_name: String,
+    pub start_timestamp: String,
+    pub end_timestamp: Option<String>,
+    pub status: WorkflowStatus,
+    pub task_ids: Vec<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct TaskExecution {
+    pub execution_id: String,
+    pub task_id: String,
+    pub task_name: String,
+    pub status: crate::TaskStatus,
+    pub logs: Vec<String>,
+    pub start_timestamp: String,
+    pub end_timestamp: String,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub enum WorkflowStatus {
+    Running,
+    Complete,
+    Failed,
+}

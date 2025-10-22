@@ -139,6 +139,29 @@ impl TaskExecutor for CliCommandHandler {
 
         if !output.status.success() {
             logger.end_task(task_id);
+
+            // Save failed task
+            if let Ok(ctx) = self.context.lock() {
+                if let Some(store) = ctx.get_store() {
+                    let task_exec = crate::persistence::models::TaskExecution {
+                        execution_id: ctx.get_execution_id(),
+                        task_id: task_id.to_string(),
+                        task_name: task_id.to_string(),
+                        status: crate::TaskStatus::Failed,
+                        logs: ctx.get_task_logs(task_id),
+                        start_timestamp: ctx.get_task_start_time(task_id),
+                        end_timestamp: chrono::Utc::now().to_rfc3339(),
+                    };
+                    drop(ctx);
+
+                    tokio::spawn(async move {
+                        if let Err(e) = store.save_task_execution(&task_exec).await {
+                            eprintln!("Failed to save failed task: {}", e);
+                        }
+                    });
+                }
+            }
+
             return Err(CoreError::CommandExecution(format!(
                 "Command '{}' failed with exit code: {:?}\nstderr: {}",
                 command,
@@ -176,6 +199,29 @@ impl TaskExecutor for CliCommandHandler {
         });
 
         logger.end_task(task_id);
+
+        // Save individual task completion
+        if let Ok(ctx) = self.context.lock() {
+            if let Some(store) = ctx.get_store() {
+                let task_exec = crate::persistence::models::TaskExecution {
+                    execution_id: ctx.get_execution_id(),
+                    task_id: task_id.to_string(),
+                    task_name: task_id.to_string(),
+                    status: crate::TaskStatus::Complete,
+                    logs: ctx.get_task_logs(task_id),
+                    start_timestamp: ctx.get_task_start_time(task_id),
+                    end_timestamp: chrono::Utc::now().to_rfc3339(),
+                };
+                drop(ctx);
+
+                tokio::spawn(async move {
+                    if let Err(e) = store.save_task_execution(&task_exec).await {
+                        eprintln!("Failed to save task: {}", e);
+                    }
+                });
+            }
+        }
+
         Ok(result)
     }
 }

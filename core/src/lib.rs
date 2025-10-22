@@ -168,6 +168,7 @@ pub struct WorkflowResult {
 
 pub use crate::engine::execute::{execute_workflow, execute_workflow_from_content};
 pub use crate::persistence::models::{
-    AppSettings, Theme, WorkflowDefinition, WorkflowExecution, WorkflowExecutionSummary,
+    AppSettings, TaskExecution, Theme, WorkflowDefinition, WorkflowExecution,
+    WorkflowExecutionSummary, WorkflowMetadata, WorkflowStatus,
 };
 pub use crate::persistence::redb_store::{AuditStore, RedbStore};
