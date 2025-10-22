@@ -105,6 +105,28 @@ impl TaskExecutor for CliCommandHandler {
 
         logger.start_task(task_id);
 
+        // Save task with InProgress status immediately
+        if let Ok(ctx) = self.context.lock() {
+            if let Some(store) = ctx.get_store() {
+                let task_exec = crate::persistence::models::TaskExecution {
+                    execution_id: ctx.get_execution_id(),
+                    task_id: task_id.to_string(),
+                    task_name: task_id.to_string(),
+                    status: crate::TaskStatus::InProgress,
+                    logs: ctx.get_task_logs(task_id),
+                    start_timestamp: ctx.get_task_start_time(task_id),
+                    end_timestamp: String::new(), // Will be set when task completes
+                };
+                drop(ctx);
+
+                tokio::spawn(async move {
+                    if let Err(e) = store.save_task_execution(&task_exec).await {
+                        eprintln!("Failed to save task start: {}", e);
+                    }
+                });
+            }
+        }
+
         let formatted_command = if args.is_empty() {
             command.to_string()
         } else {

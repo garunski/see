@@ -81,6 +81,11 @@ pub async fn execute_workflow_from_content(
         }
     }
 
+    // Emit execution_id to GUI for polling
+    if let Err(e) = context.safe_log(&format!("EXECUTION_ID:{}\n", execution_id)) {
+        eprintln!("Failed to emit execution_id: {}", e);
+    }
+
     let mut custom_functions: HashMap<String, Box<dyn AsyncFunctionHandler + Send + Sync>> =
         HashMap::new();
     custom_functions.insert(

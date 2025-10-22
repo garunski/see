@@ -33,3 +33,42 @@ pub async fn run_workflow(
 ) -> Result<WorkflowResult, CoreError> {
     execute_workflow(&file_path, Some(output), store).await
 }
+
+#[derive(Clone, Debug)]
+pub struct WorkflowProgress {
+    pub completed: usize,
+    pub total: usize,
+    pub current_task: Option<String>,
+    pub is_complete: bool,
+}
+
+pub async fn poll_workflow_progress(
+    execution_id: &str,
+    store: Arc<dyn AuditStore>,
+) -> Result<WorkflowProgress, CoreError> {
+    // Try to get workflow with tasks from new schema
+    match store.get_workflow_with_tasks(execution_id).await {
+        Ok(execution) => {
+            let completed = execution
+                .tasks
+                .iter()
+                .filter(|t| t.status == see_core::TaskStatus::Complete)
+                .count();
+            let total = execution.tasks.len();
+
+            let current_task = execution
+                .tasks
+                .iter()
+                .find(|t| t.status == see_core::TaskStatus::InProgress)
+                .map(|t| t.name.clone());
+
+            Ok(WorkflowProgress {
+                completed,
+                total,
+                current_task,
+                is_complete: execution.success,
+            })
+        }
+        Err(e) => Err(e),
+    }
+}

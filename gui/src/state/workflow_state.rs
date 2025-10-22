@@ -11,6 +11,9 @@ pub struct WorkflowState {
     pub per_task_logs: HashMap<String, Vec<String>>,
     pub tasks: Vec<TaskInfo>,
     pub execution_id: Option<String>,
+    pub polling_execution_id: Option<String>,
+    pub is_polling: bool,
+    pub polling_trigger: usize,
 }
 
 impl Default for WorkflowState {
@@ -24,6 +27,9 @@ impl Default for WorkflowState {
             per_task_logs: HashMap::new(),
             tasks: Vec::new(),
             execution_id: None,
+            polling_execution_id: None,
+            is_polling: false,
+            polling_trigger: 0,
         }
     }
 }
@@ -50,5 +56,17 @@ impl WorkflowState {
     pub fn apply_failure(&mut self, err: &str) {
         self.execution_status = crate::components::ExecutionStatus::Failed;
         self.output_logs.push(format!("Error: {}", err));
+    }
+
+    pub fn start_polling(&mut self, execution_id: String) {
+        self.polling_execution_id = Some(execution_id);
+        self.is_polling = true;
+        self.polling_trigger += 1; // Force reactivity
+    }
+
+    pub fn stop_polling(&mut self) {
+        self.polling_execution_id = None;
+        self.is_polling = false;
+        self.polling_trigger += 1; // Force reactivity
     }
 }

@@ -33,12 +33,26 @@ fn WorkflowCard(workflow: WorkflowDefinition) -> Element {
                 spawn(async move {
                     workflow_state.write().reset_before_run();
 
+                    // Polling will start once we receive EXECUTION_ID from engine output
+
                     let (output_callback, mut handles) = create_output_channel();
 
                     let mut workflow_state_clone = workflow_state;
                     spawn(async move {
                         while let Some(msg) = handles.receiver.recv().await {
-                            workflow_state_clone.write().output_logs.push(msg);
+                            if msg.starts_with("EXECUTION_ID:") {
+                                let execution_id = msg
+                                    .strip_prefix("EXECUTION_ID:")
+                                    .unwrap_or("")
+                                    .trim()
+                                    .to_string();
+                                if !execution_id.is_empty() {
+                                    workflow_state_clone.write().execution_id = Some(execution_id.clone());
+                                    workflow_state_clone.write().start_polling(execution_id);
+                                }
+                            } else {
+                                workflow_state_clone.write().output_logs.push(msg);
+                            }
                         }
                     });
 
@@ -50,6 +64,9 @@ fn WorkflowCard(workflow: WorkflowDefinition) -> Element {
                     .await
                     {
                         Ok(result) => {
+                            // Stop polling
+                            workflow_state.write().stop_polling();
+
                             workflow_state.write().apply_success(&result);
                             ui_state
                                 .write()
@@ -62,6 +79,9 @@ fn WorkflowCard(workflow: WorkflowDefinition) -> Element {
                             });
                         }
                         Err(e) => {
+                            // Stop polling on error
+                            workflow_state.write().stop_polling();
+
                             workflow_state.write().apply_failure(&e.to_string());
                             ui_state
                                 .write()

@@ -74,7 +74,21 @@ pub fn UploadPage() -> Element {
             let mut workflow_state_clone = workflow_state;
             spawn(async move {
                 while let Some(msg) = handles.receiver.recv().await {
-                    workflow_state_clone.write().output_logs.push(msg);
+                    // Check if this is an execution_id message
+                    if msg.starts_with("EXECUTION_ID:") {
+                        let execution_id = msg
+                            .strip_prefix("EXECUTION_ID:")
+                            .unwrap_or("")
+                            .trim()
+                            .to_string();
+                        if !execution_id.is_empty() {
+                            workflow_state_clone.write().execution_id = Some(execution_id.clone());
+                            workflow_state_clone.write().start_polling(execution_id);
+                        }
+                    } else {
+                        // Regular log message
+                        workflow_state_clone.write().output_logs.push(msg);
+                    }
                 }
             });
 
@@ -87,6 +101,7 @@ pub fn UploadPage() -> Element {
             {
                 Ok(result) => {
                     workflow_state.write().apply_success(&result);
+                    workflow_state.write().stop_polling(); // Stop polling when complete
                     ui_state.write().show_status(
                         "Workflow completed successfully!".to_string(),
                         crate::components::ExecutionStatus::Complete,
@@ -95,6 +110,7 @@ pub fn UploadPage() -> Element {
                 }
                 Err(e) => {
                     workflow_state.write().apply_failure(&e.to_string());
+                    workflow_state.write().stop_polling(); // Stop polling on failure
                     ui_state.write().show_status(
                         format!("Workflow failed: {}", e),
                         crate::components::ExecutionStatus::Failed,
