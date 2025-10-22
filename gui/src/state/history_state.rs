@@ -18,8 +18,7 @@ impl Default for HistoryState {
 }
 
 impl HistoryState {
-    pub fn clear_viewing(&mut self) {
-    }
+    pub fn clear_viewing(&mut self) {}
 
     pub fn delete_execution(&mut self, id: &str) {
         self.workflow_history.retain(|item| item.id != id);

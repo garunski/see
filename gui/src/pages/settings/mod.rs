@@ -33,14 +33,11 @@ pub fn SettingsPage() -> Element {
                             })
                             .await
                         {
-                            Ok(_) => {
-                            }
-                            Err(_e) => {
-                            }
+                            Ok(_) => {}
+                            Err(_e) => {}
                         }
                     }
-                    Err(_e) => {
-                    }
+                    Err(_e) => {}
                 }
             });
         }

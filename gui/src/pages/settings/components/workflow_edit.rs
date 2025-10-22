@@ -80,14 +80,11 @@ pub fn WorkflowEditPage(id: String) -> Element {
                             .save_settings(&state_provider.settings.read().settings)
                             .await
                         {
-                            Ok(_) => {
-                            }
-                            Err(_e) => {
-                            }
+                            Ok(_) => {}
+                            Err(_e) => {}
                         }
                     }
-                    Err(_e) => {
-                    }
+                    Err(_e) => {}
                 }
                 is_saving.set(false);
             });
@@ -120,14 +117,11 @@ pub fn WorkflowEditPage(id: String) -> Element {
                                 .save_settings(&state_provider.settings.read().settings)
                                 .await
                             {
-                                Ok(_) => {
-                                }
-                                Err(_e) => {
-                                }
+                                Ok(_) => {}
+                                Err(_e) => {}
                             }
                         }
-                        Err(_e) => {
-                        }
+                        Err(_e) => {}
                     }
                 });
             }

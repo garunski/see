@@ -36,9 +36,7 @@ pub fn UploadPage() -> Element {
                 if let Some(path_str) = path.to_str() {
                     state_provider.workflow.write().workflow_file = path_str.to_string();
                     state_provider.history.write().clear_viewing();
-                } else {
                 }
-            } else {
             }
             state_provider.ui.write().set_picking_file(false);
         });

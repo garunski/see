@@ -44,21 +44,16 @@ pub fn App() -> Element {
 
 #[component]
 fn AppContent() -> Element {
-
     let mut state_provider = use_hook(AppStateProvider::new);
     use_context_provider(|| state_provider.clone());
 
     let settings_loader = use_resource(|| async move {
         match see_core::get_global_store() {
-            Ok(store) => {
-                match store.load_settings().await {
-                    Ok(Some(loaded)) => Ok(loaded),
-                    Ok(None) => {
-                        Ok(AppSettings::default())
-                    }
-                    Err(e) => Err(format!("Failed to load settings: {}", e)),
-                }
-            }
+            Ok(store) => match store.load_settings().await {
+                Ok(Some(loaded)) => Ok(loaded),
+                Ok(None) => Ok(AppSettings::default()),
+                Err(e) => Err(format!("Failed to load settings: {}", e)),
+            },
             Err(e) => {
                 eprintln!("Failed to get global store for settings: {}", e);
                 Ok(AppSettings::default())

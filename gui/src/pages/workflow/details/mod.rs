@@ -23,23 +23,21 @@ pub fn WorkflowDetailsPage(id: String) -> Element {
         spawn(async move {
             loop {
                 match see_core::get_global_store() {
-                    Ok(store) => {
-                        match store.get_workflow_with_tasks(&id).await {
-                            Ok(exec) => {
-                                execution.set(Some(exec.clone()));
-                                loading.set(false);
+                    Ok(store) => match store.get_workflow_with_tasks(&id).await {
+                        Ok(exec) => {
+                            execution.set(Some(exec.clone()));
+                            loading.set(false);
 
-                                if exec.success || !exec.errors.is_empty() {
-                                    break;
-                                }
-                            }
-                            Err(e) => {
-                                error.set(Some(format!("Failed to load workflow: {}", e)));
-                                loading.set(false);
+                            if exec.success || !exec.errors.is_empty() {
                                 break;
                             }
                         }
-                    }
+                        Err(e) => {
+                            error.set(Some(format!("Failed to load workflow: {}", e)));
+                            loading.set(false);
+                            break;
+                        }
+                    },
                     Err(e) => {
                         error.set(Some(format!("Database not available: {}", e)));
                         loading.set(false);

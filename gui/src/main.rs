@@ -20,5 +20,4 @@ fn main() {
     LaunchBuilder::desktop()
         .with_cfg(Config::new().with_window(WindowBuilder::new().with_title("See Workflow Engine")))
         .launch(app::App);
-
 }
