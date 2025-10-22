@@ -1,6 +1,6 @@
 use crate::execution::context::{ExecutionContext, ExecutionContextSafe};
 use crate::{
-    errors::CoreError, AuditEntry, AuditStatus, AuditStore, OutputCallback, TaskInfo, TaskStatus,
+    errors::CoreError, AuditEntry, AuditStatus, OutputCallback, TaskInfo, TaskStatus,
     WorkflowExecution, WorkflowResult,
 };
 use chrono::Utc;
@@ -15,12 +15,13 @@ use uuid::Uuid;
 
 use super::handlers::CliCommandHandler;
 
-#[instrument(skip(workflow_data, output_callback, store), fields(execution_id))]
+#[instrument(skip(workflow_data, output_callback), fields(execution_id))]
 pub async fn execute_workflow_from_content(
     workflow_data: &str,
     output_callback: Option<OutputCallback>,
-    store: Option<Arc<dyn AuditStore>>,
 ) -> Result<WorkflowResult, CoreError> {
+    // Use global store to avoid multiple database connections
+    let store = crate::get_global_store()?;
     let mut workflow = Workflow::from_json(workflow_data)
         .map_err(|e| CoreError::WorkflowExecution(format!("Failed to parse workflow: {}", e)))?;
 
@@ -55,7 +56,7 @@ pub async fn execute_workflow_from_content(
     let context = ExecutionContext::new(
         tasks.clone(),
         output_callback,
-        store.clone(),
+        Some(store.clone()),
         execution_id.clone(),
         workflow.name.clone(),
     );
@@ -71,7 +72,7 @@ pub async fn execute_workflow_from_content(
     }
 
     // Save workflow metadata at start
-    if let Some(ref store) = store {
+    {
         let metadata = crate::persistence::models::WorkflowMetadata {
             id: execution_id.clone(),
             workflow_name: workflow.name.clone(),
@@ -237,7 +238,7 @@ pub async fn execute_workflow_from_content(
             };
 
             // Save workflow completion metadata
-            if let Some(ref store) = store {
+            {
                 let metadata = crate::persistence::models::WorkflowMetadata {
                     id: execution_id.clone(),
                     workflow_name: workflow.name.clone(),
@@ -251,8 +252,8 @@ pub async fn execute_workflow_from_content(
                 }
             }
 
-            // Save to database if store is provided
-            if let Some(store) = store {
+            // Save to database
+            {
                 let execution = WorkflowExecution {
                     id: result.execution_id.clone(),
                     workflow_name: result.workflow_name.clone(),
@@ -287,7 +288,7 @@ pub async fn execute_workflow_from_content(
             }
 
             // Save workflow failure metadata
-            if let Some(ref store) = store {
+            {
                 let metadata = crate::persistence::models::WorkflowMetadata {
                     id: execution_id.clone(),
                     workflow_name: workflow.name.clone(),
@@ -309,11 +310,10 @@ pub async fn execute_workflow_from_content(
     }
 }
 
-#[instrument(skip(output_callback, store), fields(workflow_file = %workflow_file))]
+#[instrument(skip(output_callback), fields(workflow_file = %workflow_file))]
 pub async fn execute_workflow(
     workflow_file: &str,
     output_callback: Option<OutputCallback>,
-    store: Option<Arc<dyn AuditStore>>,
 ) -> Result<WorkflowResult, CoreError> {
     debug!("Reading workflow file");
     let workflow_data = fs::read_to_string(workflow_file).await.map_err(|e| {
@@ -323,5 +323,5 @@ pub async fn execute_workflow(
         ))
     })?;
 
-    execute_workflow_from_content(&workflow_data, output_callback, store).await
+    execute_workflow_from_content(&workflow_data, output_callback).await
 }

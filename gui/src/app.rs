@@ -2,8 +2,7 @@ use crate::router::Route;
 use crate::state::AppStateProvider;
 use dioxus::prelude::*;
 use dioxus_desktop::use_window;
-use see_core::{AppSettings, AuditStore, RedbStore};
-use std::sync::Arc;
+use see_core::AppSettings;
 
 #[component]
 pub fn App() -> Element {
@@ -46,99 +45,91 @@ pub fn App() -> Element {
 
 #[component]
 fn AppContent() -> Element {
-    // 1. Initialize store and provide as context with proper error handling
-    let store = use_hook(|| match RedbStore::new_default() {
-        Ok(store) => Some(Arc::new(store)),
-        Err(e) => {
-            eprintln!("Failed to initialize database: {}", e);
-            None
-        }
-    });
-    use_context_provider(|| store.clone());
+    // 1. Store is now managed internally by core
 
     // 2. Create state provider with separated state
     let mut state_provider = use_hook(AppStateProvider::new);
     use_context_provider(|| state_provider.clone());
 
     // 3. Load settings using use_resource for proper async handling
-    let settings_loader = use_resource({
-        let store = store.clone();
-        move || {
-            let store = store.clone();
-            async move {
-                if let Some(ref s) = store {
-                    match s.load_settings().await {
-                        Ok(Some(loaded)) => Ok(loaded),
-                        Ok(None) => {
-                            // No settings found, return default settings
-                            Ok(AppSettings::default())
-                        }
-                        Err(e) => Err(format!("Failed to load settings: {}", e)),
+    let settings_loader = use_resource(|| async move {
+        // Use global store for settings loading
+        match see_core::get_global_store() {
+            Ok(store) => {
+                match store.load_settings().await {
+                    Ok(Some(loaded)) => Ok(loaded),
+                    Ok(None) => {
+                        // No settings found, return default settings
+                        Ok(AppSettings::default())
                     }
-                } else {
-                    // No store available, return default settings
-                    Ok(AppSettings::default())
+                    Err(e) => Err(format!("Failed to load settings: {}", e)),
                 }
+            }
+            Err(e) => {
+                eprintln!("Failed to get global store for settings: {}", e);
+                Ok(AppSettings::default())
             }
         }
     });
 
     // 4. Apply loaded settings to state
-    use_effect({
-        let store = store.clone();
-        move || {
-            if let Some(Ok(settings)) = settings_loader.read().as_ref() {
-                state_provider
+    use_effect(move || {
+        if let Some(Ok(settings)) = settings_loader.read().as_ref() {
+            state_provider
+                .settings
+                .write()
+                .apply_loaded_settings(settings.clone());
+
+            // Load and merge default workflows
+            let default_workflows = see_core::WorkflowDefinition::get_default_workflows();
+            let mut settings_guard = state_provider.settings.write();
+            for default_workflow in default_workflows {
+                // Check if this default workflow already exists in settings
+                let exists = settings_guard
                     .settings
-                    .write()
-                    .apply_loaded_settings(settings.clone());
-
-                // Load and merge default workflows
-                let default_workflows = see_core::WorkflowDefinition::get_default_workflows();
-                let mut settings_guard = state_provider.settings.write();
-                for default_workflow in default_workflows {
-                    // Check if this default workflow already exists in settings
-                    let exists = settings_guard
-                        .settings
-                        .workflows
-                        .iter()
-                        .any(|w| w.id == default_workflow.id);
-                    if !exists {
-                        // Add default workflow if it doesn't exist
-                        settings_guard.add_workflow(default_workflow);
-                    }
-                }
-
-                // Save updated settings with default workflows
-                if let Some(ref s) = store {
-                    let settings_to_save = settings_guard.settings.clone();
-                    let store_clone = s.clone();
-                    spawn(async move {
-                        if let Err(e) = store_clone.save_settings(&settings_to_save).await {
-                            eprintln!("Failed to save default workflows: {}", e);
-                        }
-                    });
+                    .workflows
+                    .iter()
+                    .any(|w| w.id == default_workflow.id);
+                if !exists {
+                    // Add default workflow if it doesn't exist
+                    settings_guard.add_workflow(default_workflow);
                 }
             }
+
+            // Save updated settings with default workflows
+            let settings_to_save = settings_guard.settings.clone();
+            spawn(async move {
+                match see_core::get_global_store() {
+                    Ok(store) => {
+                        if let Err(e) = store.save_settings(&settings_to_save).await {
+                            eprintln!("Failed to save default workflows: {}", e);
+                        }
+                    }
+                    Err(e) => {
+                        eprintln!("Failed to get global store for saving settings: {}", e);
+                    }
+                }
+            });
         }
     });
 
     // 6. Load history - reactive to needs_history_reload flag
-    let store_clone2 = store.clone();
     use_effect(move || {
         let needs_reload = state_provider.history.read().needs_history_reload;
         if needs_reload {
-            let store = store_clone2.clone();
             let mut history_state = state_provider.history;
             spawn(async move {
-                if let Some(s) = store {
-                    match s.list_workflow_executions(50).await {
+                match see_core::get_global_store() {
+                    Ok(store) => match store.list_workflow_executions(50).await {
                         Ok(history) => {
                             history_state.write().set_history(history);
                         }
                         Err(e) => {
                             eprintln!("Failed to load history: {}", e);
                         }
+                    },
+                    Err(e) => {
+                        eprintln!("Failed to get global store for loading history: {}", e);
                     }
                 }
             });
@@ -149,20 +140,21 @@ fn AppContent() -> Element {
     let theme_signal = use_memo(move || state_provider.settings.read().settings.theme);
 
     // Apply theme changes reactively and save to database
-    use_effect({
-        let store = store.clone();
-        move || {
-            // Save theme changes to database whenever theme changes
-            if let Some(ref s) = store {
-                let settings_to_save = state_provider.settings.read().settings.clone();
-                let store_clone = s.clone();
-                spawn(async move {
-                    if let Err(e) = store_clone.save_settings(&settings_to_save).await {
+    use_effect(move || {
+        // Save theme changes to database whenever theme changes
+        let settings_to_save = state_provider.settings.read().settings.clone();
+        spawn(async move {
+            match see_core::get_global_store() {
+                Ok(store) => {
+                    if let Err(e) = store.save_settings(&settings_to_save).await {
                         eprintln!("Failed to save theme settings: {}", e);
                     }
-                });
+                }
+                Err(e) => {
+                    eprintln!("Failed to get global store for saving theme: {}", e);
+                }
             }
-        }
+        });
     });
 
     // Poll for workflow progress during execution
@@ -180,7 +172,6 @@ fn AppContent() -> Element {
 
         if is_polling {
             let polling_execution_id = state_provider.workflow.read().polling_execution_id.clone();
-            let store = store.clone();
             let _ui_state = state_provider.ui;
             let mut workflow_state = state_provider.workflow;
 
@@ -204,41 +195,38 @@ fn AppContent() -> Element {
                         break;
                     }
 
-                    if let Some(ref s) = store {
-                        // Try to poll based on execution_id if we have it
-                        let result = if let Some(ref exec_id) = polling_execution_id {
-                            // Use specific execution_id
-                            crate::services::workflow::poll_workflow_progress(exec_id, s.clone())
-                                .await
-                        } else {
-                            continue;
-                        };
+                    // Try to poll based on execution_id if we have it
+                    let result = if let Some(ref exec_id) = polling_execution_id {
+                        // Use specific execution_id
+                        crate::services::workflow::poll_workflow_progress(exec_id).await
+                    } else {
+                        continue;
+                    };
 
-                        match result {
-                            Ok(progress) => {
-                                let _message = if let Some(ref task) = progress.current_task {
-                                    format!(
-                                        "Running: {} ({}/{} complete)",
-                                        task, progress.completed, progress.total
-                                    )
-                                } else if progress.is_complete {
-                                    // Workflow completed, stop polling
-                                    workflow_state.write().stop_polling();
-                                    break;
-                                } else if progress.total > 0 {
-                                    format!(
-                                        "Progress: {}/{} tasks complete",
-                                        progress.completed, progress.total
-                                    )
-                                } else {
-                                    "Starting workflow...".to_string()
-                                };
+                    match result {
+                        Ok(progress) => {
+                            let _message = if let Some(ref task) = progress.current_task {
+                                format!(
+                                    "Running: {} ({}/{} complete)",
+                                    task, progress.completed, progress.total
+                                )
+                            } else if progress.is_complete {
+                                // Workflow completed, stop polling
+                                workflow_state.write().stop_polling();
+                                break;
+                            } else if progress.total > 0 {
+                                format!(
+                                    "Progress: {}/{} tasks complete",
+                                    progress.completed, progress.total
+                                )
+                            } else {
+                                "Starting workflow...".to_string()
+                            };
 
-                                // Status updates removed
-                            }
-                            Err(_) => {
-                                // Workflow not found yet or error, continue polling
-                            }
+                            // Status updates removed
+                        }
+                        Err(_) => {
+                            // Workflow not found yet or error, continue polling
                         }
                     }
                 }

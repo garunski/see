@@ -2,14 +2,13 @@ use crate::router::Route;
 use crate::state::AppStateProvider;
 use dioxus::prelude::*;
 use dioxus_router::prelude::Link;
-use see_core::{RedbStore, WorkflowDefinition};
-use std::sync::Arc;
+use see_core::WorkflowDefinition;
 use uuid::Uuid;
 
 #[component]
 pub fn WorkflowEditPage(id: String) -> Element {
     let state_provider = use_context::<AppStateProvider>();
-    let store = use_context::<Option<Arc<RedbStore>>>();
+    // Store is now managed internally by core
 
     let is_new = id.is_empty();
 
@@ -37,7 +36,6 @@ pub fn WorkflowEditPage(id: String) -> Element {
 
     let mut save_workflow = {
         let mut state_provider = state_provider.clone();
-        let store = store.clone();
         let _ui_state = state_provider.ui;
         let workflow_id_for_save = id.clone();
         move || {
@@ -81,20 +79,24 @@ pub fn WorkflowEditPage(id: String) -> Element {
             }
 
             // Save to database
-            let store_clone = store.clone();
             let _ui_state = _ui_state;
             spawn(async move {
-                if let Some(ref s) = store_clone {
-                    match s
-                        .save_settings(&state_provider.settings.read().settings)
-                        .await
-                    {
-                        Ok(_) => {
-                            // Status updates removed
+                match see_core::get_global_store() {
+                    Ok(store) => {
+                        match store
+                            .save_settings(&state_provider.settings.read().settings)
+                            .await
+                        {
+                            Ok(_) => {
+                                // Status updates removed
+                            }
+                            Err(_e) => {
+                                // Status updates removed
+                            }
                         }
-                        Err(_e) => {
-                            // Status updates removed
-                        }
+                    }
+                    Err(_e) => {
+                        // Status updates removed
                     }
                 }
                 is_saving.set(false);
@@ -104,7 +106,6 @@ pub fn WorkflowEditPage(id: String) -> Element {
 
     let mut reset_to_default = {
         let mut state_provider = state_provider.clone();
-        let store = store.clone();
         let _ui_state = state_provider.ui;
         let workflow_id_for_reset = id.clone();
         move || {
@@ -124,20 +125,24 @@ pub fn WorkflowEditPage(id: String) -> Element {
                 // Status updates removed
 
                 // Save to database
-                let store_clone = store.clone();
                 let _ui_state = _ui_state;
                 spawn(async move {
-                    if let Some(ref s) = store_clone {
-                        match s
-                            .save_settings(&state_provider.settings.read().settings)
-                            .await
-                        {
-                            Ok(_) => {
-                                // Status updates removed
+                    match see_core::get_global_store() {
+                        Ok(store) => {
+                            match store
+                                .save_settings(&state_provider.settings.read().settings)
+                                .await
+                            {
+                                Ok(_) => {
+                                    // Status updates removed
+                                }
+                                Err(_e) => {
+                                    // Status updates removed
+                                }
                             }
-                            Err(_e) => {
-                                // Status updates removed
-                            }
+                        }
+                        Err(_e) => {
+                            // Status updates removed
                         }
                     }
                 });

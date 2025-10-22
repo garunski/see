@@ -4,12 +4,11 @@ use crate::state::AppStateProvider;
 use dioxus::prelude::*;
 use dioxus_router::prelude::use_navigator;
 use see_core::WorkflowDefinition;
-use std::sync::Arc;
 
 #[component]
 fn WorkflowCard(workflow: WorkflowDefinition) -> Element {
     let state_provider = use_context::<AppStateProvider>();
-    let store = use_context::<Option<Arc<see_core::RedbStore>>>();
+    // Store is now managed internally by core
     let navigator = use_navigator();
 
     rsx! {
@@ -18,7 +17,6 @@ fn WorkflowCard(workflow: WorkflowDefinition) -> Element {
             onclick: move |_| {
                 let workflow_content = workflow.content.clone();
                 let _workflow_name = workflow.name.clone();
-                let store_clone = store.clone();
                 let mut workflow_state = state_provider.workflow;
                 let _ui_state = state_provider.ui;
                 let mut history_state = state_provider.history;
@@ -58,16 +56,9 @@ fn WorkflowCard(workflow: WorkflowDefinition) -> Element {
                         }
                     });
 
-                    let store_for_execution = store_clone.map(|s| s as Arc<dyn see_core::AuditStore>);
-                    tracing::info!(store_available = store_for_execution.is_some(), "About to execute workflow");
+                    tracing::info!("About to execute workflow");
 
-                    match run_workflow_from_content(
-                        workflow_content.clone(),
-                        output_callback,
-                        store_for_execution,
-                    )
-                    .await
-                    {
+                    match run_workflow_from_content(workflow_content.clone(), output_callback).await {
                         Ok(result) => {
                             tracing::info!(success = result.success, "Workflow execution completed");
                             // Stop polling

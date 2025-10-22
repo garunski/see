@@ -12,7 +12,7 @@ use std::collections::HashMap;
 use std::fmt;
 use std::path::PathBuf;
 use std::str::FromStr;
-use std::sync::Arc;
+use std::sync::{Arc, Mutex, Once};
 
 use crate::errors::CoreError;
 
@@ -210,6 +210,34 @@ pub fn init_tracing(log_dir: Option<PathBuf>) -> Result<TracingGuard, Box<CoreEr
         .init();
 
     Ok(TracingGuard { _guard: guard })
+}
+
+/// Global store instance - singleton pattern to avoid multiple database connections
+static GLOBAL_STORE: Mutex<Option<Arc<dyn AuditStore + Send + Sync>>> = Mutex::new(None);
+static INIT: Once = Once::new();
+
+/// Get the global store instance, creating it if it doesn't exist
+pub fn get_global_store() -> Result<Arc<dyn AuditStore + Send + Sync>, CoreError> {
+    INIT.call_once(|| {
+        let store = match RedbStore::new_default() {
+            Ok(store) => Some(Arc::new(store) as Arc<dyn AuditStore + Send + Sync>),
+            Err(e) => {
+                eprintln!("Failed to initialize global store: {}", e);
+                None
+            }
+        };
+        if let Ok(mut global_store) = GLOBAL_STORE.lock() {
+            *global_store = store;
+        }
+    });
+
+    let global_store = GLOBAL_STORE
+        .lock()
+        .map_err(|e| CoreError::MutexLock(format!("Failed to lock global store: {}", e)))?;
+    global_store
+        .as_ref()
+        .ok_or_else(|| CoreError::Dataflow("Global store not initialized".to_string()))
+        .map(|store| store.clone())
 }
 
 pub use crate::engine::execute::{execute_workflow, execute_workflow_from_content};

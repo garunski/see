@@ -154,6 +154,13 @@ pub trait AuditStore: Send + Sync {
     ) -> Result<Vec<crate::persistence::models::WorkflowMetadata>, CoreError>;
     async fn delete_workflow_metadata_and_tasks(&self, execution_id: &str)
         -> Result<(), CoreError>;
+    async fn load_settings(
+        &self,
+    ) -> Result<Option<crate::persistence::models::AppSettings>, CoreError>;
+    async fn save_settings(
+        &self,
+        settings: &crate::persistence::models::AppSettings,
+    ) -> Result<(), CoreError>;
 }
 
 #[async_trait]
@@ -572,5 +579,18 @@ impl AuditStore for RedbStore {
         })
         .await
         .map_err(|e| CoreError::Dataflow(format!("task join error: {}", e)))?
+    }
+
+    async fn load_settings(
+        &self,
+    ) -> Result<Option<crate::persistence::models::AppSettings>, CoreError> {
+        self.load_settings().await
+    }
+
+    async fn save_settings(
+        &self,
+        settings: &crate::persistence::models::AppSettings,
+    ) -> Result<(), CoreError> {
+        self.save_settings(settings).await
     }
 }

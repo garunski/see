@@ -7,12 +7,11 @@ use crate::services::workflow::{create_output_channel, run_workflow};
 use crate::state::AppStateProvider;
 use dioxus::prelude::*;
 use rfd::FileDialog;
-use std::sync::Arc;
 
 #[component]
 pub fn UploadPage() -> Element {
     let mut state_provider = use_context::<AppStateProvider>();
-    let store = use_context::<Option<Arc<see_core::RedbStore>>>();
+    // Store is now managed internally by core
 
     let workflow_file = use_memo(move || state_provider.workflow.read().workflow_file.clone());
     let execution_status =
@@ -51,7 +50,6 @@ pub fn UploadPage() -> Element {
     };
 
     let on_execute = move || {
-        let store_clone = store.clone();
         let mut workflow_state = state_provider.workflow;
         let _ui_state = state_provider.ui;
         let mut history_state = state_provider.history;
@@ -83,13 +81,7 @@ pub fn UploadPage() -> Element {
                 }
             });
 
-            match run_workflow(
-                file_path,
-                output_callback,
-                store_clone.map(|s| s as Arc<dyn see_core::AuditStore>),
-            )
-            .await
-            {
+            match run_workflow(file_path, output_callback).await {
                 Ok(result) => {
                     workflow_state.write().apply_success(&result);
                     workflow_state.write().stop_polling(); // Stop polling when complete

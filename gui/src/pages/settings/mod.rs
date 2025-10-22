@@ -3,18 +3,16 @@ use crate::state::AppStateProvider;
 use dioxus::prelude::*;
 use dioxus_router::prelude::Link;
 use see_core::Theme;
-use std::sync::Arc;
 
 pub mod components;
 
 #[component]
 pub fn SettingsPage() -> Element {
     let state_provider = use_context::<AppStateProvider>();
-    let store = use_context::<Option<Arc<see_core::RedbStore>>>();
+    // Store is now managed internally by core
 
     let current_theme = use_memo(move || state_provider.settings.read().settings.theme);
 
-    let store_clone = store.clone();
     let change_theme = {
         let mut state_provider = state_provider.clone();
         move |new_theme: Theme| {
@@ -22,23 +20,32 @@ pub fn SettingsPage() -> Element {
             // Status updates removed
 
             // Save immediately with error handling
-            let store_clone = store_clone.clone();
             let _ui_state = state_provider.ui;
             spawn(async move {
-                if let Some(ref s) = store_clone {
-                    match s
-                        .save_settings(&see_core::AppSettings {
-                            theme: new_theme,
-                            workflows: state_provider.settings.read().settings.workflows.clone(),
-                        })
-                        .await
-                    {
-                        Ok(_) => {
-                            // Status updates removed
+                match see_core::get_global_store() {
+                    Ok(store) => {
+                        match store
+                            .save_settings(&see_core::AppSettings {
+                                theme: new_theme,
+                                workflows: state_provider
+                                    .settings
+                                    .read()
+                                    .settings
+                                    .workflows
+                                    .clone(),
+                            })
+                            .await
+                        {
+                            Ok(_) => {
+                                // Status updates removed
+                            }
+                            Err(_e) => {
+                                // Status updates removed
+                            }
                         }
-                        Err(_e) => {
-                            // Status updates removed
-                        }
+                    }
+                    Err(_e) => {
+                        // Status updates removed
                     }
                 }
             });

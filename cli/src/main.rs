@@ -20,7 +20,7 @@ async fn main() {
     tracing::info!(file = %args.file, "CLI starting");
 
     let output: OutputCallback = std::sync::Arc::new(|line| println!("{}", line));
-    match execute_workflow(&args.file, Some(output), None).await {
+    match execute_workflow(&args.file, Some(output)).await {
         Ok(result) => {
             tracing::info!(
                 workflow = %result.workflow_name,

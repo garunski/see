@@ -2,14 +2,13 @@ use crate::pages::workflow::upload::components::{StepNavigator, WorkflowProgress
 use crate::state::AppStateProvider;
 use dioxus::prelude::*;
 use dioxus_router::prelude::use_navigator;
-use see_core::{AuditStore, TaskStatus, WorkflowExecution};
-use std::sync::Arc;
+use see_core::{TaskStatus, WorkflowExecution};
 use std::time::Duration;
 
 #[component]
 pub fn WorkflowDetailsPage(id: String) -> Element {
     let _state_provider = use_context::<AppStateProvider>();
-    let store = use_context::<Option<Arc<see_core::RedbStore>>>();
+    // Store is now managed internally by core
     let navigator = use_navigator();
 
     let execution = use_signal(|| None::<WorkflowExecution>);
@@ -18,7 +17,6 @@ pub fn WorkflowDetailsPage(id: String) -> Element {
 
     // Load workflow execution and set up polling
     use_effect(move || {
-        let store = store.clone();
         let mut execution = execution;
         let mut loading = loading;
         let mut error = error;
@@ -26,27 +24,30 @@ pub fn WorkflowDetailsPage(id: String) -> Element {
 
         spawn(async move {
             loop {
-                if let Some(s) = store.clone() {
-                    match s.get_workflow_with_tasks(&id).await {
-                        Ok(exec) => {
-                            execution.set(Some(exec.clone()));
-                            loading.set(false);
+                match see_core::get_global_store() {
+                    Ok(store) => {
+                        match store.get_workflow_with_tasks(&id).await {
+                            Ok(exec) => {
+                                execution.set(Some(exec.clone()));
+                                loading.set(false);
 
-                            // Stop polling if workflow is complete or failed
-                            if exec.success || !exec.errors.is_empty() {
+                                // Stop polling if workflow is complete or failed
+                                if exec.success || !exec.errors.is_empty() {
+                                    break;
+                                }
+                            }
+                            Err(e) => {
+                                error.set(Some(format!("Failed to load workflow: {}", e)));
+                                loading.set(false);
                                 break;
                             }
                         }
-                        Err(e) => {
-                            error.set(Some(format!("Failed to load workflow: {}", e)));
-                            loading.set(false);
-                            break;
-                        }
                     }
-                } else {
-                    error.set(Some("Database not available".to_string()));
-                    loading.set(false);
-                    break;
+                    Err(e) => {
+                        error.set(Some(format!("Database not available: {}", e)));
+                        loading.set(false);
+                        break;
+                    }
                 }
 
                 // Poll every 2 seconds

@@ -1,5 +1,5 @@
 use see_core::{
-    errors::CoreError, execute_workflow, execute_workflow_from_content, AuditStore, OutputCallback,
+    errors::CoreError, execute_workflow, execute_workflow_from_content, OutputCallback,
     WorkflowResult,
 };
 use std::sync::Arc;
@@ -21,17 +21,15 @@ pub fn create_output_channel() -> (OutputCallback, RunHandles) {
 pub async fn run_workflow_from_content(
     content: String,
     output: OutputCallback,
-    store: Option<Arc<dyn AuditStore>>,
 ) -> Result<WorkflowResult, CoreError> {
-    execute_workflow_from_content(&content, Some(output), store).await
+    execute_workflow_from_content(&content, Some(output)).await
 }
 
 pub async fn run_workflow(
     file_path: String,
     output: OutputCallback,
-    store: Option<Arc<dyn AuditStore>>,
 ) -> Result<WorkflowResult, CoreError> {
-    execute_workflow(&file_path, Some(output), store).await
+    execute_workflow(&file_path, Some(output)).await
 }
 
 #[derive(Clone, Debug)]
@@ -42,10 +40,8 @@ pub struct WorkflowProgress {
     pub is_complete: bool,
 }
 
-pub async fn poll_workflow_progress(
-    execution_id: &str,
-    store: Arc<dyn AuditStore>,
-) -> Result<WorkflowProgress, CoreError> {
+pub async fn poll_workflow_progress(execution_id: &str) -> Result<WorkflowProgress, CoreError> {
+    let store = see_core::get_global_store()?;
     // Try to get workflow with tasks from new schema
     match store.get_workflow_with_tasks(execution_id).await {
         Ok(execution) => {

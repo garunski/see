@@ -2,8 +2,7 @@ use crate::router::Route;
 use crate::state::AppStateProvider;
 use dioxus::prelude::*;
 use dioxus_router::prelude::Link;
-use see_core::{AuditStore, WorkflowExecutionSummary, WorkflowMetadata};
-use std::sync::Arc;
+use see_core::{WorkflowExecutionSummary, WorkflowMetadata};
 use std::time::{Duration, SystemTime};
 
 #[component]
@@ -162,7 +161,7 @@ fn ErrorBanner(error: String, on_retry: EventHandler<()>) -> Element {
 #[component]
 pub fn HistoryPage() -> Element {
     let state_provider = use_context::<AppStateProvider>();
-    let store = use_context::<Option<Arc<see_core::RedbStore>>>();
+    // Store is now managed internally by core
 
     // Local state for this page
     let is_loading = use_signal(|| true);
@@ -177,11 +176,9 @@ pub fn HistoryPage() -> Element {
 
     // Manual refresh function
     let refresh_data = {
-        let store = store.clone();
         let state_provider = state_provider.clone();
 
         move || {
-            let store = store.clone();
             let mut state_provider = state_provider.clone();
             let mut is_loading = is_loading;
             let mut error = error;
@@ -193,39 +190,45 @@ pub fn HistoryPage() -> Element {
                 error.set(None);
                 is_manual_refresh.set(true);
 
-                if let Some(s) = store {
-                    // Load completed workflows
-                    match s.list_workflow_executions(50).await {
-                        Ok(history) => {
-                            state_provider.history.write().set_history(history);
+                match see_core::get_global_store() {
+                    Ok(store) => {
+                        // Load completed workflows
+                        match store.list_workflow_executions(50).await {
+                            Ok(history) => {
+                                state_provider.history.write().set_history(history);
+                            }
+                            Err(e) => {
+                                error.set(Some(format!(
+                                    "Failed to load completed workflows: {}",
+                                    e
+                                )));
+                            }
                         }
-                        Err(e) => {
-                            error.set(Some(format!("Failed to load completed workflows: {}", e)));
-                        }
-                    }
 
-                    // Load running workflows
-                    match s.list_workflow_metadata(50).await {
-                        Ok(metadata) => {
-                            // Filter to only running workflows
-                            let running: Vec<_> = metadata
-                                .into_iter()
-                                .filter(|m| {
-                                    m.status
-                                        == see_core::persistence::models::WorkflowStatus::Running
-                                })
-                                .collect();
-                            state_provider
-                                .history
-                                .write()
-                                .set_running_workflows(running);
-                        }
-                        Err(e) => {
-                            error.set(Some(format!("Failed to load running workflows: {}", e)));
+                        // Load running workflows
+                        match store.list_workflow_metadata(50).await {
+                            Ok(metadata) => {
+                                // Filter to only running workflows
+                                let running: Vec<_> = metadata
+                                    .into_iter()
+                                    .filter(|m| {
+                                        m.status
+                                            == see_core::persistence::models::WorkflowStatus::Running
+                                    })
+                                    .collect();
+                                state_provider
+                                    .history
+                                    .write()
+                                    .set_running_workflows(running);
+                            }
+                            Err(e) => {
+                                error.set(Some(format!("Failed to load running workflows: {}", e)));
+                            }
                         }
                     }
-                } else {
-                    error.set(Some("Database not available".to_string()));
+                    Err(e) => {
+                        error.set(Some(format!("Database not available: {}", e)));
+                    }
                 }
 
                 is_loading.set(false);
@@ -277,21 +280,22 @@ pub fn HistoryPage() -> Element {
     });
 
     // Delete execution handler
-    let store_clone = store.clone();
     let delete_execution = {
         let state_provider = state_provider.clone();
         move |id: String| {
-            let store_clone = store_clone.clone();
             let mut history_state = state_provider.history;
             spawn(async move {
-                if let Some(s) = store_clone {
-                    match s.delete_workflow_execution(&id).await {
+                match see_core::get_global_store() {
+                    Ok(store) => match store.delete_workflow_execution(&id).await {
                         Ok(_) => {
                             history_state.write().delete_execution(&id);
                         }
                         Err(e) => {
                             eprintln!("Failed to delete execution: {}", e);
                         }
+                    },
+                    Err(e) => {
+                        eprintln!("Failed to create store for deletion: {}", e);
                     }
                 }
             });
@@ -299,21 +303,22 @@ pub fn HistoryPage() -> Element {
     };
 
     // Delete running workflow handler
-    let store_clone2 = store.clone();
     let delete_running_workflow = {
         let state_provider = state_provider.clone();
         move |id: String| {
-            let store_clone = store_clone2.clone();
             let mut history_state = state_provider.history;
             spawn(async move {
-                if let Some(s) = store_clone {
-                    match s.delete_workflow_metadata_and_tasks(&id).await {
+                match see_core::get_global_store() {
+                    Ok(store) => match store.delete_workflow_metadata_and_tasks(&id).await {
                         Ok(_) => {
                             history_state.write().remove_running_workflow(&id);
                         }
                         Err(e) => {
                             eprintln!("Failed to delete running workflow: {}", e);
                         }
+                    },
+                    Err(e) => {
+                        eprintln!("Failed to create store for deletion: {}", e);
                     }
                 }
             });
