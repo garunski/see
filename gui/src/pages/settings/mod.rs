@@ -19,14 +19,11 @@ pub fn SettingsPage() -> Element {
         let mut state_provider = state_provider.clone();
         move |new_theme: Theme| {
             state_provider.settings.write().change_theme(new_theme);
-            state_provider.ui.write().show_status(
-                "Saving theme settings...".to_string(),
-                crate::components::ExecutionStatus::Running,
-            );
+            // Status updates removed
 
             // Save immediately with error handling
             let store_clone = store_clone.clone();
-            let mut ui_state = state_provider.ui;
+            let _ui_state = state_provider.ui;
             spawn(async move {
                 if let Some(ref s) = store_clone {
                     match s
@@ -37,16 +34,10 @@ pub fn SettingsPage() -> Element {
                         .await
                     {
                         Ok(_) => {
-                            ui_state.write().show_status(
-                                "Settings saved successfully".to_string(),
-                                crate::components::ExecutionStatus::Complete,
-                            );
+                            // Status updates removed
                         }
-                        Err(e) => {
-                            ui_state.write().show_status(
-                                format!("Failed to save settings: {}", e),
-                                crate::components::ExecutionStatus::Failed,
-                            );
+                        Err(_e) => {
+                            // Status updates removed
                         }
                     }
                 }

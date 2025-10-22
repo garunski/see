@@ -38,25 +38,19 @@ pub fn WorkflowEditPage(id: String) -> Element {
     let mut save_workflow = {
         let mut state_provider = state_provider.clone();
         let store = store.clone();
-        let mut ui_state = state_provider.ui;
+        let _ui_state = state_provider.ui;
         let workflow_id_for_save = id.clone();
         move || {
             // Validate JSON
             if let Err(e) = serde_json::from_str::<serde_json::Value>(&content()) {
                 validation_error.set(format!("Invalid JSON: {}", e));
-                ui_state.write().show_status(
-                    "Invalid JSON format".to_string(),
-                    crate::components::ExecutionStatus::Failed,
-                );
+                // Status updates removed
                 return;
             }
 
             validation_error.set(String::new());
             is_saving.set(true);
-            ui_state.write().show_status(
-                "Saving workflow...".to_string(),
-                crate::components::ExecutionStatus::Running,
-            );
+            // Status updates removed
 
             let final_id = if is_new {
                 Uuid::new_v4().to_string()
@@ -88,7 +82,7 @@ pub fn WorkflowEditPage(id: String) -> Element {
 
             // Save to database
             let store_clone = store.clone();
-            let mut ui_state = ui_state;
+            let _ui_state = _ui_state;
             spawn(async move {
                 if let Some(ref s) = store_clone {
                     match s
@@ -96,16 +90,10 @@ pub fn WorkflowEditPage(id: String) -> Element {
                         .await
                     {
                         Ok(_) => {
-                            ui_state.write().show_status(
-                                "Workflow saved successfully".to_string(),
-                                crate::components::ExecutionStatus::Complete,
-                            );
+                            // Status updates removed
                         }
-                        Err(e) => {
-                            ui_state.write().show_status(
-                                format!("Failed to save workflow: {}", e),
-                                crate::components::ExecutionStatus::Failed,
-                            );
+                        Err(_e) => {
+                            // Status updates removed
                         }
                     }
                 }
@@ -117,7 +105,7 @@ pub fn WorkflowEditPage(id: String) -> Element {
     let mut reset_to_default = {
         let mut state_provider = state_provider.clone();
         let store = store.clone();
-        let mut ui_state = state_provider.ui;
+        let _ui_state = state_provider.ui;
         let workflow_id_for_reset = id.clone();
         move || {
             // Load default workflows to find the original content
@@ -133,14 +121,11 @@ pub fn WorkflowEditPage(id: String) -> Element {
 
                 content.set(default_workflow.content.clone());
                 can_reset.set(false);
-                ui_state.write().show_status(
-                    "Resetting workflow to default...".to_string(),
-                    crate::components::ExecutionStatus::Running,
-                );
+                // Status updates removed
 
                 // Save to database
                 let store_clone = store.clone();
-                let mut ui_state = ui_state;
+                let _ui_state = _ui_state;
                 spawn(async move {
                     if let Some(ref s) = store_clone {
                         match s
@@ -148,16 +133,10 @@ pub fn WorkflowEditPage(id: String) -> Element {
                             .await
                         {
                             Ok(_) => {
-                                ui_state.write().show_status(
-                                    "Workflow reset to default".to_string(),
-                                    crate::components::ExecutionStatus::Complete,
-                                );
+                                // Status updates removed
                             }
-                            Err(e) => {
-                                ui_state.write().show_status(
-                                    format!("Failed to reset workflow: {}", e),
-                                    crate::components::ExecutionStatus::Failed,
-                                );
+                            Err(_e) => {
+                                // Status updates removed
                             }
                         }
                     }

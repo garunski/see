@@ -1,4 +1,3 @@
-use crate::components::StatusBar;
 use crate::router::Route;
 use crate::state::AppStateProvider;
 use dioxus::prelude::*;
@@ -123,18 +122,6 @@ fn AppContent() -> Element {
         }
     });
 
-    // 5. Show database initialization error notification if needed
-    let store_clone_for_notification = store.clone();
-    use_effect(move || {
-        if store_clone_for_notification.is_none() {
-            state_provider.ui.write().show_status(
-                "⚠️ Database unavailable - workflow history and settings will not be saved"
-                    .to_string(),
-                crate::components::ExecutionStatus::Failed,
-            );
-        }
-    });
-
     // 6. Load history - reactive to needs_history_reload flag
     let store_clone2 = store.clone();
     use_effect(move || {
@@ -149,10 +136,7 @@ fn AppContent() -> Element {
                             history_state.write().set_history(history);
                         }
                         Err(e) => {
-                            state_provider.ui.write().show_status(
-                                format!("Failed to load history: {}", e),
-                                crate::components::ExecutionStatus::Failed,
-                            );
+                            eprintln!("Failed to load history: {}", e);
                         }
                     }
                 }
@@ -180,19 +164,6 @@ fn AppContent() -> Element {
         }
     });
 
-    // Auto-clear completed/failed status messages after 3 seconds
-    use_effect(move || {
-        let mut ui_state = state_provider.ui;
-        spawn(async move {
-            loop {
-                tokio::time::sleep(tokio::time::Duration::from_millis(500)).await;
-                if ui_state.read().should_auto_clear() {
-                    ui_state.write().clear_status();
-                }
-            }
-        });
-    });
-
     // Poll for workflow progress during execution
     let polling_trigger = use_memo(move || state_provider.workflow.read().polling_trigger);
     let mut cancel_tx_ref = use_signal(|| None::<tokio::sync::oneshot::Sender<()>>);
@@ -209,7 +180,7 @@ fn AppContent() -> Element {
         if is_polling {
             let polling_execution_id = state_provider.workflow.read().polling_execution_id.clone();
             let store = store.clone();
-            let mut ui_state = state_provider.ui;
+            let _ui_state = state_provider.ui;
             let mut workflow_state = state_provider.workflow;
 
             // Create a cancellation token for this polling loop
@@ -244,7 +215,7 @@ fn AppContent() -> Element {
 
                         match result {
                             Ok(progress) => {
-                                let message = if let Some(ref task) = progress.current_task {
+                                let _message = if let Some(ref task) = progress.current_task {
                                     format!(
                                         "Running: {} ({}/{} complete)",
                                         task, progress.completed, progress.total
@@ -262,10 +233,7 @@ fn AppContent() -> Element {
                                     "Starting workflow...".to_string()
                                 };
 
-                                ui_state.write().show_status(
-                                    message,
-                                    crate::components::ExecutionStatus::Running,
-                                );
+                                // Status updates removed
                             }
                             Err(_) => {
                                 // Workflow not found yet or error, continue polling
@@ -311,9 +279,6 @@ fn AppContent() -> Element {
                 }
             },
 
-            StatusBar {
-                message: state_provider.ui.read().status_message.clone()
-            }
 
             Router::<Route> {}
         }

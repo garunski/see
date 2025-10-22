@@ -29,10 +29,7 @@ pub fn UploadPage() -> Element {
 
     let mut pick_file = move || {
         state_provider.ui.write().set_picking_file(true);
-        state_provider.ui.write().show_status(
-            "Opening file picker...".to_string(),
-            crate::components::ExecutionStatus::Running,
-        );
+        // Status updates removed
         spawn(async move {
             if let Some(path) = FileDialog::new()
                 .add_filter("JSON files", &["json"])
@@ -42,15 +39,12 @@ pub fn UploadPage() -> Element {
                 if let Some(path_str) = path.to_str() {
                     state_provider.workflow.write().workflow_file = path_str.to_string();
                     state_provider.history.write().clear_viewing();
-                    state_provider.ui.write().show_status(
-                        format!("Selected file: {}", path_str),
-                        crate::components::ExecutionStatus::Complete,
-                    );
+                    // Status updates removed
                 } else {
-                    state_provider.ui.write().clear_status();
+                    // Status updates removed
                 }
             } else {
-                state_provider.ui.write().clear_status();
+                // Status updates removed
             }
             state_provider.ui.write().set_picking_file(false);
         });
@@ -59,15 +53,12 @@ pub fn UploadPage() -> Element {
     let on_execute = move || {
         let store_clone = store.clone();
         let mut workflow_state = state_provider.workflow;
-        let mut ui_state = state_provider.ui;
+        let _ui_state = state_provider.ui;
         let mut history_state = state_provider.history;
         spawn(async move {
             let file_path = workflow_state.read().workflow_file.clone();
             workflow_state.write().reset_before_run();
-            ui_state.write().show_status(
-                "Starting workflow execution...".to_string(),
-                crate::components::ExecutionStatus::Running,
-            );
+            // Status updates removed
 
             let (output_callback, mut handles) = create_output_channel();
 
@@ -102,19 +93,13 @@ pub fn UploadPage() -> Element {
                 Ok(result) => {
                     workflow_state.write().apply_success(&result);
                     workflow_state.write().stop_polling(); // Stop polling when complete
-                    ui_state.write().show_status(
-                        "Workflow completed successfully!".to_string(),
-                        crate::components::ExecutionStatus::Complete,
-                    );
+                                                           // Status updates removed
                     history_state.write().needs_history_reload = true;
                 }
                 Err(e) => {
                     workflow_state.write().apply_failure(&e.to_string());
                     workflow_state.write().stop_polling(); // Stop polling on failure
-                    ui_state.write().show_status(
-                        format!("Workflow failed: {}", e),
-                        crate::components::ExecutionStatus::Failed,
-                    );
+                                                           // Status updates removed
                 }
             }
         });
