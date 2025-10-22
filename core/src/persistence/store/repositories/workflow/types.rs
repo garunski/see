@@ -20,12 +20,3 @@ pub struct TableContext<'a> {
     pub execution_ids_table: redb::Table<'a, &'static str, &'static str>,
     pub tasks_table: redb::Table<'a, &'static str, &'static [u8]>,
 }
-
-/// Helper struct for read-only table operations
-#[allow(dead_code)]
-#[derive(Debug)]
-pub struct ReadOnlyTableContext {
-    pub executions_table: redb::ReadOnlyTable<&'static str, &'static [u8]>,
-    pub execution_ids_table: redb::ReadOnlyTable<&'static str, &'static str>,
-    pub tasks_table: redb::ReadOnlyTable<&'static str, &'static [u8]>,
-}

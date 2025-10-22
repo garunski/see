@@ -22,16 +22,6 @@ pub trait TableOperations {
 
     /// Delete entries by prefix
     fn delete_by_prefix(&mut self, prefix: &str) -> Result<Vec<String>, CoreError>;
-
-    /// Iterate over entries with a given prefix and deserialize them
-    #[allow(dead_code)]
-    fn iter_by_prefix<T>(&self, prefix: &str) -> Result<Vec<T>, CoreError>
-    where
-        T: serde::de::DeserializeOwned;
-
-    /// Get all keys with a given prefix
-    #[allow(dead_code)]
-    fn get_keys_by_prefix(&self, prefix: &str) -> Result<Vec<String>, CoreError>;
 }
 
 impl TableOperations for Table<'_, &str, &[u8]> {
@@ -72,36 +62,6 @@ impl TableOperations for Table<'_, &str, &[u8]> {
 
         Ok(keys_to_delete)
     }
-
-    fn iter_by_prefix<T>(&self, prefix: &str) -> Result<Vec<T>, CoreError>
-    where
-        T: serde::de::DeserializeOwned,
-    {
-        let mut results = Vec::new();
-
-        for item in self.iter()? {
-            let (key, value) = item?;
-            if key.value().starts_with(prefix) {
-                let deserialized: T = deserialize(value.value())?;
-                results.push(deserialized);
-            }
-        }
-
-        Ok(results)
-    }
-
-    fn get_keys_by_prefix(&self, prefix: &str) -> Result<Vec<String>, CoreError> {
-        let mut keys = Vec::new();
-
-        for item in self.iter()? {
-            let (key, _) = item?;
-            if key.value().starts_with(prefix) {
-                keys.push(key.value().to_string());
-            }
-        }
-
-        Ok(keys)
-    }
 }
 
 impl TableOperations for ReadOnlyTable<&'static str, &'static [u8]> {
@@ -130,36 +90,6 @@ impl TableOperations for ReadOnlyTable<&'static str, &'static [u8]> {
         Err(CoreError::Dataflow(
             "Cannot delete from read-only table".to_string(),
         ))
-    }
-
-    fn iter_by_prefix<T>(&self, prefix: &str) -> Result<Vec<T>, CoreError>
-    where
-        T: serde::de::DeserializeOwned,
-    {
-        let mut results = Vec::new();
-
-        for item in self.iter()? {
-            let (key, value) = item?;
-            if key.value().starts_with(prefix) {
-                let deserialized: T = deserialize(value.value())?;
-                results.push(deserialized);
-            }
-        }
-
-        Ok(results)
-    }
-
-    fn get_keys_by_prefix(&self, prefix: &str) -> Result<Vec<String>, CoreError> {
-        let mut keys = Vec::new();
-
-        for item in self.iter()? {
-            let (key, _) = item?;
-            if key.value().starts_with(prefix) {
-                keys.push(key.value().to_string());
-            }
-        }
-
-        Ok(keys)
     }
 }
 

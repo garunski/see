@@ -145,14 +145,16 @@ impl AuditStore for RedbStore {
         &self,
         execution_id: &str,
     ) -> Result<WorkflowExecution, CoreError> {
-        self.workflow_repo.get_with_tasks(execution_id).await
+        self.workflow_repo
+            .get_with_tasks_required(execution_id)
+            .await
     }
 
     async fn list_workflow_metadata(
         &self,
         limit: usize,
     ) -> Result<Vec<WorkflowMetadata>, CoreError> {
-        self.workflow_repo.list_metadata(limit).await
+        self.workflow_repo.list_metadata_simple(limit).await
     }
 
     async fn delete_workflow_metadata_and_tasks(

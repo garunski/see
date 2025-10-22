@@ -33,24 +33,7 @@ impl HistoryState {
         self.running_workflows = running;
     }
 
-    #[allow(dead_code)]
-    pub fn add_running_workflow(&mut self, workflow: WorkflowMetadata) {
-        self.running_workflows.retain(|w| w.id != workflow.id);
-        self.running_workflows.push(workflow);
-    }
-
     pub fn remove_running_workflow(&mut self, id: &str) {
         self.running_workflows.retain(|w| w.id != id);
-    }
-
-    #[allow(dead_code)]
-    pub fn update_running_workflow(
-        &mut self,
-        id: &str,
-        status: see_core::persistence::models::WorkflowStatus,
-    ) {
-        if let Some(workflow) = self.running_workflows.iter_mut().find(|w| w.id == id) {
-            workflow.status = status;
-        }
     }
 }

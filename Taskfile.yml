@@ -16,7 +16,7 @@ tasks:
       - cargo clippy --all-targets --all-features -- -D warnings
       - cargo test
       - |
-        find . -name "*.rs" -not -path "./target/*" | xargs wc -l | awk '$1 > 200 && $2 != "total" {print "⚠️  " $2 " (" $1 " lines) - consider refactoring"}' | head -10
+        find . -name "*.rs" -not -path "./target/*" | xargs wc -l | awk '$1 > 200 && $2 != "total" {print "⚠️  " $2 " (" $1 " lines) - consider refactoring. create an aggressive plan, it is ok to change the contracts."}' | head -10
 
   # Run CLI application
   run-cli:

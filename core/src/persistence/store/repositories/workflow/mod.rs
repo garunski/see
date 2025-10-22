@@ -6,6 +6,8 @@ use crate::persistence::store::db_ops::DatabaseOperations;
 
 mod execution_ops;
 mod metadata_ops;
+mod query_builder;
+mod services;
 mod table_operations;
 mod types;
 
@@ -60,20 +62,22 @@ impl WorkflowRepository {
         self.metadata_ops.save_metadata(metadata).await
     }
 
-    /// Get workflow metadata by ID
-    #[allow(dead_code)]
-    pub async fn get_metadata(&self, id: &str) -> Result<WorkflowMetadata, CoreError> {
-        self.metadata_ops.get_metadata(id).await
+    /// List workflow metadata with simple pagination (for compatibility)
+    pub async fn list_metadata_simple(
+        &self,
+        limit: usize,
+    ) -> Result<Vec<WorkflowMetadata>, CoreError> {
+        self.metadata_ops.list_metadata_simple(limit).await
     }
 
-    /// List workflow metadata with pagination
-    pub async fn list_metadata(&self, limit: usize) -> Result<Vec<WorkflowMetadata>, CoreError> {
-        self.metadata_ops.list_metadata(limit).await
-    }
-
-    /// Get workflow with tasks reconstructed from metadata and task executions
-    pub async fn get_with_tasks(&self, execution_id: &str) -> Result<WorkflowExecution, CoreError> {
-        self.metadata_ops.get_with_tasks(execution_id).await
+    /// Get workflow with tasks - throws error if not found (for compatibility)
+    pub async fn get_with_tasks_required(
+        &self,
+        execution_id: &str,
+    ) -> Result<WorkflowExecution, CoreError> {
+        self.metadata_ops
+            .get_with_tasks_required(execution_id)
+            .await
     }
 
     /// Delete workflow metadata and all associated tasks
