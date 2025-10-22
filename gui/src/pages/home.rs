@@ -26,27 +26,14 @@ fn WorkflowCard(workflow: WorkflowDefinition) -> Element {
 
                 // Status updates removed
 
-                let workflow_name = workflow.name.clone();
                 spawn(async move {
                     workflow_state.write().reset_before_run();
-
-                    // Add running workflow to history state
-                    let workflow_metadata = see_core::persistence::models::WorkflowMetadata {
-                        id: "temp".to_string(), // Will be updated when we get the real execution ID
-                        workflow_name: workflow_name.clone(),
-                        start_timestamp: chrono::Utc::now().to_rfc3339(),
-                        end_timestamp: None,
-                        status: see_core::persistence::models::WorkflowStatus::Running,
-                        task_ids: vec![], // Will be updated when we get the real execution ID
-                    };
-                    history_state.write().add_running_workflow(workflow_metadata);
 
                     // Polling will start once we receive EXECUTION_ID from engine output
 
                     let (output_callback, mut handles) = create_output_channel();
 
                     let mut workflow_state_clone = workflow_state;
-                    let mut history_state_clone = history_state;
                     spawn(async move {
                         while let Some(msg) = handles.receiver.recv().await {
                             if msg.starts_with("EXECUTION_ID:") {
@@ -56,17 +43,8 @@ fn WorkflowCard(workflow: WorkflowDefinition) -> Element {
                                     .trim()
                                     .to_string();
                                 if !execution_id.is_empty() {
-                                    let execution_id_clone = execution_id.clone();
-                                    workflow_state_clone.write().execution_id = Some(execution_id_clone.clone());
-                                    workflow_state_clone.write().start_polling(execution_id_clone.clone());
-
-                                    // Update the running workflow with real execution ID
-                                    // We need to find the temp workflow and update it
-                                    let mut history = history_state_clone.write();
-                                    if let Some(workflow) = history.running_workflows.iter_mut().find(|w| w.id == "temp") {
-                                        workflow.id = execution_id_clone;
-                                        // We don't have task IDs yet, but that's okay for now
-                                    }
+                                    workflow_state_clone.write().execution_id = Some(execution_id.clone());
+                                    workflow_state_clone.write().start_polling(execution_id);
                                 }
                             } else {
                                 workflow_state_clone.write().output_logs.push(msg);
@@ -87,9 +65,6 @@ fn WorkflowCard(workflow: WorkflowDefinition) -> Element {
 
                             workflow_state.write().apply_success(&result);
                             // Status updates removed
-
-                            // Remove running workflow from history state
-                            history_state.write().remove_running_workflow(&result.execution_id);
                             history_state.write().needs_history_reload = true;
 
                             // Navigate to workflow details page
@@ -103,11 +78,6 @@ fn WorkflowCard(workflow: WorkflowDefinition) -> Element {
 
                             workflow_state.write().apply_failure(&e.to_string());
                             // Status updates removed
-
-                            // Remove running workflow from history state on error
-                            if let Some(execution_id) = workflow_state.read().execution_id.clone() {
-                                history_state.write().remove_running_workflow(&execution_id);
-                            }
                         }
                     }
                 });

@@ -151,6 +151,8 @@ pub trait AuditStore: Send + Sync {
         &self,
         limit: usize,
     ) -> Result<Vec<crate::persistence::models::WorkflowMetadata>, CoreError>;
+    async fn delete_workflow_metadata_and_tasks(&self, execution_id: &str)
+        -> Result<(), CoreError>;
 }
 
 #[async_trait]
@@ -282,6 +284,9 @@ impl AuditStore for RedbStore {
                     write_txn.open_table(redb::TableDefinition::new(EXECUTIONS_TABLE))?;
                 let mut execution_ids_table: Table<&str, &str> =
                     write_txn.open_table(redb::TableDefinition::new(EXECUTION_IDS_TABLE))?;
+                let mut tasks_table: Table<&str, &[u8]> =
+                    write_txn.open_table(redb::TableDefinition::new(TASKS_TABLE))?;
+
                 let timestamp_key = {
                     let execution_data = executions_table.get(id.as_str())?;
                     if let Some(serialized) = execution_data {
@@ -295,8 +300,31 @@ impl AuditStore for RedbStore {
                         )));
                     }
                 };
+
+                // Delete workflow execution
                 executions_table.remove(id.as_str())?;
                 execution_ids_table.remove(timestamp_key.as_str())?;
+
+                // Delete workflow metadata (stored with key "workflow:{id}")
+                let metadata_key = format!("workflow:{}", id);
+                executions_table.remove(metadata_key.as_str())?;
+
+                // Delete all tasks associated with this execution
+                let task_prefix = format!("task:{}:", id);
+                let mut keys_to_delete = Vec::new();
+
+                // First, collect all task keys to delete
+                for item in tasks_table.iter()? {
+                    let (key, _) = item?;
+                    if key.value().starts_with(&task_prefix) {
+                        keys_to_delete.push(key.value().to_string());
+                    }
+                }
+
+                // Then delete all collected task keys
+                for key in keys_to_delete {
+                    tasks_table.remove(key.as_str())?;
+                }
             }
             write_txn.commit()?;
             Ok(())
@@ -404,13 +432,27 @@ impl AuditStore for RedbStore {
                 }
             }
 
+            // Sort tasks according to metadata.task_ids order to maintain execution order
+            let ordered_tasks = if !metadata.task_ids.is_empty() {
+                let mut ordered_tasks = Vec::new();
+                for task_id in &metadata.task_ids {
+                    if let Some(task) = tasks.iter().find(|t| &t.id == task_id) {
+                        ordered_tasks.push(task.clone());
+                    }
+                }
+                ordered_tasks
+            } else {
+                // Fallback to original task order if task_ids is not available
+                tasks
+            };
+
             // Reconstruct WorkflowExecution for backward compatibility
             Ok(WorkflowExecution {
                 id: metadata.id,
                 workflow_name: metadata.workflow_name,
                 timestamp: metadata.start_timestamp,
                 success: metadata.status == crate::persistence::models::WorkflowStatus::Complete,
-                tasks,
+                tasks: ordered_tasks,
                 audit_trail: vec![],
                 per_task_logs,
                 errors: if metadata.status == crate::persistence::models::WorkflowStatus::Failed {
@@ -461,6 +503,49 @@ impl AuditStore for RedbStore {
                 Ok(metadata_list)
             },
         )
+        .await
+        .map_err(|e| CoreError::Dataflow(format!("task join error: {}", e)))?
+    }
+
+    async fn delete_workflow_metadata_and_tasks(
+        &self,
+        execution_id: &str,
+    ) -> Result<(), CoreError> {
+        let db = Arc::clone(&self.db);
+        let execution_id = execution_id.to_string();
+        task::spawn_blocking(move || -> Result<(), CoreError> {
+            let write_txn = db.begin_write()?;
+            {
+                let mut executions_table: Table<&str, &[u8]> =
+                    write_txn.open_table(redb::TableDefinition::new(EXECUTIONS_TABLE))?;
+                let mut tasks_table: Table<&str, &[u8]> =
+                    write_txn.open_table(redb::TableDefinition::new(TASKS_TABLE))?;
+
+                // Delete workflow metadata (stored with key "workflow:{execution_id}")
+                let metadata_key = format!("workflow:{}", execution_id);
+                executions_table.remove(metadata_key.as_str())?;
+
+                // Delete all tasks associated with this execution
+                // Tasks are stored with keys like "task:{execution_id}:{task_id}"
+                let task_prefix = format!("task:{}:", execution_id);
+                let mut keys_to_delete = Vec::new();
+
+                // First, collect all task keys to delete
+                for item in tasks_table.iter()? {
+                    let (key, _) = item?;
+                    if key.value().starts_with(&task_prefix) {
+                        keys_to_delete.push(key.value().to_string());
+                    }
+                }
+
+                // Then delete all collected task keys
+                for key in keys_to_delete {
+                    tasks_table.remove(key.as_str())?;
+                }
+            }
+            write_txn.commit()?;
+            Ok(())
+        })
         .await
         .map_err(|e| CoreError::Dataflow(format!("task join error: {}", e)))?
     }

@@ -4,6 +4,7 @@ use dioxus::prelude::*;
 use dioxus_router::prelude::use_navigator;
 use see_core::{AuditStore, TaskStatus, WorkflowExecution};
 use std::sync::Arc;
+use std::time::Duration;
 
 #[component]
 pub fn WorkflowDetailsPage(id: String) -> Element {
@@ -15,28 +16,41 @@ pub fn WorkflowDetailsPage(id: String) -> Element {
     let loading = use_signal(|| true);
     let error = use_signal(|| None::<String>);
 
-    // Load workflow execution on mount
+    // Load workflow execution and set up polling
     use_effect(move || {
         let store = store.clone();
         let mut execution = execution;
         let mut loading = loading;
         let mut error = error;
         let id = id.clone();
+
         spawn(async move {
-            if let Some(s) = store {
-                match s.get_workflow_execution(&id).await {
-                    Ok(exec) => {
-                        execution.set(Some(exec));
-                        loading.set(false);
+            loop {
+                if let Some(s) = store.clone() {
+                    match s.get_workflow_with_tasks(&id).await {
+                        Ok(exec) => {
+                            execution.set(Some(exec.clone()));
+                            loading.set(false);
+
+                            // Stop polling if workflow is complete or failed
+                            if exec.success || !exec.errors.is_empty() {
+                                break;
+                            }
+                        }
+                        Err(e) => {
+                            error.set(Some(e.to_string()));
+                            loading.set(false);
+                            break;
+                        }
                     }
-                    Err(e) => {
-                        error.set(Some(e.to_string()));
-                        loading.set(false);
-                    }
+                } else {
+                    error.set(Some("Database not available".to_string()));
+                    loading.set(false);
+                    break;
                 }
-            } else {
-                error.set(Some("Database not available".to_string()));
-                loading.set(false);
+
+                // Poll every 2 seconds
+                tokio::time::sleep(Duration::from_secs(2)).await;
             }
         });
     });
