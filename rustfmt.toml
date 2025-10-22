@@ -1,0 +1,14 @@
+# Rustfmt configuration for desktop application
+# Optimized for readability and consistency
+
+# Line width - 100 chars is standard for desktop apps
+max_width = 100
+
+# Edition to use for formatting
+edition = "2021"
+
+# Use spaces for indentation
+tab_spaces = 4
+
+# Other formatting preferences
+newline_style = "Unix"

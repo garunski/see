@@ -8,6 +8,16 @@ tasks:
       - cargo fmt
       - cargo clippy
 
+  # Comprehensive quality check
+  quality:
+    desc: Run all quality checks (formatting, linting, tests, file size)
+    cmds:
+      - cargo fmt -- --check
+      - cargo clippy --all-targets --all-features -- -D warnings
+      - cargo test
+      - |
+        find . -name "*.rs" -not -path "./target/*" | xargs wc -l | awk '$1 > 200 && $2 != "total" {print "⚠️  " $2 " (" $1 " lines) - consider refactoring"}' | head -10
+
   # Run CLI application
   run-cli:
     desc: Run CLI with workflow.json

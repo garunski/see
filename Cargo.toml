@@ -6,6 +6,12 @@ members = [
 ]
 resolver = "2"
 
+[workspace.lints.clippy]
+# Enable pedantic lints for comprehensive code quality checking
+pedantic = "warn"
+cognitive_complexity = "warn"
+type_complexity = "warn"
+
 [profile]
 
 [profile.wasm-dev]

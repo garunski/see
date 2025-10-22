@@ -1,0 +1,27 @@
+# Cargo configuration for development convenience
+
+[alias]
+# Quality check alias - runs all quality checks
+quality = "run --package see-tools --bin quality-check"
+
+# Development aliases
+dev = "run --package gui"
+cli = "run --package cli"
+
+# Build aliases
+build-gui = "build --package gui"
+build-cli = "build --package cli"
+build-all = "build --workspace"
+
+# Test aliases
+test-all = "test --workspace"
+test-gui = "test --package gui"
+test-core = "test --package see_core"
+
+# Lint aliases
+lint = "clippy --all-targets --all-features -- -D warnings"
+fmt-check = "fmt -- --check"
+
+[build]
+# Enable better error messages
+rustflags = ["-C", "debuginfo=1"]

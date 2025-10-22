@@ -1,0 +1,11 @@
+# Clippy configuration for desktop application
+# Enables pedantic lints with reasonable limits
+
+# Cognitive complexity - warn if functions exceed this complexity
+cognitive-complexity-threshold = 15
+
+# Type complexity - warn if types exceed this complexity  
+type-complexity-threshold = 250
+
+# Allow some pedantic lints that can be noisy
+# but still enable the pedantic group for comprehensive checking
