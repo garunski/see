@@ -79,9 +79,28 @@ pub async fn execute_workflow_from_content(
         if let Err(e) = store.save_workflow_metadata(&metadata).await {
             eprintln!("Failed to save workflow metadata: {}", e);
         }
+
+        // Create and save initial task execution records with Pending status
+        for task in &tasks {
+            let task_exec = crate::persistence::models::TaskExecution {
+                execution_id: execution_id.clone(),
+                task_id: task.id.clone(),
+                task_name: task.name.clone(),
+                status: crate::TaskStatus::Pending,
+                logs: Vec::new(),
+                start_timestamp: String::new(), // Will be set when task starts
+                end_timestamp: String::new(),   // Will be set when task completes
+            };
+            if let Err(e) = store.save_task_execution(&task_exec).await {
+                eprintln!(
+                    "Failed to save initial task execution for task {}: {}",
+                    task.id, e
+                );
+            }
+        }
     }
 
-    // Emit execution_id to GUI for polling
+    // Emit execution_id to GUI for polling (only after all initial data is saved)
     if let Err(e) = context.safe_log(&format!("EXECUTION_ID:{}\n", execution_id)) {
         eprintln!("Failed to emit execution_id: {}", e);
     }

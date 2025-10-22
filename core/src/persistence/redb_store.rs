@@ -147,6 +147,10 @@ pub trait AuditStore: Send + Sync {
         &self,
         execution_id: &str,
     ) -> Result<WorkflowExecution, CoreError>;
+    async fn list_workflow_metadata(
+        &self,
+        limit: usize,
+    ) -> Result<Vec<crate::persistence::models::WorkflowMetadata>, CoreError>;
 }
 
 #[async_trait]
@@ -416,6 +420,47 @@ impl AuditStore for RedbStore {
                 },
             })
         })
+        .await
+        .map_err(|e| CoreError::Dataflow(format!("task join error: {}", e)))?
+    }
+
+    async fn list_workflow_metadata(
+        &self,
+        limit: usize,
+    ) -> Result<Vec<crate::persistence::models::WorkflowMetadata>, CoreError> {
+        let db = Arc::clone(&self.db);
+        task::spawn_blocking(
+            move || -> Result<Vec<crate::persistence::models::WorkflowMetadata>, CoreError> {
+                let read_txn = db.begin_read()?;
+                let workflows_table: ReadOnlyTable<&str, &[u8]> =
+                    read_txn.open_table(redb::TableDefinition::new(EXECUTIONS_TABLE))?;
+
+                let mut metadata_list = Vec::new();
+                let mut count = 0;
+
+                for item in workflows_table.iter()? {
+                    if count >= limit {
+                        break;
+                    }
+
+                    let (key, value) = item?;
+                    // Only process keys that start with "workflow:" (metadata keys)
+                    if key.value().starts_with("workflow:") {
+                        let metadata: crate::persistence::models::WorkflowMetadata =
+                            bincode::deserialize(value.value())
+                                .map_err(|e| CoreError::Dataflow(e.to_string()))?;
+
+                        metadata_list.push(metadata);
+                        count += 1;
+                    }
+                }
+
+                // Sort by start_timestamp descending (most recent first)
+                metadata_list.sort_by(|a, b| b.start_timestamp.cmp(&a.start_timestamp));
+
+                Ok(metadata_list)
+            },
+        )
         .await
         .map_err(|e| CoreError::Dataflow(format!("task join error: {}", e)))?
     }

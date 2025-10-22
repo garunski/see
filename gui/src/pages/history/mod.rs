@@ -2,7 +2,7 @@ use crate::router::Route;
 use crate::state::AppStateProvider;
 use dioxus::prelude::*;
 use dioxus_router::prelude::Link;
-use see_core::{AuditStore, WorkflowExecutionSummary};
+use see_core::{AuditStore, WorkflowExecutionSummary, WorkflowMetadata};
 use std::sync::Arc;
 
 #[component]
@@ -59,11 +59,51 @@ fn HistoryItem(
 }
 
 #[component]
+fn RunningWorkflowItem(workflow: WorkflowMetadata) -> Element {
+    rsx! {
+        div { class: "bg-white dark:bg-zinc-800 rounded-xl border border-zinc-200 dark:border-zinc-700 shadow-sm hover:bg-zinc-50 dark:hover:bg-zinc-700 transition-colors",
+            Link {
+                to: Route::WorkflowDetailsPage { id: workflow.id.clone() },
+                class: "block p-6",
+                div { class: "flex items-center justify-between",
+                    div { class: "flex-1 min-w-0",
+                        div { class: "flex items-center gap-4 mb-3",
+                            h4 { class: "text-base font-semibold text-zinc-900 dark:text-white truncate", "{workflow.workflow_name}" }
+                            div {
+                                class: "px-3 py-1 text-sm rounded-full font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200",
+                                "In Progress"
+                            }
+                        }
+                        div { class: "text-sm text-zinc-500 dark:text-zinc-400 mb-2",
+                            "Started: {workflow.start_timestamp}"
+                        }
+                        div { class: "text-sm text-zinc-500 dark:text-zinc-400",
+                            "{workflow.task_ids.len()} tasks"
+                        }
+                    }
+                    div { class: "ml-4 flex items-center",
+                        // Spinning loading icon
+                        svg {
+                            class: "w-5 h-5 text-blue-600 dark:text-blue-400 animate-spin",
+                            view_box: "0 0 20 20",
+                            fill: "currentColor",
+                            path { d: "M10 2a8 8 0 100 16 8 8 0 000-16zM8.5 10a1.5 1.5 0 113 0 1.5 1.5 0 01-3 0z" }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+#[component]
 pub fn HistoryPage() -> Element {
     let state_provider = use_context::<AppStateProvider>();
     let store = use_context::<Option<Arc<see_core::RedbStore>>>();
 
     let workflow_history = use_memo(move || state_provider.history.read().workflow_history.clone());
+    let running_workflows =
+        use_memo(move || state_provider.history.read().running_workflows.clone());
 
     let store_clone = store.clone();
     let delete_execution = {
@@ -97,19 +137,40 @@ pub fn HistoryPage() -> Element {
                 p { class: "mt-2 text-zinc-600 dark:text-zinc-400", "View and manage your previous workflow executions" }
             }
 
-            // History List
-            if workflow_history().is_empty() {
-                div { class: "bg-white dark:bg-zinc-800 rounded-xl border border-zinc-200 dark:border-zinc-700 p-16 text-center shadow-sm",
-                    div { class: "text-6xl mb-6", "📋" }
-                    h3 { class: "text-base font-semibold text-zinc-900 dark:text-white mb-3", "No workflow executions yet" }
-                    p { class: "text-zinc-500 dark:text-zinc-400", "Execute your first workflow to see it appear here" }
+            // Running Workflows
+            if !running_workflows().is_empty() {
+                div { class: "space-y-4",
+                    div { class: "flex items-center justify-between",
+                        h2 { class: "text-lg font-semibold text-zinc-900 dark:text-white", "Running Workflows" }
+                    }
+                    div { class: "grid gap-6",
+                        for workflow in running_workflows().iter() {
+                            RunningWorkflowItem {
+                                workflow: workflow.clone(),
+                            }
+                        }
+                    }
                 }
-            } else {
-                div { class: "grid gap-6",
-                    for execution in workflow_history().iter() {
-                        HistoryItem {
-                            execution: execution.clone(),
-                            on_delete_execution: delete_execution.clone(),
+            }
+
+            // Completed Workflows
+            div { class: "space-y-4",
+                div { class: "flex items-center justify-between",
+                    h2 { class: "text-lg font-semibold text-zinc-900 dark:text-white", "Completed Workflows" }
+                }
+                if workflow_history().is_empty() {
+                    div { class: "bg-white dark:bg-zinc-800 rounded-xl border border-zinc-200 dark:border-zinc-700 p-16 text-center shadow-sm",
+                        div { class: "text-6xl mb-6", "📋" }
+                        h3 { class: "text-base font-semibold text-zinc-900 dark:text-white mb-3", "No completed workflows yet" }
+                        p { class: "text-zinc-500 dark:text-zinc-400", "Execute your first workflow to see it appear here" }
+                    }
+                } else {
+                    div { class: "grid gap-6",
+                        for execution in workflow_history().iter() {
+                            HistoryItem {
+                                execution: execution.clone(),
+                                on_delete_execution: delete_execution.clone(),
+                            }
                         }
                     }
                 }

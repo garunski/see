@@ -131,12 +131,31 @@ fn AppContent() -> Element {
             let mut history_state = state_provider.history;
             spawn(async move {
                 if let Some(s) = store {
+                    // Load completed workflows
                     match s.list_workflow_executions(50).await {
                         Ok(history) => {
                             history_state.write().set_history(history);
                         }
                         Err(e) => {
                             eprintln!("Failed to load history: {}", e);
+                        }
+                    }
+
+                    // Load running workflows
+                    match s.list_workflow_metadata(50).await {
+                        Ok(metadata) => {
+                            // Filter to only running workflows
+                            let running: Vec<_> = metadata
+                                .into_iter()
+                                .filter(|m| {
+                                    m.status
+                                        == see_core::persistence::models::WorkflowStatus::Running
+                                })
+                                .collect();
+                            history_state.write().set_running_workflows(running);
+                        }
+                        Err(e) => {
+                            eprintln!("Failed to load running workflows: {}", e);
                         }
                     }
                 }
