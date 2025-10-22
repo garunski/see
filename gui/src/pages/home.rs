@@ -22,7 +22,6 @@ fn WorkflowCard(workflow: WorkflowDefinition) -> Element {
                 let mut workflow_state = state_provider.workflow;
                 let _ui_state = state_provider.ui;
                 let mut history_state = state_provider.history;
-                let navigator_clone = navigator;
 
                 // Status updates removed
 
@@ -34,6 +33,7 @@ fn WorkflowCard(workflow: WorkflowDefinition) -> Element {
                     let (output_callback, mut handles) = create_output_channel();
 
                     let mut workflow_state_clone = workflow_state;
+                    let navigator_clone_for_start = navigator.clone();
                     spawn(async move {
                         while let Some(msg) = handles.receiver.recv().await {
                             if msg.starts_with("EXECUTION_ID:") {
@@ -44,6 +44,12 @@ fn WorkflowCard(workflow: WorkflowDefinition) -> Element {
                                     .to_string();
                                 if !execution_id.is_empty() {
                                     workflow_state_clone.write().execution_id = Some(execution_id.clone());
+
+                                    // Navigate to workflow details page as soon as execution starts
+                                    navigator_clone_for_start.push(Route::WorkflowDetailsPage {
+                                        id: execution_id.clone()
+                                    });
+
                                     workflow_state_clone.write().start_polling(execution_id);
                                 }
                             } else {
@@ -67,10 +73,7 @@ fn WorkflowCard(workflow: WorkflowDefinition) -> Element {
                             // Status updates removed
                             history_state.write().needs_history_reload = true;
 
-                            // Navigate to workflow details page
-                            navigator_clone.push(Route::WorkflowDetailsPage {
-                                id: result.execution_id.clone()
-                            });
+                            // Navigation already happened when execution started
                         }
                         Err(e) => {
                             // Stop polling on error

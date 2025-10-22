@@ -38,7 +38,7 @@ pub fn WorkflowDetailsPage(id: String) -> Element {
                             }
                         }
                         Err(e) => {
-                            error.set(Some(e.to_string()));
+                            error.set(Some(format!("Failed to load workflow: {}", e)));
                             loading.set(false);
                             break;
                         }
