@@ -1,5 +1,5 @@
 use crate::errors::CoreError;
-use crate::persistence::redb_store::{AuditStore, RedbStore};
+use crate::persistence::store::{AuditStore, RedbStore};
 use std::sync::{Arc, Mutex, Once};
 
 static GLOBAL_STORE: Mutex<Option<Arc<dyn AuditStore + Send + Sync>>> = Mutex::new(None);

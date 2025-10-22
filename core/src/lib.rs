@@ -23,4 +23,4 @@ pub use crate::persistence::models::{
     AppSettings, TaskExecution, Theme, WorkflowDefinition, WorkflowExecution,
     WorkflowExecutionSummary, WorkflowMetadata, WorkflowStatus,
 };
-pub use crate::persistence::redb_store::{AuditStore, RedbStore};
+pub use crate::persistence::store::{AuditStore, RedbStore};

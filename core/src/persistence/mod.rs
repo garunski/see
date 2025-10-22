@@ -1,6 +1,6 @@
 pub mod default_workflows;
 pub mod models;
-pub mod redb_store;
+pub mod store;
 
 use async_trait::async_trait;
 use uuid::Uuid;
