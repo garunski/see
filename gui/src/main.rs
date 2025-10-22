@@ -6,6 +6,7 @@ mod pages;
 mod router;
 mod state;
 mod services {
+    pub mod history;
     pub mod workflow;
 }
 mod app;
