@@ -1,5 +1,8 @@
 #![allow(clippy::result_large_err)]
-use crate::{errors::CoreError, OutputCallback, TaskInfo, TaskStatus};
+use crate::{
+    errors::CoreError,
+    types::{OutputCallback, TaskInfo, TaskStatus},
+};
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex, MutexGuard};
 use tracing::{debug, trace};

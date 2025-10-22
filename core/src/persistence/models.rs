@@ -1,3 +1,4 @@
+use crate::types::{AuditEntry, TaskInfo, TaskStatus};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
@@ -7,8 +8,8 @@ pub struct WorkflowExecution {
     pub workflow_name: String,
     pub timestamp: String,
     pub success: bool,
-    pub tasks: Vec<crate::TaskInfo>,
-    pub audit_trail: Vec<crate::AuditEntry>,
+    pub tasks: Vec<TaskInfo>,
+    pub audit_trail: Vec<AuditEntry>,
     pub per_task_logs: HashMap<String, Vec<String>>,
     pub errors: Vec<String>,
 }
@@ -91,7 +92,7 @@ pub struct TaskExecution {
     pub execution_id: String,
     pub task_id: String,
     pub task_name: String,
-    pub status: crate::TaskStatus,
+    pub status: TaskStatus,
     pub logs: Vec<String>,
     pub start_timestamp: String,
     pub end_timestamp: String,

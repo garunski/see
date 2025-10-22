@@ -1,7 +1,8 @@
 use crate::execution::context::{ExecutionContext, ExecutionContextSafe};
 use crate::{
-    errors::CoreError, AuditEntry, AuditStatus, OutputCallback, TaskInfo, TaskStatus,
-    WorkflowExecution, WorkflowResult,
+    errors::CoreError,
+    types::{AuditEntry, AuditStatus, OutputCallback, TaskInfo, TaskStatus, WorkflowResult},
+    WorkflowExecution,
 };
 use chrono::Utc;
 use dataflow_rs::engine::{message::Message, AsyncFunctionHandler};
@@ -93,7 +94,7 @@ pub async fn execute_workflow_from_content(
                 execution_id: execution_id.clone(),
                 task_id: task.id.clone(),
                 task_name: task.name.clone(),
-                status: crate::TaskStatus::Pending,
+                status: TaskStatus::Pending,
                 logs: Vec::new(),
                 start_timestamp: String::new(),
                 end_timestamp: String::new(),

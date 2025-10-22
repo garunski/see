@@ -1,6 +1,7 @@
 use crate::errors::CoreError;
 use crate::execution::context::ExecutionContext;
 use crate::task_executor::{TaskExecutor, TaskLogger};
+use crate::types::TaskStatus;
 use async_trait::async_trait;
 use dataflow_rs::engine::{
     message::{Change, Message},
@@ -115,7 +116,7 @@ impl TaskExecutor for CliCommandHandler {
                     execution_id: ctx.get_execution_id(),
                     task_id: task_id.to_string(),
                     task_name: task_id.to_string(),
-                    status: crate::TaskStatus::InProgress,
+                    status: TaskStatus::InProgress,
                     logs: ctx.get_task_logs(task_id),
                     start_timestamp: ctx.get_task_start_time(task_id),
                     end_timestamp: String::new(),
@@ -178,7 +179,7 @@ impl TaskExecutor for CliCommandHandler {
                         execution_id: ctx.get_execution_id(),
                         task_id: task_id.to_string(),
                         task_name: task_id.to_string(),
-                        status: crate::TaskStatus::Failed,
+                        status: TaskStatus::Failed,
                         logs: ctx.get_task_logs(task_id),
                         start_timestamp: ctx.get_task_start_time(task_id),
                         end_timestamp: chrono::Utc::now().to_rfc3339(),
@@ -243,7 +244,7 @@ impl TaskExecutor for CliCommandHandler {
                     execution_id: ctx.get_execution_id(),
                     task_id: task_id.to_string(),
                     task_name: task_id.to_string(),
-                    status: crate::TaskStatus::Complete,
+                    status: TaskStatus::Complete,
                     logs: ctx.get_task_logs(task_id),
                     start_timestamp: ctx.get_task_start_time(task_id),
                     end_timestamp: chrono::Utc::now().to_rfc3339(),

@@ -1,6 +1,6 @@
 use crate::errors::CoreError;
 use crate::execution::context::ExecutionContext;
-use crate::TaskStatus;
+use crate::types::TaskStatus;
 use std::sync::{Arc, Mutex};
 
 pub struct SafeExecutionContext {
