@@ -10,10 +10,12 @@ use serde_json::json;
 use std::collections::HashMap;
 use std::sync::Arc;
 use tokio::fs;
+use tracing::{debug, error, info, instrument};
 use uuid::Uuid;
 
 use super::handlers::CliCommandHandler;
 
+#[instrument(skip(workflow_data, output_callback, store), fields(execution_id))]
 pub async fn execute_workflow_from_content(
     workflow_data: &str,
     output_callback: Option<OutputCallback>,
@@ -46,6 +48,8 @@ pub async fn execute_workflow_from_content(
         .collect();
 
     let execution_id = Uuid::new_v4().to_string();
+    tracing::Span::current().record("execution_id", &execution_id);
+    info!(workflow_name = %workflow.name, task_count = workflow.tasks.len(), "Starting workflow");
     let workflow_start_time = chrono::Utc::now().to_rfc3339();
 
     let context = ExecutionContext::new(
@@ -57,13 +61,13 @@ pub async fn execute_workflow_from_content(
     );
 
     if let Err(e) = context.safe_log("Loading workflow from content\n") {
-        eprintln!("Failed to log workflow loading: {}", e);
+        error!(error = %e, "Failed to log workflow loading");
     }
     if let Err(e) = context.safe_log(&format!("Loaded workflow: {}\n", workflow.name)) {
-        eprintln!("Failed to log workflow name: {}", e);
+        error!(error = %e, "Failed to log workflow name");
     }
     if let Err(e) = context.safe_log(&format!("Number of tasks: {}\n", workflow.tasks.len())) {
-        eprintln!("Failed to log task count: {}", e);
+        error!(error = %e, "Failed to log task count");
     }
 
     // Save workflow metadata at start
@@ -77,7 +81,7 @@ pub async fn execute_workflow_from_content(
             task_ids: tasks.iter().map(|t| t.id.clone()).collect(),
         };
         if let Err(e) = store.save_workflow_metadata(&metadata).await {
-            eprintln!("Failed to save workflow metadata: {}", e);
+            error!(error = %e, "Failed to save workflow metadata");
         }
 
         // Create and save initial task execution records with Pending status
@@ -115,14 +119,16 @@ pub async fn execute_workflow_from_content(
     let engine = Engine::new(vec![workflow.clone()], Some(custom_functions));
     let mut message = Message::from_value(&json!({}));
 
+    debug!("Executing workflow via dataflow engine");
     if let Err(e) = context.safe_log("\nExecuting workflow...\n") {
-        eprintln!("Failed to log execution start: {}", e);
+        error!(error = %e, "Failed to log execution start");
     }
 
     match engine.process_message(&mut message).await {
         Ok(_) => {
+            info!("Workflow execution completed successfully");
             if let Err(e) = context.safe_log("\n✅ Workflow execution complete!") {
-                eprintln!("Failed to log execution completion: {}", e);
+                error!(error = %e, "Failed to log execution completion");
             }
 
             let audit_trail: Vec<AuditEntry> = message
@@ -241,7 +247,7 @@ pub async fn execute_workflow_from_content(
                     task_ids: tasks.iter().map(|t| t.id.clone()).collect(),
                 };
                 if let Err(e) = store.save_workflow_metadata(&metadata).await {
-                    eprintln!("Failed to update workflow completion: {}", e);
+                    error!(error = %e, "Failed to save workflow completion metadata");
                 }
             }
 
@@ -303,11 +309,13 @@ pub async fn execute_workflow_from_content(
     }
 }
 
+#[instrument(skip(output_callback, store), fields(workflow_file = %workflow_file))]
 pub async fn execute_workflow(
     workflow_file: &str,
     output_callback: Option<OutputCallback>,
     store: Option<Arc<dyn AuditStore>>,
 ) -> Result<WorkflowResult, CoreError> {
+    debug!("Reading workflow file");
     let workflow_data = fs::read_to_string(workflow_file).await.map_err(|e| {
         CoreError::WorkflowExecution(format!(
             "Failed to read workflow file '{}': {}",

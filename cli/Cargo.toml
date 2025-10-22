@@ -7,4 +7,5 @@ edition = "2021"
 see_core = { path = "../core" }
 clap = { version = "4", features = ["derive"] }
 tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter", "fmt"] }
 tokio = { version = "1", features = ["full"] }

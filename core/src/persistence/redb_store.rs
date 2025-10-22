@@ -8,6 +8,7 @@ use std::path::PathBuf;
 use std::sync::Arc;
 use tokio::task;
 use tokio::time::{sleep, Duration};
+use tracing::{debug, error, info, instrument, trace, warn};
 
 const EXECUTIONS_TABLE: &str = "executions";
 const EXECUTION_IDS_TABLE: &str = "execution_ids";
@@ -157,6 +158,7 @@ pub trait AuditStore: Send + Sync {
 
 #[async_trait]
 impl AuditStore for RedbStore {
+    #[instrument(skip(self, execution), fields(execution_id = %execution.id))]
     async fn save_workflow_execution(
         &self,
         execution: &WorkflowExecution,
@@ -165,36 +167,53 @@ impl AuditStore for RedbStore {
         let execution = execution.clone();
         let id = execution.id.clone();
 
+        trace!("Entering save_workflow_execution");
         let mut last_error = None;
 
         for attempt in 0..3 {
+            debug!(attempt = attempt, "Starting save attempt");
             let result = task::spawn_blocking({
                 let db = Arc::clone(&db);
                 let execution = execution.clone();
                 let id = id.clone();
+                let span = tracing::debug_span!("blocking_save", attempt = attempt);
+
                 move || -> Result<String, CoreError> {
-                    let write_txn = db.begin_write()?;
-                    {
-                        let mut executions_table: Table<&str, &[u8]> =
-                            write_txn.open_table(redb::TableDefinition::new(EXECUTIONS_TABLE))?;
-                        let mut execution_ids_table: Table<&str, &str> = write_txn
-                            .open_table(redb::TableDefinition::new(EXECUTION_IDS_TABLE))?;
-                        let serialized = bincode::serialize(&execution)
-                            .map_err(|e| CoreError::Dataflow(e.to_string()))?;
-                        executions_table.insert(id.as_str(), serialized.as_slice())?;
-                        let timestamp_key = format!("{}:{}", execution.timestamp, id);
-                        execution_ids_table.insert(timestamp_key.as_str(), id.as_str())?;
-                    }
-                    write_txn.commit()?;
-                    Ok(id)
+                    span.in_scope(|| {
+                        trace!("Beginning write transaction");
+                        let write_txn = db.begin_write()?;
+                        {
+                            trace!("Opening tables");
+                            let mut executions_table: Table<&str, &[u8]> = write_txn
+                                .open_table(redb::TableDefinition::new(EXECUTIONS_TABLE))?;
+                            let mut execution_ids_table: Table<&str, &str> = write_txn
+                                .open_table(redb::TableDefinition::new(EXECUTION_IDS_TABLE))?;
+                            let serialized = bincode::serialize(&execution)
+                                .map_err(|e| CoreError::Dataflow(e.to_string()))?;
+                            debug!(serialized_size = serialized.len(), "Serialized execution");
+                            executions_table.insert(id.as_str(), serialized.as_slice())?;
+                            trace!("Inserted into executions table");
+                            let timestamp_key = format!("{}:{}", execution.timestamp, id);
+                            execution_ids_table.insert(timestamp_key.as_str(), id.as_str())?;
+                            trace!("Inserted into execution_ids table");
+                        }
+                        trace!("Committing transaction");
+                        write_txn.commit()?;
+                        trace!("Write transaction committed successfully");
+                        Ok(id)
+                    })
                 }
             })
             .await
             .map_err(|e| CoreError::Dataflow(format!("task join error: {}", e)))?;
 
             match result {
-                Ok(id) => return Ok(id),
+                Ok(id) => {
+                    info!("Workflow execution saved successfully");
+                    return Ok(id);
+                }
                 Err(error) => {
+                    warn!(error = %error, attempt = attempt, "Save attempt failed");
                     last_error = Some(error);
 
                     // Don't retry on the last attempt
@@ -209,6 +228,7 @@ impl AuditStore for RedbStore {
             }
         }
 
+        error!("All save attempts exhausted");
         Err(last_error.unwrap())
     }
 
@@ -333,6 +353,7 @@ impl AuditStore for RedbStore {
         .map_err(|e| CoreError::Dataflow(format!("task join error: {}", e)))?
     }
 
+    #[instrument(skip(self, metadata), fields(metadata_id = %metadata.id, status = ?metadata.status))]
     async fn save_workflow_metadata(
         &self,
         metadata: &crate::persistence::models::WorkflowMetadata,
@@ -341,6 +362,7 @@ impl AuditStore for RedbStore {
         let metadata = metadata.clone();
         let key = format!("workflow:{}", metadata.id);
 
+        trace!("Saving workflow metadata");
         task::spawn_blocking(move || -> Result<(), CoreError> {
             let write_txn = db.begin_write()?;
             {
@@ -357,6 +379,7 @@ impl AuditStore for RedbStore {
         .map_err(|e| CoreError::Dataflow(format!("task join error: {}", e)))?
     }
 
+    #[instrument(skip(self, task), fields(execution_id = %task.execution_id, task_id = %task.task_id))]
     async fn save_task_execution(
         &self,
         task: &crate::persistence::models::TaskExecution,
@@ -365,6 +388,7 @@ impl AuditStore for RedbStore {
         let task = task.clone();
         let key = format!("task:{}:{}", task.execution_id, task.task_id);
 
+        trace!("Saving task execution");
         task::spawn_blocking(move || -> Result<(), CoreError> {
             let write_txn = db.begin_write()?;
             {

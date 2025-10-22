@@ -7,6 +7,7 @@ edition = "2021"
 see_core = { path = "../core" }
 dioxus = { version = "0.6", features = ["desktop", "router"] }
 tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter", "fmt"] }
 dark-light = "0.2.0"
 rfd = "0.14"
 tokio = { version = "1", features = ["full"] }

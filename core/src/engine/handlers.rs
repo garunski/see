@@ -10,6 +10,7 @@ use dataflow_rs::DataflowError;
 use datalogic_rs::DataLogic;
 use serde_json::{json, Value};
 use std::sync::{Arc, Mutex};
+use tracing::{debug, error, instrument, trace, Instrument};
 
 pub struct CliCommandHandler {
     context: Arc<Mutex<ExecutionContext>>,
@@ -72,6 +73,7 @@ impl CliCommandHandler {
 }
 
 impl TaskExecutor for CliCommandHandler {
+    #[instrument(skip(self, task_config, logger), fields(task_id))]
     async fn execute(
         &self,
         task_config: &Value,
@@ -103,6 +105,8 @@ impl TaskExecutor for CliCommandHandler {
             .and_then(|v| v.as_str())
             .unwrap_or("unknown");
 
+        tracing::Span::current().record("task_id", task_id);
+        debug!("Starting task execution");
         logger.start_task(task_id);
 
         // Save task with InProgress status immediately
@@ -119,11 +123,16 @@ impl TaskExecutor for CliCommandHandler {
                 };
                 drop(ctx);
 
-                tokio::spawn(async move {
-                    if let Err(e) = store.save_task_execution(&task_exec).await {
-                        eprintln!("Failed to save task start: {}", e);
+                let span = tracing::debug_span!("save_task_start_bg", task_id = %task_id);
+                tokio::spawn(
+                    async move {
+                        trace!("Saving task start state");
+                        if let Err(e) = store.save_task_execution(&task_exec).await {
+                            error!(error = %e, "Failed to save task start");
+                        }
                     }
-                });
+                    .instrument(span),
+                );
             }
         }
 
@@ -138,6 +147,7 @@ impl TaskExecutor for CliCommandHandler {
             formatted_command, response_type
         ));
 
+        debug!(command = %command, args = ?args, "Executing CLI command");
         let output = tokio::process::Command::new(command)
             .args(&args)
             .output()
@@ -160,6 +170,7 @@ impl TaskExecutor for CliCommandHandler {
         }
 
         if !output.status.success() {
+            error!(exit_code = ?output.status.code(), stderr = %stderr, "Command failed");
             logger.end_task(task_id);
 
             // Save failed task
@@ -176,11 +187,16 @@ impl TaskExecutor for CliCommandHandler {
                     };
                     drop(ctx);
 
-                    tokio::spawn(async move {
-                        if let Err(e) = store.save_task_execution(&task_exec).await {
-                            eprintln!("Failed to save failed task: {}", e);
+                    let span = tracing::debug_span!("save_task_failed_bg", task_id = %task_id);
+                    tokio::spawn(
+                        async move {
+                            trace!("Saving failed task state");
+                            if let Err(e) = store.save_task_execution(&task_exec).await {
+                                error!(error = %e, "Failed to save failed task");
+                            }
                         }
-                    });
+                        .instrument(span),
+                    );
                 }
             }
 
@@ -192,6 +208,7 @@ impl TaskExecutor for CliCommandHandler {
             )));
         }
 
+        debug!("Command executed successfully");
         let extracted_json = if !stdout.is_empty() {
             match response_type {
                 "json" => Some(serde_json::from_str::<Value>(&stdout).map_err(|e| {
@@ -236,11 +253,16 @@ impl TaskExecutor for CliCommandHandler {
                 };
                 drop(ctx);
 
-                tokio::spawn(async move {
-                    if let Err(e) = store.save_task_execution(&task_exec).await {
-                        eprintln!("Failed to save task: {}", e);
+                let span = tracing::debug_span!("save_task_complete_bg", task_id = %task_id);
+                tokio::spawn(
+                    async move {
+                        trace!("Saving task completion state");
+                        if let Err(e) = store.save_task_execution(&task_exec).await {
+                            error!(error = %e, "Failed to save task completion");
+                        }
                     }
-                });
+                    .instrument(span),
+                );
             }
         }
 

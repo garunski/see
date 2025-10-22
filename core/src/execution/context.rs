@@ -2,6 +2,7 @@
 use crate::{errors::CoreError, OutputCallback, TaskInfo, TaskStatus};
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex, MutexGuard};
+use tracing::{debug, trace};
 
 pub struct ExecutionContext {
     current_task_id: Option<String>,
@@ -52,17 +53,20 @@ impl ExecutionContext {
     }
 
     pub fn start_task(&mut self, task_id: &str) {
+        debug!(task_id = %task_id, "Starting task");
         self.current_task_id = Some(task_id.to_string());
         self.task_start_times
             .insert(task_id.to_string(), chrono::Utc::now().to_rfc3339());
         self.update_task_status(task_id, TaskStatus::InProgress);
     }
 
-    pub fn end_task(&mut self, _task_id: &str) {
+    pub fn end_task(&mut self, task_id: &str) {
+        debug!(task_id = %task_id, "Ending task");
         self.current_task_id = None;
     }
 
     pub fn update_task_status(&mut self, task_id: &str, status: TaskStatus) {
+        trace!(task_id = %task_id, status = %status, "Updating task status");
         if let Some(task) = self.tasks.iter_mut().find(|t| t.id == task_id) {
             task.status = status;
         }

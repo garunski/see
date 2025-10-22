@@ -11,7 +11,14 @@ mod services {
 mod app;
 
 fn main() {
+    // CRITICAL: Keep guard alive for entire program lifetime
+    let _tracing_guard = see_core::init_tracing(None).expect("Failed to initialize tracing");
+
+    tracing::info!("GUI starting");
+
     LaunchBuilder::desktop()
         .with_cfg(Config::new().with_window(WindowBuilder::new().with_title("See Workflow Engine")))
         .launch(app::App);
+
+    // _tracing_guard dropped here when GUI closes, flushing logs
 }
