@@ -7,10 +7,11 @@ use std::sync::Arc;
 
 #[component]
 pub fn App() -> Element {
-    // 0. Configure window behavior - disable "Always on Top"
+    // 0. Configure window behavior - disable "Always on Top" and set focus
     let window = use_window();
     use_effect(move || {
         window.set_always_on_top(false);
+        window.set_focus();
     });
 
     rsx! {

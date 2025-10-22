@@ -1,4 +1,5 @@
 use dioxus::prelude::*;
+use dioxus_desktop::{Config, WindowBuilder};
 
 mod components;
 mod pages;
@@ -10,5 +11,7 @@ mod services {
 mod app;
 
 fn main() {
-    launch(app::App);
+    LaunchBuilder::desktop()
+        .with_cfg(Config::new().with_window(WindowBuilder::new().with_title("See Workflow Engine")))
+        .launch(app::App);
 }

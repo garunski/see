@@ -35,6 +35,7 @@ impl HistoryState {
         self.running_workflows = running;
     }
 
+    #[allow(dead_code)]
     pub fn add_running_workflow(&mut self, workflow: WorkflowMetadata) {
         // Remove if already exists (in case of restart)
         self.running_workflows.retain(|w| w.id != workflow.id);
@@ -45,6 +46,7 @@ impl HistoryState {
         self.running_workflows.retain(|w| w.id != id);
     }
 
+    #[allow(dead_code)]
     pub fn update_running_workflow(
         &mut self,
         id: &str,

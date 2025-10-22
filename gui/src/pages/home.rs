@@ -33,7 +33,7 @@ fn WorkflowCard(workflow: WorkflowDefinition) -> Element {
                     let (output_callback, mut handles) = create_output_channel();
 
                     let mut workflow_state_clone = workflow_state;
-                    let navigator_clone_for_start = navigator.clone();
+                    let navigator_clone_for_start = navigator;
                     spawn(async move {
                         while let Some(msg) = handles.receiver.recv().await {
                             if msg.starts_with("EXECUTION_ID:") {

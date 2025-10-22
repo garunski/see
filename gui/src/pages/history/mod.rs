@@ -179,10 +179,6 @@ pub fn HistoryPage() -> Element {
     let refresh_data = {
         let store = store.clone();
         let state_provider = state_provider.clone();
-        let is_loading = is_loading;
-        let error = error;
-        let last_updated = last_updated;
-        let is_manual_refresh = is_manual_refresh;
 
         move || {
             let store = store.clone();
@@ -275,11 +271,9 @@ pub fn HistoryPage() -> Element {
         });
 
         // Cleanup on unmount
-        (move || {
-            if let Some(cancel_tx) = cancel_tx_ref.write().take() {
-                let _ = cancel_tx.send(());
-            }
-        })()
+        if let Some(cancel_tx) = cancel_tx_ref.write().take() {
+            let _ = cancel_tx.send(());
+        }
     });
 
     // Delete execution handler
