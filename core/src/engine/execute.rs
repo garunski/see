@@ -20,7 +20,6 @@ pub async fn execute_workflow_from_content(
     workflow_data: &str,
     output_callback: Option<OutputCallback>,
 ) -> Result<WorkflowResult, CoreError> {
-    // Use global store to avoid multiple database connections
     let store = crate::get_global_store()?;
     let mut workflow = Workflow::from_json(workflow_data)
         .map_err(|e| CoreError::WorkflowExecution(format!("Failed to parse workflow: {}", e)))?;
@@ -76,7 +75,6 @@ pub async fn execute_workflow_from_content(
         error!(error = %e, "Failed to log task count");
     }
 
-    // Save workflow metadata at start
     {
         let metadata = crate::persistence::models::WorkflowMetadata {
             id: execution_id.clone(),
@@ -90,7 +88,6 @@ pub async fn execute_workflow_from_content(
             error!(error = %e, "Failed to save workflow metadata");
         }
 
-        // Create and save initial task execution records with Pending status
         for task in &tasks {
             let task_exec = crate::persistence::models::TaskExecution {
                 execution_id: execution_id.clone(),
@@ -98,8 +95,8 @@ pub async fn execute_workflow_from_content(
                 task_name: task.name.clone(),
                 status: crate::TaskStatus::Pending,
                 logs: Vec::new(),
-                start_timestamp: String::new(), // Will be set when task starts
-                end_timestamp: String::new(),   // Will be set when task completes
+                start_timestamp: String::new(),
+                end_timestamp: String::new(),
             };
             if let Err(e) = store.save_task_execution(&task_exec).await {
                 eprintln!(
@@ -110,7 +107,6 @@ pub async fn execute_workflow_from_content(
         }
     }
 
-    // Emit execution_id to GUI for polling (only after all initial data is saved)
     if let Err(e) = context.safe_log(&format!("EXECUTION_ID:{}\n", execution_id)) {
         eprintln!("Failed to emit execution_id: {}", e);
     }
@@ -282,7 +278,6 @@ pub async fn execute_workflow_from_content(
                 output_logs: output_logs.clone(),
             };
 
-            // Save workflow completion metadata
             {
                 info!(
                     execution_id = %execution_id,
@@ -302,7 +297,6 @@ pub async fn execute_workflow_from_content(
                 }
             }
 
-            // Save to database
             {
                 let execution = WorkflowExecution {
                     id: result.execution_id.clone(),
@@ -316,7 +310,6 @@ pub async fn execute_workflow_from_content(
                 };
 
                 if let Err(e) = store.save_workflow_execution(&execution).await {
-                    // Log error but don't fail the workflow
                     context
                         .safe_log(&format!(
                             "⚠️  Warning: Failed to save workflow execution to database: {}",
@@ -353,7 +346,6 @@ pub async fn execute_workflow_from_content(
                 );
             }
 
-            // Save workflow failure metadata
             {
                 info!(
                     execution_id = %execution_id,

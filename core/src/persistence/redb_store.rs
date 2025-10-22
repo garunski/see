@@ -108,12 +108,10 @@ impl RedbStore {
                 Err(error) => {
                     last_error = Some(error);
 
-                    // Don't retry on the last attempt
                     if attempt == 2 {
                         break;
                     }
 
-                    // Simple exponential backoff: 100ms, 200ms
                     let delay_ms = 100 * (2_u64.pow(attempt));
                     sleep(Duration::from_millis(delay_ms)).await;
                 }
@@ -223,12 +221,10 @@ impl AuditStore for RedbStore {
                     warn!(error = %error, attempt = attempt, "Save attempt failed");
                     last_error = Some(error);
 
-                    // Don't retry on the last attempt
                     if attempt == 2 {
                         break;
                     }
 
-                    // Simple exponential backoff: 100ms, 200ms
                     let delay_ms = 100 * (2_u64.pow(attempt));
                     sleep(Duration::from_millis(delay_ms)).await;
                 }
@@ -328,19 +324,15 @@ impl AuditStore for RedbStore {
                     }
                 };
 
-                // Delete workflow execution
                 executions_table.remove(id.as_str())?;
                 execution_ids_table.remove(timestamp_key.as_str())?;
 
-                // Delete workflow metadata (stored with key "workflow:{id}")
                 let metadata_key = format!("workflow:{}", id);
                 executions_table.remove(metadata_key.as_str())?;
 
-                // Delete all tasks associated with this execution
                 let task_prefix = format!("task:{}:", id);
                 let mut keys_to_delete = Vec::new();
 
-                // First, collect all task keys to delete
                 for item in tasks_table.iter()? {
                     let (key, _) = item?;
                     if key.value().starts_with(&task_prefix) {
@@ -348,7 +340,6 @@ impl AuditStore for RedbStore {
                     }
                 }
 
-                // Then delete all collected task keys
                 for key in keys_to_delete {
                     tasks_table.remove(key.as_str())?;
                 }
@@ -422,7 +413,6 @@ impl AuditStore for RedbStore {
         task::spawn_blocking(move || -> Result<WorkflowExecution, CoreError> {
             let read_txn = db.begin_read()?;
 
-            // Get workflow metadata
             let workflows_table: ReadOnlyTable<&str, &[u8]> =
                 read_txn.open_table(redb::TableDefinition::new(EXECUTIONS_TABLE))?;
             let workflow_key = format!("workflow:{}", execution_id);
@@ -437,7 +427,6 @@ impl AuditStore for RedbStore {
                     )));
                 };
 
-            // Get all tasks for this workflow
             let tasks_table: ReadOnlyTable<&str, &[u8]> =
                 read_txn.open_table(redb::TableDefinition::new(TASKS_TABLE))?;
             let task_prefix = format!("task:{}:", execution_id);
@@ -463,7 +452,6 @@ impl AuditStore for RedbStore {
                 }
             }
 
-            // Sort tasks according to metadata.task_ids order to maintain execution order
             let ordered_tasks = if !metadata.task_ids.is_empty() {
                 let mut ordered_tasks = Vec::new();
                 for task_id in &metadata.task_ids {
@@ -473,11 +461,9 @@ impl AuditStore for RedbStore {
                 }
                 ordered_tasks
             } else {
-                // Fallback to original task order if task_ids is not available
                 tasks
             };
 
-            // Reconstruct WorkflowExecution for backward compatibility
             Ok(WorkflowExecution {
                 id: metadata.id,
                 workflow_name: metadata.workflow_name,
@@ -517,7 +503,6 @@ impl AuditStore for RedbStore {
                     }
 
                     let (key, value) = item?;
-                    // Only process keys that start with "workflow:" (metadata keys)
                     if key.value().starts_with("workflow:") {
                         let metadata: crate::persistence::models::WorkflowMetadata =
                             bincode::deserialize(value.value())
@@ -528,7 +513,6 @@ impl AuditStore for RedbStore {
                     }
                 }
 
-                // Sort by start_timestamp descending (most recent first)
                 metadata_list.sort_by(|a, b| b.start_timestamp.cmp(&a.start_timestamp));
 
                 Ok(metadata_list)
@@ -552,16 +536,12 @@ impl AuditStore for RedbStore {
                 let mut tasks_table: Table<&str, &[u8]> =
                     write_txn.open_table(redb::TableDefinition::new(TASKS_TABLE))?;
 
-                // Delete workflow metadata (stored with key "workflow:{execution_id}")
                 let metadata_key = format!("workflow:{}", execution_id);
                 executions_table.remove(metadata_key.as_str())?;
 
-                // Delete all tasks associated with this execution
-                // Tasks are stored with keys like "task:{execution_id}:{task_id}"
                 let task_prefix = format!("task:{}:", execution_id);
                 let mut keys_to_delete = Vec::new();
 
-                // First, collect all task keys to delete
                 for item in tasks_table.iter()? {
                     let (key, _) = item?;
                     if key.value().starts_with(&task_prefix) {
@@ -569,7 +549,6 @@ impl AuditStore for RedbStore {
                     }
                 }
 
-                // Then delete all collected task keys
                 for key in keys_to_delete {
                     tasks_table.remove(key.as_str())?;
                 }

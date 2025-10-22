@@ -42,7 +42,6 @@ fn HistoryItem(
                     onclick: move |_| {
                         on_delete_execution.call(execution_id_for_delete.clone());
                     },
-                    // TrashIcon SVG
                     svg {
                         class: "w-5 h-5",
                         view_box: "0 0 20 20",
@@ -82,7 +81,6 @@ fn RunningWorkflowItem(
                     }
                 }
                 div { class: "ml-4 flex items-center gap-2",
-                    // Spinning loading icon
                     svg {
                         class: "w-5 h-5 text-blue-600 dark:text-blue-400 animate-spin",
                         view_box: "0 0 20 20",
@@ -94,7 +92,6 @@ fn RunningWorkflowItem(
                         onclick: move |_| {
                             on_delete_workflow.call(workflow_id_for_delete.clone());
                         },
-                        // TrashIcon SVG
                         svg {
                             class: "w-5 h-5",
                             view_box: "0 0 20 20",
@@ -161,20 +158,16 @@ fn ErrorBanner(error: String, on_retry: EventHandler<()>) -> Element {
 #[component]
 pub fn HistoryPage() -> Element {
     let state_provider = use_context::<AppStateProvider>();
-    // Store is now managed internally by core
 
-    // Local state for this page
     let is_loading = use_signal(|| true);
     let error = use_signal(|| None::<String>);
     let last_updated = use_signal(|| None::<SystemTime>);
     let is_manual_refresh = use_signal(|| false);
 
-    // Get current data from state
     let workflow_history = use_memo(move || state_provider.history.read().workflow_history.clone());
     let running_workflows =
         use_memo(move || state_provider.history.read().running_workflows.clone());
 
-    // Manual refresh function
     let refresh_data = {
         let state_provider = state_provider.clone();
 
@@ -192,7 +185,6 @@ pub fn HistoryPage() -> Element {
 
                 match see_core::get_global_store() {
                     Ok(store) => {
-                        // Load completed workflows
                         match store.list_workflow_executions(50).await {
                             Ok(history) => {
                                 state_provider.history.write().set_history(history);
@@ -205,10 +197,8 @@ pub fn HistoryPage() -> Element {
                             }
                         }
 
-                        // Load running workflows
                         match store.list_workflow_metadata(50).await {
                             Ok(metadata) => {
-                                // Filter to only running workflows
                                 let running: Vec<_> = metadata
                                     .into_iter()
                                     .filter(|m| {
@@ -238,32 +228,26 @@ pub fn HistoryPage() -> Element {
         }
     };
 
-    // Clone refresh_data for multiple uses
     let refresh_data_1 = refresh_data.clone();
     let refresh_data_2 = refresh_data.clone();
     let refresh_data_3 = refresh_data.clone();
     let refresh_data_4 = refresh_data.clone();
 
-    // Initial load on mount
     use_effect(move || {
         refresh_data_1();
     });
 
-    // Polling effect - only run once on mount
     let mut cancel_tx_ref = use_signal(|| None::<tokio::sync::oneshot::Sender<()>>);
     use_effect(move || {
-        // Start new polling loop
         let (cancel_tx, mut cancel_rx) = tokio::sync::oneshot::channel();
         *cancel_tx_ref.write() = Some(cancel_tx);
 
         let refresh_data = refresh_data_2.clone();
         spawn(async move {
             let mut interval = tokio::time::interval(Duration::from_secs(3));
-            // Skip the first tick to avoid immediate execution
             interval.tick().await;
 
             loop {
-                // Check for cancellation first
                 if cancel_rx.try_recv().is_ok() {
                     break;
                 }
@@ -273,13 +257,11 @@ pub fn HistoryPage() -> Element {
             }
         });
 
-        // Cleanup on unmount
         if let Some(cancel_tx) = cancel_tx_ref.write().take() {
             let _ = cancel_tx.send(());
         }
     });
 
-    // Delete execution handler
     let delete_execution = {
         let state_provider = state_provider.clone();
         move |id: String| {
@@ -302,7 +284,6 @@ pub fn HistoryPage() -> Element {
         }
     };
 
-    // Delete running workflow handler
     let delete_running_workflow = {
         let state_provider = state_provider.clone();
         move |id: String| {
@@ -325,7 +306,6 @@ pub fn HistoryPage() -> Element {
         }
     };
 
-    // Format last updated time
     let last_updated_text = use_memo(move || {
         if let Some(time) = last_updated() {
             let elapsed = time.elapsed().unwrap_or(Duration::from_secs(0));
@@ -343,7 +323,6 @@ pub fn HistoryPage() -> Element {
 
     rsx! {
         div { class: "space-y-8",
-            // Header with refresh button and last updated
             div { class: "flex items-center justify-between",
                 div {
                     h1 { class: "text-xl font-bold text-zinc-900 dark:text-white", "Workflow History" }
@@ -370,7 +349,6 @@ pub fn HistoryPage() -> Element {
                 }
             }
 
-            // Error banner
             if let Some(err) = error() {
                 ErrorBanner {
                     error: err,
@@ -378,11 +356,9 @@ pub fn HistoryPage() -> Element {
                 }
             }
 
-            // Loading state
             if is_loading() && workflow_history().is_empty() && running_workflows().is_empty() {
                 LoadingSkeleton {}
             } else {
-                // Running Workflows
                 if !running_workflows().is_empty() {
                     div { class: "space-y-4",
                         div { class: "flex items-center justify-between",
@@ -403,7 +379,6 @@ pub fn HistoryPage() -> Element {
                     }
                 }
 
-                // Completed Workflows
                 div { class: "space-y-4",
                     div { class: "flex items-center justify-between",
                         h2 { class: "text-lg font-semibold text-zinc-900 dark:text-white", "Completed Workflows" }

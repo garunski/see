@@ -48,7 +48,6 @@ pub fn AppLayout() -> Element {
                         class: "inline-flex items-center justify-center rounded-lg p-2 text-zinc-950 hover:bg-zinc-950/5 dark:text-white dark:hover:bg-white/5",
                         onclick: move |_| show_sidebar.set(true),
                         "aria-label": "Open navigation",
-                        // OpenMenuIcon SVG
                         svg {
                             class: "h-6 w-6",
                             view_box: "0 0 20 20",
@@ -62,12 +61,10 @@ pub fn AppLayout() -> Element {
 
             if *show_sidebar.read() {
                 div { class: "sm:hidden",
-                    // Backdrop
                     div {
                         class: "fixed inset-0 bg-black/30 transition data-closed:opacity-0 data-enter:duration-300 data-enter:ease-out data-leave:duration-200 data-leave:ease-in",
                         onclick: move |_| show_sidebar.set(false)
                     }
-                    // Dialog panel
                     div { class: "fixed inset-y-0 w-full max-w-80 p-2 transition duration-300 ease-in-out",
                         div { class: "flex h-full flex-col rounded-lg bg-white shadow-xs ring-1 ring-zinc-950/5 dark:bg-zinc-900 dark:ring-white/10",
                             div { class: "-mb-3 px-4 pt-3",
@@ -75,7 +72,6 @@ pub fn AppLayout() -> Element {
                                     class: "inline-flex items-center justify-center rounded-lg p-2 text-zinc-950 hover:bg-zinc-950/5 dark:text-white dark:hover:bg-white/5",
                                     onclick: move |_| show_sidebar.set(false),
                                     "aria-label": "Close navigation",
-                                    // CloseMenuIcon SVG
                                     svg {
                                         class: "h-6 w-6",
                                         view_box: "0 0 20 20",

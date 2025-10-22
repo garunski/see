@@ -8,7 +8,6 @@ use uuid::Uuid;
 #[component]
 pub fn WorkflowEditPage(id: String) -> Element {
     let state_provider = use_context::<AppStateProvider>();
-    // Store is now managed internally by core
 
     let is_new = id.is_empty();
 
@@ -18,7 +17,6 @@ pub fn WorkflowEditPage(id: String) -> Element {
     let mut is_saving = use_signal(|| false);
     let mut can_reset = use_signal(|| false);
 
-    // Load existing workflow if editing
     let workflow_id_for_effect = id.clone();
     use_effect(move || {
         if !is_new && !workflow_id_for_effect.is_empty() {
@@ -39,16 +37,13 @@ pub fn WorkflowEditPage(id: String) -> Element {
         let _ui_state = state_provider.ui;
         let workflow_id_for_save = id.clone();
         move || {
-            // Validate JSON
             if let Err(e) = serde_json::from_str::<serde_json::Value>(&content()) {
                 validation_error.set(format!("Invalid JSON: {}", e));
-                // Status updates removed
                 return;
             }
 
             validation_error.set(String::new());
             is_saving.set(true);
-            // Status updates removed
 
             let final_id = if is_new {
                 Uuid::new_v4().to_string()
@@ -64,7 +59,6 @@ pub fn WorkflowEditPage(id: String) -> Element {
                 is_edited: false,
             };
 
-            // Update state
             if is_new {
                 state_provider
                     .settings
@@ -78,7 +72,6 @@ pub fn WorkflowEditPage(id: String) -> Element {
                 );
             }
 
-            // Save to database
             let _ui_state = _ui_state;
             spawn(async move {
                 match see_core::get_global_store() {
@@ -88,15 +81,12 @@ pub fn WorkflowEditPage(id: String) -> Element {
                             .await
                         {
                             Ok(_) => {
-                                // Status updates removed
                             }
                             Err(_e) => {
-                                // Status updates removed
                             }
                         }
                     }
                     Err(_e) => {
-                        // Status updates removed
                     }
                 }
                 is_saving.set(false);
@@ -109,7 +99,6 @@ pub fn WorkflowEditPage(id: String) -> Element {
         let _ui_state = state_provider.ui;
         let workflow_id_for_reset = id.clone();
         move || {
-            // Load default workflows to find the original content
             let default_workflows = see_core::WorkflowDefinition::get_default_workflows();
             if let Some(default_workflow) = default_workflows
                 .iter()
@@ -122,9 +111,7 @@ pub fn WorkflowEditPage(id: String) -> Element {
 
                 content.set(default_workflow.content.clone());
                 can_reset.set(false);
-                // Status updates removed
 
-                // Save to database
                 let _ui_state = _ui_state;
                 spawn(async move {
                     match see_core::get_global_store() {
@@ -134,15 +121,12 @@ pub fn WorkflowEditPage(id: String) -> Element {
                                 .await
                             {
                                 Ok(_) => {
-                                    // Status updates removed
                                 }
                                 Err(_e) => {
-                                    // Status updates removed
                                 }
                             }
                         }
                         Err(_e) => {
-                            // Status updates removed
                         }
                     }
                 });
@@ -152,13 +136,11 @@ pub fn WorkflowEditPage(id: String) -> Element {
 
     rsx! {
         div { class: "space-y-8",
-            // Header
             div { class: "flex items-center justify-between",
                 div { class: "flex items-center gap-4",
                     Link {
                         to: Route::WorkflowsListPage {},
                         class: "inline-flex items-center gap-x-1.5 rounded-md bg-zinc-100 dark:bg-zinc-800 px-3 py-2 text-sm font-semibold text-zinc-900 dark:text-zinc-100 shadow-sm hover:bg-zinc-200 dark:hover:bg-zinc-700",
-                        // Arrow left icon
                         svg { class: "-ml-0.5 h-4 w-4", view_box: "0 0 20 20", fill: "currentColor",
                             path { fill_rule: "evenodd", d: "M17 10a.75.75 0 01-.75.75H5.612l2.158 1.96a.75.75 0 11-1.04 1.08l-3.5-3.25a.75.75 0 010-1.08l3.5-3.25a.75.75 0 111.04 1.08L5.612 9.25H16.25A.75.75 0 0117 10z", clip_rule: "evenodd" }
                         }
@@ -190,10 +172,8 @@ pub fn WorkflowEditPage(id: String) -> Element {
                 }
             }
 
-            // Form
             div { class: "bg-white dark:bg-zinc-800 rounded-xl border border-zinc-200 dark:border-zinc-700 p-8 shadow-sm",
                 div { class: "space-y-6",
-                    // Name field
                     div {
                         label { class: "block text-sm font-medium text-zinc-900 dark:text-white mb-2",
                             "Workflow Name"
@@ -207,7 +187,6 @@ pub fn WorkflowEditPage(id: String) -> Element {
                         }
                     }
 
-                    // Content field
                     div {
                         label { class: "block text-sm font-medium text-zinc-900 dark:text-white mb-2",
                             "Workflow Definition (JSON)"

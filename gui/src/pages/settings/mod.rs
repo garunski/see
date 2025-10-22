@@ -9,7 +9,6 @@ pub mod components;
 #[component]
 pub fn SettingsPage() -> Element {
     let state_provider = use_context::<AppStateProvider>();
-    // Store is now managed internally by core
 
     let current_theme = use_memo(move || state_provider.settings.read().settings.theme);
 
@@ -17,9 +16,7 @@ pub fn SettingsPage() -> Element {
         let mut state_provider = state_provider.clone();
         move |new_theme: Theme| {
             state_provider.settings.write().change_theme(new_theme);
-            // Status updates removed
 
-            // Save immediately with error handling
             let _ui_state = state_provider.ui;
             spawn(async move {
                 match see_core::get_global_store() {
@@ -37,15 +34,12 @@ pub fn SettingsPage() -> Element {
                             .await
                         {
                             Ok(_) => {
-                                // Status updates removed
                             }
                             Err(_e) => {
-                                // Status updates removed
                             }
                         }
                     }
                     Err(_e) => {
-                        // Status updates removed
                     }
                 }
             });
@@ -54,13 +48,11 @@ pub fn SettingsPage() -> Element {
 
     rsx! {
         div { class: "space-y-8",
-            // Header
             div {
                 h1 { class: "text-xl font-bold text-zinc-900 dark:text-white", "Settings" }
                 p { class: "mt-2 text-zinc-600 dark:text-zinc-400", "Customize your application preferences" }
             }
 
-            // Theme Section
             div { class: "bg-white dark:bg-zinc-800 rounded-xl border border-zinc-200 dark:border-zinc-700 p-8 shadow-sm",
                 h3 { class: "text-base font-semibold text-zinc-900 dark:text-white mb-6", "Appearance" }
                 div { class: "space-y-4",
@@ -113,7 +105,6 @@ pub fn SettingsPage() -> Element {
                 }
             }
 
-            // Workflow Settings Section
             div { class: "bg-white dark:bg-zinc-800 rounded-xl border border-zinc-200 dark:border-zinc-700 p-8 shadow-sm",
                 h3 { class: "text-base font-semibold text-zinc-900 dark:text-white mb-4", "Workflow Management" }
                 div { class: "space-y-4",
@@ -123,7 +114,6 @@ pub fn SettingsPage() -> Element {
                     Link {
                         to: Route::WorkflowsListPage {},
                         class: "inline-flex items-center gap-x-1.5 rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600",
-                        // Cog icon
                         svg { class: "-ml-0.5 h-4 w-4", view_box: "0 0 20 20", fill: "currentColor",
                             path { d: "M10 2a8 8 0 100 16 8 8 0 000-16zM8.5 10a1.5 1.5 0 113 0 1.5 1.5 0 01-3 0zM10 6a4 4 0 100 8 4 4 0 000-8z" }
                         }

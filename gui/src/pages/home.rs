@@ -8,7 +8,6 @@ use see_core::WorkflowDefinition;
 #[component]
 fn WorkflowCard(workflow: WorkflowDefinition) -> Element {
     let _state_provider = use_context::<AppStateProvider>();
-    // Store is now managed internally by core
     let _navigator = use_navigator();
 
     rsx! {
@@ -25,15 +24,12 @@ fn WorkflowCard(workflow: WorkflowDefinition) -> Element {
                     "User initiated workflow execution from home page"
                 );
 
-                // Use tokio::spawn instead of dioxus::spawn to create a truly detached task
                 tokio::spawn(async move {
                     tracing::info!(
                         workflow_name = %workflow_name,
                         "Starting truly detached workflow execution - completely independent of UI lifecycle"
                     );
 
-                    // Execute workflow independently - don't update UI state
-                    // The workflow will save to database and UI will poll for updates
                     match run_workflow_from_content(workflow_content, None).await {
                         Ok(result) => {
                             tracing::info!(
@@ -84,18 +80,15 @@ fn WorkflowCard(workflow: WorkflowDefinition) -> Element {
 pub fn HomePage() -> Element {
     let state_provider = use_context::<AppStateProvider>();
 
-    // Use a safer approach - read directly from the signal without use_memo
     let workflows = state_provider.settings.read().get_workflows().clone();
 
     rsx! {
         div { class: "space-y-8",
-            // Header
             div {
                 h1 { class: "text-2xl font-bold text-zinc-900 dark:text-white", "Welcome to See" }
                 p { class: "mt-2 text-zinc-600 dark:text-zinc-400", "Your workflow automation platform" }
             }
 
-            // Quick Actions
             div { class: "grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3",
                 Link {
                     to: Route::WorkflowEditPageNew {},
@@ -146,7 +139,6 @@ pub fn HomePage() -> Element {
                 }
             }
 
-            // Workflows List
             div { class: "space-y-4",
                 div { class: "flex items-center justify-between",
                     h2 { class: "text-lg font-semibold text-zinc-900 dark:text-white", "Your Workflows" }

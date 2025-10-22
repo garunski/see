@@ -1,10 +1,8 @@
 use serde_json::json;
 
-/// Default workflow definitions built into the application
 pub struct DefaultWorkflows;
 
 impl DefaultWorkflows {
-    /// Get the Simple Echo Demo workflow as JSON string
     pub fn simple_echo() -> String {
         serde_json::to_string_pretty(&json!({
             "id": "cursor_agent_demo",
@@ -26,7 +24,6 @@ impl DefaultWorkflows {
         .unwrap()
     }
 
-    /// Get the Cursor Agent Demo workflow as JSON string
     pub fn cursor_demo() -> String {
         serde_json::to_string_pretty(&json!({
             "id": "cursor_agent_demo",

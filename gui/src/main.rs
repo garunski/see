@@ -11,7 +11,6 @@ mod services {
 mod app;
 
 fn main() {
-    // CRITICAL: Keep guard alive for entire program lifetime
     let _tracing_guard = see_core::init_tracing(None)
         .map_err(|e| format!("Failed to initialize tracing: {}", e))
         .expect("Failed to initialize tracing");
@@ -22,5 +21,4 @@ fn main() {
         .with_cfg(Config::new().with_window(WindowBuilder::new().with_title("See Workflow Engine")))
         .launch(app::App);
 
-    // _tracing_guard dropped here when GUI closes, flushing logs
 }

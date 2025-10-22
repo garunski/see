@@ -19,7 +19,6 @@ impl Default for HistoryState {
 
 impl HistoryState {
     pub fn clear_viewing(&mut self) {
-        // No longer needed as viewing is handled by routing
     }
 
     pub fn delete_execution(&mut self, id: &str) {
@@ -37,7 +36,6 @@ impl HistoryState {
 
     #[allow(dead_code)]
     pub fn add_running_workflow(&mut self, workflow: WorkflowMetadata) {
-        // Remove if already exists (in case of restart)
         self.running_workflows.retain(|w| w.id != workflow.id);
         self.running_workflows.push(workflow);
     }

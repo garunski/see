@@ -128,15 +128,11 @@ impl ExecutionContext {
     }
 }
 
-/// Extension trait for Arc<Mutex<ExecutionContext>> to provide safe methods
 pub trait ExecutionContextSafe {
-    /// Safe logging method that handles mutex lock errors
     fn safe_log(&self, msg: &str) -> Result<(), CoreError>;
 
-    /// Safe task status update method that handles mutex lock errors
     fn safe_update_task_status(&self, task_id: &str, status: TaskStatus) -> Result<(), CoreError>;
 
-    /// Lock with retry logic for high-contention scenarios
     fn lock_with_retry<F, R>(&self, operation: F, max_retries: usize) -> Result<R, CoreError>
     where
         F: Fn(&MutexGuard<ExecutionContext>) -> Result<R, CoreError>;
@@ -188,7 +184,6 @@ impl ExecutionContextSafe for Arc<Mutex<ExecutionContext>> {
                     )));
                 }
                 Err(_) => {
-                    // Brief backoff before retry
                     std::thread::sleep(std::time::Duration::from_millis(10 * (attempt + 1) as u64));
                 }
             }

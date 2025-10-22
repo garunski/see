@@ -41,7 +41,6 @@ pub struct WorkflowDefinition {
 use crate::persistence::default_workflows::DefaultWorkflows;
 
 impl WorkflowDefinition {
-    /// Get all default workflow definitions
     pub fn get_default_workflows() -> Vec<Self> {
         vec![
             WorkflowDefinition {

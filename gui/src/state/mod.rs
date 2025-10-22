@@ -10,7 +10,6 @@ pub use workflow_state::WorkflowState;
 
 use dioxus::prelude::*;
 
-// State provider for context
 #[derive(Clone)]
 pub struct AppStateProvider {
     pub workflow: Signal<WorkflowState>,

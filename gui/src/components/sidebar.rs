@@ -7,7 +7,6 @@ pub fn Sidebar() -> Element {
     rsx! {
         aside { class: "fixed inset-y-0 left-0 w-48 bg-zinc-100 dark:bg-zinc-950",
             nav { class: "flex h-full min-h-0 flex-col",
-                // Header - using Catalyst SidebarHeader classes
                 div { class: "flex flex-col border-b border-zinc-950/5 p-4 dark:border-white/5",
                     div { class: "flex items-center gap-3",
                         div { class: "w-6 h-6 bg-zinc-900 dark:bg-white rounded-lg flex items-center justify-center text-white dark:text-zinc-900 text-sm font-semibold", "⚡" }
@@ -15,13 +14,11 @@ pub fn Sidebar() -> Element {
                     }
                 }
 
-                // Navigation - using Catalyst SidebarBody classes
                 div { class: "flex flex-1 flex-col overflow-y-auto p-4",
                     div { class: "flex flex-col gap-0.5",
                         Link {
                             to: Route::HomePage {},
                             class: "flex w-full items-center gap-2 rounded-lg px-2 py-2 text-left text-sm font-medium text-zinc-900 data-hover:bg-zinc-950/5 data-active:bg-zinc-950/5 dark:text-white dark:data-hover:bg-white/5 dark:data-active:bg-white/5",
-                            // HomeIcon SVG
                             svg {
                                 class: "w-4 h-4 shrink-0 fill-zinc-500 data-hover:fill-zinc-900 data-active:fill-zinc-900 dark:fill-zinc-400 dark:data-hover:fill-white dark:data-active:fill-white",
                                 view_box: "0 0 20 20",
@@ -32,7 +29,6 @@ pub fn Sidebar() -> Element {
                         Link {
                             to: Route::UploadPage {},
                             class: "flex w-full items-center gap-2 rounded-lg px-2 py-2 text-left text-sm font-medium text-zinc-900 data-hover:bg-zinc-950/5 data-active:bg-zinc-950/5 dark:text-white dark:data-hover:bg-white/5 dark:data-active:bg-white/5",
-                            // UploadIcon SVG
                             svg {
                                 class: "w-4 h-4 shrink-0 fill-zinc-500 data-hover:fill-zinc-900 data-active:fill-zinc-900 dark:fill-zinc-400 dark:data-hover:fill-white dark:data-active:fill-white",
                                 view_box: "0 0 20 20",
@@ -43,7 +39,6 @@ pub fn Sidebar() -> Element {
                         Link {
                             to: Route::HistoryPage {},
                             class: "flex w-full items-center gap-2 rounded-lg px-2 py-2 text-left text-sm font-medium text-zinc-900 data-hover:bg-zinc-950/5 data-active:bg-zinc-950/5 dark:text-white dark:data-hover:bg-white/5 dark:data-active:bg-white/5",
-                            // Square2StackIcon SVG
                             svg {
                                 class: "w-4 h-4 shrink-0 fill-zinc-500 data-hover:fill-zinc-900 data-active:fill-zinc-900 dark:fill-zinc-400 dark:data-hover:fill-white dark:data-active:fill-white",
                                 view_box: "0 0 20 20",
@@ -54,7 +49,6 @@ pub fn Sidebar() -> Element {
                         Link {
                             to: Route::SettingsPage {},
                             class: "flex w-full items-center gap-2 rounded-lg px-2 py-2 text-left text-sm font-medium text-zinc-900 data-hover:bg-zinc-950/5 data-active:bg-zinc-950/5 dark:text-white dark:data-hover:bg-white/5 dark:data-active:bg-white/5",
-                            // Cog6ToothIcon SVG
                             svg {
                                 class: "w-4 h-4 shrink-0 fill-zinc-500 data-hover:fill-zinc-900 data-active:fill-zinc-900 dark:fill-zinc-400 dark:data-hover:fill-white dark:data-active:fill-white",
                                 view_box: "0 0 20 20",

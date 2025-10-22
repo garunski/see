@@ -3,7 +3,6 @@ use crate::execution::context::ExecutionContext;
 use crate::TaskStatus;
 use std::sync::{Arc, Mutex};
 
-/// Safe wrapper around ExecutionContext that encapsulates mutex operations
 pub struct SafeExecutionContext {
     inner: Arc<Mutex<ExecutionContext>>,
 }
@@ -21,9 +20,8 @@ impl SafeExecutionContext {
                 Ok(())
             }
             Err(e) => {
-                // Log to stderr instead of failing - prevents deadlock
                 eprintln!("Failed to lock context for logging: {}", e);
-                Ok(()) // Return Ok to prevent error propagation
+                Ok(())
             }
         }
     }
@@ -37,7 +35,7 @@ impl SafeExecutionContext {
             }
             Err(e) => {
                 eprintln!("Failed to lock context for task status update: {}", e);
-                Ok(()) // Return Ok to prevent error propagation
+                Ok(())
             }
         }
     }

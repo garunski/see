@@ -109,7 +109,6 @@ impl TaskExecutor for CliCommandHandler {
         debug!("Starting task execution");
         logger.start_task(task_id);
 
-        // Save task with InProgress status immediately
         if let Ok(ctx) = self.context.lock() {
             if let Some(store) = ctx.get_store() {
                 let task_exec = crate::persistence::models::TaskExecution {
@@ -119,7 +118,7 @@ impl TaskExecutor for CliCommandHandler {
                     status: crate::TaskStatus::InProgress,
                     logs: ctx.get_task_logs(task_id),
                     start_timestamp: ctx.get_task_start_time(task_id),
-                    end_timestamp: String::new(), // Will be set when task completes
+                    end_timestamp: String::new(),
                 };
                 drop(ctx);
 
@@ -173,7 +172,6 @@ impl TaskExecutor for CliCommandHandler {
             error!(exit_code = ?output.status.code(), stderr = %stderr, "Command failed");
             logger.end_task(task_id);
 
-            // Save failed task
             if let Ok(ctx) = self.context.lock() {
                 if let Some(store) = ctx.get_store() {
                     let task_exec = crate::persistence::models::TaskExecution {
@@ -239,7 +237,6 @@ impl TaskExecutor for CliCommandHandler {
 
         logger.end_task(task_id);
 
-        // Save individual task completion
         if let Ok(ctx) = self.context.lock() {
             if let Some(store) = ctx.get_store() {
                 let task_exec = crate::persistence::models::TaskExecution {
@@ -287,10 +284,8 @@ impl AsyncFunctionHandler for CliCommandHandler {
             }
         };
 
-        // Create a logger that wraps the context
         let logger = crate::task_executor::ContextTaskLogger::new(self.context.clone());
 
-        // Use the TaskExecutor implementation
         let result = TaskExecutor::execute(self, input, &logger)
             .await
             .map_err(|e| DataflowError::function_execution(e.to_string(), None))?;

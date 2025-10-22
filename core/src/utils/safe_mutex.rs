@@ -2,7 +2,6 @@
 use crate::errors::CoreError;
 use std::sync::{Mutex, MutexGuard};
 
-/// A safe wrapper around Mutex that converts lock poisoning into proper errors
 pub struct SafeMutex<T> {
     inner: Mutex<T>,
 }

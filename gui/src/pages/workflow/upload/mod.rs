@@ -11,7 +11,6 @@ use rfd::FileDialog;
 #[component]
 pub fn UploadPage() -> Element {
     let mut state_provider = use_context::<AppStateProvider>();
-    // Store is now managed internally by core
 
     let workflow_file = use_memo(move || state_provider.workflow.read().workflow_file.clone());
     let execution_status =
@@ -19,7 +18,7 @@ pub fn UploadPage() -> Element {
     let workflow_result = use_memo(move || state_provider.workflow.read().workflow_result.clone());
     let current_step = use_memo(move || state_provider.workflow.read().current_step);
     let is_picking_file = use_memo(move || state_provider.ui.read().is_picking_file);
-    let is_viewing_history = use_memo(move || false); // No longer needed with routing
+    let is_viewing_history = use_memo(move || false);
 
     let mut on_workflow_file_change = move |value: String| {
         state_provider.workflow.write().workflow_file = value;
@@ -28,7 +27,6 @@ pub fn UploadPage() -> Element {
 
     let mut pick_file = move || {
         state_provider.ui.write().set_picking_file(true);
-        // Status updates removed
         spawn(async move {
             if let Some(path) = FileDialog::new()
                 .add_filter("JSON files", &["json"])
@@ -38,12 +36,9 @@ pub fn UploadPage() -> Element {
                 if let Some(path_str) = path.to_str() {
                     state_provider.workflow.write().workflow_file = path_str.to_string();
                     state_provider.history.write().clear_viewing();
-                    // Status updates removed
                 } else {
-                    // Status updates removed
                 }
             } else {
-                // Status updates removed
             }
             state_provider.ui.write().set_picking_file(false);
         });
@@ -56,7 +51,6 @@ pub fn UploadPage() -> Element {
             let file_path = workflow_state.read().workflow_file.clone();
             workflow_state.write().reset_before_run();
 
-            // Execute and wait for result (like CLI)
             match run_workflow(file_path, None).await {
                 Ok(result) => {
                     workflow_state.write().apply_success(&result);
@@ -93,13 +87,11 @@ pub fn UploadPage() -> Element {
 
     rsx! {
         div { class: "space-y-8",
-            // Header - using Catalyst typography
             div {
                 h1 { class: "text-lg font-semibold text-zinc-950 dark:text-white", "Upload Workflow" }
                 p { class: "mt-2 text-sm text-zinc-500 dark:text-zinc-400", "Upload and execute workflow files" }
             }
 
-            // File Upload Section
             div { class: "space-y-4",
                 div { class: "flex items-center gap-4",
                     input {
@@ -138,7 +130,6 @@ pub fn UploadPage() -> Element {
                 }
             }
 
-            // Execution Status
             if !matches!(execution_status(), ExecutionStatus::Idle) {
                 div { class: "p-4 bg-zinc-50 dark:bg-zinc-800 rounded-lg border border-zinc-200 dark:border-zinc-700",
                     div { class: "flex items-center gap-3",
@@ -163,7 +154,6 @@ pub fn UploadPage() -> Element {
                 }
             }
 
-            // Workflow Results
             if let Some(result) = workflow_result.read().clone() {
                 div { class: "space-y-4",
                     h2 { class: "text-base font-semibold text-zinc-950 dark:text-white", "Execution Results" }

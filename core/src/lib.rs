@@ -16,10 +16,8 @@ use std::sync::{Arc, Mutex, Once};
 
 use crate::errors::CoreError;
 
-/// Output callback type for real-time output during workflow execution
 pub type OutputCallback = Arc<dyn Fn(String) + Send + Sync>;
 
-/// Task execution status
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum TaskStatus {
     Pending,
@@ -29,7 +27,6 @@ pub enum TaskStatus {
 }
 
 impl TaskStatus {
-    /// Convert to lowercase string for serialization
     pub fn as_str(&self) -> &'static str {
         match self {
             TaskStatus::Pending => "pending",
@@ -79,7 +76,6 @@ impl<'de> Deserialize<'de> for TaskStatus {
     }
 }
 
-/// Audit trail status codes
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum AuditStatus {
     Success,
@@ -87,7 +83,6 @@ pub enum AuditStatus {
 }
 
 impl AuditStatus {
-    /// Convert to HTTP status code string
     pub fn as_http_code(&self) -> &'static str {
         match self {
             AuditStatus::Success => "200",
@@ -95,7 +90,6 @@ impl AuditStatus {
         }
     }
 
-    /// Create from HTTP status code
     pub fn from_http_code(code: &str) -> Self {
         match code {
             "200" => AuditStatus::Success,
@@ -137,7 +131,6 @@ impl<'de> Deserialize<'de> for AuditStatus {
     }
 }
 
-/// Information about a single task in a workflow
 #[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]
 pub struct TaskInfo {
     pub id: String,
@@ -145,7 +138,6 @@ pub struct TaskInfo {
     pub status: TaskStatus,
 }
 
-/// Audit trail entry
 #[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]
 pub struct AuditEntry {
     pub task_id: String,
@@ -154,7 +146,6 @@ pub struct AuditEntry {
     pub changes_count: usize,
 }
 
-/// Workflow execution result
 #[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]
 pub struct WorkflowResult {
     pub success: bool,
@@ -169,12 +160,10 @@ pub struct WorkflowResult {
     pub output_logs: Vec<String>,
 }
 
-/// Guard that MUST be kept alive for the duration of the program.
 pub struct TracingGuard {
     _guard: tracing_appender::non_blocking::WorkerGuard,
 }
 
-/// Initialize tracing with console and file output.
 pub fn init_tracing(log_dir: Option<PathBuf>) -> Result<TracingGuard, Box<CoreError>> {
     use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt, EnvFilter};
 
@@ -215,11 +204,9 @@ pub fn init_tracing(log_dir: Option<PathBuf>) -> Result<TracingGuard, Box<CoreEr
     Ok(TracingGuard { _guard: guard })
 }
 
-/// Global store instance - singleton pattern to avoid multiple database connections
 static GLOBAL_STORE: Mutex<Option<Arc<dyn AuditStore + Send + Sync>>> = Mutex::new(None);
 static INIT: Once = Once::new();
 
-/// Get the global store instance, creating it if it doesn't exist
 pub fn get_global_store() -> Result<Arc<dyn AuditStore + Send + Sync>, Box<CoreError>> {
     INIT.call_once(|| {
         let store = match RedbStore::new_default() {
