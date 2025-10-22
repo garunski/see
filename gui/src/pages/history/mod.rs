@@ -72,19 +72,25 @@ pub fn HistoryPage() -> Element {
             let store_clone = store_clone.clone();
             let mut history_state = state_provider.history;
             let mut ui_state = state_provider.ui;
+            ui_state.write().show_status(
+                format!("Deleting execution {}...", &id[..8]),
+                crate::components::ExecutionStatus::Running,
+            );
             spawn(async move {
                 if let Some(s) = store_clone {
                     match s.delete_workflow_execution(&id).await {
                         Ok(_) => {
                             history_state.write().delete_execution(&id);
-                            ui_state
-                                .write()
-                                .show_toast("Workflow execution deleted".to_string());
+                            ui_state.write().show_status(
+                                "Workflow execution deleted".to_string(),
+                                crate::components::ExecutionStatus::Complete,
+                            );
                         }
                         Err(e) => {
-                            ui_state
-                                .write()
-                                .show_toast(format!("Failed to delete execution: {}", e));
+                            ui_state.write().show_status(
+                                format!("Failed to delete execution: {}", e),
+                                crate::components::ExecutionStatus::Failed,
+                            );
                         }
                     }
                 }

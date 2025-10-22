@@ -17,11 +17,18 @@ fn WorkflowCard(workflow: WorkflowDefinition) -> Element {
             class: "rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 p-4 hover:bg-zinc-50 dark:hover:bg-zinc-700 hover:shadow-md transition-colors cursor-pointer",
             onclick: move |_| {
                 let workflow_content = workflow.content.clone();
+                let workflow_name = workflow.name.clone();
                 let store_clone = store.clone();
                 let mut workflow_state = state_provider.workflow;
                 let mut ui_state = state_provider.ui;
                 let mut history_state = state_provider.history;
                 let navigator_clone = navigator;
+
+                // Show starting status
+                ui_state.write().show_status(
+                    format!("Starting workflow: {}", workflow_name),
+                    crate::components::ExecutionStatus::Running
+                );
 
                 spawn(async move {
                     workflow_state.write().reset_before_run();
@@ -46,7 +53,7 @@ fn WorkflowCard(workflow: WorkflowDefinition) -> Element {
                             workflow_state.write().apply_success(&result);
                             ui_state
                                 .write()
-                                .show_toast("Workflow completed successfully!".to_string());
+                                .show_status("Workflow completed successfully!".to_string(), crate::components::ExecutionStatus::Complete);
                             history_state.write().needs_history_reload = true;
 
                             // Navigate to workflow details page
@@ -58,7 +65,7 @@ fn WorkflowCard(workflow: WorkflowDefinition) -> Element {
                             workflow_state.write().apply_failure(&e.to_string());
                             ui_state
                                 .write()
-                                .show_toast(format!("Workflow failed: {}", e));
+                                .show_status(format!("Workflow failed: {}", e), crate::components::ExecutionStatus::Failed);
                         }
                     }
                 });

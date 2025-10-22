@@ -1,4 +1,4 @@
-use crate::components::Toast;
+use crate::components::StatusBar;
 use crate::router::Route;
 use crate::state::AppStateProvider;
 use dioxus::prelude::*;
@@ -127,9 +127,10 @@ fn AppContent() -> Element {
     let store_clone_for_notification = store.clone();
     use_effect(move || {
         if store_clone_for_notification.is_none() {
-            state_provider.ui.write().show_toast(
+            state_provider.ui.write().show_status(
                 "⚠️ Database unavailable - workflow history and settings will not be saved"
                     .to_string(),
+                crate::components::ExecutionStatus::Failed,
             );
         }
     });
@@ -148,10 +149,10 @@ fn AppContent() -> Element {
                             history_state.write().set_history(history);
                         }
                         Err(e) => {
-                            state_provider
-                                .ui
-                                .write()
-                                .show_toast(format!("Failed to load history: {}", e));
+                            state_provider.ui.write().show_status(
+                                format!("Failed to load history: {}", e),
+                                crate::components::ExecutionStatus::Failed,
+                            );
                         }
                     }
                 }
@@ -177,6 +178,19 @@ fn AppContent() -> Element {
                 });
             }
         }
+    });
+
+    // Auto-clear completed/failed status messages after 3 seconds
+    use_effect(move || {
+        let mut ui_state = state_provider.ui;
+        spawn(async move {
+            loop {
+                tokio::time::sleep(tokio::time::Duration::from_millis(500)).await;
+                if ui_state.read().should_auto_clear() {
+                    ui_state.write().clear_status();
+                }
+            }
+        });
     });
 
     rsx! {
@@ -213,9 +227,8 @@ fn AppContent() -> Element {
                 }
             },
 
-            Toast {
-                message: state_provider.ui.read().toast_message.clone(),
-                on_dismiss: move |_| state_provider.ui.write().dismiss_toast()
+            StatusBar {
+                message: state_provider.ui.read().status_message.clone()
             }
 
             Router::<Route> {}

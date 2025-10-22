@@ -1,8 +1,8 @@
 pub mod sidebar;
-pub mod toast;
+pub mod status_bar;
 
 pub use sidebar::Sidebar;
-pub use toast::Toast;
+pub use status_bar::*;
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum ExecutionStatus {

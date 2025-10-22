@@ -29,6 +29,10 @@ pub fn UploadPage() -> Element {
 
     let mut pick_file = move || {
         state_provider.ui.write().set_picking_file(true);
+        state_provider.ui.write().show_status(
+            "Opening file picker...".to_string(),
+            crate::components::ExecutionStatus::Running,
+        );
         spawn(async move {
             if let Some(path) = FileDialog::new()
                 .add_filter("JSON files", &["json"])
@@ -38,7 +42,15 @@ pub fn UploadPage() -> Element {
                 if let Some(path_str) = path.to_str() {
                     state_provider.workflow.write().workflow_file = path_str.to_string();
                     state_provider.history.write().clear_viewing();
+                    state_provider.ui.write().show_status(
+                        format!("Selected file: {}", path_str),
+                        crate::components::ExecutionStatus::Complete,
+                    );
+                } else {
+                    state_provider.ui.write().clear_status();
                 }
+            } else {
+                state_provider.ui.write().clear_status();
             }
             state_provider.ui.write().set_picking_file(false);
         });
@@ -52,6 +64,10 @@ pub fn UploadPage() -> Element {
         spawn(async move {
             let file_path = workflow_state.read().workflow_file.clone();
             workflow_state.write().reset_before_run();
+            ui_state.write().show_status(
+                "Starting workflow execution...".to_string(),
+                crate::components::ExecutionStatus::Running,
+            );
 
             let (output_callback, mut handles) = create_output_channel();
 
@@ -71,16 +87,18 @@ pub fn UploadPage() -> Element {
             {
                 Ok(result) => {
                     workflow_state.write().apply_success(&result);
-                    ui_state
-                        .write()
-                        .show_toast("Workflow completed successfully!".to_string());
+                    ui_state.write().show_status(
+                        "Workflow completed successfully!".to_string(),
+                        crate::components::ExecutionStatus::Complete,
+                    );
                     history_state.write().needs_history_reload = true;
                 }
                 Err(e) => {
                     workflow_state.write().apply_failure(&e.to_string());
-                    ui_state
-                        .write()
-                        .show_toast(format!("Workflow failed: {}", e));
+                    ui_state.write().show_status(
+                        format!("Workflow failed: {}", e),
+                        crate::components::ExecutionStatus::Failed,
+                    );
                 }
             }
         });
