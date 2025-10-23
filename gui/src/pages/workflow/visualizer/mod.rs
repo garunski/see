@@ -116,7 +116,6 @@ pub fn WorkflowVisualizerPage(id: String) -> Element {
                                                     type: 'LOAD_WORKFLOW',
                                                     payload: {{ workflow: workflowData }}
                                                 }}, '*');
-                                                console.log('Sent workflow to iframe:', workflowData);
                                             }} else {{
                                                 console.error('Iframe or contentWindow not available');
                                             }}

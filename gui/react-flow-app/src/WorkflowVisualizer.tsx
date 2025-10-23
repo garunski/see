@@ -123,7 +123,7 @@ const WorkflowVisualizer: React.FC<WorkflowVisualizerProps> = () => {
   // Listen for messages from parent window (Dioxus)
   useEffect(() => {
     const handleMessage = (event: MessageEvent<MessageFromParent>) => {
-      if (event.data.type === 'LOAD_WORKFLOW' && event.data.payload) {
+      if (event.data.type === 'LOAD_WORKFLOW' && event.data.payload?.workflow) {
         const wf = event.data.payload.workflow;
         setWorkflow(wf);
         

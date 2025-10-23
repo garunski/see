@@ -82,33 +82,49 @@ const WorkflowEditor: React.FC = () => {
     return edgeList;
   }, []);
 
-  // Click handler with logging and postMessage to Dioxus parent
+  // Click handler with postMessage to Dioxus parent
   const handleNodeClick = useCallback((_event: React.MouseEvent, node: Node) => {
-    console.log('=== NODE CLICKED ===');
-    console.log('Node ID:', node.id);
-    console.log('Node Data:', node.data);
-    console.log('Full Node:', node);
-    
-    // Send to Dioxus parent window
+    // Send to Dioxus parent window - only send cloneable data
     window.parent.postMessage({
       type: 'NODE_CLICKED',
       payload: {
         nodeId: node.id,
         nodeName: node.data.task?.name,
+        functionName: node.data.task?.function?.name
+      }
+    }, '*');
+  }, []);
+
+  // Double-click handler for opening node editor
+  const handleNodeDoubleClick = useCallback((_event: React.MouseEvent, node: Node) => {
+    // Extract only the primitive values we need for the editor
+    const task = node.data.task;
+    const taskData = task ? {
+      id: task.id,
+      name: task.name,
+      function: {
+        name: task.function?.name || 'cli_command',
+        input: task.function?.input || {}
+      }
+    } : null;
+    
+    // Send to Dioxus parent window - only send primitive, cloneable data
+    window.parent.postMessage({
+      type: 'NODE_DOUBLE_CLICKED',
+      payload: {
+        nodeId: node.id,
+        nodeName: node.data.task?.name,
         functionName: node.data.task?.function?.name,
-        fullNode: node
+        task: taskData
       }
     }, '*');
   }, []);
 
   // Listen for messages from parent window (Dioxus)
   useEffect(() => {
-    console.log('[WorkflowEditor] Component mounted, setting up message listener');
-    
     const handleMessage = (event: MessageEvent<MessageFromParent>) => {
-      if (event.data.type === 'LOAD_WORKFLOW' && event.data.payload) {
+      if (event.data.type === 'LOAD_WORKFLOW' && event.data.payload?.workflow) {
         const wf = event.data.payload.workflow;
-        console.log('[WorkflowEditor] Received LOAD_WORKFLOW:', wf);
         setWorkflow(wf);
         
         const newNodes = tasksToNodes(wf);
@@ -117,7 +133,43 @@ const WorkflowEditor: React.FC = () => {
         setNodes(newNodes);
         setEdges(newEdges);
         setIsLoaded(true);
-        console.log('[WorkflowEditor] Loaded', newNodes.length, 'nodes');
+      } else if (event.data.type === 'UPDATE_NODE' && event.data.payload) {
+        const { nodeId, name, functionType, command, args, prompt } = event.data.payload;
+        
+        // Update the node in the nodes array
+        setNodes((currentNodes) => 
+          currentNodes.map((node) => {
+            if (node.id === nodeId) {
+              const updatedTask = {
+                ...node.data.task,
+                name: name,
+                function: {
+                  name: functionType,
+                  input: functionType === 'cli_command' 
+                    ? { command, args }
+                    : { prompt }
+                }
+              };
+              
+              return {
+                ...node,
+                data: {
+                  ...node.data,
+                  task: updatedTask,
+                  label: (
+                    <div style={{ padding: '10px' }}>
+                      <div style={{ fontWeight: 'bold', marginBottom: '5px' }}>{name}</div>
+                      <div style={{ fontSize: '12px', color: '#666' }}>
+                        {functionType}
+                      </div>
+                    </div>
+                  )
+                }
+              };
+            }
+            return node;
+          })
+        );
       }
     };
 
@@ -158,8 +210,6 @@ const WorkflowEditor: React.FC = () => {
     );
   }
 
-  console.log('[WorkflowEditor] Rendering with', nodes.length, 'nodes');
-
   return (
     <div style={{ width: '100vw', height: '100vh' }}>
       <ReactFlow
@@ -169,6 +219,7 @@ const WorkflowEditor: React.FC = () => {
         onEdgesChange={onEdgesChange}
         onConnect={onConnect}
         onNodeClick={handleNodeClick}
+        onNodeDoubleClick={handleNodeDoubleClick}
         fitView
         attributionPosition="bottom-left"
       >

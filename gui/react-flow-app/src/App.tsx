@@ -14,8 +14,6 @@ const App: React.FC = () => {
   const isEditor = window.WORKFLOW_MODE === 'editor' || 
                    new URLSearchParams(window.location.search).get('mode') === 'editor';
 
-  console.log('[App] Mode:', isEditor ? 'EDITOR' : 'VISUALIZER', '(window.WORKFLOW_MODE:', window.WORKFLOW_MODE, ')');
-
   if (isEditor) {
     return <WorkflowEditor />;
   }

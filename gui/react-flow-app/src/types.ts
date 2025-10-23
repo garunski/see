@@ -24,9 +24,15 @@ export interface Workflow {
 }
 
 export interface MessageFromParent {
-  type: 'LOAD_WORKFLOW' | 'GET_WORKFLOW_STATE';
+  type: 'LOAD_WORKFLOW' | 'GET_WORKFLOW_STATE' | 'UPDATE_NODE';
   payload?: {
-    workflow: Workflow;
+    workflow?: Workflow;
+    nodeId?: string;
+    name?: string;
+    functionType?: string;
+    command?: string;
+    args?: string[];
+    prompt?: string;
   };
 }
 

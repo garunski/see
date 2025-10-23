@@ -25,6 +25,7 @@ pub fn WorkflowEditPage(id: String) -> Element {
     let mut workflow_name = use_signal(String::new);
     let mut edit_mode = use_signal(|| EditMode::Json);
     let selected_node_info = use_signal(|| String::from("No node selected"));
+    let _editing_node = use_signal(|| Option::<String>::None);
 
     let workflow_id_for_effect = id.clone();
     use_effect(move || {
@@ -260,17 +261,8 @@ pub fn WorkflowEditPage(id: String) -> Element {
                     script {
                         dangerous_inner_html: format!(
                             r#"
-                            console.log('[Dioxus] Setting up NODE_CLICKED listener');
-                            
                             window.addEventListener('message', function(event) {{
-                                console.log('[Dioxus] Received message:', event.data);
-                                
                                 if (event.data && event.data.type === 'NODE_CLICKED') {{
-                                    console.log('[Dioxus] NODE_CLICKED event detected!');
-                                    console.log('  Node ID:', event.data.payload.nodeId);
-                                    console.log('  Node Name:', event.data.payload.nodeName);
-                                    console.log('  Function:', event.data.payload.functionName);
-                                    
                                     // Update the info div
                                     const infoDiv = document.getElementById('selected-node-info');
                                     if (infoDiv && event.data.payload) {{
@@ -278,10 +270,130 @@ pub fn WorkflowEditPage(id: String) -> Element {
                                         const func = event.data.payload.functionName || 'unknown';
                                         infoDiv.textContent = 'Selected: ' + name + ' (' + func + ')';
                                     }}
+                                }} else if (event.data && event.data.type === 'NODE_DOUBLE_CLICKED') {{
+                                    
+                                    // Show node editor modal
+                                    const modal = document.getElementById('node-editor-modal');
+                                    if (modal) {{
+                                        modal.style.display = 'flex';
+                                        
+                                        // Populate form fields
+                                        const nameInput = document.getElementById('node-name-input');
+                                        const functionSelect = document.getElementById('node-function-select');
+                                        const commandInput = document.getElementById('node-command-input');
+                                        const argsInput = document.getElementById('node-args-input');
+                                        const promptInput = document.getElementById('node-prompt-input');
+                                        
+                                        if (nameInput && event.data.payload.task) {{
+                                            nameInput.value = event.data.payload.task.name || '';
+                                        }}
+                                        if (functionSelect && event.data.payload.task) {{
+                                            functionSelect.value = event.data.payload.task.function?.name || 'cli_command';
+                                        }}
+                                        if (commandInput && event.data.payload.task?.function?.input) {{
+                                            commandInput.value = event.data.payload.task.function.input.command || '';
+                                        }}
+                                        if (argsInput && event.data.payload.task?.function?.input?.args) {{
+                                            argsInput.value = event.data.payload.task.function.input.args.join(', ');
+                                        }}
+                                        if (promptInput && event.data.payload.task?.function?.input) {{
+                                            promptInput.value = event.data.payload.task.function.input.prompt || '';
+                                        }}
+                                        
+                                        // Store current node ID for saving
+                                        modal.setAttribute('data-node-id', event.data.payload.nodeId);
+                                        
+                                        // Set up event listeners when modal is shown
+                                        setupModalEventListeners();
+                                    }}
                                 }}
                             }});
                             
-                            console.log('[Dioxus] Listener registered');
+                            // Function to set up modal event listeners
+                            function setupModalEventListeners() {{
+                                
+                                const modal = document.getElementById('node-editor-modal');
+                                const cancelBtn = document.getElementById('node-editor-cancel');
+                                const saveBtn = document.getElementById('node-editor-save');
+                                const functionSelect = document.getElementById('node-function-select');
+                                const cliFields = document.getElementById('cli-fields');
+                                const cursorFields = document.getElementById('node-prompt-input');
+                                
+                                // Remove existing listeners to avoid duplicates
+                                if (cancelBtn) {{
+                                    cancelBtn.replaceWith(cancelBtn.cloneNode(true));
+                                }}
+                                if (saveBtn) {{
+                                    saveBtn.replaceWith(saveBtn.cloneNode(true));
+                                }}
+                                if (modal) {{
+                                    modal.replaceWith(modal.cloneNode(true));
+                                }}
+                                
+                                // Get fresh references after cloning
+                                const newModal = document.getElementById('node-editor-modal');
+                                const newCancelBtn = document.getElementById('node-editor-cancel');
+                                const newSaveBtn = document.getElementById('node-editor-save');
+                                const newFunctionSelect = document.getElementById('node-function-select');
+                                const newCliFields = document.getElementById('cli-fields');
+                                const newCursorFields = document.getElementById('node-prompt-input');
+                                
+                                // Close modal on cancel
+                                if (newCancelBtn) {{
+                                    newCancelBtn.addEventListener('click', function() {{
+                                        if (newModal) newModal.style.display = 'none';
+                                    }});
+                                }}
+                                
+                                // Close modal on backdrop click
+                                if (newModal) {{
+                                    newModal.addEventListener('click', function(e) {{
+                                        if (e.target === newModal) {{
+                                            newModal.style.display = 'none';
+                                        }}
+                                    }});
+                                }}
+                                
+                                // Toggle form fields based on function type
+                                if (newFunctionSelect) {{
+                                    newFunctionSelect.addEventListener('change', function() {{
+                                        const isCli = this.value === 'cli_command';
+                                        if (newCliFields) newCliFields.style.display = isCli ? 'block' : 'none';
+                                        if (newCursorFields) newCursorFields.style.display = isCli ? 'none' : 'block';
+                                    }});
+                                }}
+                                
+                                // Save button handler
+                                if (newSaveBtn) {{
+                                    newSaveBtn.addEventListener('click', function() {{
+                                        const nodeId = newModal.getAttribute('data-node-id');
+                                        const name = document.getElementById('node-name-input').value;
+                                        const functionType = document.getElementById('node-function-select').value;
+                                        const command = document.getElementById('node-command-input').value;
+                                        const args = document.getElementById('node-args-input').value;
+                                        const prompt = document.getElementById('node-prompt-input').value;
+                                        
+                                        // Send update to iframe
+                                        const iframe = document.getElementById('workflow-editor-iframe');
+                                        if (iframe && iframe.contentWindow) {{
+                                            iframe.contentWindow.postMessage({{
+                                                type: 'UPDATE_NODE',
+                                                payload: {{
+                                                    nodeId,
+                                                    name,
+                                                    functionType,
+                                                    command,
+                                                    args: args.split(',').map(s => s.trim()).filter(s => s),
+                                                    prompt
+                                                }}
+                                            }}, '*');
+                                        }}
+                                        
+                                        // Close modal
+                                        newModal.style.display = 'none';
+                                    }});
+                                }}
+                            }}
                             "#
                         )
                     }
@@ -319,7 +431,6 @@ pub fn WorkflowEditPage(id: String) -> Element {
                                                         type: 'LOAD_WORKFLOW',
                                                         payload: {{ workflow: workflowData }}
                                                     }}, '*');
-                                                    console.log('Sent workflow to editor:', workflowData);
                                                 }} else {{
                                                     console.error('Editor iframe or contentWindow not available');
                                                 }}
@@ -363,6 +474,84 @@ pub fn WorkflowEditPage(id: String) -> Element {
                                         div { class: "text-red-600 dark:text-red-400 mb-2", "Invalid Workflow" }
                                         p { class: "text-zinc-600 dark:text-zinc-400", "Please fix the JSON before switching to visual mode" }
                                     }
+                                }
+                            }
+                        }
+                    }
+
+                    // Node Editor Modal
+                    div {
+                        id: "node-editor-modal",
+                        class: "fixed inset-0 z-50 hidden items-center justify-center bg-black bg-opacity-50",
+                        style: "display: none;",
+                        div {
+                            class: "bg-white dark:bg-zinc-800 rounded-xl shadow-xl p-6 max-w-md w-full mx-4",
+                            h3 { class: "text-lg font-semibold text-zinc-900 dark:text-white mb-4", "Edit Node" }
+
+                            div { class: "space-y-4",
+                                div {
+                                    label { class: "block text-sm font-medium text-zinc-900 dark:text-white mb-1", "Node Name" }
+                                    input {
+                                        id: "node-name-input",
+                                        type: "text",
+                                        class: "w-full px-3 py-2 border border-zinc-300 dark:border-zinc-600 rounded-md text-zinc-900 dark:text-white bg-zinc-50 dark:bg-zinc-700 focus:ring-2 focus:ring-blue-500 focus:border-transparent",
+                                        placeholder: "Enter node name"
+                                    }
+                                }
+
+                                div {
+                                    label { class: "block text-sm font-medium text-zinc-900 dark:text-white mb-1", "Function Type" }
+                                    select {
+                                        id: "node-function-select",
+                                        class: "w-full px-3 py-2 border border-zinc-300 dark:border-zinc-600 rounded-md text-zinc-900 dark:text-white bg-zinc-50 dark:bg-zinc-700 focus:ring-2 focus:ring-blue-500 focus:border-transparent",
+                                        option { value: "cli_command", "CLI Command" }
+                                        option { value: "cursor_agent", "Cursor Agent" }
+                                    }
+                                }
+
+                                div { id: "cli-fields",
+                                    div {
+                                        label { class: "block text-sm font-medium text-zinc-900 dark:text-white mb-1", "Command" }
+                                        input {
+                                            id: "node-command-input",
+                                            type: "text",
+                                            class: "w-full px-3 py-2 border border-zinc-300 dark:border-zinc-600 rounded-md text-zinc-900 dark:text-white bg-zinc-50 dark:bg-zinc-700 focus:ring-2 focus:ring-blue-500 focus:border-transparent",
+                                            placeholder: "e.g., echo, ls, curl"
+                                        }
+                                    }
+
+                                    div {
+                                        label { class: "block text-sm font-medium text-zinc-900 dark:text-white mb-1", "Arguments (comma-separated)" }
+                                        input {
+                                            id: "node-args-input",
+                                            type: "text",
+                                            class: "w-full px-3 py-2 border border-zinc-300 dark:border-zinc-600 rounded-md text-zinc-900 dark:text-white bg-zinc-50 dark:bg-zinc-700 focus:ring-2 focus:ring-blue-500 focus:border-transparent",
+                                            placeholder: "e.g., Hello World, -l, /path/to/file"
+                                        }
+                                    }
+                                }
+
+                                div { id: "cursor-fields", style: "display: none;",
+                                    label { class: "block text-sm font-medium text-zinc-900 dark:text-white mb-1", "Prompt" }
+                                    textarea {
+                                        id: "node-prompt-input",
+                                        rows: 4,
+                                        class: "w-full px-3 py-2 border border-zinc-300 dark:border-zinc-600 rounded-md text-zinc-900 dark:text-white bg-zinc-50 dark:bg-zinc-700 focus:ring-2 focus:ring-blue-500 focus:border-transparent",
+                                        placeholder: "Enter your prompt for the Cursor agent"
+                                    }
+                                }
+                            }
+
+                            div { class: "flex gap-3 justify-end mt-6",
+                                button {
+                                    id: "node-editor-cancel",
+                                    class: "px-4 py-2 text-sm font-medium text-zinc-700 dark:text-zinc-300 bg-zinc-100 dark:bg-zinc-700 hover:bg-zinc-200 dark:hover:bg-zinc-600 rounded-md transition-colors",
+                                    "Cancel"
+                                }
+                                button {
+                                    id: "node-editor-save",
+                                    class: "px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-md transition-colors",
+                                    "Save Changes"
                                 }
                             }
                         }
