@@ -24,16 +24,17 @@ export interface Workflow {
 }
 
 export interface MessageFromParent {
-  type: 'LOAD_WORKFLOW';
-  payload: {
+  type: 'LOAD_WORKFLOW' | 'GET_WORKFLOW_STATE';
+  payload?: {
     workflow: Workflow;
   };
 }
 
 export interface MessageToParent {
-  type: 'SAVE_WORKFLOW';
-  payload: {
+  type: 'SAVE_WORKFLOW' | 'WORKFLOW_STATE' | 'VALIDATION_ERROR' | 'READY';
+  payload?: {
     workflow: Workflow;
+    error?: string;
   };
 }
 

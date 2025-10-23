@@ -3,8 +3,14 @@ use crate::router::Route;
 use crate::state::AppStateProvider;
 use dioxus::prelude::*;
 use dioxus_router::prelude::Link;
-use see_core::WorkflowDefinition;
+use see_core::{WorkflowDefinition, WorkflowJson};
 use uuid::Uuid;
+
+#[derive(PartialEq, Clone, Copy)]
+enum EditMode {
+    Visual,
+    Json,
+}
 
 #[component]
 pub fn WorkflowEditPage(id: String) -> Element {
@@ -17,6 +23,7 @@ pub fn WorkflowEditPage(id: String) -> Element {
     let mut is_saving = use_signal(|| false);
     let mut can_reset = use_signal(|| false);
     let mut workflow_name = use_signal(String::new);
+    let mut edit_mode = use_signal(|| EditMode::Json);
 
     let workflow_id_for_effect = id.clone();
     use_effect(move || {
@@ -45,6 +52,34 @@ pub fn WorkflowEditPage(id: String) -> Element {
             workflow_name.set("Invalid Workflow".to_string());
         }
     });
+
+    // Prepare workflow JSON for visual editor
+    let workflow_json_str = use_memo(move || {
+        if let Ok(workflow_json) = serde_json::from_str::<WorkflowJson>(&content()) {
+            match serde_json::to_string(&workflow_json) {
+                Ok(json_str) => Some(json_str),
+                Err(_) => None,
+            }
+        } else {
+            None
+        }
+    });
+
+    // Mode switching handlers
+    let switch_to_visual = move |_| {
+        // Validate JSON before switching
+        if let Err(e) = serde_json::from_str::<serde_json::Value>(&content()) {
+            validation_error.set(format!("Invalid JSON: {}", e));
+            return;
+        }
+
+        validation_error.set(String::new());
+        edit_mode.set(EditMode::Visual);
+    };
+
+    let switch_to_json = move |_| {
+        edit_mode.set(EditMode::Json);
+    };
 
     let mut save_workflow = {
         let mut state_provider = state_provider.clone();
@@ -171,6 +206,22 @@ pub fn WorkflowEditPage(id: String) -> Element {
                     }
                 }
                 div { class: "flex items-center gap-3",
+                    // Mode toggle buttons
+                    div { class: "flex rounded-lg bg-zinc-100 dark:bg-zinc-800 p-1",
+                        Button {
+                            variant: if edit_mode() == EditMode::Visual { ButtonVariant::Primary } else { ButtonVariant::Ghost },
+                            size: ButtonSize::Small,
+                            onclick: switch_to_visual,
+                            "Visual Editor"
+                        }
+                        Button {
+                            variant: if edit_mode() == EditMode::Json { ButtonVariant::Primary } else { ButtonVariant::Ghost },
+                            size: ButtonSize::Small,
+                            onclick: switch_to_json,
+                            "JSON Editor"
+                        }
+                    }
+
                     if !is_new {
                         Link {
                             to: Route::WorkflowVisualizerPage { id: id.clone() },
@@ -179,7 +230,7 @@ pub fn WorkflowEditPage(id: String) -> Element {
                                 path { d: "M10 12.5a2.5 2.5 0 100-5 2.5 2.5 0 000 5z" }
                                 path { fill_rule: "evenodd", d: "M.664 10.59a1.651 1.651 0 010-1.186A10.004 10.004 0 0110 3c4.257 0 7.893 2.66 9.336 6.41.147.381.146.804 0 1.186A10.004 10.004 0 0110 17c-4.257 0-7.893-2.66-9.336-6.41zM14 10a4 4 0 11-8 0 4 4 0 018 0z", clip_rule: "evenodd" }
                             }
-                            "Visualize"
+                            "View"
                         }
                     }
                     if can_reset() {
@@ -201,34 +252,111 @@ pub fn WorkflowEditPage(id: String) -> Element {
                 }
             }
 
-            div { class: "bg-white dark:bg-zinc-800 rounded-xl border border-zinc-200 dark:border-zinc-700 p-8 shadow-sm",
-                div { class: "space-y-6",
-                    div {
-                        label { class: "block text-sm font-medium text-zinc-900 dark:text-white mb-2",
-                            "Workflow Name"
+            // Content area - conditional rendering based on edit mode
+            match edit_mode() {
+                EditMode::Visual => rsx! {
+                    div { class: "bg-white dark:bg-zinc-800 rounded-xl border border-zinc-200 dark:border-zinc-700 shadow-sm",
+                        div { class: "p-4 border-b border-zinc-200 dark:border-zinc-700",
+                            div { class: "flex items-center justify-between",
+                                h3 { class: "text-lg font-semibold text-zinc-900 dark:text-white",
+                                    "Visual Editor"
+                                }
+                                div { class: "text-sm text-zinc-500 dark:text-zinc-400",
+                                    "Drag nodes to reposition, double-click to edit"
+                                }
+                            }
                         }
-                        div { class: "block w-full rounded-md border-0 py-1.5 text-zinc-900 dark:text-white shadow-sm ring-1 ring-inset ring-zinc-300 dark:ring-zinc-600 bg-zinc-50 dark:bg-zinc-700 sm:text-sm sm:leading-6",
-                            {workflow_name()}
-                        }
-                        p { class: "mt-1 text-xs text-zinc-500 dark:text-zinc-400",
-                            "Name is extracted from the JSON 'name' field"
+                        div { class: "relative", style: "height: 600px",
+                            if let Some(json_str) = workflow_json_str() {
+                                // Script to send workflow data to iframe
+                                script {
+                                    dangerous_inner_html: format!(
+                                        r#"
+                                        setTimeout(function() {{
+                                            try {{
+                                                const iframe = document.getElementById('workflow-editor-iframe');
+                                                if (iframe && iframe.contentWindow) {{
+                                                    const workflowData = {};
+                                                    iframe.contentWindow.postMessage({{
+                                                        type: 'LOAD_WORKFLOW',
+                                                        payload: {{ workflow: workflowData }}
+                                                    }}, '*');
+                                                    console.log('Sent workflow to editor:', workflowData);
+                                                }} else {{
+                                                    console.error('Editor iframe or contentWindow not available');
+                                                }}
+                                            }} catch (e) {{
+                                                console.error('Failed to send workflow to editor:', e);
+                                            }}
+                                        }}, 500);
+                                        "#,
+                                        json_str
+                                    )
+                                }
+
+                                iframe {
+                                    id: "workflow-editor-iframe",
+                                    srcdoc: format!(
+                                        r#"<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Workflow Editor</title>
+    <link rel="stylesheet" href="{}" />
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="{}?mode=editor"></script>
+  </body>
+</html>"#,
+                                        asset!("/assets/workflow-visualizer/index.css"),
+                                        asset!("/assets/workflow-visualizer/index.js")
+                                    ),
+                                    class: "w-full h-full border-0 rounded-b-xl",
+                                }
+                            } else {
+                                div { class: "flex items-center justify-center h-full",
+                                    div { class: "text-center",
+                                        div { class: "text-red-600 dark:text-red-400 mb-2", "Invalid Workflow" }
+                                        p { class: "text-zinc-600 dark:text-zinc-400", "Please fix the JSON before switching to visual mode" }
+                                    }
+                                }
+                            }
                         }
                     }
+                },
+                EditMode::Json => rsx! {
+                    div { class: "bg-white dark:bg-zinc-800 rounded-xl border border-zinc-200 dark:border-zinc-700 p-8 shadow-sm",
+                        div { class: "space-y-6",
+                            div {
+                                label { class: "block text-sm font-medium text-zinc-900 dark:text-white mb-2",
+                                    "Workflow Name"
+                                }
+                                div { class: "block w-full rounded-md border-0 py-1.5 text-zinc-900 dark:text-white shadow-sm ring-1 ring-inset ring-zinc-300 dark:ring-zinc-600 bg-zinc-50 dark:bg-zinc-700 sm:text-sm sm:leading-6",
+                                    {workflow_name()}
+                                }
+                                p { class: "mt-1 text-xs text-zinc-500 dark:text-zinc-400",
+                                    "Name is extracted from the JSON 'name' field"
+                                }
+                            }
 
-                    div {
-                        label { class: "block text-sm font-medium text-zinc-900 dark:text-white mb-2",
-                            "Workflow Definition (JSON)"
-                        }
-                        textarea {
-                            value: "{content()}",
-                            oninput: move |evt| content.set(evt.value()),
-                            placeholder: "Enter workflow JSON definition",
-                            rows: 20,
-                            class: "block w-full rounded-md border-0 py-1.5 text-zinc-900 dark:text-white shadow-sm ring-1 ring-inset ring-zinc-300 dark:ring-zinc-600 placeholder:text-zinc-400 dark:placeholder:text-zinc-500 focus:ring-2 focus:ring-inset focus:ring-blue-600 dark:bg-zinc-700 sm:text-sm sm:leading-6 font-mono"
-                        }
-                        if !validation_error().is_empty() {
-                            div { class: "mt-2 text-sm text-red-600 dark:text-red-400",
-                                {validation_error()}
+                            div {
+                                label { class: "block text-sm font-medium text-zinc-900 dark:text-white mb-2",
+                                    "Workflow Definition (JSON)"
+                                }
+                                textarea {
+                                    value: "{content()}",
+                                    oninput: move |evt| content.set(evt.value()),
+                                    placeholder: "Enter workflow JSON definition",
+                                    rows: 20,
+                                    class: "block w-full rounded-md border-0 py-1.5 text-zinc-900 dark:text-white shadow-sm ring-1 ring-inset ring-zinc-300 dark:ring-zinc-600 placeholder:text-zinc-400 dark:placeholder:text-zinc-500 focus:ring-2 focus:ring-inset focus:ring-blue-600 dark:bg-zinc-700 sm:text-sm sm:leading-6 font-mono"
+                                }
+                                if !validation_error().is_empty() {
+                                    div { class: "mt-2 text-sm text-red-600 dark:text-red-400",
+                                        {validation_error()}
+                                    }
+                                }
                             }
                         }
                     }
