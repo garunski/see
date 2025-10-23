@@ -24,6 +24,7 @@ pub fn WorkflowEditPage(id: String) -> Element {
     let mut can_reset = use_signal(|| false);
     let mut workflow_name = use_signal(String::new);
     let mut edit_mode = use_signal(|| EditMode::Json);
+    let selected_node_info = use_signal(|| String::from("No node selected"));
 
     let workflow_id_for_effect = id.clone();
     use_effect(move || {
@@ -255,6 +256,36 @@ pub fn WorkflowEditPage(id: String) -> Element {
             // Content area - conditional rendering based on edit mode
             match edit_mode() {
                 EditMode::Visual => rsx! {
+                    // Message listener for node clicks from iframe
+                    script {
+                        dangerous_inner_html: format!(
+                            r#"
+                            console.log('[Dioxus] Setting up NODE_CLICKED listener');
+                            
+                            window.addEventListener('message', function(event) {{
+                                console.log('[Dioxus] Received message:', event.data);
+                                
+                                if (event.data && event.data.type === 'NODE_CLICKED') {{
+                                    console.log('[Dioxus] NODE_CLICKED event detected!');
+                                    console.log('  Node ID:', event.data.payload.nodeId);
+                                    console.log('  Node Name:', event.data.payload.nodeName);
+                                    console.log('  Function:', event.data.payload.functionName);
+                                    
+                                    // Update the info div
+                                    const infoDiv = document.getElementById('selected-node-info');
+                                    if (infoDiv && event.data.payload) {{
+                                        const name = event.data.payload.nodeName || 'Unknown';
+                                        const func = event.data.payload.functionName || 'unknown';
+                                        infoDiv.textContent = 'Selected: ' + name + ' (' + func + ')';
+                                    }}
+                                }}
+                            }});
+                            
+                            console.log('[Dioxus] Listener registered');
+                            "#
+                        )
+                    }
+
                     div { class: "bg-white dark:bg-zinc-800 rounded-xl border border-zinc-200 dark:border-zinc-700 shadow-sm",
                         div { class: "p-4 border-b border-zinc-200 dark:border-zinc-700",
                             div { class: "flex items-center justify-between",
@@ -267,8 +298,15 @@ pub fn WorkflowEditPage(id: String) -> Element {
                             }
                         }
                         div { class: "relative", style: "height: 600px",
+                            // Selected node info display
+                            div {
+                                id: "selected-node-info",
+                                class: "absolute top-4 right-4 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 px-3 py-2 rounded-lg text-sm font-medium z-10",
+                                "{selected_node_info()}"
+                            }
+
                             if let Some(json_str) = workflow_json_str() {
-                                // Script to send workflow data to iframe
+                                // Script to send workflow data to iframe and set up click handling
                                 script {
                                     dangerous_inner_html: format!(
                                         r#"
@@ -304,10 +342,14 @@ pub fn WorkflowEditPage(id: String) -> Element {
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Workflow Editor</title>
     <link rel="stylesheet" href="{}" />
+    <script>
+      // Set mode before React app loads
+      window.WORKFLOW_MODE = 'editor';
+    </script>
   </head>
   <body>
     <div id="root"></div>
-    <script type="module" src="{}?mode=editor"></script>
+    <script type="module" src="{}"></script>
   </body>
 </html>"#,
                                         asset!("/assets/workflow-visualizer/index.css"),

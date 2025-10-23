@@ -8,6 +8,8 @@ interface NodeEditorProps {
 }
 
 const NodeEditor: React.FC<NodeEditorProps> = ({ node, onSave, onClose }) => {
+  console.log('NodeEditor rendered with node:', node);
+  
   const [formData, setFormData] = useState({
     name: node.data.task.name || '',
     functionType: node.data.task.function.name || 'cli_command',
