@@ -1,24 +1,21 @@
 pub mod components;
 
-pub use components::WorkflowInfoCard;
-
-use crate::components::{Button, ButtonSize, ButtonVariant, ExecutionStatus};
-use crate::services::workflow::run_workflow;
+use crate::components::{Button, ButtonSize, ButtonVariant};
+use crate::services::workflow::read_and_parse_workflow_file;
 use crate::state::AppStateProvider;
 use dioxus::prelude::*;
+use dioxus_router::prelude::use_navigator;
 use rfd::FileDialog;
 
 #[component]
 pub fn UploadPage() -> Element {
     let mut state_provider = use_context::<AppStateProvider>();
+    let navigator = use_navigator();
 
     let workflow_file = use_memo(move || state_provider.workflow.read().workflow_file.clone());
-    let execution_status =
-        use_memo(move || state_provider.workflow.read().execution_status.clone());
-    let workflow_result = use_memo(move || state_provider.workflow.read().workflow_result.clone());
-    let current_step = use_memo(move || state_provider.workflow.read().current_step);
     let is_picking_file = use_memo(move || state_provider.ui.read().is_picking_file);
-    let is_viewing_history = use_memo(move || false);
+    let error_message = use_signal(|| String::new());
+    let is_saving = use_signal(|| false);
 
     let mut on_workflow_file_change = move |value: String| {
         state_provider.workflow.write().workflow_file = value;
@@ -42,52 +39,62 @@ pub fn UploadPage() -> Element {
         });
     };
 
-    let on_execute = move || {
-        let mut workflow_state = state_provider.workflow;
-        let mut history_state = state_provider.history;
-        spawn(async move {
-            let file_path = workflow_state.read().workflow_file.clone();
-            workflow_state.write().reset_before_run();
+    let on_save = move || {
+        let file_path = state_provider.workflow.read().workflow_file.clone();
+        let mut settings_state = state_provider.settings;
+        let mut error_signal = error_message;
+        let mut saving_signal = is_saving;
+        let navigator = navigator.clone();
 
-            match run_workflow(file_path, None).await {
-                Ok(result) => {
-                    workflow_state.write().apply_success(&result);
-                    history_state.write().needs_history_reload = true;
+        if file_path.is_empty() {
+            error_signal.set("Please select a workflow file first".to_string());
+            return;
+        }
+
+        saving_signal.set(true);
+        error_signal.set(String::new());
+
+        spawn(async move {
+            // Read and parse the workflow file
+            match read_and_parse_workflow_file(file_path) {
+                Ok(workflow) => {
+                    // Add workflow to settings
+                    settings_state.write().add_workflow(workflow.clone());
+
+                    // Save settings to database
+                    match see_core::get_global_store() {
+                        Ok(store) => {
+                            let settings_to_save = settings_state.read().settings.clone();
+                            if let Err(e) = store.save_settings(&settings_to_save).await {
+                                error_signal.set(format!("Failed to save workflow: {}", e));
+                                saving_signal.set(false);
+                                return;
+                            }
+                        }
+                        Err(e) => {
+                            error_signal.set(format!("Database unavailable: {}", e));
+                            saving_signal.set(false);
+                            return;
+                        }
+                    }
+
+                    // Navigate to home page
+                    navigator.push(crate::router::Route::HomePage {});
                 }
                 Err(e) => {
-                    workflow_state.write().apply_failure(&e.to_string());
+                    error_signal.set(e);
+                    saving_signal.set(false);
                 }
             }
         });
     };
 
-    let on_next_step = move || {
-        let current = state_provider.workflow.read().current_step;
-        let total = state_provider.workflow.read().tasks.len();
-        if current < total.saturating_sub(1) {
-            state_provider.workflow.write().current_step = current + 1;
-        }
-    };
-
-    let on_prev_step = move || {
-        let current = state_provider.workflow.read().current_step;
-        if current > 0 {
-            state_provider.workflow.write().current_step = current - 1;
-        }
-    };
-
-    let on_jump_to_step = move |step: usize| {
-        let total = state_provider.workflow.read().tasks.len();
-        if step < total {
-            state_provider.workflow.write().current_step = step;
-        }
-    };
 
     rsx! {
         div { class: "space-y-8",
             div {
                 h1 { class: "text-lg font-semibold text-zinc-950 dark:text-white", "Upload Workflow" }
-                p { class: "mt-2 text-sm text-zinc-500 dark:text-zinc-400", "Upload and execute workflow files" }
+                p { class: "mt-2 text-sm text-zinc-500 dark:text-zinc-400", "Upload workflow files to save them to your workflow library" }
             }
 
             div { class: "space-y-4",
@@ -115,51 +122,20 @@ pub fn UploadPage() -> Element {
                     }
                 }
 
+                if !error_message().is_empty() {
+                    div { class: "p-4 bg-red-50 dark:bg-red-900/20 rounded-lg border border-red-200 dark:border-red-700",
+                        p { class: "text-sm text-red-700 dark:text-red-300", "{error_message()}" }
+                    }
+                }
+
                 Button {
                     variant: ButtonVariant::Primary,
                     size: ButtonSize::Large,
-                    disabled: Some(matches!(execution_status(), ExecutionStatus::Running) || is_viewing_history()),
-                    onclick: move |_| on_execute(),
+                    disabled: Some(is_saving()),
+                    loading: Some(is_saving()),
+                    onclick: move |_| on_save(),
                     class: "w-full font-semibold".to_string(),
-                    if matches!(execution_status(), ExecutionStatus::Running) { "Executing..." } else { "Execute Workflow" }
-                }
-            }
-
-            if !matches!(execution_status(), ExecutionStatus::Idle) {
-                div { class: "p-4 bg-zinc-50 dark:bg-zinc-800 rounded-lg border border-zinc-200 dark:border-zinc-700",
-                    div { class: "flex items-center gap-3",
-                        div {
-                            class: format!("w-3 h-3 rounded-full {}", match execution_status() {
-                                ExecutionStatus::Running => "bg-blue-500 animate-pulse",
-                                ExecutionStatus::Complete => "bg-emerald-500",
-                                ExecutionStatus::Failed => "bg-red-500",
-                                _ => "bg-zinc-400"
-                            })
-                        }
-                        span {
-                            class: "text-sm font-medium text-zinc-900 dark:text-white",
-                            match execution_status() {
-                                ExecutionStatus::Running => "Running",
-                                ExecutionStatus::Complete => "Complete",
-                                ExecutionStatus::Failed => "Failed",
-                                _ => "Idle"
-                            }
-                        }
-                    }
-                }
-            }
-
-            if let Some(result) = workflow_result.read().clone() {
-                div { class: "space-y-4",
-                    h2 { class: "text-base font-semibold text-zinc-950 dark:text-white", "Execution Results" }
-                    WorkflowInfoCard {
-                        result: ReadOnlySignal::new(Signal::new(result)),
-                        tasks: state_provider.workflow.read().tasks.clone(),
-                        current_step: current_step(),
-                        on_next_step: on_next_step,
-                        on_prev_step: on_prev_step,
-                        on_jump_to_step: on_jump_to_step
-                    }
+                    if is_saving() { "Saving..." } else { "Save Workflow" }
                 }
             }
         }
