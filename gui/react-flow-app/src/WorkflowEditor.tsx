@@ -25,6 +25,7 @@ const WorkflowEditor: React.FC = () => {
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
   const [workflow, setWorkflow] = useState<Workflow | null>(null);
   const [isLoaded, setIsLoaded] = useState(false);
+  const [workflowName, setWorkflowName] = useState<string>('');
 
   // Convert workflow tasks to React Flow nodes
   const tasksToNodes = useCallback((wf: Workflow): Node[] => {
@@ -126,6 +127,13 @@ const WorkflowEditor: React.FC = () => {
       if (event.data.type === 'LOAD_WORKFLOW' && event.data.payload?.workflow) {
         const wf = event.data.payload.workflow;
         setWorkflow(wf);
+        
+        // Set workflow name from payload
+        if (event.data.payload.workflowName) {
+          setWorkflowName(event.data.payload.workflowName);
+        } else if (wf.name) {
+          setWorkflowName(wf.name);
+        }
         
         const newNodes = tasksToNodes(wf);
         const newEdges = tasksToEdges(wf);
@@ -233,8 +241,39 @@ const WorkflowEditor: React.FC = () => {
           boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
           fontFamily: 'system-ui, -apple-system, sans-serif',
         }}>
-          <div style={{ fontWeight: 'bold', fontSize: '16px', marginBottom: '4px' }}>
-            {workflow?.name || 'Workflow Editor'}
+          <div style={{ marginBottom: '8px' }}>
+            <input
+              type="text"
+              value={workflowName}
+              onChange={(e) => {
+                const newName = e.target.value;
+                setWorkflowName(newName);
+                // Send name change to parent window
+                window.parent.postMessage({
+                  type: 'WORKFLOW_NAME_CHANGED',
+                  payload: { name: newName }
+                }, '*');
+              }}
+              style={{
+                fontWeight: 'bold',
+                fontSize: '16px',
+                border: 'none',
+                background: 'transparent',
+                outline: 'none',
+                borderBottom: '2px solid transparent',
+                padding: '2px 4px',
+                marginBottom: '4px',
+                width: '100%',
+                minWidth: '200px'
+              }}
+              onFocus={(e) => {
+                e.target.style.borderBottomColor = '#3b82f6';
+              }}
+              onBlur={(e) => {
+                e.target.style.borderBottomColor = 'transparent';
+              }}
+              placeholder="Workflow Name"
+            />
           </div>
           <div style={{ fontSize: '14px', color: '#666' }}>
             {workflow?.tasks.length || 0} task{(workflow?.tasks.length || 0) !== 1 ? 's' : ''}

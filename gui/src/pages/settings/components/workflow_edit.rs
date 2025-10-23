@@ -1,8 +1,7 @@
 use crate::components::{Button, ButtonSize, ButtonVariant};
-use crate::router::Route;
 use crate::state::AppStateProvider;
 use dioxus::prelude::*;
-use dioxus_router::prelude::Link;
+use dioxus_router::prelude::use_navigator;
 use see_core::{WorkflowDefinition, WorkflowJson};
 use uuid::Uuid;
 
@@ -15,6 +14,7 @@ enum EditMode {
 #[component]
 pub fn WorkflowEditPage(id: String) -> Element {
     let state_provider = use_context::<AppStateProvider>();
+    let navigator = use_navigator();
 
     let is_new = id.is_empty();
 
@@ -23,7 +23,11 @@ pub fn WorkflowEditPage(id: String) -> Element {
     let mut is_saving = use_signal(|| false);
     let mut can_reset = use_signal(|| false);
     let mut workflow_name = use_signal(String::new);
-    let mut edit_mode = use_signal(|| EditMode::Json);
+    let mut edited_workflow_name = use_signal(String::new);
+    let mut has_unsaved_changes = use_signal(|| false);
+    let mut original_content = use_signal(String::new);
+    let mut original_name = use_signal(String::new);
+    let mut edit_mode = use_signal(|| EditMode::Visual);
     let selected_node_info = use_signal(|| String::from("No node selected"));
     let _editing_node = use_signal(|| Option::<String>::None);
 
@@ -37,31 +41,45 @@ pub fn WorkflowEditPage(id: String) -> Element {
             {
                 content.set(workflow.content.clone());
                 workflow_name.set(workflow.get_name());
+                edited_workflow_name.set(workflow.get_name());
+                original_content.set(workflow.content.clone());
+                original_name.set(workflow.get_name());
                 can_reset.set(workflow.is_default && workflow.is_edited);
             }
         }
     });
 
-    // Update workflow name when content changes
+    // Update workflow name when content changes (only in JSON mode)
     use_effect(move || {
-        if let Ok(json) = serde_json::from_str::<serde_json::Value>(&content()) {
-            if let Some(name) = json.get("name").and_then(|v| v.as_str()) {
-                workflow_name.set(name.to_string());
+        if edit_mode() == EditMode::Json {
+            if let Ok(json) = serde_json::from_str::<serde_json::Value>(&content()) {
+                if let Some(name) = json.get("name").and_then(|v| v.as_str()) {
+                    let name_str = name.to_string();
+                    workflow_name.set(name_str);
+                } else {
+                    workflow_name.set("Unnamed Workflow".to_string());
+                }
             } else {
-                workflow_name.set("Unnamed Workflow".to_string());
+                workflow_name.set("Invalid Workflow".to_string());
             }
-        } else {
-            workflow_name.set("Invalid Workflow".to_string());
         }
+    });
+
+    // Track unsaved changes - simplified logic
+    use_effect(move || {
+        let content_changed = content() != original_content();
+        let name_changed = if edit_mode() == EditMode::Visual {
+            edited_workflow_name() != original_name()
+        } else {
+            workflow_name() != original_name()
+        };
+        has_unsaved_changes.set(content_changed || name_changed);
     });
 
     // Prepare workflow JSON for visual editor
     let workflow_json_str = use_memo(move || {
         if let Ok(workflow_json) = serde_json::from_str::<WorkflowJson>(&content()) {
-            match serde_json::to_string(&workflow_json) {
-                Ok(json_str) => Some(json_str),
-                Err(_) => None,
-            }
+            serde_json::to_string(&workflow_json).ok()
         } else {
             None
         }
@@ -76,10 +94,25 @@ pub fn WorkflowEditPage(id: String) -> Element {
         }
 
         validation_error.set(String::new());
+        // Close any open modal when switching modes
+        spawn(async move {
+            // Use a simple approach - the modal will be hidden when the component re-renders
+        });
         edit_mode.set(EditMode::Visual);
     };
 
     let switch_to_json = move |_| {
+        // Update JSON content with edited name before switching
+        if let Ok(mut json) = serde_json::from_str::<serde_json::Value>(&content()) {
+            json["name"] = serde_json::Value::String(edited_workflow_name());
+            if let Ok(updated_content) = serde_json::to_string(&json) {
+                content.set(updated_content);
+            }
+        }
+        // Close any open modal when switching modes
+        spawn(async move {
+            // Use a simple approach - the modal will be hidden when the component re-renders
+        });
         edit_mode.set(EditMode::Json);
     };
 
@@ -88,13 +121,22 @@ pub fn WorkflowEditPage(id: String) -> Element {
         let _ui_state = state_provider.ui;
         let workflow_id_for_save = id.clone();
         move || {
-            if let Err(e) = serde_json::from_str::<serde_json::Value>(&content()) {
+            // Update content with edited name before saving
+            let mut final_content = content();
+            if let Ok(mut json) = serde_json::from_str::<serde_json::Value>(&final_content) {
+                json["name"] = serde_json::Value::String(edited_workflow_name());
+                if let Ok(updated_content) = serde_json::to_string(&json) {
+                    final_content = updated_content;
+                }
+            }
+
+            if let Err(e) = serde_json::from_str::<serde_json::Value>(&final_content) {
                 validation_error.set(format!("Invalid JSON: {}", e));
                 return;
             }
 
             // Validate that JSON has a name field
-            if let Ok(json) = serde_json::from_str::<serde_json::Value>(&content()) {
+            if let Ok(json) = serde_json::from_str::<serde_json::Value>(&final_content) {
                 if json.get("name").and_then(|v| v.as_str()).is_none() {
                     validation_error.set("JSON must contain a 'name' field".to_string());
                     return;
@@ -112,7 +154,7 @@ pub fn WorkflowEditPage(id: String) -> Element {
 
             let workflow = WorkflowDefinition {
                 id: final_id.clone(),
-                content: content(),
+                content: final_content.clone(),
                 is_default: false,
                 is_edited: false,
             };
@@ -128,6 +170,12 @@ pub fn WorkflowEditPage(id: String) -> Element {
                     .write()
                     .update_workflow(final_id.clone(), workflow.content.clone());
             }
+
+            // Update local state after successful save
+            content.set(final_content.clone());
+            original_content.set(final_content);
+            original_name.set(edited_workflow_name());
+            has_unsaved_changes.set(false);
 
             let _ui_state = _ui_state;
             spawn(async move {
@@ -190,8 +238,17 @@ pub fn WorkflowEditPage(id: String) -> Element {
         div { class: "space-y-8",
             div { class: "flex items-center justify-between",
                 div { class: "flex items-center gap-4",
-                    Link {
-                        to: Route::WorkflowsListPage {},
+                    Button {
+                        variant: ButtonVariant::Ghost,
+                        size: ButtonSize::Medium,
+                        onclick: move |_| {
+                            if has_unsaved_changes() {
+                                // For now, just navigate back - in a real app you'd want a proper confirmation dialog
+                                // TODO: Implement proper confirmation dialog using Dioxus components
+                            }
+                            // Navigate back using Dioxus router
+                            navigator.go_back();
+                        },
                         class: "inline-flex items-center gap-x-1.5 rounded-md bg-zinc-100 dark:bg-zinc-800 px-3 py-2 text-sm font-semibold text-zinc-900 dark:text-zinc-100 shadow-sm hover:bg-zinc-200 dark:hover:bg-zinc-700",
                         svg { class: "-ml-0.5 h-4 w-4", view_box: "0 0 20 20", fill: "currentColor",
                             path { fill_rule: "evenodd", d: "M17 10a.75.75 0 01-.75.75H5.612l2.158 1.96a.75.75 0 11-1.04 1.08l-3.5-3.25a.75.75 0 010-1.08l3.5-3.25a.75.75 0 111.04 1.08L5.612 9.25H16.25A.75.75 0 0117 10z", clip_rule: "evenodd" }
@@ -224,17 +281,6 @@ pub fn WorkflowEditPage(id: String) -> Element {
                         }
                     }
 
-                    if !is_new {
-                        Link {
-                            to: Route::WorkflowVisualizerPage { id: id.clone() },
-                            class: "inline-flex items-center gap-x-1.5 rounded-md bg-purple-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-purple-500",
-                            svg { class: "-ml-0.5 h-4 w-4", view_box: "0 0 20 20", fill: "currentColor",
-                                path { d: "M10 12.5a2.5 2.5 0 100-5 2.5 2.5 0 000 5z" }
-                                path { fill_rule: "evenodd", d: "M.664 10.59a1.651 1.651 0 010-1.186A10.004 10.004 0 0110 3c4.257 0 7.893 2.66 9.336 6.41.147.381.146.804 0 1.186A10.004 10.004 0 0110 17c-4.257 0-7.893-2.66-9.336-6.41zM14 10a4 4 0 11-8 0 4 4 0 018 0z", clip_rule: "evenodd" }
-                            }
-                            "View"
-                        }
-                    }
                     if can_reset() {
                         Button {
                             variant: ButtonVariant::Danger,
@@ -305,6 +351,13 @@ pub fn WorkflowEditPage(id: String) -> Element {
                                         
                                         // Set up event listeners when modal is shown
                                         setupModalEventListeners();
+                                    }}
+                                }} else if (event.data && event.data.type === 'WORKFLOW_NAME_CHANGED') {{
+                                    // Handle workflow name changes from React editor
+                                    const nameInput = document.querySelector('input[placeholder="Enter workflow name"]');
+                                    if (nameInput && event.data.payload && event.data.payload.name) {{
+                                        nameInput.value = event.data.payload.name;
+                                        nameInput.dispatchEvent(new Event('input', {{ bubbles: true }}));
                                     }}
                                 }}
                             }});
@@ -398,7 +451,7 @@ pub fn WorkflowEditPage(id: String) -> Element {
                         )
                     }
 
-                    div { class: "bg-white dark:bg-zinc-800 rounded-xl border border-zinc-200 dark:border-zinc-700 shadow-sm",
+                        div { class: "bg-white dark:bg-zinc-800 rounded-xl border border-zinc-200 dark:border-zinc-700 shadow-sm",
                         div { class: "p-4 border-b border-zinc-200 dark:border-zinc-700",
                             div { class: "flex items-center justify-between",
                                 h3 { class: "text-lg font-semibold text-zinc-900 dark:text-white",
@@ -429,7 +482,10 @@ pub fn WorkflowEditPage(id: String) -> Element {
                                                     const workflowData = {};
                                                     iframe.contentWindow.postMessage({{
                                                         type: 'LOAD_WORKFLOW',
-                                                        payload: {{ workflow: workflowData }}
+                                                        payload: {{ 
+                                                            workflow: workflowData,
+                                                            workflowName: '{}'
+                                                        }}
                                                     }}, '*');
                                                 }} else {{
                                                     console.error('Editor iframe or contentWindow not available');
@@ -439,7 +495,8 @@ pub fn WorkflowEditPage(id: String) -> Element {
                                             }}
                                         }}, 500);
                                         "#,
-                                        json_str
+                                        json_str,
+                                        edited_workflow_name()
                                     )
                                 }
 

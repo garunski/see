@@ -9,7 +9,7 @@ pub fn WorkflowVisualizerPage(id: String) -> Element {
     let state_provider = use_context::<AppStateProvider>();
     let navigator = use_navigator();
 
-    let mut error_message = use_signal(|| String::new());
+    let mut error_message = use_signal(String::new);
 
     // Load workflow from settings
     let workflow_id_clone = id.clone();

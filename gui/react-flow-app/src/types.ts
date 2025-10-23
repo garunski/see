@@ -27,6 +27,7 @@ export interface MessageFromParent {
   type: 'LOAD_WORKFLOW' | 'GET_WORKFLOW_STATE' | 'UPDATE_NODE';
   payload?: {
     workflow?: Workflow;
+    workflowName?: string;
     nodeId?: string;
     name?: string;
     functionType?: string;
