@@ -9,7 +9,7 @@ use crate::pages::{
 use dioxus::prelude::*;
 use dioxus_router::prelude::{Link, Outlet, Routable};
 
-#[derive(Routable, Clone)]
+#[derive(Routable, Clone, PartialEq)]
 #[rustfmt::skip]
 pub enum Route {
     #[layout(AppLayout)]
