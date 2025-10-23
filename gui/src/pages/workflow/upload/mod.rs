@@ -14,7 +14,7 @@ pub fn UploadPage() -> Element {
 
     let workflow_file = use_memo(move || state_provider.workflow.read().workflow_file.clone());
     let is_picking_file = use_memo(move || state_provider.ui.read().is_picking_file);
-    let error_message = use_signal(|| String::new());
+    let error_message = use_signal(String::new);
     let is_saving = use_signal(|| false);
 
     let mut on_workflow_file_change = move |value: String| {
@@ -44,7 +44,7 @@ pub fn UploadPage() -> Element {
         let mut settings_state = state_provider.settings;
         let mut error_signal = error_message;
         let mut saving_signal = is_saving;
-        let navigator = navigator.clone();
+        let navigator = navigator;
 
         if file_path.is_empty() {
             error_signal.set("Please select a workflow file first".to_string());
@@ -88,7 +88,6 @@ pub fn UploadPage() -> Element {
             }
         });
     };
-
 
     rsx! {
         div { class: "space-y-8",

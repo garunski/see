@@ -40,29 +40,4 @@ impl WorkflowState {
         self.execution_id = None;
         tracing::debug!("Workflow state reset completed");
     }
-
-    pub fn apply_success(&mut self, result: &WorkflowResult) {
-        tracing::info!(
-            execution_id = %result.execution_id,
-            workflow_name = %result.workflow_name,
-            success = result.success,
-            task_count = result.task_count,
-            "Applying successful workflow result to state"
-        );
-        self.execution_status = crate::components::ExecutionStatus::Complete;
-        self.workflow_result = Some(result.clone());
-        self.per_task_logs = result.per_task_logs.clone();
-        self.tasks = result.tasks.clone();
-        self.execution_id = Some(result.execution_id.clone());
-    }
-
-    pub fn apply_failure(&mut self, err: &str) {
-        tracing::error!(
-            error = %err,
-            execution_id = self.execution_id.as_deref().unwrap_or("unknown"),
-            "Applying workflow failure to state - this may be due to navigation away from home page"
-        );
-        self.execution_status = crate::components::ExecutionStatus::Failed;
-        self.output_logs.push(format!("Error: {}", err));
-    }
 }

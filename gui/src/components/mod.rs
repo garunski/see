@@ -12,6 +12,4 @@ pub use workflow_progress::WorkflowProgress;
 pub enum ExecutionStatus {
     Idle,
     Running,
-    Complete,
-    Failed,
 }
