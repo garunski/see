@@ -3,7 +3,9 @@ use crate::pages::settings::components::{
     WorkflowEditPage, WorkflowEditPageNew, WorkflowsListPage,
 };
 use crate::pages::workflow::{UploadPage, WorkflowDetailsPage};
-use crate::pages::{HistoryPage, HomePage, SettingsPage};
+use crate::pages::{
+    HistoryPage, HomePage, PromptEditPage, PromptEditPageNew, PromptsListPage, SettingsPage,
+};
 use dioxus::prelude::*;
 use dioxus_router::prelude::{Link, Outlet, Routable};
 
@@ -15,18 +17,24 @@ pub enum Route {
         HomePage {},
         #[route("/workflows/upload")]
         UploadPage {},
+        #[route("/workflows")]
+        WorkflowsListPage {},
+        #[route("/workflows/new")]
+        WorkflowEditPageNew {},
+        #[route("/workflows/edit/:id")]
+        WorkflowEditPage { id: String },
         #[route("/history")]
         HistoryPage {},
         #[route("/history/:id")]
         WorkflowDetailsPage { id: String },
+        #[route("/prompts")]
+        PromptsListPage {},
+        #[route("/prompts/new")]
+        PromptEditPageNew {},
+        #[route("/prompts/edit/:id")]
+        PromptEditPage { id: String },
         #[route("/settings")]
         SettingsPage {},
-        #[route("/settings/workflows")]
-        WorkflowsListPage {},
-        #[route("/settings/workflows/new")]
-        WorkflowEditPageNew {},
-        #[route("/settings/workflows/edit/:id")]
-        WorkflowEditPage { id: String },
     #[end_layout]
     #[route("/:..route")]
     PageNotFound { route: Vec<String> },

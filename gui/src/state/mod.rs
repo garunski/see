@@ -1,9 +1,11 @@
 pub mod history_state;
+pub mod prompt_state;
 pub mod settings_state;
 pub mod ui_state;
 pub mod workflow_state;
 
 pub use history_state::HistoryState;
+pub use prompt_state::PromptState;
 pub use settings_state::SettingsState;
 pub use ui_state::UIState;
 pub use workflow_state::WorkflowState;
@@ -16,6 +18,7 @@ pub struct AppStateProvider {
     pub ui: Signal<UIState>,
     pub history: Signal<HistoryState>,
     pub settings: Signal<SettingsState>,
+    pub prompts: Signal<PromptState>,
 }
 
 impl Default for AppStateProvider {
@@ -25,6 +28,7 @@ impl Default for AppStateProvider {
             ui: Signal::new(UIState::default()),
             history: Signal::new(HistoryState::default()),
             settings: Signal::new(SettingsState::default()),
+            prompts: Signal::new(PromptState::default()),
         }
     }
 }

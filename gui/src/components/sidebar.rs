@@ -37,6 +37,16 @@ pub fn Sidebar() -> Element {
                             span { class: "truncate", "Upload" }
                         }
                         Link {
+                            to: Route::WorkflowsListPage {},
+                            class: "flex w-full items-center gap-2 rounded-lg px-2 py-2 text-left text-sm font-medium text-zinc-900 data-hover:bg-zinc-950/5 data-active:bg-zinc-950/5 dark:text-white dark:data-hover:bg-white/5 dark:data-active:bg-white/5",
+                            svg {
+                                class: "w-4 h-4 shrink-0 fill-zinc-500 data-hover:fill-zinc-900 data-active:fill-zinc-900 dark:fill-zinc-400 dark:data-hover:fill-white dark:data-active:fill-white",
+                                view_box: "0 0 20 20",
+                                path { d: "M5 3a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2V5a2 2 0 00-2-2H5zM5 11a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2v-2a2 2 0 00-2-2H5zM11 5a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V5zM11 13a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" }
+                            }
+                            span { class: "truncate", "Workflows" }
+                        }
+                        Link {
                             to: Route::HistoryPage {},
                             class: "flex w-full items-center gap-2 rounded-lg px-2 py-2 text-left text-sm font-medium text-zinc-900 data-hover:bg-zinc-950/5 data-active:bg-zinc-950/5 dark:text-white dark:data-hover:bg-white/5 dark:data-active:bg-white/5",
                             svg {
@@ -45,6 +55,16 @@ pub fn Sidebar() -> Element {
                                 path { d: "M5 3a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2V5a2 2 0 00-2-2H5zM5 11a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2v-2a2 2 0 00-2-2H5zM11 5a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V5zM11 13a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" }
                             }
                             span { class: "truncate", "History" }
+                        }
+                        Link {
+                            to: Route::PromptsListPage {},
+                            class: "flex w-full items-center gap-2 rounded-lg px-2 py-2 text-left text-sm font-medium text-zinc-900 data-hover:bg-zinc-950/5 data-active:bg-zinc-950/5 dark:text-white dark:data-hover:bg-white/5 dark:data-active:bg-white/5",
+                            svg {
+                                class: "w-4 h-4 shrink-0 fill-zinc-500 data-hover:fill-zinc-900 data-active:fill-zinc-900 dark:fill-zinc-400 dark:data-hover:fill-white dark:data-active:fill-white",
+                                view_box: "0 0 20 20",
+                                path { d: "M10 2a8 8 0 100 16 8 8 0 000-16zM8.5 10a1.5 1.5 0 113 0 1.5 1.5 0 01-3 0zM10 6a4 4 0 100 8 4 4 0 000-8z" }
+                            }
+                            span { class: "truncate", "Prompts" }
                         }
                         Link {
                             to: Route::SettingsPage {},
