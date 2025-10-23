@@ -1,6 +1,7 @@
 mod components;
 mod hooks;
 
+use crate::components::{Button, ButtonSize, ButtonVariant};
 use crate::state::AppStateProvider;
 use components::{ErrorBanner, HistoryItem, LoadingSkeleton, RunningWorkflowItem};
 use dioxus::prelude::*;
@@ -36,12 +37,15 @@ pub fn HistoryPage() -> Element {
                     h1 { class: "text-xl font-bold text-zinc-900 dark:text-white", "Workflow History" }
                     p { class: "mt-2 text-zinc-600 dark:text-zinc-400", "View and manage your previous workflow executions" }
                 }
-                button {
-                    class: "flex items-center gap-2 px-3 py-2 text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white transition-colors rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800",
+                Button {
+                    variant: ButtonVariant::Ghost,
+                    size: ButtonSize::Medium,
+                    disabled: Some(is_loading()),
+                    loading: Some(is_loading()),
                     onclick: move |_| refresh_data_button(),
-                    disabled: is_loading(),
+                    class: "flex items-center gap-2".to_string(),
                     svg {
-                        class: format!("w-4 h-4 {}", if is_loading() { "animate-spin" } else { "" }),
+                        class: "w-4 h-4",
                         view_box: "0 0 20 20",
                         fill: "currentColor",
                         path { d: "M10 2a8 8 0 100 16 8 8 0 000-16zM8.5 10a1.5 1.5 0 113 0 1.5 1.5 0 01-3 0z" }

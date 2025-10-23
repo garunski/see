@@ -1,4 +1,4 @@
-use crate::components::Sidebar;
+use crate::components::{Button, ButtonSize, ButtonVariant, Sidebar};
 use crate::pages::settings::components::{
     WorkflowEditPage, WorkflowEditPageNew, WorkflowsListPage,
 };
@@ -44,10 +44,11 @@ pub fn AppLayout() -> Element {
 
             header { class: "flex items-center px-4 sm:hidden",
                 div { class: "py-2.5",
-                    button {
-                        class: "inline-flex items-center justify-center rounded-lg p-2 text-zinc-950 hover:bg-zinc-950/5 dark:text-white dark:hover:bg-white/5",
+                    Button {
+                        variant: ButtonVariant::Ghost,
+                        size: ButtonSize::Medium,
                         onclick: move |_| show_sidebar.set(true),
-                        "aria-label": "Open navigation",
+                        class: "p-2".to_string(),
                         svg {
                             class: "h-6 w-6",
                             view_box: "0 0 20 20",
@@ -68,10 +69,11 @@ pub fn AppLayout() -> Element {
                     div { class: "fixed inset-y-0 w-full max-w-80 p-2 transition duration-300 ease-in-out",
                         div { class: "flex h-full flex-col rounded-lg bg-white shadow-xs ring-1 ring-zinc-950/5 dark:bg-zinc-900 dark:ring-white/10",
                             div { class: "-mb-3 px-4 pt-3",
-                                button {
-                                    class: "inline-flex items-center justify-center rounded-lg p-2 text-zinc-950 hover:bg-zinc-950/5 dark:text-white dark:hover:bg-white/5",
+                                Button {
+                                    variant: ButtonVariant::Ghost,
+                                    size: ButtonSize::Medium,
                                     onclick: move |_| show_sidebar.set(false),
-                                    "aria-label": "Close navigation",
+                                    class: "p-2".to_string(),
                                     svg {
                                         class: "h-6 w-6",
                                         view_box: "0 0 20 20",

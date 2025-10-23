@@ -1,3 +1,4 @@
+use crate::components::{Button, ButtonSize, ButtonVariant};
 use crate::router::Route;
 use dioxus::prelude::*;
 use dioxus_router::prelude::Link;
@@ -35,11 +36,13 @@ pub fn HistoryItem(
                         "{execution.task_count} tasks completed"
                     }
                 }
-                button {
-                    class: "ml-4 p-2 text-zinc-400 hover:text-red-600 dark:hover:text-red-400 transition-colors rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20",
+                Button {
+                    variant: ButtonVariant::Ghost,
+                    size: ButtonSize::Small,
                     onclick: move |_| {
                         on_delete_execution.call(execution_id_for_delete.clone());
                     },
+                    class: "ml-4 p-2 text-zinc-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20".to_string(),
                     svg {
                         class: "w-5 h-5",
                         view_box: "0 0 20 20",

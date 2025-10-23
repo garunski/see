@@ -1,3 +1,4 @@
+use crate::components::{Button, ButtonSize, ButtonVariant};
 use dioxus::prelude::*;
 
 #[component]
@@ -17,9 +18,11 @@ pub fn ErrorBanner(error: String, on_retry: EventHandler<()>) -> Element {
                         p { class: "text-sm text-red-700 dark:text-red-300 mt-1", "{error}" }
                     }
                 }
-                button {
-                    class: "px-3 py-1 text-sm font-medium text-red-800 dark:text-red-200 bg-red-100 dark:bg-red-900/30 hover:bg-red-200 dark:hover:bg-red-900/50 rounded-md transition-colors",
+                Button {
+                    variant: ButtonVariant::Secondary,
+                    size: ButtonSize::Small,
                     onclick: move |_| on_retry.call(()),
+                    class: "px-3 py-1 text-sm font-medium text-red-800 dark:text-red-200 bg-red-100 dark:bg-red-900/30 hover:bg-red-200 dark:hover:bg-red-900/50".to_string(),
                     "Retry"
                 }
             }

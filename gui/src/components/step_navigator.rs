@@ -1,3 +1,4 @@
+use crate::components::{Button, ButtonSize, ButtonVariant};
 use dioxus::prelude::*;
 use see_core::TaskStatus;
 
@@ -27,7 +28,12 @@ pub fn StepNavigator(
 
     rsx! {
         div { class: "flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-lg",
-            button { class: "flex items-center space-x-2 px-3 py-2 text-sm font-medium rounded-lg transition-colors duration-200", class: if is_first { "text-gray-400 cursor-not-allowed" } else { "text-gray-700 hover:bg-gray-200 dark:text-gray-300 dark:hover:bg-gray-700" }, disabled: is_first, onclick: move |_| if !is_first { on_prev.call(()) },
+            Button {
+                variant: ButtonVariant::Secondary,
+                size: ButtonSize::Small,
+                disabled: Some(is_first),
+                onclick: move |_| if !is_first { on_prev.call(()) },
+                class: "flex items-center space-x-2".to_string(),
                 div { class: "w-4 h-4", "◀" }
                 span { "Previous" }
             }
@@ -40,7 +46,12 @@ pub fn StepNavigator(
                 }
             }
 
-            button { class: "flex items-center space-x-2 px-3 py-2 text-sm font-medium rounded-lg transition-colors duration-200", class: if is_last { "text-gray-400 cursor-not-allowed" } else { "text-gray-700 hover:bg-gray-200 dark:text-gray-300 dark:hover:bg-gray-700" }, disabled: is_last, onclick: move |_| if !is_last { on_next.call(()) },
+            Button {
+                variant: ButtonVariant::Secondary,
+                size: ButtonSize::Small,
+                disabled: Some(is_last),
+                onclick: move |_| if !is_last { on_next.call(()) },
+                class: "flex items-center space-x-2".to_string(),
                 span { "Next" }
                 div { class: "w-4 h-4", "▶" }
             }

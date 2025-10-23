@@ -1,3 +1,4 @@
+use crate::components::{Button, ButtonSize, ButtonVariant};
 use crate::router::Route;
 use crate::state::AppStateProvider;
 use dioxus::prelude::*;
@@ -151,16 +152,19 @@ pub fn WorkflowEditPage(id: String) -> Element {
                 }
                 div { class: "flex items-center gap-3",
                     if can_reset() {
-                        button {
+                        Button {
+                            variant: ButtonVariant::Danger,
+                            size: ButtonSize::Medium,
                             onclick: move |_| reset_to_default(),
-                            class: "inline-flex items-center gap-x-1.5 rounded-md bg-yellow-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-yellow-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-yellow-600",
                             "Reset to Default"
                         }
                     }
-                    button {
+                    Button {
+                        variant: ButtonVariant::Primary,
+                        size: ButtonSize::Medium,
+                        disabled: Some(is_saving()),
+                        loading: Some(is_saving()),
                         onclick: move |_| save_workflow(),
-                        disabled: is_saving(),
-                        class: "inline-flex items-center gap-x-1.5 rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 disabled:opacity-50",
                         if is_saving() { "Saving..." } else { "Save" }
                     }
                 }

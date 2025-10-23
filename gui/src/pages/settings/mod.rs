@@ -1,3 +1,4 @@
+use crate::components::{Button, ButtonSize, ButtonVariant};
 use crate::router::Route;
 use crate::state::AppStateProvider;
 use dioxus::prelude::*;
@@ -54,7 +55,13 @@ pub fn SettingsPage() -> Element {
                 h3 { class: "text-base font-semibold text-zinc-900 dark:text-white mb-6", "Appearance" }
                 div { class: "space-y-4",
                     for theme in [Theme::Light, Theme::Dark, Theme::System] {
-                        button {
+                        Button {
+                            variant: ButtonVariant::Ghost,
+                            size: ButtonSize::Large,
+                            onclick: {
+                                let mut change_theme = change_theme;
+                                move |_| change_theme(theme)
+                            },
                             class: format!(
                                 "w-full flex items-center justify-between px-6 py-4 rounded-xl border-2 transition-colors {}",
                                 if current_theme() == theme {
@@ -63,11 +70,6 @@ pub fn SettingsPage() -> Element {
                                     "border-zinc-200 dark:border-zinc-700 hover:border-zinc-300 dark:hover:border-zinc-600 hover:bg-zinc-50 dark:hover:bg-zinc-700"
                                 }
                             ),
-                            onclick: {
-                                let mut change_theme = change_theme;
-                                move |_| change_theme(theme)
-                            },
-
                             div { class: "flex items-center gap-4",
                                 div { class: "text-3xl",
                                     match theme {

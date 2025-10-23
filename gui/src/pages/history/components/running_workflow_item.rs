@@ -1,3 +1,4 @@
+use crate::components::{Button, ButtonSize, ButtonVariant};
 use crate::router::Route;
 use dioxus::prelude::*;
 use dioxus_router::prelude::Link;
@@ -36,11 +37,13 @@ pub fn RunningWorkflowItem(
                         fill: "currentColor",
                         path { d: "M10 2a8 8 0 100 16 8 8 0 000-16zM8.5 10a1.5 1.5 0 113 0 1.5 1.5 0 01-3 0z" }
                     }
-                    button {
-                        class: "p-2 text-zinc-400 hover:text-red-600 dark:hover:text-red-400 transition-colors rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20",
+                    Button {
+                        variant: ButtonVariant::Ghost,
+                        size: ButtonSize::Small,
                         onclick: move |_| {
                             on_delete_workflow.call(workflow_id_for_delete.clone());
                         },
+                        class: "p-2 text-zinc-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20".to_string(),
                         svg {
                             class: "w-5 h-5",
                             view_box: "0 0 20 20",
