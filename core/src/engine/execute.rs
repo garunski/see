@@ -398,3 +398,21 @@ pub async fn execute_workflow(
 
     execute_workflow_from_content(&workflow_data, output_callback).await
 }
+
+#[instrument(skip(output_callback), fields(workflow_id = %workflow_id))]
+pub async fn execute_workflow_by_id(
+    workflow_id: &str,
+    output_callback: Option<OutputCallback>,
+) -> Result<WorkflowResult, CoreError> {
+    debug!("Fetching workflow definition by ID");
+    let store = crate::get_global_store()?;
+    let workflow_definition = store.get_workflow_definition(workflow_id).await?;
+
+    debug!(
+        workflow_id = %workflow_id,
+        workflow_name = %workflow_definition.get_name(),
+        "Found workflow definition, executing"
+    );
+
+    execute_workflow_from_content(&workflow_definition.content, output_callback).await
+}

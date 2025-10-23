@@ -4,8 +4,8 @@
 
 use crate::errors::CoreError;
 use crate::persistence::models::{
-    AppSettings, Prompt, TaskExecution, WorkflowExecution, WorkflowExecutionSummary,
-    WorkflowMetadata,
+    AppSettings, Prompt, TaskExecution, WorkflowDefinition, WorkflowExecution,
+    WorkflowExecutionSummary, WorkflowMetadata,
 };
 use async_trait::async_trait;
 use redb::{Database, ReadOnlyTable, ReadableTable, Table, TableDefinition};
@@ -58,6 +58,7 @@ pub trait AuditStore: Send + Sync {
     async fn list_prompts(&self) -> Result<Vec<Prompt>, CoreError>;
     async fn delete_prompt(&self, id: &str) -> Result<(), CoreError>;
     async fn clear_all_data(&self) -> Result<(), CoreError>;
+    async fn get_workflow_definition(&self, id: &str) -> Result<WorkflowDefinition, CoreError>;
 }
 
 /// RedbStore implementation with direct operations
@@ -618,6 +619,28 @@ impl AuditStore for RedbStore {
             }
             write_txn.commit()?;
             Ok(())
+        })
+        .await
+    }
+
+    async fn get_workflow_definition(&self, id: &str) -> Result<WorkflowDefinition, CoreError> {
+        let id = id.to_string();
+        self.execute_read(move |db| {
+            let read_txn = db.begin_read()?;
+            let settings_table: ReadOnlyTable<&str, &[u8]> = read_txn.open_table(SETTINGS_DEF)?;
+
+            if let Some(serialized) = settings_table.get("app_settings")? {
+                let settings: AppSettings = Self::deserialize(serialized.value())?;
+                settings
+                    .workflows
+                    .into_iter()
+                    .find(|w| w.id == id)
+                    .ok_or_else(|| {
+                        CoreError::Dataflow(format!("Workflow with id '{}' not found", id))
+                    })
+            } else {
+                Err(CoreError::Dataflow("App settings not found".to_string()))
+            }
         })
         .await
     }

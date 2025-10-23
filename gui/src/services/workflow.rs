@@ -1,14 +1,13 @@
 use see_core::{
-    errors::CoreError, execute_workflow_from_content, OutputCallback, WorkflowDefinition,
-    WorkflowResult,
+    errors::CoreError, execute_workflow_by_id, OutputCallback, WorkflowDefinition, WorkflowResult,
 };
 use std::fs;
 
-pub async fn run_workflow_from_content(
-    content: String,
+pub async fn run_workflow_by_id(
+    workflow_id: String,
     output: Option<OutputCallback>,
 ) -> Result<WorkflowResult, CoreError> {
-    execute_workflow_from_content(&content, output).await
+    execute_workflow_by_id(&workflow_id, output).await
 }
 
 pub fn read_and_parse_workflow_file(file_path: String) -> Result<WorkflowDefinition, String> {

@@ -1,5 +1,5 @@
 use crate::router::Route;
-use crate::services::workflow::run_workflow_from_content;
+use crate::services::workflow::run_workflow_by_id;
 use crate::state::AppStateProvider;
 use dioxus::prelude::*;
 use dioxus_router::prelude::use_navigator;
@@ -14,7 +14,6 @@ fn WorkflowCard(workflow: WorkflowDefinition) -> Element {
         div {
             class: "rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 p-4 hover:bg-zinc-50 dark:hover:bg-zinc-700 hover:shadow-md transition-colors cursor-pointer",
             onclick: move |_| {
-                let workflow_content = workflow.content.clone();
                 let workflow_name = workflow.get_name();
                 let workflow_id = workflow.id.clone();
 
@@ -27,10 +26,11 @@ fn WorkflowCard(workflow: WorkflowDefinition) -> Element {
                 tokio::spawn(async move {
                     tracing::info!(
                         workflow_name = %workflow_name,
+                        workflow_id = %workflow_id,
                         "Starting truly detached workflow execution - completely independent of UI lifecycle"
                     );
 
-                    match run_workflow_from_content(workflow_content, None).await {
+                    match run_workflow_by_id(workflow_id.clone(), None).await {
                         Ok(result) => {
                             tracing::info!(
                                 success = result.success,
@@ -43,6 +43,7 @@ fn WorkflowCard(workflow: WorkflowDefinition) -> Element {
                             tracing::error!(
                                 error = %e,
                                 workflow_name = %workflow_name,
+                                workflow_id = %workflow_id,
                                 "Truly detached workflow execution failed - error saved to database, UI will poll for updates"
                             );
                         }

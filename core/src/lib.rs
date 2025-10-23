@@ -18,7 +18,9 @@ pub use tracing::{init_tracing, TracingGuard};
 // Re-export store functionality
 pub use store::get_global_store;
 
-pub use crate::engine::execute::{execute_workflow, execute_workflow_from_content};
+pub use crate::engine::execute::{
+    execute_workflow, execute_workflow_by_id, execute_workflow_from_content,
+};
 pub use crate::persistence::models::{
     AppSettings, Prompt, TaskExecution, Theme, WorkflowDefinition, WorkflowExecution,
     WorkflowExecutionSummary, WorkflowMetadata, WorkflowStatus,
