@@ -30,7 +30,7 @@ tasks:
   # Run GUI application
   run-gui:
     desc: Run GUI with dx CLI
-    deps: [dev,tailwind-build]
+    deps: [dev,tailwind-build,build-visualizer]
     env:
       RUST_LOG: see_core=trace
     cmds:
@@ -39,14 +39,14 @@ tasks:
   # Development server with hot-reloading
   serve-gui:
     desc: Start GUI development server with hot-reloading
-    deps: [dev]
+    deps: [dev,tailwind-build,build-visualizer]
     cmds:
       - dx serve --package gui
 
   # Build release binary
   build-release:
     desc: Build optimized release binary with dx CLI
-    deps: [dev]
+    deps: [dev,tailwind-build,build-visualizer]
     cmds:
       - dx build --package gui
 
@@ -55,7 +55,9 @@ tasks:
     desc: Clean build artifacts
     cmds:
       - cargo clean
-      - dx clean --package gui
+      - dx clean
+      - rm -rf gui/react-flow-app/node_modules
+      - rm -rf gui/assets/workflow-visualizer
 
   # Internal: Download Tailwind CLI
   tailwind-setup:
@@ -71,3 +73,17 @@ tasks:
     deps: [tailwind-setup]
     cmds:
       - ./tailwindcss -i ./input.css -o ./gui/assets/tailwind.css --config ./gui/tailwind.config.js --minify
+
+  # Build React Flow visualizer
+  build-visualizer:
+    desc: Build React Flow workflow visualizer
+    dir: gui/react-flow-app
+    cmds:
+      - npm install
+      - npm run build
+    sources:
+      - src/**/*
+      - package.json
+      - vite.config.ts
+    generates:
+      - ../assets/workflow-visualizer/index.html

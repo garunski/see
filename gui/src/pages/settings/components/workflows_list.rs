@@ -78,10 +78,17 @@ pub fn WorkflowsListPage() -> Element {
                                             }
                                         }
                                         td { class: "px-6 py-4 whitespace-nowrap text-right text-sm font-medium",
-                                            Link {
-                                                to: Route::WorkflowEditPage { id: workflow.id.clone() },
-                                                class: "text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300",
-                                                "Edit"
+                                            div { class: "flex items-center justify-end gap-3",
+                                                Link {
+                                                    to: Route::WorkflowVisualizerPage { id: workflow.id.clone() },
+                                                    class: "text-purple-600 hover:text-purple-900 dark:text-purple-400 dark:hover:text-purple-300",
+                                                    "Visualize"
+                                                }
+                                                Link {
+                                                    to: Route::WorkflowEditPage { id: workflow.id.clone() },
+                                                    class: "text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300",
+                                                    "Edit"
+                                                }
                                             }
                                         }
                                     }

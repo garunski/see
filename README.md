@@ -10,6 +10,7 @@ A lightweight workflow execution engine built on [dataflow-rs](https://crates.io
 - **Audit trail** - Full tracking of task execution with timestamps and changes
 - **Context management** - Task outputs are automatically stored and available for inspection
 - **JSON-based workflows** - Define workflows using dataflow-rs's JSON format
+- **Visual workflow editor** - Interactive React Flow-based diagram editor with drag-and-drop nodes
 
 ## Installation
 
@@ -18,6 +19,7 @@ A lightweight workflow execution engine built on [dataflow-rs](https://crates.io
 - Rust 1.70 or later
 - Cargo
 - Dioxus CLI (`dx`) - Install with: `cargo binstall dioxus-cli`
+- Node.js 18+ and npm (for building the workflow visualizer)
 
 ### Build
 
@@ -44,9 +46,27 @@ cargo build -p cli --release
 
 ### GUI: Desktop app
 
-Using dx CLI (recommended):
+The GUI includes a visual workflow editor powered by React Flow.
+
+Using Task (recommended):
 
 ```bash
+# Development with hot-reloading (builds React Flow app automatically)
+task serve-gui
+
+# Run GUI
+task run-gui
+
+# Build for production
+task build-release
+```
+
+Using dx CLI directly:
+
+```bash
+# Build React Flow visualizer first
+task build-visualizer
+
 # Development with hot-reloading
 dx serve --package gui
 
@@ -60,8 +80,19 @@ dx run --package gui
 Or using cargo directly:
 
 ```bash
+# Build visualizer first
+cd gui/react-flow-app && npm install && npm run build && cd ../..
+
+# Run GUI
 cargo run -p gui
 ```
+
+**Features:**
+- Create and edit workflows
+- Visual workflow diagram with interactive nodes
+- Drag-and-drop node positioning
+- Zoom and pan controls
+- Execution history viewer
 
 ### Workflow Format
 
@@ -97,6 +128,23 @@ Workflows are defined in JSON using the dataflow-rs format:
   ]
 }
 ```
+
+## Workflow Visualizer
+
+The GUI includes an interactive workflow visualizer built with React Flow. See [WORKFLOW_VISUALIZER.md](./WORKFLOW_VISUALIZER.md) for detailed documentation.
+
+**Quick Start:**
+1. Open the GUI application
+2. Navigate to "Workflows" page
+3. Click "Visualize" next to any workflow
+4. View and interact with the workflow diagram
+
+**Features:**
+- Sequential task visualization with auto-generated edges
+- Drag nodes to reposition them
+- Zoom and pan controls
+- Node positions persist in workflow metadata
+- Fully responsive and interactive
 
 ## Testing
 

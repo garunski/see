@@ -22,7 +22,8 @@ pub use crate::engine::execute::{
     execute_workflow, execute_workflow_by_id, execute_workflow_from_content,
 };
 pub use crate::persistence::models::{
-    AppSettings, Prompt, TaskExecution, Theme, WorkflowDefinition, WorkflowExecution,
-    WorkflowExecutionSummary, WorkflowMetadata, WorkflowStatus,
+    AppSettings, NodePosition, Prompt, TaskExecution, Theme, WorkflowDefinition, WorkflowExecution,
+    WorkflowExecutionSummary, WorkflowJson, WorkflowMetadata, WorkflowStatus,
+    WorkflowVisualizationMetadata,
 };
 pub use crate::persistence::store::{AuditStore, RedbStore};

@@ -2,6 +2,28 @@ use crate::types::{AuditEntry, TaskInfo, TaskStatus};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
+// Workflow JSON structures with visualization metadata support
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct NodePosition {
+    pub x: f64,
+    pub y: f64,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Default)]
+pub struct WorkflowVisualizationMetadata {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub node_positions: Option<HashMap<String, NodePosition>>,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct WorkflowJson {
+    pub id: String,
+    pub name: String,
+    pub tasks: Vec<serde_json::Value>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub metadata: Option<WorkflowVisualizationMetadata>,
+}
+
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct WorkflowExecution {
     pub id: String,

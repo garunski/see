@@ -171,6 +171,17 @@ pub fn WorkflowEditPage(id: String) -> Element {
                     }
                 }
                 div { class: "flex items-center gap-3",
+                    if !is_new {
+                        Link {
+                            to: Route::WorkflowVisualizerPage { id: id.clone() },
+                            class: "inline-flex items-center gap-x-1.5 rounded-md bg-purple-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-purple-500",
+                            svg { class: "-ml-0.5 h-4 w-4", view_box: "0 0 20 20", fill: "currentColor",
+                                path { d: "M10 12.5a2.5 2.5 0 100-5 2.5 2.5 0 000 5z" }
+                                path { fill_rule: "evenodd", d: "M.664 10.59a1.651 1.651 0 010-1.186A10.004 10.004 0 0110 3c4.257 0 7.893 2.66 9.336 6.41.147.381.146.804 0 1.186A10.004 10.004 0 0110 17c-4.257 0-7.893-2.66-9.336-6.41zM14 10a4 4 0 11-8 0 4 4 0 018 0z", clip_rule: "evenodd" }
+                            }
+                            "Visualize"
+                        }
+                    }
                     if can_reset() {
                         Button {
                             variant: ButtonVariant::Danger,

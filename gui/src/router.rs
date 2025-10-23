@@ -2,7 +2,7 @@ use crate::components::{Button, ButtonSize, ButtonVariant, Sidebar};
 use crate::pages::settings::components::{
     WorkflowEditPage, WorkflowEditPageNew, WorkflowsListPage,
 };
-use crate::pages::workflow::{UploadPage, WorkflowDetailsPage};
+use crate::pages::workflow::{UploadPage, WorkflowDetailsPage, WorkflowVisualizerPage};
 use crate::pages::{
     HistoryPage, HomePage, PromptEditPage, PromptEditPageNew, PromptsListPage, SettingsPage,
 };
@@ -17,6 +17,8 @@ pub enum Route {
         HomePage {},
         #[route("/workflows/upload")]
         UploadPage {},
+        #[route("/workflows/visualize/:id")]
+        WorkflowVisualizerPage { id: String },
         #[route("/workflows")]
         WorkflowsListPage {},
         #[route("/workflows/new")]
