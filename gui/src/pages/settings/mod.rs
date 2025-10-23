@@ -1,5 +1,6 @@
-use crate::components::{Button, ButtonSize, ButtonVariant};
+use crate::components::{Button, ButtonSize, ButtonVariant, ConfirmDialog};
 use crate::router::Route;
+use crate::services::clear_database;
 use crate::state::AppStateProvider;
 use dioxus::prelude::*;
 use dioxus_router::prelude::Link;
@@ -39,6 +40,43 @@ pub fn SettingsPage() -> Element {
                         }
                     }
                     Err(_e) => {}
+                }
+            });
+        }
+    };
+
+    let mut show_confirm_dialog = use_signal(|| false);
+
+    let clear_database_handler = {
+        let state_provider = state_provider.clone();
+        let mut show_dialog = show_confirm_dialog;
+        move |_| {
+            show_dialog.set(false);
+            let mut state = state_provider.clone();
+            spawn(async move {
+                match clear_database().await {
+                    Ok(_) => {
+                        // Reset all state to defaults
+                        state.history.write().workflow_history.clear();
+                        state.history.write().running_workflows.clear();
+                        state.history.write().needs_history_reload = true;
+                        state.workflow.write().reset_before_run();
+
+                        // Reload settings (will load defaults and trigger app reload)
+                        match see_core::get_global_store() {
+                            Ok(store) => {
+                                if let Ok(Some(settings)) = store.load_settings().await {
+                                    state.settings.write().apply_loaded_settings(settings);
+                                }
+                            }
+                            Err(e) => {
+                                tracing::error!("Failed to reload settings: {}", e);
+                            }
+                        }
+                    }
+                    Err(e) => {
+                        tracing::error!("Failed to clear database: {}", e);
+                    }
                 }
             });
         }
@@ -117,6 +155,35 @@ pub fn SettingsPage() -> Element {
                             path { d: "M10 2a8 8 0 100 16 8 8 0 000-16zM8.5 10a1.5 1.5 0 113 0 1.5 1.5 0 01-3 0zM10 6a4 4 0 100 8 4 4 0 000-8z" }
                         }
                         "Manage Workflows"
+                    }
+                }
+            }
+
+            ConfirmDialog {
+                show: show_confirm_dialog(),
+                title: "Clear All Data?".to_string(),
+                message: "This will permanently delete all workflow history, settings, and prompts. This action cannot be undone.".to_string(),
+                confirm_text: "Clear All Data".to_string(),
+                cancel_text: "Cancel".to_string(),
+                on_confirm: clear_database_handler,
+                on_cancel: move |_| show_confirm_dialog.set(false)
+            }
+
+            div { class: "bg-white dark:bg-zinc-800 rounded-xl border border-zinc-200 dark:border-zinc-700 p-8 shadow-sm",
+                h3 { class: "text-base font-semibold text-zinc-900 dark:text-white mb-4", "Data Management" }
+                div { class: "space-y-4",
+                    p { class: "text-zinc-600 dark:text-zinc-400",
+                        "Clear all application data including workflow history, settings, and prompts. This action cannot be undone."
+                    }
+                    Button {
+                        variant: ButtonVariant::Danger,
+                        size: ButtonSize::Large,
+                        onclick: move |_| show_confirm_dialog.set(true),
+                        class: "w-full",
+                        svg { class: "w-5 h-5 mr-2", view_box: "0 0 20 20", fill: "currentColor",
+                            path { d: "M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" }
+                        }
+                        "Clear All Data"
                     }
                 }
             }

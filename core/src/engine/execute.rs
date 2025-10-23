@@ -14,7 +14,7 @@ use tokio::fs;
 use tracing::{debug, error, info, instrument};
 use uuid::Uuid;
 
-use super::handlers::CliCommandHandler;
+use super::handlers::{CliCommandHandler, CursorAgentHandler};
 
 #[instrument(skip(workflow_data, output_callback), fields(execution_id))]
 pub async fn execute_workflow_from_content(
@@ -27,7 +27,7 @@ pub async fn execute_workflow_from_content(
 
     for task in &mut workflow.tasks {
         if let dataflow_rs::FunctionConfig::Custom { name, input } = &mut task.function {
-            if name == "cli_command" {
+            if name == "cli_command" || name == "cursor_agent" {
                 if let Some(input_obj) = input.as_object_mut() {
                     input_obj.insert(
                         "task_id".to_string(),
@@ -117,6 +117,10 @@ pub async fn execute_workflow_from_content(
     custom_functions.insert(
         "cli_command".to_string(),
         Box::new(CliCommandHandler::new(context.clone())),
+    );
+    custom_functions.insert(
+        "cursor_agent".to_string(),
+        Box::new(CursorAgentHandler::new(context.clone())),
     );
 
     let engine = Engine::new(vec![workflow.clone()], Some(custom_functions));

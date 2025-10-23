@@ -6,7 +6,7 @@ impl DefaultWorkflows {
     pub fn simple_echo() -> String {
         serde_json::to_string_pretty(&json!({
             "id": "cursor_agent_demo",
-            "name": "Cursor Agent JSON Parser Demo",
+            "name": "Echo CLI Demo",
             "tasks": [
                 {
                     "id": "echo_complete",
@@ -27,7 +27,7 @@ impl DefaultWorkflows {
     pub fn cursor_demo() -> String {
         serde_json::to_string_pretty(&json!({
             "id": "cursor_agent_demo",
-            "name": "Cursor Agent JSON Parser Demo",
+            "name": "5 Step CLI Demo",
             "tasks": [
                 {
                     "id": "who_are_you",
@@ -92,5 +92,26 @@ impl DefaultWorkflows {
                 }
             ]
         })).unwrap()
+    }
+
+    pub fn cursor_agent_simple() -> String {
+        serde_json::to_string_pretty(&json!({
+            "id": "cursor_agent_simple",
+            "name": "Simple Cursor Agent Demo",
+            "tasks": [
+                {
+                    "id": "ask_who_are_you",
+                    "name": "Ask Cursor Agent Who Are You",
+                    "function": {
+                        "name": "cursor_agent",
+                        "response_type": "json",
+                        "input": {
+                            "prompt": "who are you"
+                        }
+                    }
+                }
+            ]
+        }))
+        .unwrap()
     }
 }

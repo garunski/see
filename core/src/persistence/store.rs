@@ -4,7 +4,8 @@
 
 use crate::errors::CoreError;
 use crate::persistence::models::{
-    AppSettings, TaskExecution, WorkflowExecution, WorkflowExecutionSummary, WorkflowMetadata,
+    AppSettings, Prompt, TaskExecution, WorkflowExecution, WorkflowExecutionSummary,
+    WorkflowMetadata,
 };
 use async_trait::async_trait;
 use redb::{Database, ReadOnlyTable, ReadableTable, Table, TableDefinition};
@@ -17,11 +18,13 @@ const EXECUTIONS_TABLE: &str = "executions";
 const EXECUTION_IDS_TABLE: &str = "execution_ids";
 const SETTINGS_TABLE: &str = "settings";
 const TASKS_TABLE: &str = "tasks";
+const PROMPTS_TABLE: &str = "prompts";
 
 const EXECUTIONS_DEF: TableDefinition<&str, &[u8]> = TableDefinition::new(EXECUTIONS_TABLE);
 const EXECUTION_IDS_DEF: TableDefinition<&str, &str> = TableDefinition::new(EXECUTION_IDS_TABLE);
 const SETTINGS_DEF: TableDefinition<&str, &[u8]> = TableDefinition::new(SETTINGS_TABLE);
 const TASKS_DEF: TableDefinition<&str, &[u8]> = TableDefinition::new(TASKS_TABLE);
+const PROMPTS_DEF: TableDefinition<&str, &[u8]> = TableDefinition::new(PROMPTS_TABLE);
 
 /// Main store trait for audit operations
 #[async_trait]
@@ -50,6 +53,11 @@ pub trait AuditStore: Send + Sync {
         -> Result<(), CoreError>;
     async fn load_settings(&self) -> Result<Option<AppSettings>, CoreError>;
     async fn save_settings(&self, settings: &AppSettings) -> Result<(), CoreError>;
+    async fn save_prompt(&self, prompt: &Prompt) -> Result<(), CoreError>;
+    async fn get_prompt(&self, id: &str) -> Result<Option<Prompt>, CoreError>;
+    async fn list_prompts(&self) -> Result<Vec<Prompt>, CoreError>;
+    async fn delete_prompt(&self, id: &str) -> Result<(), CoreError>;
+    async fn clear_all_data(&self) -> Result<(), CoreError>;
 }
 
 /// RedbStore implementation with direct operations
@@ -72,6 +80,7 @@ impl RedbStore {
                 write_txn.open_table(EXECUTION_IDS_DEF)?;
             let _settings_table: Table<&str, &[u8]> = write_txn.open_table(SETTINGS_DEF)?;
             let _tasks_table: Table<&str, &[u8]> = write_txn.open_table(TASKS_DEF)?;
+            let _prompts_table: Table<&str, &[u8]> = write_txn.open_table(PROMPTS_DEF)?;
         }
         write_txn.commit()?;
 
@@ -479,6 +488,133 @@ impl AuditStore for RedbStore {
                 let mut settings_table: Table<&str, &[u8]> = write_txn.open_table(SETTINGS_DEF)?;
                 let serialized = Self::serialize(&settings)?;
                 settings_table.insert("app_settings", serialized.as_slice())?;
+            }
+            write_txn.commit()?;
+            Ok(())
+        })
+        .await
+    }
+
+    async fn save_prompt(&self, prompt: &Prompt) -> Result<(), CoreError> {
+        let prompt = prompt.clone();
+        self.execute_write(move |db| {
+            let write_txn = db.begin_write()?;
+            {
+                let mut prompts_table: Table<&str, &[u8]> = write_txn.open_table(PROMPTS_DEF)?;
+                let serialized = Self::serialize(&prompt)?;
+                prompts_table.insert(prompt.id.as_str(), serialized.as_slice())?;
+            }
+            write_txn.commit()?;
+            Ok(())
+        })
+        .await
+    }
+
+    async fn get_prompt(&self, id: &str) -> Result<Option<Prompt>, CoreError> {
+        let id = id.to_string();
+        self.execute_read(move |db| {
+            let read_txn = db.begin_read()?;
+            let prompts_table: ReadOnlyTable<&str, &[u8]> = read_txn.open_table(PROMPTS_DEF)?;
+            if let Some(serialized) = prompts_table.get(id.as_str())? {
+                let prompt: Prompt = Self::deserialize(serialized.value())?;
+                Ok(Some(prompt))
+            } else {
+                Ok(None)
+            }
+        })
+        .await
+    }
+
+    async fn list_prompts(&self) -> Result<Vec<Prompt>, CoreError> {
+        self.execute_read(move |db| {
+            let read_txn = db.begin_read()?;
+            let prompts_table: ReadOnlyTable<&str, &[u8]> = read_txn.open_table(PROMPTS_DEF)?;
+            let mut prompts = Vec::new();
+            for item in prompts_table.iter()? {
+                let (_, value) = item?;
+                let prompt: Prompt = Self::deserialize(value.value())?;
+                prompts.push(prompt);
+            }
+            Ok(prompts)
+        })
+        .await
+    }
+
+    async fn delete_prompt(&self, id: &str) -> Result<(), CoreError> {
+        let id = id.to_string();
+        self.execute_write(move |db| {
+            let write_txn = db.begin_write()?;
+            {
+                let mut prompts_table: Table<&str, &[u8]> = write_txn.open_table(PROMPTS_DEF)?;
+                prompts_table.remove(id.as_str())?;
+            }
+            write_txn.commit()?;
+            Ok(())
+        })
+        .await
+    }
+
+    async fn clear_all_data(&self) -> Result<(), CoreError> {
+        self.execute_write(move |db| {
+            let write_txn = db.begin_write()?;
+            {
+                let mut executions_table: Table<&str, &[u8]> =
+                    write_txn.open_table(EXECUTIONS_DEF)?;
+                let mut execution_ids_table: Table<&str, &str> =
+                    write_txn.open_table(EXECUTION_IDS_DEF)?;
+                let mut settings_table: Table<&str, &[u8]> = write_txn.open_table(SETTINGS_DEF)?;
+                let mut tasks_table: Table<&str, &[u8]> = write_txn.open_table(TASKS_DEF)?;
+                let mut prompts_table: Table<&str, &[u8]> = write_txn.open_table(PROMPTS_DEF)?;
+
+                // Clear executions table
+                let mut keys_to_remove = Vec::new();
+                for item in executions_table.iter()? {
+                    let (key, _) = item?;
+                    keys_to_remove.push(key.value().to_string());
+                }
+                for key in &keys_to_remove {
+                    executions_table.remove(key.as_str())?;
+                }
+
+                // Clear execution_ids table
+                keys_to_remove.clear();
+                for item in execution_ids_table.iter()? {
+                    let (key, _) = item?;
+                    keys_to_remove.push(key.value().to_string());
+                }
+                for key in &keys_to_remove {
+                    execution_ids_table.remove(key.as_str())?;
+                }
+
+                // Clear settings table
+                keys_to_remove.clear();
+                for item in settings_table.iter()? {
+                    let (key, _) = item?;
+                    keys_to_remove.push(key.value().to_string());
+                }
+                for key in &keys_to_remove {
+                    settings_table.remove(key.as_str())?;
+                }
+
+                // Clear tasks table
+                keys_to_remove.clear();
+                for item in tasks_table.iter()? {
+                    let (key, _) = item?;
+                    keys_to_remove.push(key.value().to_string());
+                }
+                for key in &keys_to_remove {
+                    tasks_table.remove(key.as_str())?;
+                }
+
+                // Clear prompts table
+                keys_to_remove.clear();
+                for item in prompts_table.iter()? {
+                    let (key, _) = item?;
+                    keys_to_remove.push(key.value().to_string());
+                }
+                for key in &keys_to_remove {
+                    prompts_table.remove(key.as_str())?;
+                }
             }
             write_txn.commit()?;
             Ok(())

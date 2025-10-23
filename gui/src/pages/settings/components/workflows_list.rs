@@ -52,7 +52,7 @@ pub fn WorkflowsListPage() -> Element {
                                     tr { class: "hover:bg-zinc-50 dark:hover:bg-zinc-700",
                                         td { class: "px-6 py-4 whitespace-nowrap",
                                             div { class: "text-sm font-medium text-zinc-900 dark:text-white",
-                                                {workflow.name.clone()}
+                                                {workflow.get_name()}
                                             }
                                         }
                                         td { class: "px-6 py-4 whitespace-nowrap",

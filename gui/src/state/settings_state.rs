@@ -33,9 +33,8 @@ impl SettingsState {
         self.settings.workflows.push(workflow);
     }
 
-    pub fn update_workflow(&mut self, id: String, name: String, content: String) {
+    pub fn update_workflow(&mut self, id: String, content: String) {
         if let Some(workflow) = self.settings.workflows.iter_mut().find(|w| w.id == id) {
-            workflow.name = name;
             workflow.content = content;
             if workflow.is_default {
                 workflow.is_edited = true;

@@ -12,11 +12,11 @@ pub fn WorkflowEditPage(id: String) -> Element {
 
     let is_new = id.is_empty();
 
-    let mut name = use_signal(String::new);
     let mut content = use_signal(String::new);
     let mut validation_error = use_signal(String::new);
     let mut is_saving = use_signal(|| false);
     let mut can_reset = use_signal(|| false);
+    let mut workflow_name = use_signal(String::new);
 
     let workflow_id_for_effect = id.clone();
     use_effect(move || {
@@ -26,10 +26,23 @@ pub fn WorkflowEditPage(id: String) -> Element {
                 .read()
                 .get_workflow(workflow_id_for_effect.clone())
             {
-                name.set(workflow.name.clone());
                 content.set(workflow.content.clone());
+                workflow_name.set(workflow.get_name());
                 can_reset.set(workflow.is_default && workflow.is_edited);
             }
+        }
+    });
+
+    // Update workflow name when content changes
+    use_effect(move || {
+        if let Ok(json) = serde_json::from_str::<serde_json::Value>(&content()) {
+            if let Some(name) = json.get("name").and_then(|v| v.as_str()) {
+                workflow_name.set(name.to_string());
+            } else {
+                workflow_name.set("Unnamed Workflow".to_string());
+            }
+        } else {
+            workflow_name.set("Invalid Workflow".to_string());
         }
     });
 
@@ -43,6 +56,14 @@ pub fn WorkflowEditPage(id: String) -> Element {
                 return;
             }
 
+            // Validate that JSON has a name field
+            if let Ok(json) = serde_json::from_str::<serde_json::Value>(&content()) {
+                if json.get("name").and_then(|v| v.as_str()).is_none() {
+                    validation_error.set("JSON must contain a 'name' field".to_string());
+                    return;
+                }
+            }
+
             validation_error.set(String::new());
             is_saving.set(true);
 
@@ -54,7 +75,6 @@ pub fn WorkflowEditPage(id: String) -> Element {
 
             let workflow = WorkflowDefinition {
                 id: final_id.clone(),
-                name: name(),
                 content: content(),
                 is_default: false,
                 is_edited: false,
@@ -66,11 +86,10 @@ pub fn WorkflowEditPage(id: String) -> Element {
                     .write()
                     .add_workflow(workflow.clone());
             } else {
-                state_provider.settings.write().update_workflow(
-                    final_id.clone(),
-                    workflow.name.clone(),
-                    workflow.content.clone(),
-                );
+                state_provider
+                    .settings
+                    .write()
+                    .update_workflow(final_id.clone(), workflow.content.clone());
             }
 
             let _ui_state = _ui_state;
@@ -108,6 +127,7 @@ pub fn WorkflowEditPage(id: String) -> Element {
                 );
 
                 content.set(default_workflow.content.clone());
+                workflow_name.set(default_workflow.get_name());
                 can_reset.set(false);
 
                 let _ui_state = _ui_state;
@@ -176,12 +196,11 @@ pub fn WorkflowEditPage(id: String) -> Element {
                         label { class: "block text-sm font-medium text-zinc-900 dark:text-white mb-2",
                             "Workflow Name"
                         }
-                        input {
-                            r#type: "text",
-                            value: "{name()}",
-                            oninput: move |evt| name.set(evt.value()),
-                            placeholder: "Enter workflow name",
-                            class: "block w-full rounded-md border-0 py-1.5 text-zinc-900 dark:text-white shadow-sm ring-1 ring-inset ring-zinc-300 dark:ring-zinc-600 placeholder:text-zinc-400 dark:placeholder:text-zinc-500 focus:ring-2 focus:ring-inset focus:ring-blue-600 dark:bg-zinc-700 sm:text-sm sm:leading-6"
+                        div { class: "block w-full rounded-md border-0 py-1.5 text-zinc-900 dark:text-white shadow-sm ring-1 ring-inset ring-zinc-300 dark:ring-zinc-600 bg-zinc-50 dark:bg-zinc-700 sm:text-sm sm:leading-6",
+                            {workflow_name()}
+                        }
+                        p { class: "mt-1 text-xs text-zinc-500 dark:text-zinc-400",
+                            "Name is extracted from the JSON 'name' field"
                         }
                     }
 

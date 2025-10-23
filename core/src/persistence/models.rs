@@ -33,7 +33,6 @@ pub enum Theme {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct WorkflowDefinition {
     pub id: String,
-    pub name: String,
     pub content: String,
     pub is_default: bool,
     pub is_edited: bool,
@@ -42,19 +41,34 @@ pub struct WorkflowDefinition {
 use crate::persistence::default_workflows::DefaultWorkflows;
 
 impl WorkflowDefinition {
+    pub fn get_name(&self) -> String {
+        if let Ok(json) = serde_json::from_str::<serde_json::Value>(&self.content) {
+            json.get("name")
+                .and_then(|v| v.as_str())
+                .unwrap_or("Unnamed Workflow")
+                .to_string()
+        } else {
+            "Invalid Workflow".to_string()
+        }
+    }
+
     pub fn get_default_workflows() -> Vec<Self> {
         vec![
             WorkflowDefinition {
                 id: "default-echo-workflow-00000001".to_string(),
-                name: "Simple Echo Demo".to_string(),
                 content: DefaultWorkflows::simple_echo(),
                 is_default: true,
                 is_edited: false,
             },
             WorkflowDefinition {
                 id: "default-cursor-demo-00000002".to_string(),
-                name: "Cursor Agent Demo".to_string(),
                 content: DefaultWorkflows::cursor_demo(),
+                is_default: true,
+                is_edited: false,
+            },
+            WorkflowDefinition {
+                id: "default-cursor-agent-simple-00000003".to_string(),
+                content: DefaultWorkflows::cursor_agent_simple(),
                 is_default: true,
                 is_edited: false,
             },
@@ -103,4 +117,12 @@ pub enum WorkflowStatus {
     Running,
     Complete,
     Failed,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct Prompt {
+    pub id: String,          // human-readable ID like "generate-rust-code"
+    pub content: String,     // the actual prompt text
+    pub description: String, // optional description
+    pub created_at: String,  // timestamp
 }

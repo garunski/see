@@ -5,7 +5,7 @@ pub mod workflow_progress;
 
 pub use sidebar::Sidebar;
 pub use step_navigator::StepNavigator;
-pub use ui::{Button, ButtonSize, ButtonVariant};
+pub use ui::{Button, ButtonSize, ButtonVariant, ConfirmDialog};
 pub use workflow_progress::WorkflowProgress;
 
 #[derive(Debug, Clone, PartialEq)]
