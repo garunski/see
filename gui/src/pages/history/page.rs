@@ -89,7 +89,14 @@ pub fn HistoryPage() -> Element {
                     }
                     if workflow_history().is_empty() {
                         div { class: "bg-white dark:bg-zinc-800 rounded-xl border border-zinc-200 dark:border-zinc-700 p-16 text-center shadow-sm",
-                            div { class: "text-6xl mb-6", "📋" }
+                            div { class: "flex justify-center mb-6",
+                                Icon {
+                                    name: "history".to_string(),
+                                    class: Some("w-16 h-16 text-zinc-400 dark:text-zinc-500".to_string()),
+                                    size: None,
+                                    variant: Some("outline".to_string()),
+                                }
+                            }
                             h3 { class: "text-base font-semibold text-zinc-900 dark:text-white mb-3", "No completed workflows yet" }
                             p { class: "text-zinc-500 dark:text-zinc-400", "Execute your first workflow to see it appear here" }
                         }

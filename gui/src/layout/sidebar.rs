@@ -10,7 +10,14 @@ pub fn Sidebar() -> Element {
             nav { class: "flex h-full min-h-0 flex-col",
                 div { class: "flex flex-col border-b border-zinc-950/5 p-4 dark:border-white/5",
                     div { class: "flex items-center gap-3",
-                        div { class: "w-6 h-6 bg-zinc-900 dark:bg-white rounded-lg flex items-center justify-center text-white dark:text-zinc-900 text-sm font-semibold", "⚡" }
+                        div { class: "w-6 h-6 bg-zinc-900 dark:bg-white rounded-lg flex items-center justify-center",
+                            Icon {
+                                name: "bolt".to_string(),
+                                class: Some("w-4 h-4 text-white dark:text-zinc-900".to_string()),
+                                size: None,
+                                variant: Some("outline".to_string()),
+                            }
+                        }
                         span { class: "text-sm font-semibold text-zinc-900 dark:text-white", "S-E-E" }
                     }
                 }

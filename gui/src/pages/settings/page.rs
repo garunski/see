@@ -109,9 +109,30 @@ pub fn SettingsPage() -> Element {
                             div { class: "flex items-center gap-4",
                                 div { class: "text-3xl",
                                     match theme {
-                                        Theme::Light => "☀️",
-                                        Theme::Dark => "🌙",
-                                        Theme::System => "💻",
+                                        Theme::Light => rsx! {
+                                            Icon {
+                                                name: "sun".to_string(),
+                                                class: Some("w-8 h-8 text-yellow-500".to_string()),
+                                                size: None,
+                                                variant: Some("outline".to_string()),
+                                            }
+                                        },
+                                        Theme::Dark => rsx! {
+                                            Icon {
+                                                name: "moon".to_string(),
+                                                class: Some("w-8 h-8 text-blue-500".to_string()),
+                                                size: None,
+                                                variant: Some("outline".to_string()),
+                                            }
+                                        },
+                                        Theme::System => rsx! {
+                                            Icon {
+                                                name: "computer".to_string(),
+                                                class: Some("w-8 h-8 text-gray-500".to_string()),
+                                                size: None,
+                                                variant: Some("outline".to_string()),
+                                            }
+                                        },
                                     }
                                 }
                                 div { class: "text-left",
