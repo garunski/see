@@ -214,3 +214,70 @@ pub fn PromptsListPage() -> Element {
 - Standardize error handling across all pages
 - Improve consistency of user experience
 - Faster development of new pages
+
+## Failed Attempts and Lessons Learned
+
+### Attempt 1: Confirmation Dialog Hook (Phase 2)
+
+**What was attempted:**
+- Created `use_confirmation_dialog` hook with complex state management
+- Tried to use `Box<dyn FnMut>` for closures in struct fields
+- Attempted to migrate PromptsListPage and SettingsPage
+
+**Why it failed:**
+1. **Closure ownership issues**: The `Box<dyn FnMut>` closures couldn't be moved into the rsx! macro due to Rust's ownership rules
+2. **Complex state management**: The hook tried to manage too much state internally, making it difficult to use in different contexts
+3. **Field access confusion**: Signal fields needed to be called as functions `(confirmation.show)()` but this was error-prone
+4. **Move semantics**: The closures couldn't be moved into the component's rsx! macro because they were captured by the `FnMut` closure
+
+**Error messages encountered:**
+```
+error[E0507]: cannot move out of value, a captured variable in an `FnMut` closure
+error[E0596]: cannot borrow `confirmation.show_dialog` as mutable, as it is not declared as mutable
+error[E0277]: the trait bound `dyn FnMut(String, String, String): Clone` is not satisfied
+```
+
+**What was learned:**
+- Dioxus hooks with complex closure management are difficult to implement
+- Simple inline patterns are often better than over-engineered hooks
+- The confirmation dialog pattern is better left as inline code rather than extracted
+
+### Attempt 2: App State Hook (Phase 1)
+
+**What was attempted:**
+- Created `use_app_state` hook with convenience methods
+- Migrated HomePage to use `use_workflows()`
+
+**Why it partially succeeded:**
+- This actually worked well and was successful
+- The pattern of `use_workflows() -> Memo<Vec<WorkflowDefinition>>` is clean and useful
+- HomePage migration was successful
+
+**What was learned:**
+- Simple data access hooks work well
+- Memoized state access is a good pattern to extract
+- Start with the simplest patterns first
+
+### Current State
+
+**What works:**
+- `use_app_state` hook with `use_workflows()`, `use_prompts()`, etc.
+- HomePage successfully migrated to use the app state hook
+- Basic state access patterns are working
+
+**What doesn't work:**
+- Complex confirmation dialog hooks with closure management
+- Any hook that tries to return closures in struct fields
+- Hooks that require complex state management with multiple signals
+
+**Recommendations for next agent:**
+1. **Stick to simple patterns**: Only extract hooks that return simple data types or signals
+2. **Avoid closure hooks**: Don't try to create hooks that return closures or complex state management
+3. **Focus on data access**: The `use_app_state` pattern works well - expand on this
+4. **Keep confirmation dialogs inline**: The current inline pattern is actually cleaner and more maintainable
+5. **Test incrementally**: Run `task quality` after every single change, not just after major phases
+
+**Next steps:**
+- Continue with simple data access hooks (use_workflow_history, use_running_workflows)
+- Skip complex state management hooks
+- Focus on reducing boilerplate in data access patterns only
