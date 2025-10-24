@@ -59,6 +59,14 @@ pub trait AuditStore: Send + Sync {
     async fn delete_prompt(&self, id: &str) -> Result<(), CoreError>;
     async fn clear_all_data(&self) -> Result<(), CoreError>;
     async fn get_workflow_definition(&self, id: &str) -> Result<WorkflowDefinition, CoreError>;
+    async fn get_workflow_metadata(
+        &self,
+        execution_id: &str,
+    ) -> Result<WorkflowMetadata, CoreError>;
+    async fn get_task_executions(
+        &self,
+        execution_id: &str,
+    ) -> Result<Vec<TaskExecution>, CoreError>;
 }
 
 /// RedbStore implementation with direct operations
@@ -641,6 +649,57 @@ impl AuditStore for RedbStore {
             } else {
                 Err(CoreError::Dataflow("App settings not found".to_string()))
             }
+        })
+        .await
+    }
+
+    async fn get_workflow_metadata(
+        &self,
+        execution_id: &str,
+    ) -> Result<WorkflowMetadata, CoreError> {
+        let execution_id = execution_id.to_string();
+        self.execute_read(move |db| {
+            let read_txn = db.begin_read()?;
+            let workflows_table: ReadOnlyTable<&str, &[u8]> =
+                read_txn.open_table(EXECUTIONS_DEF)?;
+
+            let workflow_key = Self::workflow_metadata_key(&execution_id);
+
+            if let Some(serialized) = workflows_table.get(&*workflow_key)? {
+                let metadata: WorkflowMetadata = Self::deserialize(serialized.value())?;
+                Ok(metadata)
+            } else {
+                Err(CoreError::Dataflow(format!(
+                    "Workflow metadata with id '{}' not found",
+                    execution_id
+                )))
+            }
+        })
+        .await
+    }
+
+    async fn get_task_executions(
+        &self,
+        execution_id: &str,
+    ) -> Result<Vec<TaskExecution>, CoreError> {
+        let execution_id = execution_id.to_string();
+        self.execute_read(move |db| {
+            let read_txn = db.begin_read()?;
+            let tasks_table: ReadOnlyTable<&str, &[u8]> = read_txn.open_table(TASKS_DEF)?;
+
+            let task_prefix = Self::task_prefix(&execution_id);
+            let mut tasks = Vec::new();
+
+            for item in tasks_table.iter()? {
+                let (key, value) = item?;
+                let key_str = key.value();
+                if key_str.starts_with(&task_prefix) {
+                    let task_exec: TaskExecution = Self::deserialize(value.value())?;
+                    tasks.push(task_exec);
+                }
+            }
+
+            Ok(tasks)
         })
         .await
     }

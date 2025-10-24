@@ -27,8 +27,23 @@ fn ResumeButton(execution_id: String, task: TaskInfo) -> Element {
             button {
                 class: "px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-md font-medium transition-colors inline-flex items-center gap-2",
                 onclick: move |_| {
-                    tracing::info!("Resume button clicked for execution {} task {}", execution_id_clone, task_id);
-                    // TODO: Implement actual resume logic in Phase 5
+                    let execution_id_clone = execution_id_clone.clone();
+                    let task_id_clone = task_id.clone();
+
+                    spawn(async move {
+                        tracing::info!("Resume button clicked for execution {} task {}", execution_id_clone, task_id_clone);
+
+                        match s_e_e_core::engine::resume_task(&execution_id_clone, &task_id_clone).await {
+                            Ok(_) => {
+                                tracing::info!("Task resumed successfully");
+                                // TODO: Refresh the page or update state in Phase 6
+                            }
+                            Err(e) => {
+                                tracing::error!("Failed to resume task: {}", e);
+                                // TODO: Show error message to user in Phase 6
+                            }
+                        }
+                    });
                 },
                 Icon {
                     name: "play".to_string(),

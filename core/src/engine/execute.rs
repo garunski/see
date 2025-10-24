@@ -416,3 +416,146 @@ pub async fn execute_workflow_by_id(
 
     execute_workflow_from_content(&workflow_definition.content, output_callback).await
 }
+
+/// Resume a workflow that is waiting for user input
+#[instrument(skip(execution_id), fields(execution_id))]
+pub async fn resume_workflow(execution_id: &str) -> Result<(), CoreError> {
+    let store = crate::get_global_store()?;
+
+    info!(
+        execution_id = %execution_id,
+        "Resuming workflow execution"
+    );
+
+    // Load workflow metadata
+    let metadata = store.get_workflow_metadata(execution_id).await?;
+
+    // Check if workflow is actually waiting for input
+    if metadata.status != crate::persistence::models::WorkflowStatus::WaitingForInput {
+        return Err(CoreError::Validation(format!(
+            "Workflow {} is not waiting for input (status: {:?})",
+            execution_id, metadata.status
+        )));
+    }
+
+    // Load task executions
+    let task_executions = store.get_task_executions(execution_id).await?;
+
+    // Find tasks that are waiting for input
+    let waiting_tasks: Vec<_> = task_executions
+        .iter()
+        .filter(|task| task.status == crate::types::TaskStatus::WaitingForInput)
+        .collect();
+
+    if waiting_tasks.is_empty() {
+        return Err(CoreError::Validation(format!(
+            "No tasks waiting for input in workflow {}",
+            execution_id
+        )));
+    }
+
+    // Resume each waiting task
+    for task in waiting_tasks {
+        let mut updated_task = task.clone();
+        updated_task.status = crate::types::TaskStatus::InProgress;
+        updated_task.end_timestamp = String::new(); // Clear end timestamp
+
+        store.save_task_execution(&updated_task).await?;
+
+        info!(
+            execution_id = %execution_id,
+            task_id = %task.task_id,
+            "Resumed task from waiting state"
+        );
+    }
+
+    // Update workflow status back to Running
+    let mut updated_metadata = metadata.clone();
+    updated_metadata.status = crate::persistence::models::WorkflowStatus::Running;
+    store.save_workflow_metadata(&updated_metadata).await?;
+
+    info!(
+        execution_id = %execution_id,
+        "Workflow resumed successfully"
+    );
+
+    Ok(())
+}
+
+/// Resume a specific task that is waiting for user input
+#[instrument(skip(execution_id, task_id), fields(execution_id, task_id))]
+pub async fn resume_task(execution_id: &str, task_id: &str) -> Result<(), CoreError> {
+    let store = crate::get_global_store()?;
+
+    info!(
+        execution_id = %execution_id,
+        task_id = %task_id,
+        "Resuming specific task"
+    );
+
+    // Load task execution
+    let task_executions = store.get_task_executions(execution_id).await?;
+    let task = task_executions
+        .iter()
+        .find(|t| t.task_id == task_id)
+        .ok_or_else(|| {
+            CoreError::Validation(format!(
+                "Task {} not found in execution {}",
+                task_id, execution_id
+            ))
+        })?;
+
+    // Check if task is waiting for input
+    if task.status != crate::types::TaskStatus::WaitingForInput {
+        return Err(CoreError::Validation(format!(
+            "Task {} is not waiting for input (status: {})",
+            task_id, task.status
+        )));
+    }
+
+    // Update task status
+    let mut updated_task = task.clone();
+    updated_task.status = crate::types::TaskStatus::InProgress;
+    updated_task.end_timestamp = String::new(); // Clear end timestamp
+
+    store.save_task_execution(&updated_task).await?;
+
+    // Check if all tasks are now running or complete
+    let all_tasks = store.get_task_executions(execution_id).await?;
+    let has_waiting_tasks = all_tasks
+        .iter()
+        .any(|t| t.status == crate::types::TaskStatus::WaitingForInput);
+
+    info!(
+        execution_id = %execution_id,
+        task_count = all_tasks.len(),
+        has_waiting_tasks = has_waiting_tasks,
+        "Checking if workflow should be resumed"
+    );
+
+    if !has_waiting_tasks {
+        // Update workflow status back to Running
+        let metadata = store.get_workflow_metadata(execution_id).await?;
+        let mut updated_metadata = metadata.clone();
+        updated_metadata.status = crate::persistence::models::WorkflowStatus::Running;
+        store.save_workflow_metadata(&updated_metadata).await?;
+
+        info!(
+            execution_id = %execution_id,
+            "All tasks resumed, workflow status updated to Running"
+        );
+    } else {
+        info!(
+            execution_id = %execution_id,
+            "Still has waiting tasks, workflow status remains WaitingForInput"
+        );
+    }
+
+    info!(
+        execution_id = %execution_id,
+        task_id = %task_id,
+        "Task resumed successfully"
+    );
+
+    Ok(())
+}
