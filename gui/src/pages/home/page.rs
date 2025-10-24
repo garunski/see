@@ -85,22 +85,22 @@ pub fn HomePage() -> Element {
 
             div { class: "grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3",
                 ActionCard {
-                    title: "Create Workflow".to_string(),
-                    description: "Design a new workflow".to_string(),
-                    icon: ActionIcon::Plus,
-                    route: Route::WorkflowEditPageNew {},
-                }
-
-                ActionCard {
-                    title: "Upload & Execute".to_string(),
-                    description: "Run a workflow file".to_string(),
+                    title: "Upload".to_string(),
+                    description: "Upload workflow files".to_string(),
                     icon: ActionIcon::Upload,
                     route: Route::UploadPage {},
                 }
 
                 ActionCard {
-                    title: "View History".to_string(),
-                    description: "Check execution logs".to_string(),
+                    title: "Workflows".to_string(),
+                    description: "Edit and organize".to_string(),
+                    icon: ActionIcon::Workflows,
+                    route: Route::WorkflowsListPage {},
+                }
+
+                ActionCard {
+                    title: "History".to_string(),
+                    description: "View execution logs".to_string(),
                     icon: ActionIcon::History,
                     route: Route::HistoryPage {},
                 }
