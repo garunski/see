@@ -197,7 +197,9 @@ impl TaskExecutor for CliCommandHandler {
         logger.end_task(task_id);
 
         // Check if this task should pause for user input
+        debug!(task_id = %task_id, task_config = ?task_config, "Checking for pause_for_input configuration");
         if let Some(pause_config) = task_config.get("pause_for_input") {
+            debug!(task_id = %task_id, pause_config = ?pause_config, "Found pause_for_input configuration");
             if let Some(prompt) = pause_config.get("prompt").and_then(|v| v.as_str()) {
                 info!(
                     task_id = %task_id,
@@ -232,7 +234,10 @@ impl AsyncFunctionHandler for CliCommandHandler {
         _datalogic: Arc<DataLogic>,
     ) -> dataflow_rs::Result<(usize, Vec<Change>)> {
         let input = match config {
-            FunctionConfig::Custom { input, .. } => input,
+            FunctionConfig::Custom { input, .. } => {
+                debug!(input = ?input, "Handler received input configuration");
+                input
+            }
             _ => {
                 return Err(DataflowError::Validation(
                     "Invalid configuration".to_string(),
