@@ -4,6 +4,43 @@ use dioxus::prelude::*;
 use s_e_e_core::{TaskInfo, WorkflowExecution};
 
 #[component]
+fn TaskResumeButton(task: TaskInfo) -> Element {
+    let task_id = task.id.clone();
+
+    rsx! {
+        div {
+            class: "mt-4 p-3 bg-amber-50 border border-amber-200 rounded",
+            div { class: "flex items-center gap-2 mb-2",
+                Icon {
+                    name: "pause".to_string(),
+                    class: Some("text-amber-600".to_string()),
+                    size: Some("w-4 h-4".to_string()),
+                    variant: Some("outline".to_string()),
+                }
+                span { class: "text-amber-800 font-medium", "Waiting for Input" }
+            }
+            p { class: "text-amber-700 text-sm mb-3",
+                "This task is paused and waiting for user input."
+            }
+            button {
+                class: "px-3 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded text-sm font-medium transition-colors inline-flex items-center gap-2",
+                onclick: move |_| {
+                    tracing::info!("Resume button clicked for task {}", task_id);
+                    // TODO: Implement actual resume logic in Phase 5
+                },
+                Icon {
+                    name: "play".to_string(),
+                    class: Some("w-4 h-4".to_string()),
+                    size: None,
+                    variant: Some("outline".to_string()),
+                }
+                "Resume Task"
+            }
+        }
+    }
+}
+
+#[component]
 pub fn TaskDetailsPanel(
     is_open: bool,
     current_task: Option<TaskInfo>,
@@ -112,6 +149,11 @@ pub fn TaskDetailsPanel(
                                     }
                                 }
                             }
+                        }
+
+                        // Resume button for waiting tasks
+                        if task.status == s_e_e_core::TaskStatus::WaitingForInput {
+                            TaskResumeButton { task: task.clone() }
                         }
                     }
                 } else {
