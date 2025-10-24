@@ -1,6 +1,4 @@
-use crate::components::{
-    Button, ButtonSize, ButtonVariant, ConfirmDialog, EmptyState, PageHeader, SectionCard,
-};
+use crate::components::{EmptyState, List, ListItemWithLink, PageHeader, SectionCard};
 use crate::hooks::use_prompts;
 use crate::icons::Icon;
 use crate::layout::router::Route;
@@ -13,8 +11,6 @@ use dioxus_router::prelude::Link;
 pub fn PromptsListPage() -> Element {
     let state_provider = use_context::<AppStateProvider>();
     let prompts = use_prompts();
-    let mut show_delete_dialog = use_signal(|| false);
-    let mut prompt_to_delete = use_signal(String::new);
 
     // Load prompts on mount
     let state_provider_clone = state_provider.clone();
@@ -33,36 +29,6 @@ pub fn PromptsListPage() -> Element {
             });
         }
     });
-
-    let mut delete_prompt = {
-        let _state_provider = state_provider.clone();
-        let mut show_dialog = show_delete_dialog;
-        move |id: String| {
-            prompt_to_delete.set(id);
-            show_dialog.set(true);
-        }
-    };
-
-    let confirm_delete = {
-        let state_provider = state_provider.clone();
-        let mut show_dialog = show_delete_dialog;
-        move |_| {
-            let id = prompt_to_delete();
-            show_dialog.set(false);
-
-            let mut state_provider = state_provider.clone();
-            spawn(async move {
-                match PromptService::delete_prompt(&id).await {
-                    Ok(_) => {
-                        state_provider.prompts.write().remove_prompt(id);
-                    }
-                    Err(e) => {
-                        tracing::error!("Failed to delete prompt: {}", e);
-                    }
-                }
-            });
-        }
-    };
 
     rsx! {
         div { class: "space-y-8",
@@ -84,76 +50,45 @@ pub fn PromptsListPage() -> Element {
                 }),
             }
 
-            SectionCard {
-                title: Some("All Prompts".to_string()),
-                children: rsx! {
-                    if prompts().is_empty() {
+            if prompts().is_empty() {
+                SectionCard {
+                    title: Some("All Prompts".to_string()),
+                    children: rsx! {
                         EmptyState {
                             message: "No prompts yet. Create your first prompt to get started.".to_string(),
                         }
-                    } else {
-                        div { class: "overflow-hidden",
-                            table { class: "min-w-full divide-y divide-zinc-200 dark:divide-zinc-700",
-                                thead { class: "bg-zinc-50 dark:bg-zinc-700",
-                                    tr {
-                                        th { class: "px-6 py-3 text-left text-xs font-medium text-zinc-500 dark:text-zinc-300 uppercase tracking-wider", "ID" }
-                                        th { class: "px-6 py-3 text-left text-xs font-medium text-zinc-500 dark:text-zinc-300 uppercase tracking-wider", "Description" }
-                                        th { class: "px-6 py-3 text-left text-xs font-medium text-zinc-500 dark:text-zinc-300 uppercase tracking-wider", "Created" }
-                                        th { class: "px-6 py-3 text-right text-xs font-medium text-zinc-500 dark:text-zinc-300 uppercase tracking-wider", "Actions" }
+                    },
+                    padding: None,
+                }
+            } else {
+                List {
+                    for prompt in prompts().iter() {
+                        ListItemWithLink {
+                            icon_name: "prompts".to_string(),
+                            icon_variant: Some("outline".to_string()),
+                            title: prompt.id.clone(),
+                            subtitle: Some(rsx! {
+                                div { class: "flex flex-col gap-1",
+                                    div { class: "text-sm text-gray-900 dark:text-white max-w-xs truncate",
+                                        {prompt.description.clone()}
+                                    }
+                                    div { class: "text-xs text-gray-500 dark:text-gray-400",
+                                        "Created: {prompt.created_at}"
                                     }
                                 }
-                                tbody { class: "bg-white dark:bg-zinc-800 divide-y divide-zinc-200 dark:divide-zinc-700",
-                                    for prompt in prompts().into_iter() {
-                                        tr { class: "hover:bg-zinc-50 dark:hover:bg-zinc-700",
-                                            td { class: "px-6 py-4 whitespace-nowrap",
-                                                div { class: "text-sm font-medium text-zinc-900 dark:text-white",
-                                                    {prompt.id.clone()}
-                                                }
-                                            }
-                                            td { class: "px-6 py-4",
-                                                div { class: "text-sm text-zinc-900 dark:text-white max-w-xs truncate",
-                                                    {prompt.description.clone()}
-                                                }
-                                            }
-                                            td { class: "px-6 py-4 whitespace-nowrap",
-                                                div { class: "text-sm text-zinc-500 dark:text-zinc-400",
-                                                    {prompt.created_at.clone()}
-                                                }
-                                            }
-                                            td { class: "px-6 py-4 whitespace-nowrap text-right text-sm font-medium",
-                                                div { class: "flex items-center justify-end gap-2",
-                                                    Link {
-                                                        to: Route::PromptEditPage { id: prompt.id.clone() },
-                                                        class: "text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300",
-                                                        "Edit"
-                                                    }
-                                                    Button {
-                                                        variant: ButtonVariant::Danger,
-                                                        size: ButtonSize::Small,
-                                                        onclick: move |_| delete_prompt(prompt.id.clone()),
-                                                        "Delete"
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    }
+                            }),
+                            right_content: None,
+                            link_to: rsx! {
+                                Link {
+                                    to: Route::PromptEditPage { id: prompt.id.clone() },
+                                    span { class: "absolute inset-x-0 -top-px bottom-0" }
+                                    {prompt.id.clone()}
                                 }
-                            }
+                            },
                         }
                     }
-                },
-                padding: None,
+                }
             }
-        }
-
-        ConfirmDialog {
-            show: show_delete_dialog(),
-            title: "Delete Prompt?".to_string(),
-            message: format!("Are you sure you want to delete the prompt '{}'? This action cannot be undone.", prompt_to_delete()),
-            confirm_text: "Delete".to_string(),
-            cancel_text: "Cancel".to_string(),
-            on_confirm: confirm_delete,
-            on_cancel: move |_| show_delete_dialog.set(false)
         }
     }
 }
