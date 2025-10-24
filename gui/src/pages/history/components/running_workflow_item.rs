@@ -1,5 +1,6 @@
 use crate::components::{Button, ButtonSize, ButtonVariant};
-use crate::router::Route;
+use crate::icons::Icon;
+use crate::layout::router::Route;
 use dioxus::prelude::*;
 use dioxus_router::prelude::Link;
 use see_core::WorkflowMetadata;
@@ -31,11 +32,11 @@ pub fn RunningWorkflowItem(
                     }
                 }
                 div { class: "ml-4 flex items-center gap-2",
-                    svg {
-                        class: "w-5 h-5 text-blue-600 dark:text-blue-400 animate-spin",
-                        view_box: "0 0 20 20",
-                        fill: "currentColor",
-                        path { d: "M10 2a8 8 0 100 16 8 8 0 000-16zM8.5 10a1.5 1.5 0 113 0 1.5 1.5 0 01-3 0z" }
+                    Icon {
+                        name: "play".to_string(),
+                        class: Some("w-5 h-5 text-blue-600 dark:text-blue-400 animate-spin".to_string()),
+                        size: None,
+                        variant: Some("outline".to_string()),
                     }
                     Button {
                         variant: ButtonVariant::Ghost,
@@ -44,11 +45,11 @@ pub fn RunningWorkflowItem(
                             on_delete_workflow.call(workflow_id_for_delete.clone());
                         },
                         class: "p-2 text-zinc-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20".to_string(),
-                        svg {
-                            class: "w-5 h-5",
-                            view_box: "0 0 20 20",
-                            fill: "currentColor",
-                            path { d: "M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z" }
+                        Icon {
+                            name: "x".to_string(),
+                            class: Some("w-5 h-5".to_string()),
+                            size: None,
+                            variant: Some("outline".to_string()),
                         }
                     }
                 }

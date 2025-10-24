@@ -18,17 +18,7 @@ debug
 .DS_Store
 Thumbs.db
 
-# Tailwind CSS (generated assets)
-/tailwindcss
-gui/assets/tailwind.css
-
-# React Flow Visualizer
-# Built assets (generated from source via npm run build)
-gui/assets/workflow-visualizer/
-
-# Node.js / NPM
-gui/react-flow-app/node_modules/
-gui/react-flow-app/dist/
+gui/assets/
 
 # Package manager logs
 npm-debug.log*
@@ -46,5 +36,6 @@ lerna-debug.log*
 
 # Project-specific
 examples
-typescript
+typescript_sample
 .task
+node_modules

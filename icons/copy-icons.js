@@ -1,0 +1,61 @@
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+const heroiconsDir = path.join(__dirname, 'node_modules', 'heroicons');
+const outputDir = path.join(__dirname, '..', 'gui', 'assets', 'icons');
+
+// Icon mapping: our name -> heroicons file name
+const iconMap = {
+  home: 'home',
+  upload: 'arrow-up-tray',
+  workflows: 'squares-2x2',
+  history: 'clock',
+  prompts: 'chat-bubble-left-right',
+  settings: 'cog-6-tooth',
+  plus: 'plus',
+  x: 'x-mark',
+  chevron_left: 'chevron-left',
+  chevron_right: 'chevron-right',
+  arrow_left: 'arrow-left',
+  trash: 'trash',
+  exclamation_circle: 'exclamation-circle',
+  play: 'play',
+  stop: 'stop',
+  bars_3: 'bars-3'
+};
+
+// Ensure output directory exists
+if (!fs.existsSync(outputDir)) {
+  fs.mkdirSync(outputDir, { recursive: true });
+}
+
+console.log('Copying Heroicons...');
+
+// Copy both solid and outline variants
+Object.entries(iconMap).forEach(([ourName, heroiconName]) => {
+  // Copy solid variant
+  const solidSrc = path.join(heroiconsDir, '24', 'solid', `${heroiconName}.svg`);
+  const solidDest = path.join(outputDir, `${ourName}-solid.svg`);
+  if (fs.existsSync(solidSrc)) {
+    fs.copyFileSync(solidSrc, solidDest);
+    console.log(`✓ Copied ${ourName}-solid.svg`);
+  } else {
+    console.log(`✗ Missing: ${solidSrc}`);
+  }
+  
+  // Copy outline variant
+  const outlineSrc = path.join(heroiconsDir, '24', 'outline', `${heroiconName}.svg`);
+  const outlineDest = path.join(outputDir, `${ourName}-outline.svg`);
+  if (fs.existsSync(outlineSrc)) {
+    fs.copyFileSync(outlineSrc, outlineDest);
+    console.log(`✓ Copied ${ourName}-outline.svg`);
+  } else {
+    console.log(`✗ Missing: ${outlineSrc}`);
+  }
+});
+
+console.log('Icon copying complete!');

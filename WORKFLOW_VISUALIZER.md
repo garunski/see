@@ -8,7 +8,7 @@ A React Flow-based interactive workflow visualizer has been integrated into the 
 
 ### 1. React Flow Application
 
-**Location**: `gui/react-flow-app/`
+**Location**: `react-flow-app/`
 
 A standalone React + TypeScript + Vite application that:
 - Displays workflows as interactive node graphs
@@ -111,7 +111,7 @@ Added tasks:
 
 ```bash
 # Build React Flow app
-cd gui/react-flow-app && npm run build
+cd react-flow-app && npm run build
 
 # Or use Task
 task build-visualizer
@@ -209,7 +209,7 @@ task serve-gui
 ## File Manifest
 
 ### New Files
-- `gui/react-flow-app/` - Complete React application
+- `react-flow-app/` - Complete React application
   - `package.json` - NPM dependencies
   - `vite.config.ts` - Build configuration
   - `tsconfig.json` - TypeScript configuration

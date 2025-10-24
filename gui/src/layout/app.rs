@@ -1,4 +1,4 @@
-use crate::router::Route;
+use super::router::Route;
 use crate::state::AppStateProvider;
 use dioxus::prelude::*;
 use dioxus_desktop::use_window;

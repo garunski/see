@@ -179,7 +179,7 @@ const WorkflowVisualizer: React.FC<WorkflowVisualizerProps> = () => {
   }
 
   return (
-    <div className="w-screen h-screen">
+    <div className="w-full h-full min-h-0">
       <ReactFlow
         nodes={nodes}
         edges={edges}

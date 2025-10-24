@@ -14,7 +14,7 @@ pub fn TaskLogs(
         rsx! {
             div { class: "bg-white dark:bg-zinc-900 rounded-lg shadow-sm ring-1 ring-zinc-950/5 dark:ring-white/10 p-6",
                 h3 { class: "text-base font-semibold text-zinc-950 dark:text-white mb-4", "Current Task Logs" }
-                div { class: "space-y-2 max-h-64 overflow-y-auto",
+                div { class: "space-y-2 max-h-96 overflow-y-auto",
                     for log in logs.iter() {
                         div { class: "text-sm text-zinc-700 dark:text-zinc-300 font-mono bg-zinc-100 dark:bg-zinc-800 p-2 rounded", "{log}" }
                     }

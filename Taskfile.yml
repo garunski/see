@@ -30,7 +30,7 @@ tasks:
   # Run GUI application
   run-gui:
     desc: Run GUI with dx CLI
-    deps: [dev,tailwind-build,build-visualizer]
+    deps: [dev,tailwind-build,icons-build,build-visualizer]
     env:
       RUST_LOG: see_core=trace
     cmds:
@@ -39,14 +39,14 @@ tasks:
   # Development server with hot-reloading
   serve-gui:
     desc: Start GUI development server with hot-reloading
-    deps: [dev,tailwind-build,build-visualizer]
+    deps: [dev,tailwind-build,icons-build,build-visualizer]
     cmds:
       - dx serve --package gui
 
   # Build release binary
   build-release:
     desc: Build optimized release binary with dx CLI
-    deps: [dev,tailwind-build,build-visualizer]
+    deps: [dev,tailwind-build,icons-build,build-visualizer]
     cmds:
       - dx build --package gui
 
@@ -56,28 +56,31 @@ tasks:
     cmds:
       - cargo clean
       - dx clean
-      - rm -rf gui/react-flow-app/node_modules
+      - rm -rf react-flow-app/node_modules
+      - rm -rf tailwind/node_modules
       - rm -rf gui/assets/workflow-visualizer
+      - rm -f gui/assets/tailwind.css
 
-  # Internal: Download Tailwind CLI
-  tailwind-setup:
-    cmds:
-      - curl -sLO https://github.com/tailwindlabs/tailwindcss/releases/latest/download/tailwindcss-macos-arm64
-      - mv tailwindcss-macos-arm64 tailwindcss
-      - chmod +x tailwindcss
-    status:
-      - test -f tailwindcss
-
-  # Internal: Build Tailwind CSS
+  # Build Tailwind CSS for both apps
   tailwind-build:
-    deps: [tailwind-setup]
+    desc: Build Tailwind CSS for main GUI and React Flow apps
+    dir: tailwind
     cmds:
-      - ./tailwindcss -i ./input.css -o ./gui/assets/tailwind.css --config ./gui/tailwind.config.js --minify
+      - npm install
+      - npm run build
+
+  # Build Icons
+  icons-build:
+    desc: Build SVG icons for the GUI app
+    dir: icons
+    cmds:
+      - npm install
+      - npm run build
 
   # Build React Flow visualizer
   build-visualizer:
     desc: Build React Flow workflow visualizer
-    dir: gui/react-flow-app
+    dir: react-flow-app
     cmds:
       - npm install
       - npm run build

@@ -1,4 +1,5 @@
 use crate::components::{Button, ButtonSize, ButtonVariant};
+use crate::icons::Icon;
 use crate::state::AppStateProvider;
 use dioxus::prelude::*;
 use dioxus_router::prelude::use_navigator;
@@ -144,8 +145,11 @@ pub fn WorkflowEditPage(id: String) -> Element {
                             navigator.go_back();
                         },
                         class: "inline-flex items-center gap-x-1.5 rounded-md bg-zinc-100 dark:bg-zinc-800 px-3 py-2 text-sm font-semibold text-zinc-900 dark:text-zinc-100 shadow-sm hover:bg-zinc-200 dark:hover:bg-zinc-700",
-                        svg { class: "-ml-0.5 h-4 w-4", view_box: "0 0 20 20", fill: "currentColor",
-                            path { fill_rule: "evenodd", d: "M17 10a.75.75 0 01-.75.75H5.612l2.158 1.96a.75.75 0 11-1.04 1.08l-3.5-3.25a.75.75 0 010-1.08l3.5-3.25a.75.75 0 111.04 1.08L5.612 9.25H16.25A.75.75 0 0117 10z", clip_rule: "evenodd" }
+                        Icon {
+                            name: "arrow_left".to_string(),
+                            class: Some("-ml-0.5 h-4 w-4".to_string()),
+                            size: None,
+                            variant: Some("outline".to_string()),
                         }
                         "Back"
                     }
@@ -213,7 +217,7 @@ pub fn WorkflowEditPage(id: String) -> Element {
                                 }
                             }
                         }
-                        div { class: "relative", style: "height: 600px",
+                        div { class: "relative h-[calc(100vh-100px)]",
                             // Selected node info display
                             div {
                                 id: "selected-node-info",
@@ -252,7 +256,7 @@ pub fn WorkflowEditPage(id: String) -> Element {
                                         asset!("/assets/tailwind.css"),
                                         asset!("/assets/workflow-visualizer/index.js")
                                     ),
-                                    class: "w-full h-full border-0 rounded-b-xl",
+                                    class: "w-full h-full border-0 rounded-b-xl min-h-0",
                                 }
                             } else {
                                 div { class: "flex items-center justify-center h-full",

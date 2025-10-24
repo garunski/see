@@ -1,6 +1,7 @@
 pub mod components;
 
 use crate::components::{Button, ButtonSize, ButtonVariant};
+use crate::layout::router::Route;
 use crate::services::workflow::read_and_parse_workflow_file;
 use crate::state::AppStateProvider;
 use dioxus::prelude::*;
@@ -79,7 +80,7 @@ pub fn UploadPage() -> Element {
                     }
 
                     // Navigate to home page
-                    navigator.push(crate::router::Route::HomePage {});
+                    navigator.push(Route::HomePage {});
                 }
                 Err(e) => {
                     error_signal.set(e);

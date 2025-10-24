@@ -1,0 +1,16 @@
+{
+  "name": "tailwind-builder",
+  "version": "1.0.0",
+  "description": "Centralized Tailwind CSS builder for the See project",
+  "type": "module",
+  "scripts": {
+    "build": "vite build",
+    "dev": "vite build --watch"
+  },
+  "devDependencies": {
+    "vite": "^5.4.21",
+    "tailwindcss": "^3.4.15",
+    "autoprefixer": "^10.4.20",
+    "postcss": "^8.4.49"
+  }
+}

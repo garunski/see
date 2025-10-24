@@ -2,6 +2,7 @@ mod components;
 mod hooks;
 
 use crate::components::{Button, ButtonSize, ButtonVariant};
+use crate::icons::Icon;
 use crate::state::AppStateProvider;
 use components::{ErrorBanner, HistoryItem, LoadingSkeleton, RunningWorkflowItem};
 use dioxus::prelude::*;
@@ -44,11 +45,11 @@ pub fn HistoryPage() -> Element {
                     loading: Some(is_loading()),
                     onclick: move |_| refresh_data_button(),
                     class: "flex items-center gap-2".to_string(),
-                    svg {
-                        class: "w-4 h-4",
-                        view_box: "0 0 20 20",
-                        fill: "currentColor",
-                        path { d: "M10 2a8 8 0 100 16 8 8 0 000-16zM8.5 10a1.5 1.5 0 113 0 1.5 1.5 0 01-3 0z" }
+                    Icon {
+                        name: "history".to_string(),
+                        class: Some("w-4 h-4".to_string()),
+                        size: None,
+                        variant: Some("outline".to_string()),
                     }
                     span { "Refresh" }
                 }

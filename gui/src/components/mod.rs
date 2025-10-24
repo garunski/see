@@ -1,12 +1,8 @@
-pub mod sidebar;
-pub mod step_navigator;
-pub mod ui;
-pub mod workflow_progress;
+pub mod button;
+pub mod dialog;
 
-pub use sidebar::Sidebar;
-pub use step_navigator::StepNavigator;
-pub use ui::{Button, ButtonSize, ButtonVariant, ConfirmDialog};
-pub use workflow_progress::WorkflowProgress;
+pub use button::{Button, ButtonSize, ButtonVariant};
+pub use dialog::ConfirmDialog;
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum ExecutionStatus {

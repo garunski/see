@@ -1,4 +1,5 @@
-use crate::router::Route;
+use crate::icons::Icon;
+use crate::layout::router::Route;
 use dioxus::prelude::*;
 use dioxus_router::prelude::Link;
 use see_core::WorkflowDefinition;
@@ -74,19 +75,10 @@ pub fn ActionCard(props: ActionCardProps) -> Element {
         route,
     } = props;
 
-    let (icon_class, icon_path) = match icon {
-        ActionIcon::Plus => (
-            "h-5 w-5 text-blue-600 dark:text-blue-400",
-            "M10.75 4.75a.75.75 0 00-1.5 0v4.5h-4.5a.75.75 0 000 1.5h4.5v4.5a.75.75 0 001.5 0v-4.5h4.5a.75.75 0 000-1.5h-4.5v-4.5z"
-        ),
-        ActionIcon::Upload => (
-            "h-5 w-5 text-green-600 dark:text-green-400",
-            "M10.75 2.75a.75.75 0 00-1.5 0v8.614L6.295 8.235a.75.75 0 10-1.09 1.03l4.25 4.5a.75.75 0 001.09 0l4.25-4.5a.75.75 0 00-1.09-1.03L10.75 11.364V2.75z"
-        ),
-        ActionIcon::History => (
-            "h-5 w-5 text-purple-600 dark:text-purple-400",
-            "M10 2a8 8 0 100 16 8 8 0 000-16zM8.5 10a1.5 1.5 0 113 0 1.5 1.5 0 01-3 0z"
-        ),
+    let (icon_name, icon_class) = match icon {
+        ActionIcon::Plus => ("plus", "h-5 w-5 text-blue-600 dark:text-blue-400"),
+        ActionIcon::Upload => ("upload", "h-5 w-5 text-green-600 dark:text-green-400"),
+        ActionIcon::History => ("history", "h-5 w-5 text-purple-600 dark:text-purple-400"),
     };
 
     let bg_class = match icon {
@@ -101,8 +93,11 @@ pub fn ActionCard(props: ActionCardProps) -> Element {
             class: "group relative rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 p-6 hover:bg-zinc-50 dark:hover:bg-zinc-700 transition-colors",
             div { class: "flex items-center gap-3",
                 div { class: "flex h-10 w-10 items-center justify-center rounded-lg {bg_class}",
-                    svg { class: "{icon_class}", view_box: "0 0 20 20", fill: "currentColor",
-                        path { d: "{icon_path}" }
+                    Icon {
+                        name: icon_name.to_string(),
+                        class: Some(icon_class.to_string()),
+                        size: None,
+                        variant: Some("outline".to_string()),
                     }
                 }
                 div {

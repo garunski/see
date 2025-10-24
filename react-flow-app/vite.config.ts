@@ -5,7 +5,7 @@ export default defineConfig({
   plugins: [react()],
   base: '/assets/workflow-visualizer/',
   build: {
-    outDir: '../assets/workflow-visualizer',
+    outDir: '../gui/assets/workflow-visualizer',
     emptyOutDir: true,
     assetsDir: '.', // Don't nest assets in subdirectory
     rollupOptions: {

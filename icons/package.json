@@ -1,0 +1,12 @@
+{
+  "name": "see-icons",
+  "version": "1.0.0",
+  "description": "SVG icons for See workflow engine",
+  "type": "module",
+  "scripts": {
+    "build": "node copy-icons.js"
+  },
+  "dependencies": {
+    "heroicons": "^2.2.0"
+  }
+}

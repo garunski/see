@@ -1,3 +1,4 @@
+use crate::icons::Icon;
 use dioxus::prelude::*;
 
 #[derive(Debug, Clone, PartialEq)]
@@ -64,11 +65,11 @@ pub fn Button(
                 }
             },
             if loading {
-                svg {
-                    class: "w-4 h-4 animate-spin mr-2",
-                    view_box: "0 0 20 20",
-                    fill: "currentColor",
-                    path { d: "M10 2a8 8 0 100 16 8 8 0 000-16zM8.5 10a1.5 1.5 0 113 0 1.5 1.5 0 01-3 0z" }
+                Icon {
+                    name: "play".to_string(),
+                    class: Some("w-4 h-4 animate-spin mr-2".to_string()),
+                    size: None,
+                    variant: Some("outline".to_string()),
                 }
             }
             {children}

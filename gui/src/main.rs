@@ -2,8 +2,9 @@ use dioxus::prelude::*;
 use dioxus_desktop::{Config, WindowBuilder};
 
 mod components;
+mod icons;
+mod layout;
 mod pages;
-mod router;
 mod state;
 mod services {
     pub mod database;
@@ -13,7 +14,6 @@ mod services {
 
     pub use database::clear_database;
 }
-mod app;
 
 fn main() {
     let _tracing_guard = see_core::init_tracing(None)
@@ -24,5 +24,5 @@ fn main() {
 
     LaunchBuilder::desktop()
         .with_cfg(Config::new().with_window(WindowBuilder::new().with_title("See Workflow Engine")))
-        .launch(app::App);
+        .launch(layout::App);
 }
