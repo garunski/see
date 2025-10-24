@@ -1,5 +1,5 @@
+use crate::hooks::use_workflows;
 use crate::layout::router::Route;
-use crate::state::AppStateProvider;
 use dioxus::prelude::*;
 use dioxus_router::prelude::Link;
 
@@ -7,8 +7,7 @@ use super::components::{ActionCard, ActionIcon, WorkflowList};
 
 #[component]
 pub fn HomePage() -> Element {
-    let state_provider = use_context::<AppStateProvider>();
-    let workflows = state_provider.settings.read().get_workflows().clone();
+    let workflows = use_workflows();
 
     rsx! {
         div { class: "space-y-8",
@@ -50,7 +49,7 @@ pub fn HomePage() -> Element {
                     }
                 }
 
-                WorkflowList { workflows }
+                WorkflowList { workflows: workflows() }
             }
         }
     }

@@ -1,4 +1,5 @@
 use crate::components::{Button, ButtonSize, ButtonVariant};
+use crate::hooks::{use_running_workflows, use_workflow_history};
 use crate::icons::Icon;
 use crate::state::AppStateProvider;
 use dioxus::prelude::*;
@@ -8,7 +9,7 @@ use super::hooks::{use_deletion_handlers, use_history_data};
 
 #[component]
 pub fn HistoryPage() -> Element {
-    let state_provider = use_context::<AppStateProvider>();
+    let _state_provider = use_context::<AppStateProvider>();
 
     // Use custom hooks for data management
     let (is_loading, error, refresh_data) = use_history_data();
@@ -24,10 +25,9 @@ pub fn HistoryPage() -> Element {
     let refresh_data_button = refresh_data.clone();
     let refresh_data_error = refresh_data.clone();
 
-    // Get data from state
-    let workflow_history = use_memo(move || state_provider.history.read().workflow_history.clone());
-    let running_workflows =
-        use_memo(move || state_provider.history.read().running_workflows.clone());
+    // Get data from state using hooks
+    let workflow_history = use_workflow_history();
+    let running_workflows = use_running_workflows();
 
     rsx! {
         div { class: "space-y-8",

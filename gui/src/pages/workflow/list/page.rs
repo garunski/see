@@ -1,13 +1,12 @@
+use crate::hooks::use_workflows;
 use crate::icons::Icon;
 use crate::layout::router::Route;
-use crate::state::AppStateProvider;
 use dioxus::prelude::*;
 use dioxus_router::prelude::Link;
 
 #[component]
 pub fn WorkflowsListPage() -> Element {
-    let state_provider = use_context::<AppStateProvider>();
-    let workflows = use_memo(move || state_provider.settings.read().get_workflows().clone());
+    let workflows = use_workflows();
 
     rsx! {
         div { class: "space-y-8",

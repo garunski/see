@@ -2,6 +2,7 @@ use dioxus::prelude::*;
 use dioxus_desktop::{Config, WindowBuilder};
 
 mod components;
+mod hooks;
 mod icons;
 mod layout;
 mod pages;

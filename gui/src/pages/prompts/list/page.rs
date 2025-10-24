@@ -1,4 +1,5 @@
 use crate::components::{Button, ButtonSize, ButtonVariant, ConfirmDialog};
+use crate::hooks::use_prompts;
 use crate::icons::Icon;
 use crate::layout::router::Route;
 use crate::services::prompt::PromptService;
@@ -9,10 +10,7 @@ use dioxus_router::prelude::Link;
 #[component]
 pub fn PromptsListPage() -> Element {
     let state_provider = use_context::<AppStateProvider>();
-    let prompts = use_memo(move || {
-        let prompts = state_provider.prompts.read().get_prompts().clone();
-        prompts
-    });
+    let prompts = use_prompts();
     let mut show_delete_dialog = use_signal(|| false);
     let mut prompt_to_delete = use_signal(String::new);
 
