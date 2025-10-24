@@ -1,3 +1,5 @@
-pub mod components;
+pub mod edit;
+pub mod list;
 
-pub use components::{PromptEditPage, PromptEditPageNew, PromptsListPage};
+pub use edit::{PromptEditPage, PromptEditPageNew};
+pub use list::PromptsListPage;
