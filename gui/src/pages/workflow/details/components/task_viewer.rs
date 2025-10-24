@@ -1,3 +1,4 @@
+#[allow(dead_code)]
 use super::{StepNavigator, WorkflowProgress};
 use dioxus::prelude::*;
 use see_core::{TaskInfo, TaskStatus};

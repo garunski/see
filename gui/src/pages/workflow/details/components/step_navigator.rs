@@ -1,3 +1,4 @@
+#[allow(dead_code)]
 use crate::components::{Button, ButtonSize, ButtonVariant};
 use dioxus::prelude::*;
 use see_core::TaskStatus;
