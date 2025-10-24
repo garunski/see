@@ -20,7 +20,7 @@ tasks:
       - task: tailwind
       - task: icons
       - task: visualizer
-      - dx run --package gui
+      - dx run --package s_e_e_gui
 
   clean:
     desc: Clean build artifacts

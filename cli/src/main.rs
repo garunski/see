@@ -2,7 +2,7 @@ use clap::Parser;
 use s_e_e_core::{execute_workflow, OutputCallback};
 
 #[derive(Parser, Debug)]
-#[command(name = "see-cli", version, about = "Run workflows")]
+#[command(name = "s_e_e_cli", version, about = "Run workflows")]
 struct Args {
     #[arg(short, long, default_value = "workflow.json")]
     file: String,

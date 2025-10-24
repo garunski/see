@@ -92,7 +92,7 @@ impl RedbStore {
     pub fn default_path() -> Result<PathBuf, CoreError> {
         let home_dir = dirs::home_dir()
             .ok_or_else(|| std::io::Error::new(std::io::ErrorKind::NotFound, "home dir"))?;
-        Ok(home_dir.join(".see").join("audit.redb"))
+        Ok(home_dir.join(".s_e_e").join("audit.redb"))
     }
 
     /// Create a new RedbStore with the default path

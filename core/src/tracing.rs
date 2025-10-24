@@ -16,13 +16,13 @@ pub fn init_tracing(log_dir: Option<PathBuf>) -> Result<TracingGuard, Box<CoreEr
                     "Could not find home directory".to_string(),
                 ))
             })?;
-            home.join(".see").join("logs")
+            home.join(".s_e_e").join("logs")
         }
     };
 
     std::fs::create_dir_all(&log_dir).map_err(|e| Box::new(CoreError::from(e)))?;
 
-    let file_appender = tracing_appender::rolling::daily(log_dir, "see.log");
+    let file_appender = tracing_appender::rolling::daily(log_dir, "s_e_e.log");
     let (non_blocking, guard) = tracing_appender::non_blocking(file_appender);
 
     let env_filter = EnvFilter::try_from_default_env().unwrap_or_else(|_| EnvFilter::new("info"));

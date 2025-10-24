@@ -15,7 +15,7 @@ export default {
   theme: {
     extend: {
       colors: {
-        // Custom colors for the See project
+        // Custom colors for the Speculative Execution Engine project
         primary: {
           50: '#eff6ff',
           100: '#dbeafe',

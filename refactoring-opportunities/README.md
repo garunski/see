@@ -1,6 +1,6 @@
 # Refactoring Opportunities
 
-This directory contains detailed refactoring plans for the See GUI application after the successful pages folder reorganization.
+This directory contains detailed refactoring plans for the Speculative Execution Engine GUI application after the successful pages folder reorganization.
 
 ## 🎯 Overview
 
@@ -154,7 +154,7 @@ cargo test
 
 ### Build Application
 ```bash
-cargo build --package gui
+cargo build --package s_e_e_gui
 ```
 
 ## 📚 Additional Resources

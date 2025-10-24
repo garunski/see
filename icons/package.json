@@ -1,7 +1,7 @@
 {
-  "name": "see-icons",
+  "name": "s_e_e_icons",
   "version": "1.0.0",
-  "description": "SVG icons for See workflow engine",
+  "description": "SVG icons for Speculative Execution Engine",
   "type": "module",
   "scripts": {
     "build": "node copy-icons.js"

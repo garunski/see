@@ -34,13 +34,13 @@ cargo build --release
 From the repo root:
 
 ```bash
-cargo run -p cli -- --file workflow.json
+cargo run -p s_e_e_cli -- --file workflow.json
 ```
 
 Or build and run:
 
 ```bash
-cargo build -p cli --release
+cargo build -p s_e_e_cli --release
 ./target/release/cli --file workflow.json
 ```
 
@@ -68,13 +68,13 @@ Using dx CLI directly:
 task build-visualizer
 
 # Development with hot-reloading
-dx serve --package gui
+dx serve --package s_e_e_gui
 
 # Build for production
-dx build --package gui
+dx build --package s_e_e_gui
 
 # Run without hot-reloading
-dx run --package gui
+dx run --package s_e_e_gui
 ```
 
 Or using cargo directly:
@@ -84,7 +84,7 @@ Or using cargo directly:
 cd gui/react-flow-app && npm install && npm run build && cd ../..
 
 # Run GUI
-cargo run -p gui
+cargo run -p s_e_e_gui
 ```
 
 **Features:**
@@ -198,7 +198,7 @@ This project has undergone significant refactoring to improve code quality and m
 - Avoids complex state management while maintaining reactivity
 
 **Incremental Migration:**
-- Test after each small change with `cargo check --package gui`
+- Test after each small change with `cargo check --package s_e_e_gui`
 - Run `task quality` frequently to catch issues early
 - Migrate one page/component at a time
 

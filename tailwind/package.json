@@ -1,7 +1,7 @@
 {
   "name": "tailwind-builder",
   "version": "1.0.0",
-  "description": "Centralized Tailwind CSS builder for the See project",
+  "description": "Centralized Tailwind CSS builder for the Speculative Execution Engine project",
   "type": "module",
   "scripts": {
     "build": "vite build",
