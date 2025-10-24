@@ -6,7 +6,7 @@ use see_core::WorkflowJson;
 
 use super::{
     create_reset_to_default_handler, create_save_workflow_handler, create_switch_to_json_handler,
-    create_switch_to_visual_handler, load_workflow_script, NodeEditorModal, SaveWorkflowParams,
+    create_switch_to_visual_handler, load_workflow_script, SaveWorkflowParams,
     MESSAGE_LISTENER_SCRIPT,
 };
 
@@ -237,6 +237,7 @@ pub fn WorkflowEditPage(id: String) -> Element {
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Workflow Editor</title>
     <link rel="stylesheet" href="{}" />
+    <link rel="stylesheet" href="{}" />
     <script>
       // Set mode before React app loads
       window.WORKFLOW_MODE = 'editor';
@@ -248,6 +249,7 @@ pub fn WorkflowEditPage(id: String) -> Element {
   </body>
 </html>"#,
                                         asset!("/assets/workflow-visualizer/index.css"),
+                                        asset!("/assets/tailwind.css"),
                                         asset!("/assets/workflow-visualizer/index.js")
                                     ),
                                     class: "w-full h-full border-0 rounded-b-xl",
@@ -262,9 +264,6 @@ pub fn WorkflowEditPage(id: String) -> Element {
                             }
                         }
                     }
-
-                    // Node Editor Modal
-                    NodeEditorModal {}
                 },
                 EditMode::Json => rsx! {
                     div { class: "bg-white dark:bg-zinc-800 rounded-xl border border-zinc-200 dark:border-zinc-700 p-8 shadow-sm",

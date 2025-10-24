@@ -47,9 +47,9 @@ const WorkflowVisualizer: React.FC<WorkflowVisualizerProps> = () => {
         position,
         data: {
           label: (
-            <div style={{ padding: '10px' }}>
-              <div style={{ fontWeight: 'bold', marginBottom: '5px' }}>{task.name}</div>
-              <div style={{ fontSize: '12px', color: '#666' }}>
+            <div className="p-2.5">
+              <div className="font-bold mb-1.5 text-zinc-900 dark:text-white">{task.name}</div>
+              <div className="text-xs text-zinc-500 dark:text-zinc-400">
                 {task.function.name}
               </div>
             </div>
@@ -169,37 +169,17 @@ const WorkflowVisualizer: React.FC<WorkflowVisualizerProps> = () => {
 
   if (!workflow) {
     return (
-      <div style={{
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        height: '100vh',
-        fontFamily: 'system-ui, -apple-system, sans-serif',
-        color: '#666',
-      }}>
+      <div className="flex items-center justify-center h-screen font-sans text-zinc-500 dark:text-zinc-400">
         <div>
-          <div style={{
-            width: '40px',
-            height: '40px',
-            border: '3px solid #e5e7eb',
-            borderTopColor: '#3b82f6',
-            borderRadius: '50%',
-            animation: 'spin 1s linear infinite',
-            margin: '0 auto 16px',
-          }} />
+          <div className="w-10 h-10 border-3 border-zinc-200 border-t-blue-500 rounded-full animate-spin mx-auto mb-4" />
           <div>Loading workflow...</div>
         </div>
-        <style>{`
-          @keyframes spin {
-            to { transform: rotate(360deg); }
-          }
-        `}</style>
       </div>
     );
   }
 
   return (
-    <div style={{ width: '100vw', height: '100vh' }}>
+    <div className="w-screen h-screen">
       <ReactFlow
         nodes={nodes}
         edges={edges}
@@ -211,17 +191,11 @@ const WorkflowVisualizer: React.FC<WorkflowVisualizerProps> = () => {
       >
         <Background variant={BackgroundVariant.Dots} gap={16} size={1} />
         <Controls />
-        <Panel position="top-left" style={{
-          background: 'white',
-          padding: '12px 16px',
-          borderRadius: '8px',
-          boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-          fontFamily: 'system-ui, -apple-system, sans-serif',
-        }}>
-          <div style={{ fontWeight: 'bold', fontSize: '16px', marginBottom: '4px' }}>
+        <Panel position="top-left" className="bg-white dark:bg-zinc-800 p-3 rounded-lg shadow-sm font-sans">
+          <div className="font-bold text-base mb-1 text-zinc-900 dark:text-white">
             {workflow.name}
           </div>
-          <div style={{ fontSize: '14px', color: '#666' }}>
+          <div className="text-sm text-zinc-500 dark:text-zinc-400">
             {workflow.tasks.length} task{workflow.tasks.length !== 1 ? 's' : ''}
           </div>
         </Panel>

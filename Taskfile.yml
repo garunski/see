@@ -81,9 +81,3 @@ tasks:
     cmds:
       - npm install
       - npm run build
-    sources:
-      - src/**/*
-      - package.json
-      - vite.config.ts
-    generates:
-      - ../assets/workflow-visualizer/index.html

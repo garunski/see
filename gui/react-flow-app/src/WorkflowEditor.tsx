@@ -12,7 +12,9 @@ import ReactFlow, {
   BackgroundVariant,
 } from 'reactflow';
 import 'reactflow/dist/style.css';
-import { Workflow, MessageFromParent } from './types';
+import { Workflow, MessageFromParent, WorkflowTask } from './types';
+import { NodeEditorModal } from './components/NodeEditorModal';
+import { Input } from './components/input';
 
 const NODE_WIDTH = 250;
 const NODE_HEIGHT = 80;
@@ -26,6 +28,10 @@ const WorkflowEditor: React.FC = () => {
   const [workflow, setWorkflow] = useState<Workflow | null>(null);
   const [isLoaded, setIsLoaded] = useState(false);
   const [workflowName, setWorkflowName] = useState<string>('');
+  
+  // Modal state
+  const [editingNode, setEditingNode] = useState<WorkflowTask | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   // Convert workflow tasks to React Flow nodes
   const tasksToNodes = useCallback((wf: Workflow): Node[] => {
@@ -44,9 +50,9 @@ const WorkflowEditor: React.FC = () => {
         position,
         data: {
           label: (
-            <div style={{ padding: '10px' }}>
-              <div style={{ fontWeight: 'bold', marginBottom: '5px' }}>{task.name}</div>
-              <div style={{ fontSize: '12px', color: '#666' }}>
+            <div className="p-2.5">
+              <div className="font-bold mb-1.5 text-zinc-900 dark:text-white">{task.name}</div>
+              <div className="text-xs text-zinc-500 dark:text-zinc-400">
                 {task.function.name}
               </div>
             </div>
@@ -96,30 +102,35 @@ const WorkflowEditor: React.FC = () => {
     }, '*');
   }, []);
 
-  // Double-click handler for opening node editor
+  // Double-click handler for opening node editor modal
   const handleNodeDoubleClick = useCallback((_event: React.MouseEvent, node: Node) => {
-    // Extract only the primitive values we need for the editor
-    const task = node.data.task;
-    const taskData = task ? {
-      id: task.id,
-      name: task.name,
-      function: {
-        name: task.function?.name || 'cli_command',
-        input: task.function?.input || {}
-      }
-    } : null;
-    
-    // Send to Dioxus parent window - only send primitive, cloneable data
-    window.parent.postMessage({
-      type: 'NODE_DOUBLE_CLICKED',
-      payload: {
-        nodeId: node.id,
-        nodeName: node.data.task?.name,
-        functionName: node.data.task?.function?.name,
-        task: taskData
-      }
-    }, '*');
+    setEditingNode(node.data.task);
+    setIsModalOpen(true);
   }, []);
+
+  // Save handler for modal
+  const handleSaveNode = useCallback((updatedNode: WorkflowTask) => {
+    setNodes((currentNodes) => 
+      currentNodes.map((node) => {
+        if (node.id === updatedNode.id) {
+          return {
+            ...node,
+            data: {
+              ...node.data,
+              task: updatedNode,
+              label: (
+                <div className="p-2.5">
+                  <div className="font-bold mb-1.5 text-zinc-900 dark:text-white">{updatedNode.name}</div>
+                  <div className="text-xs text-zinc-500 dark:text-zinc-400">{updatedNode.function.name}</div>
+                </div>
+              )
+            }
+          }
+        }
+        return node;
+      })
+    );
+  }, [setNodes]);
 
   // Listen for messages from parent window (Dioxus)
   useEffect(() => {
@@ -141,43 +152,6 @@ const WorkflowEditor: React.FC = () => {
         setNodes(newNodes);
         setEdges(newEdges);
         setIsLoaded(true);
-      } else if (event.data.type === 'UPDATE_NODE' && event.data.payload) {
-        const { nodeId, name, functionType, command, args, prompt } = event.data.payload;
-        
-        // Update the node in the nodes array
-        setNodes((currentNodes) => 
-          currentNodes.map((node) => {
-            if (node.id === nodeId) {
-              const updatedTask = {
-                ...node.data.task,
-                name: name,
-                function: {
-                  name: functionType,
-                  input: functionType === 'cli_command' 
-                    ? { command, args }
-                    : { prompt }
-                }
-              };
-              
-              return {
-                ...node,
-                data: {
-                  ...node.data,
-                  task: updatedTask,
-                  label: (
-                    <div style={{ padding: '10px' }}>
-                      <div style={{ fontWeight: 'bold', marginBottom: '5px' }}>{name}</div>
-                      <div style={{ fontSize: '12px', color: '#666' }}>
-                        {functionType}
-                      </div>
-                    </div>
-                  )
-                }
-              };
-            }
-            return node;
-          })
-        );
       }
     };
 
@@ -192,34 +166,15 @@ const WorkflowEditor: React.FC = () => {
 
   if (!isLoaded) {
     return (
-      <div style={{ 
-        display: 'flex', 
-        justifyContent: 'center', 
-        alignItems: 'center', 
-        height: '100%',
-        flexDirection: 'column',
-        gap: '20px'
-      }}>
-        <div style={{
-          width: '40px',
-          height: '40px',
-          border: '3px solid #e5e7eb',
-          borderTopColor: '#3b82f6',
-          borderRadius: '50%',
-          animation: 'spin 1s linear infinite',
-        }} />
-        <div>Loading workflow editor...</div>
-        <style>{`
-          @keyframes spin {
-            to { transform: rotate(360deg); }
-          }
-        `}</style>
+      <div className="flex justify-center items-center h-screen flex-col gap-5">
+        <div className="w-10 h-10 border-3 border-zinc-200 border-t-blue-500 rounded-full animate-spin" />
+        <div className="text-zinc-600 dark:text-zinc-400">Loading workflow editor...</div>
       </div>
     );
   }
 
   return (
-    <div style={{ width: '100vw', height: '100vh' }}>
+    <div className="w-screen h-screen">
       <ReactFlow
         nodes={nodes}
         edges={edges}
@@ -234,16 +189,9 @@ const WorkflowEditor: React.FC = () => {
         <Background variant={BackgroundVariant.Dots} gap={16} size={1} />
         <Controls />
         
-        <Panel position="top-left" style={{
-          background: 'white',
-          padding: '12px 16px',
-          borderRadius: '8px',
-          boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-          fontFamily: 'system-ui, -apple-system, sans-serif',
-        }}>
-          <div style={{ marginBottom: '8px' }}>
-            <input
-              type="text"
+        <Panel position="top-left" className="bg-white dark:bg-zinc-800 p-3 rounded-lg shadow-sm font-sans">
+          <div className="mb-2">
+            <Input
               value={workflowName}
               onChange={(e) => {
                 const newName = e.target.value;
@@ -254,32 +202,21 @@ const WorkflowEditor: React.FC = () => {
                   payload: { name: newName }
                 }, '*');
               }}
-              style={{
-                fontWeight: 'bold',
-                fontSize: '16px',
-                border: 'none',
-                background: 'transparent',
-                outline: 'none',
-                borderBottom: '2px solid transparent',
-                padding: '2px 4px',
-                marginBottom: '4px',
-                width: '100%',
-                minWidth: '200px'
-              }}
-              onFocus={(e) => {
-                e.target.style.borderBottomColor = '#3b82f6';
-              }}
-              onBlur={(e) => {
-                e.target.style.borderBottomColor = 'transparent';
-              }}
               placeholder="Workflow Name"
             />
           </div>
-          <div style={{ fontSize: '14px', color: '#666' }}>
+          <div className="text-sm text-zinc-500 dark:text-zinc-400">
             {workflow?.tasks.length || 0} task{(workflow?.tasks.length || 0) !== 1 ? 's' : ''}
           </div>
         </Panel>
       </ReactFlow>
+      
+      <NodeEditorModal 
+        isOpen={isModalOpen}
+        node={editingNode}
+        onSave={handleSaveNode}
+        onClose={() => setIsModalOpen(false)}
+      />
     </div>
   );
 };
