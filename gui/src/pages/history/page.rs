@@ -1,4 +1,4 @@
-use crate::components::{Button, ButtonSize, ButtonVariant};
+use crate::components::{Button, ButtonSize, ButtonVariant, PageHeader};
 use crate::hooks::{use_running_workflows, use_workflow_history};
 use crate::icons::Icon;
 use crate::state::AppStateProvider;
@@ -31,26 +31,26 @@ pub fn HistoryPage() -> Element {
 
     rsx! {
         div { class: "space-y-8",
-            div { class: "flex items-center justify-between",
-                div {
-                    h1 { class: "text-xl font-bold text-zinc-900 dark:text-white", "Workflow History" }
-                    p { class: "mt-2 text-zinc-600 dark:text-zinc-400", "View and manage your previous workflow executions" }
-                }
-                Button {
-                    variant: ButtonVariant::Ghost,
-                    size: ButtonSize::Medium,
-                    disabled: Some(is_loading()),
-                    loading: Some(is_loading()),
-                    onclick: move |_| refresh_data_button(),
-                    class: "flex items-center gap-2".to_string(),
-                    Icon {
-                        name: "history".to_string(),
-                        class: Some("w-4 h-4".to_string()),
-                        size: None,
-                        variant: Some("outline".to_string()),
+            PageHeader {
+                title: "Workflow History".to_string(),
+                description: "View and manage your previous workflow executions".to_string(),
+                actions: Some(rsx! {
+                    Button {
+                        variant: ButtonVariant::Ghost,
+                        size: ButtonSize::Medium,
+                        disabled: Some(is_loading()),
+                        loading: Some(is_loading()),
+                        onclick: move |_| refresh_data_button(),
+                        class: "flex items-center gap-2".to_string(),
+                        Icon {
+                            name: "history".to_string(),
+                            class: Some("w-4 h-4".to_string()),
+                            size: None,
+                            variant: Some("outline".to_string()),
+                        }
+                        span { "Refresh" }
                     }
-                    span { "Refresh" }
-                }
+                }),
             }
 
             if let Some(err) = error() {

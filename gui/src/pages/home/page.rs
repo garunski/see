@@ -1,3 +1,4 @@
+use crate::components::PageHeader;
 use crate::hooks::use_workflows;
 use crate::layout::router::Route;
 use dioxus::prelude::*;
@@ -11,9 +12,10 @@ pub fn HomePage() -> Element {
 
     rsx! {
         div { class: "space-y-8",
-            div {
-                h1 { class: "text-2xl font-bold text-zinc-900 dark:text-white", "Welcome to See" }
-                p { class: "mt-2 text-zinc-600 dark:text-zinc-400", "Your workflow automation platform" }
+            PageHeader {
+                title: "Welcome to See".to_string(),
+                description: "Your workflow automation platform".to_string(),
+                actions: None,
             }
 
             div { class: "grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3",

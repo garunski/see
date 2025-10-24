@@ -1,4 +1,4 @@
-use crate::components::{Button, ButtonSize, ButtonVariant};
+use crate::components::{Button, ButtonSize, ButtonVariant, PageHeader, SectionCard};
 use crate::layout::router::Route;
 use crate::services::workflow::read_and_parse_workflow_file;
 use crate::state::AppStateProvider;
@@ -90,51 +90,58 @@ pub fn UploadPage() -> Element {
 
     rsx! {
         div { class: "space-y-8",
-            div {
-                h1 { class: "text-lg font-semibold text-zinc-950 dark:text-white", "Upload Workflow" }
-                p { class: "mt-2 text-sm text-zinc-500 dark:text-zinc-400", "Upload workflow files to save them to your workflow library" }
+            PageHeader {
+                title: "Upload Workflow".to_string(),
+                description: "Upload workflow files to save them to your workflow library".to_string(),
+                actions: None,
             }
 
-            div { class: "space-y-4",
-                div { class: "flex items-center gap-4",
-                    input {
-                        r#type: "text",
-                        placeholder: "Select workflow file...",
-                        value: workflow_file(),
-                        oninput: move |evt| on_workflow_file_change(evt.value()),
-                        class: "block w-full px-3 py-2 text-sm text-zinc-950 dark:text-white bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    }
-                    Button {
-                        variant: ButtonVariant::Secondary,
-                        size: ButtonSize::Medium,
-                        disabled: Some(is_picking_file()),
-                        loading: Some(is_picking_file()),
-                        onclick: move |_| pick_file(),
-                        if is_picking_file() { "" } else { "Browse" }
-                    }
-                }
+            SectionCard {
+                title: None,
+                children: rsx! {
+                    div { class: "space-y-4",
+                        div { class: "flex items-center gap-4",
+                            input {
+                                r#type: "text",
+                                placeholder: "Select workflow file...",
+                                value: workflow_file(),
+                                oninput: move |evt| on_workflow_file_change(evt.value()),
+                                class: "block w-full px-3 py-2 text-sm text-zinc-950 dark:text-white bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            }
+                            Button {
+                                variant: ButtonVariant::Secondary,
+                                size: ButtonSize::Medium,
+                                disabled: Some(is_picking_file()),
+                                loading: Some(is_picking_file()),
+                                onclick: move |_| pick_file(),
+                                if is_picking_file() { "" } else { "Browse" }
+                            }
+                        }
 
-                if !workflow_file().is_empty() && workflow_file() != "workflow.json" {
-                    div { class: "p-4 bg-zinc-50 dark:bg-zinc-800 rounded-lg border border-zinc-200 dark:border-zinc-700",
-                        p { class: "text-sm text-zinc-700 dark:text-zinc-300", "Selected file: {workflow_file()}" }
-                    }
-                }
+                        if !workflow_file().is_empty() && workflow_file() != "workflow.json" {
+                            div { class: "p-4 bg-zinc-50 dark:bg-zinc-800 rounded-lg border border-zinc-200 dark:border-zinc-700",
+                                p { class: "text-sm text-zinc-700 dark:text-zinc-300", "Selected file: {workflow_file()}" }
+                            }
+                        }
 
-                if !error_message().is_empty() {
-                    div { class: "p-4 bg-red-50 dark:bg-red-900/20 rounded-lg border border-red-200 dark:border-red-700",
-                        p { class: "text-sm text-red-700 dark:text-red-300", "{error_message()}" }
-                    }
-                }
+                        if !error_message().is_empty() {
+                            div { class: "p-4 bg-red-50 dark:bg-red-900/20 rounded-lg border border-red-200 dark:border-red-700",
+                                p { class: "text-sm text-red-700 dark:text-red-300", "{error_message()}" }
+                            }
+                        }
 
-                Button {
-                    variant: ButtonVariant::Primary,
-                    size: ButtonSize::Large,
-                    disabled: Some(is_saving()),
-                    loading: Some(is_saving()),
-                    onclick: move |_| on_save(),
-                    class: "w-full font-semibold".to_string(),
-                    if is_saving() { "Saving..." } else { "Save Workflow" }
-                }
+                        Button {
+                            variant: ButtonVariant::Primary,
+                            size: ButtonSize::Large,
+                            disabled: Some(is_saving()),
+                            loading: Some(is_saving()),
+                            onclick: move |_| on_save(),
+                            class: "w-full font-semibold".to_string(),
+                            if is_saving() { "Saving..." } else { "Save Workflow" }
+                        }
+                    }
+                },
+                padding: None,
             }
         }
     }

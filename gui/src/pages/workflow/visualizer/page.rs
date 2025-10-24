@@ -1,4 +1,4 @@
-use crate::components::{Button, ButtonSize, ButtonVariant};
+use crate::components::{Button, ButtonSize, ButtonVariant, PageHeader};
 use crate::state::AppStateProvider;
 use dioxus::prelude::*;
 use dioxus_router::prelude::use_navigator;
@@ -46,19 +46,20 @@ pub fn WorkflowVisualizerPage(id: String) -> Element {
     rsx! {
         div { class: "flex flex-col h-screen",
             // Header
-            div { class: "flex items-center justify-between px-6 py-4 bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-700",
-                div { class: "flex items-center gap-4",
-                    Button {
-                        variant: ButtonVariant::Ghost,
-                        size: ButtonSize::Medium,
-                        onclick: move |_| {
-                            navigator.go_back();
-                        },
-                        "← Back"
-                    }
-                    h1 { class: "text-xl font-semibold text-zinc-900 dark:text-white",
-                        "Workflow Visualizer"
-                    }
+            div { class: "px-6 py-4 bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-700",
+                PageHeader {
+                    title: "Workflow Visualizer".to_string(),
+                    description: "Interactive workflow diagram".to_string(),
+                    actions: Some(rsx! {
+                        Button {
+                            variant: ButtonVariant::Ghost,
+                            size: ButtonSize::Medium,
+                            onclick: move |_| {
+                                navigator.go_back();
+                            },
+                            "← Back"
+                        }
+                    }),
                 }
             }
 
