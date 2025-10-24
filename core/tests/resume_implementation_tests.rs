@@ -16,6 +16,8 @@ async fn setup_test_workflow_waiting(execution_id: &str) -> Result<(), Box<dyn s
         end_timestamp: None,
         status: WorkflowStatus::WaitingForInput,
         task_ids: vec!["task1".to_string(), "task2".to_string()],
+        is_paused: true,
+        paused_task_id: Some("task1".to_string()),
     };
     store.save_workflow_metadata(&metadata).await?;
 
@@ -57,6 +59,8 @@ async fn setup_test_workflow_running(execution_id: &str) -> Result<(), Box<dyn s
         end_timestamp: None,
         status: WorkflowStatus::Running,
         task_ids: vec!["task1".to_string()],
+        is_paused: false,
+        paused_task_id: None,
     };
     store.save_workflow_metadata(&metadata).await?;
 
@@ -196,6 +200,8 @@ async fn test_resume_task_success() {
         end_timestamp: None,
         status: WorkflowStatus::WaitingForInput,
         task_ids: vec!["task1".to_string()],
+        is_paused: true,
+        paused_task_id: Some("task1".to_string()),
     };
     store.save_workflow_metadata(&metadata).await.unwrap();
 
@@ -278,6 +284,8 @@ async fn test_resume_task_wrong_status() {
         end_timestamp: None,
         status: WorkflowStatus::Running,
         task_ids: vec!["task1".to_string()],
+        is_paused: false,
+        paused_task_id: None,
     };
     store.save_workflow_metadata(&metadata).await.unwrap();
 
@@ -372,6 +380,8 @@ async fn test_resume_task_last_waiting() {
         end_timestamp: None,
         status: WorkflowStatus::WaitingForInput,
         task_ids: vec!["task1".to_string(), "task2".to_string()],
+        is_paused: true,
+        paused_task_id: Some("task1".to_string()),
     };
     store.save_workflow_metadata(&metadata).await.unwrap();
 

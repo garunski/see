@@ -67,6 +67,13 @@ pub trait AuditStore: Send + Sync {
         &self,
         execution_id: &str,
     ) -> Result<Vec<TaskExecution>, CoreError>;
+    async fn mark_workflow_paused(
+        &self,
+        execution_id: &str,
+        task_id: &str,
+    ) -> Result<(), CoreError>;
+    async fn mark_workflow_resumed(&self, execution_id: &str) -> Result<(), CoreError>;
+    async fn get_paused_workflows(&self) -> Result<Vec<WorkflowMetadata>, CoreError>;
 }
 
 /// RedbStore implementation with direct operations
@@ -700,6 +707,113 @@ impl AuditStore for RedbStore {
             }
 
             Ok(tasks)
+        })
+        .await
+    }
+
+    async fn mark_workflow_paused(
+        &self,
+        execution_id: &str,
+        task_id: &str,
+    ) -> Result<(), CoreError> {
+        let execution_id = execution_id.to_string();
+        let task_id = task_id.to_string();
+
+        self.execute_write(move |db| {
+            let write_txn = db.begin_write()?;
+            {
+                let mut executions_table: Table<&str, &[u8]> =
+                    write_txn.open_table(EXECUTIONS_DEF)?;
+
+                let workflow_key = Self::workflow_metadata_key(&execution_id);
+
+                // Get current metadata
+                let mut metadata: WorkflowMetadata =
+                    if let Some(serialized) = executions_table.get(&*workflow_key)? {
+                        Self::deserialize(serialized.value())?
+                    } else {
+                        return Err(CoreError::Dataflow(format!(
+                            "Workflow metadata with id '{}' not found",
+                            execution_id
+                        )));
+                    };
+
+                // Update metadata
+                metadata.is_paused = true;
+                metadata.paused_task_id = Some(task_id.clone());
+                metadata.status = crate::persistence::models::WorkflowStatus::WaitingForInput;
+
+                // Save updated metadata
+                let serialized = Self::serialize(&metadata)?;
+                executions_table.insert(workflow_key.as_str(), serialized.as_slice())?;
+            }
+            write_txn.commit()?;
+            Ok(())
+        })
+        .await
+    }
+
+    async fn mark_workflow_resumed(&self, execution_id: &str) -> Result<(), CoreError> {
+        let execution_id = execution_id.to_string();
+
+        self.execute_write(move |db| {
+            let write_txn = db.begin_write()?;
+            {
+                let mut executions_table: Table<&str, &[u8]> =
+                    write_txn.open_table(EXECUTIONS_DEF)?;
+
+                let workflow_key = Self::workflow_metadata_key(&execution_id);
+
+                // Get current metadata
+                let mut metadata: WorkflowMetadata =
+                    if let Some(serialized) = executions_table.get(&*workflow_key)? {
+                        Self::deserialize(serialized.value())?
+                    } else {
+                        return Err(CoreError::Dataflow(format!(
+                            "Workflow metadata with id '{}' not found",
+                            execution_id
+                        )));
+                    };
+
+                // Update metadata
+                metadata.is_paused = false;
+                metadata.paused_task_id = None;
+                metadata.status = crate::persistence::models::WorkflowStatus::Running;
+
+                // Save updated metadata
+                let serialized = Self::serialize(&metadata)?;
+                executions_table.insert(workflow_key.as_str(), serialized.as_slice())?;
+            }
+            write_txn.commit()?;
+            Ok(())
+        })
+        .await
+    }
+
+    async fn get_paused_workflows(&self) -> Result<Vec<WorkflowMetadata>, CoreError> {
+        self.execute_read(move |db| {
+            let read_txn = db.begin_read()?;
+            let workflows_table: ReadOnlyTable<&str, &[u8]> =
+                read_txn.open_table(EXECUTIONS_DEF)?;
+
+            let mut paused_workflows = Vec::new();
+
+            for item in workflows_table.iter()? {
+                let (key, value) = item?;
+                if key.value().starts_with("workflow:") {
+                    let metadata: WorkflowMetadata = Self::deserialize(value.value())?;
+                    if metadata.status
+                        == crate::persistence::models::WorkflowStatus::WaitingForInput
+                    {
+                        paused_workflows.push(metadata);
+                    }
+                }
+            }
+
+            // Sort by start time descending
+            paused_workflows.sort_by(|a, b| b.start_timestamp.cmp(&a.start_timestamp));
+
+            Ok(paused_workflows)
         })
         .await
     }

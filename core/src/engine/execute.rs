@@ -84,6 +84,8 @@ pub async fn execute_workflow_from_content(
             end_timestamp: None,
             status: crate::persistence::models::WorkflowStatus::Running,
             task_ids: tasks.iter().map(|t| t.id.clone()).collect(),
+            is_paused: false,
+            paused_task_id: None,
         };
         if let Err(e) = store.save_workflow_metadata(&metadata).await {
             error!(error = %e, "Failed to save workflow metadata");
@@ -296,6 +298,8 @@ pub async fn execute_workflow_from_content(
                     end_timestamp: Some(chrono::Utc::now().to_rfc3339()),
                     status: crate::persistence::models::WorkflowStatus::Complete,
                     task_ids: tasks.iter().map(|t| t.id.clone()).collect(),
+                    is_paused: false,
+                    paused_task_id: None,
                 };
                 if let Err(e) = store.save_workflow_metadata(&metadata).await {
                     error!(error = %e, "Failed to save workflow completion metadata");
@@ -364,6 +368,8 @@ pub async fn execute_workflow_from_content(
                     end_timestamp: Some(chrono::Utc::now().to_rfc3339()),
                     status: crate::persistence::models::WorkflowStatus::Failed,
                     task_ids: tasks.iter().map(|t| t.id.clone()).collect(),
+                    is_paused: false,
+                    paused_task_id: None,
                 };
                 if let Err(e) = store.save_workflow_metadata(&metadata).await {
                     eprintln!("Failed to update workflow failure: {}", e);
@@ -469,10 +475,8 @@ pub async fn resume_workflow(execution_id: &str) -> Result<(), CoreError> {
         );
     }
 
-    // Update workflow status back to Running
-    let mut updated_metadata = metadata.clone();
-    updated_metadata.status = crate::persistence::models::WorkflowStatus::Running;
-    store.save_workflow_metadata(&updated_metadata).await?;
+    // Mark workflow as resumed using new persistence method
+    store.mark_workflow_resumed(execution_id).await?;
 
     info!(
         execution_id = %execution_id,
@@ -534,11 +538,8 @@ pub async fn resume_task(execution_id: &str, task_id: &str) -> Result<(), CoreEr
     );
 
     if !has_waiting_tasks {
-        // Update workflow status back to Running
-        let metadata = store.get_workflow_metadata(execution_id).await?;
-        let mut updated_metadata = metadata.clone();
-        updated_metadata.status = crate::persistence::models::WorkflowStatus::Running;
-        store.save_workflow_metadata(&updated_metadata).await?;
+        // Mark workflow as resumed using new persistence method
+        store.mark_workflow_resumed(execution_id).await?;
 
         info!(
             execution_id = %execution_id,
@@ -555,6 +556,48 @@ pub async fn resume_task(execution_id: &str, task_id: &str) -> Result<(), CoreEr
         execution_id = %execution_id,
         task_id = %task_id,
         "Task resumed successfully"
+    );
+
+    Ok(())
+}
+
+/// Pause a workflow for user input
+#[instrument(skip(execution_id, task_id), fields(execution_id, task_id))]
+pub async fn pause_workflow(execution_id: &str, task_id: &str) -> Result<(), CoreError> {
+    let store = crate::get_global_store()?;
+
+    info!(
+        execution_id = %execution_id,
+        task_id = %task_id,
+        "Pausing workflow for user input"
+    );
+
+    // Load task execution
+    let task_executions = store.get_task_executions(execution_id).await?;
+    let task = task_executions
+        .iter()
+        .find(|t| t.task_id == task_id)
+        .ok_or_else(|| {
+            CoreError::Validation(format!(
+                "Task {} not found in execution {}",
+                task_id, execution_id
+            ))
+        })?;
+
+    // Update task status to waiting for input
+    let mut updated_task = task.clone();
+    updated_task.status = crate::types::TaskStatus::WaitingForInput;
+    updated_task.end_timestamp = String::new(); // Clear end timestamp
+
+    store.save_task_execution(&updated_task).await?;
+
+    // Mark workflow as paused
+    store.mark_workflow_paused(execution_id, task_id).await?;
+
+    info!(
+        execution_id = %execution_id,
+        task_id = %task_id,
+        "Workflow paused successfully"
     );
 
     Ok(())

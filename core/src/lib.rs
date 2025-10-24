@@ -18,7 +18,8 @@ pub use tracing::{init_tracing, TracingGuard};
 pub use store::get_global_store;
 
 pub use crate::engine::execute::{
-    execute_workflow, execute_workflow_by_id, execute_workflow_from_content,
+    execute_workflow, execute_workflow_by_id, execute_workflow_from_content, pause_workflow,
+    resume_task, resume_workflow,
 };
 pub use crate::persistence::models::{
     AppSettings, NodePosition, Prompt, TaskExecution, Theme, WorkflowDefinition, WorkflowExecution,

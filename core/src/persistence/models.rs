@@ -94,6 +94,12 @@ impl WorkflowDefinition {
                 is_default: true,
                 is_edited: false,
             },
+            WorkflowDefinition {
+                id: "default-user-input-demo-00000004".to_string(),
+                content: DefaultWorkflows::user_input_demo(),
+                is_default: true,
+                is_edited: false,
+            },
         ]
     }
 }
@@ -121,6 +127,10 @@ pub struct WorkflowMetadata {
     pub end_timestamp: Option<String>,
     pub status: WorkflowStatus,
     pub task_ids: Vec<String>,
+    #[serde(default)]
+    pub is_paused: bool,
+    #[serde(default)]
+    pub paused_task_id: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
