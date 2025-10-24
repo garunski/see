@@ -34,6 +34,7 @@ pub fn TaskDetailsPanel(
             s_e_e_core::TaskStatus::Failed => "bg-red-500/20 backdrop-blur-sm",
             s_e_e_core::TaskStatus::InProgress => "bg-blue-500/20 backdrop-blur-sm",
             s_e_e_core::TaskStatus::Pending => "bg-zinc-500/20 backdrop-blur-sm",
+            s_e_e_core::TaskStatus::WaitingForInput => "bg-amber-500/20 backdrop-blur-sm",
         }
     } else {
         "bg-zinc-500/20 backdrop-blur-sm"
@@ -146,6 +147,7 @@ pub fn TaskDetailsPanel(
                                 s_e_e_core::TaskStatus::Failed => "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200",
                                 s_e_e_core::TaskStatus::InProgress => "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200",
                                 s_e_e_core::TaskStatus::Pending => "bg-zinc-100 text-zinc-800 dark:bg-zinc-900 dark:text-zinc-200",
+                                s_e_e_core::TaskStatus::WaitingForInput => "bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200",
                             }
                         ),
                         match task.status {
@@ -153,6 +155,7 @@ pub fn TaskDetailsPanel(
                             s_e_e_core::TaskStatus::Failed => "Failed",
                             s_e_e_core::TaskStatus::InProgress => "In Progress",
                             s_e_e_core::TaskStatus::Pending => "Pending",
+                            s_e_e_core::TaskStatus::WaitingForInput => "Waiting for Input",
                         }
                     }
                 }

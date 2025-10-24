@@ -129,12 +129,85 @@ impl ExecutionContext {
     pub fn get_store(&self) -> Option<Arc<dyn crate::AuditStore>> {
         self.audit_store.clone()
     }
+
+    /// Pause a task for user input
+    pub fn pause_for_input(&mut self, task_id: &str, prompt: &str) -> Result<(), CoreError> {
+        // Validate task exists
+        if !self.tasks.iter().any(|t| t.id == task_id) {
+            return Err(CoreError::Validation(format!("Task {} not found", task_id)));
+        }
+
+        // Log the pause
+        self.log(&format!(
+            "⏸️  Task {} paused for user input: {}",
+            task_id, prompt
+        ));
+
+        // Update task status
+        self.update_task_status(task_id, TaskStatus::WaitingForInput);
+
+        // Set current task to None since it's paused
+        self.current_task_id = None;
+
+        Ok(())
+    }
+
+    /// Resume a paused task
+    pub fn resume_task(&mut self, task_id: &str) -> Result<(), CoreError> {
+        // Validate task exists and is waiting for input
+        let task = self
+            .tasks
+            .iter()
+            .find(|t| t.id == task_id)
+            .ok_or_else(|| CoreError::Validation(format!("Task {} not found", task_id)))?;
+
+        if task.status != TaskStatus::WaitingForInput {
+            return Err(CoreError::Validation(format!(
+                "Task {} is not waiting for input (status: {})",
+                task_id, task.status
+            )));
+        }
+
+        // Log the resume
+        self.log(&format!(
+            "▶️  Task {} resumed from user input pause",
+            task_id
+        ));
+
+        // Update task status back to InProgress
+        self.update_task_status(task_id, TaskStatus::InProgress);
+
+        // Set as current task
+        self.current_task_id = Some(task_id.to_string());
+
+        Ok(())
+    }
+
+    /// Check if any task is waiting for input
+    pub fn has_waiting_tasks(&self) -> bool {
+        self.tasks
+            .iter()
+            .any(|t| t.status == TaskStatus::WaitingForInput)
+    }
+
+    /// Get all tasks waiting for input
+    pub fn get_waiting_tasks(&self) -> Vec<&TaskInfo> {
+        self.tasks
+            .iter()
+            .filter(|t| t.status == TaskStatus::WaitingForInput)
+            .collect()
+    }
 }
 
 pub trait ExecutionContextSafe {
     fn safe_log(&self, msg: &str) -> Result<(), CoreError>;
 
     fn safe_update_task_status(&self, task_id: &str, status: TaskStatus) -> Result<(), CoreError>;
+
+    fn safe_pause_for_input(&self, task_id: &str, prompt: &str) -> Result<(), CoreError>;
+    fn safe_resume_task(&self, task_id: &str) -> Result<(), CoreError>;
+    fn safe_has_waiting_tasks(&self) -> Result<bool, CoreError>;
+    fn safe_get_waiting_tasks(&self) -> Result<Vec<TaskInfo>, CoreError>;
 
     fn lock_with_retry<F, R>(&self, operation: F, max_retries: usize) -> Result<R, CoreError>
     where
@@ -171,6 +244,65 @@ impl ExecutionContextSafe for Arc<Mutex<ExecutionContext>> {
             })?;
         ctx.update_task_status(task_id, status);
         Ok(())
+    }
+
+    fn safe_pause_for_input(&self, task_id: &str, prompt: &str) -> Result<(), CoreError> {
+        let mut ctx = self
+            .lock()
+            .map_err(|e| {
+                tracing::error!(
+                    error = %e,
+                    task_id = %task_id,
+                    prompt = %prompt,
+                    "Failed to lock execution context for pause_for_input - this may indicate workflow interruption"
+                );
+                CoreError::MutexLock(format!("Failed to lock context: {}", e))
+            })?;
+        ctx.pause_for_input(task_id, prompt)
+    }
+
+    fn safe_resume_task(&self, task_id: &str) -> Result<(), CoreError> {
+        let mut ctx = self
+            .lock()
+            .map_err(|e| {
+                tracing::error!(
+                    error = %e,
+                    task_id = %task_id,
+                    "Failed to lock execution context for resume_task - this may indicate workflow interruption"
+                );
+                CoreError::MutexLock(format!("Failed to lock context: {}", e))
+            })?;
+        ctx.resume_task(task_id)
+    }
+
+    fn safe_has_waiting_tasks(&self) -> Result<bool, CoreError> {
+        let ctx = self
+            .lock()
+            .map_err(|e| {
+                tracing::error!(
+                    error = %e,
+                    "Failed to lock execution context for has_waiting_tasks - this may indicate workflow interruption"
+                );
+                CoreError::MutexLock(format!("Failed to lock context: {}", e))
+            })?;
+        Ok(ctx.has_waiting_tasks())
+    }
+
+    fn safe_get_waiting_tasks(&self) -> Result<Vec<TaskInfo>, CoreError> {
+        let ctx = self
+            .lock()
+            .map_err(|e| {
+                tracing::error!(
+                    error = %e,
+                    "Failed to lock execution context for get_waiting_tasks - this may indicate workflow interruption"
+                );
+                CoreError::MutexLock(format!("Failed to lock context: {}", e))
+            })?;
+        Ok(ctx
+            .get_waiting_tasks()
+            .iter()
+            .map(|t| (*t).clone())
+            .collect())
     }
 
     fn lock_with_retry<F, R>(&self, operation: F, max_retries: usize) -> Result<R, CoreError>

@@ -12,6 +12,7 @@ pub enum TaskStatus {
     InProgress,
     Complete,
     Failed,
+    WaitingForInput,
 }
 
 impl TaskStatus {
@@ -21,6 +22,7 @@ impl TaskStatus {
             TaskStatus::InProgress => "in-progress",
             TaskStatus::Complete => "complete",
             TaskStatus::Failed => "failed",
+            TaskStatus::WaitingForInput => "waiting-for-input",
         }
     }
 }
@@ -40,6 +42,7 @@ impl FromStr for TaskStatus {
             "in-progress" => Ok(TaskStatus::InProgress),
             "complete" => Ok(TaskStatus::Complete),
             "failed" => Ok(TaskStatus::Failed),
+            "waiting-for-input" => Ok(TaskStatus::WaitingForInput),
             _ => Err(format!("Invalid task status: {}", s)),
         }
     }

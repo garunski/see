@@ -139,6 +139,7 @@ pub enum WorkflowStatus {
     Running,
     Complete,
     Failed,
+    WaitingForInput,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
