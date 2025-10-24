@@ -1,4 +1,4 @@
-use crate::components::{Button, ButtonSize, ButtonVariant, ConfirmDialog};
+use crate::components::{Button, ButtonSize, ButtonVariant, ConfirmDialog, PageHeader};
 use crate::icons::Icon;
 use crate::services::clear_database;
 use crate::state::AppStateProvider;
@@ -81,9 +81,10 @@ pub fn SettingsPage() -> Element {
 
     rsx! {
         div { class: "space-y-8",
-            div {
-                h1 { class: "text-xl font-bold text-zinc-900 dark:text-white", "Settings" }
-                p { class: "mt-2 text-zinc-600 dark:text-zinc-400", "Customize your application preferences" }
+            PageHeader {
+                title: "Settings".to_string(),
+                description: "Customize your application preferences".to_string(),
+                actions: None,
             }
 
             div { class: "bg-white dark:bg-zinc-800 rounded-xl border border-zinc-200 dark:border-zinc-700 p-8 shadow-sm",

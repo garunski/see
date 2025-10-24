@@ -1,4 +1,6 @@
-use crate::components::{Button, ButtonSize, ButtonVariant, ConfirmDialog};
+use crate::components::{
+    Button, ButtonSize, ButtonVariant, ConfirmDialog, EmptyState, PageHeader, SectionCard,
+};
 use crate::hooks::use_prompts;
 use crate::icons::Icon;
 use crate::layout::router::Route;
@@ -64,76 +66,73 @@ pub fn PromptsListPage() -> Element {
 
     rsx! {
         div { class: "space-y-8",
-            div { class: "flex items-center justify-between",
-                div {
-                    h1 { class: "text-xl font-bold text-zinc-900 dark:text-white", "Prompts" }
-                    p { class: "mt-2 text-zinc-600 dark:text-zinc-400", "Manage your prompt templates" }
-                }
-                Link {
-                    to: Route::PromptEditPageNew {},
-                    class: "inline-flex items-center gap-x-1.5 rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600",
-                    Icon {
-                        name: "plus".to_string(),
-                        class: Some("-ml-0.5".to_string()),
-                        size: Some("h-5 w-5".to_string()),
-                        variant: Some("outline".to_string()),
+            PageHeader {
+                title: "Prompts".to_string(),
+                description: "Manage your prompt templates".to_string(),
+                actions: Some(rsx! {
+                    Link {
+                        to: Route::PromptEditPageNew {},
+                        class: "inline-flex items-center gap-x-1.5 rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600",
+                        Icon {
+                            name: "plus".to_string(),
+                            class: Some("-ml-0.5".to_string()),
+                            size: Some("h-5 w-5".to_string()),
+                            variant: Some("outline".to_string()),
+                        }
+                        "Create Prompt"
                     }
-                    "Create Prompt"
-                }
+                }),
             }
 
-            div { class: "bg-white dark:bg-zinc-800 rounded-xl border border-zinc-200 dark:border-zinc-700 shadow-sm",
-                div { class: "px-6 py-4 border-b border-zinc-200 dark:border-zinc-700",
-                    h3 { class: "text-base font-semibold text-zinc-900 dark:text-white", "All Prompts" }
-                }
-
-                if prompts().is_empty() {
-                    div { class: "px-6 py-12 text-center",
-                        div { class: "text-zinc-500 dark:text-zinc-400",
-                            "No prompts yet. Create your first prompt to get started."
+            SectionCard {
+                title: Some("All Prompts".to_string()),
+                children: rsx! {
+                    if prompts().is_empty() {
+                        EmptyState {
+                            message: "No prompts yet. Create your first prompt to get started.".to_string(),
                         }
-                    }
-                } else {
-                    div { class: "overflow-hidden",
-                        table { class: "min-w-full divide-y divide-zinc-200 dark:divide-zinc-700",
-                            thead { class: "bg-zinc-50 dark:bg-zinc-700",
-                                tr {
-                                    th { class: "px-6 py-3 text-left text-xs font-medium text-zinc-500 dark:text-zinc-300 uppercase tracking-wider", "ID" }
-                                    th { class: "px-6 py-3 text-left text-xs font-medium text-zinc-500 dark:text-zinc-300 uppercase tracking-wider", "Description" }
-                                    th { class: "px-6 py-3 text-left text-xs font-medium text-zinc-500 dark:text-zinc-300 uppercase tracking-wider", "Created" }
-                                    th { class: "px-6 py-3 text-right text-xs font-medium text-zinc-500 dark:text-zinc-300 uppercase tracking-wider", "Actions" }
+                    } else {
+                        div { class: "overflow-hidden",
+                            table { class: "min-w-full divide-y divide-zinc-200 dark:divide-zinc-700",
+                                thead { class: "bg-zinc-50 dark:bg-zinc-700",
+                                    tr {
+                                        th { class: "px-6 py-3 text-left text-xs font-medium text-zinc-500 dark:text-zinc-300 uppercase tracking-wider", "ID" }
+                                        th { class: "px-6 py-3 text-left text-xs font-medium text-zinc-500 dark:text-zinc-300 uppercase tracking-wider", "Description" }
+                                        th { class: "px-6 py-3 text-left text-xs font-medium text-zinc-500 dark:text-zinc-300 uppercase tracking-wider", "Created" }
+                                        th { class: "px-6 py-3 text-right text-xs font-medium text-zinc-500 dark:text-zinc-300 uppercase tracking-wider", "Actions" }
+                                    }
                                 }
-                            }
-                            tbody { class: "bg-white dark:bg-zinc-800 divide-y divide-zinc-200 dark:divide-zinc-700",
-                                for prompt in prompts().into_iter() {
-                                    tr { class: "hover:bg-zinc-50 dark:hover:bg-zinc-700",
-                                        td { class: "px-6 py-4 whitespace-nowrap",
-                                            div { class: "text-sm font-medium text-zinc-900 dark:text-white",
-                                                {prompt.id.clone()}
-                                            }
-                                        }
-                                        td { class: "px-6 py-4",
-                                            div { class: "text-sm text-zinc-900 dark:text-white max-w-xs truncate",
-                                                {prompt.description.clone()}
-                                            }
-                                        }
-                                        td { class: "px-6 py-4 whitespace-nowrap",
-                                            div { class: "text-sm text-zinc-500 dark:text-zinc-400",
-                                                {prompt.created_at.clone()}
-                                            }
-                                        }
-                                        td { class: "px-6 py-4 whitespace-nowrap text-right text-sm font-medium",
-                                            div { class: "flex items-center justify-end gap-2",
-                                                Link {
-                                                    to: Route::PromptEditPage { id: prompt.id.clone() },
-                                                    class: "text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300",
-                                                    "Edit"
+                                tbody { class: "bg-white dark:bg-zinc-800 divide-y divide-zinc-200 dark:divide-zinc-700",
+                                    for prompt in prompts().into_iter() {
+                                        tr { class: "hover:bg-zinc-50 dark:hover:bg-zinc-700",
+                                            td { class: "px-6 py-4 whitespace-nowrap",
+                                                div { class: "text-sm font-medium text-zinc-900 dark:text-white",
+                                                    {prompt.id.clone()}
                                                 }
-                                                Button {
-                                                    variant: ButtonVariant::Danger,
-                                                    size: ButtonSize::Small,
-                                                    onclick: move |_| delete_prompt(prompt.id.clone()),
-                                                    "Delete"
+                                            }
+                                            td { class: "px-6 py-4",
+                                                div { class: "text-sm text-zinc-900 dark:text-white max-w-xs truncate",
+                                                    {prompt.description.clone()}
+                                                }
+                                            }
+                                            td { class: "px-6 py-4 whitespace-nowrap",
+                                                div { class: "text-sm text-zinc-500 dark:text-zinc-400",
+                                                    {prompt.created_at.clone()}
+                                                }
+                                            }
+                                            td { class: "px-6 py-4 whitespace-nowrap text-right text-sm font-medium",
+                                                div { class: "flex items-center justify-end gap-2",
+                                                    Link {
+                                                        to: Route::PromptEditPage { id: prompt.id.clone() },
+                                                        class: "text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300",
+                                                        "Edit"
+                                                    }
+                                                    Button {
+                                                        variant: ButtonVariant::Danger,
+                                                        size: ButtonSize::Small,
+                                                        onclick: move |_| delete_prompt(prompt.id.clone()),
+                                                        "Delete"
+                                                    }
                                                 }
                                             }
                                         }
@@ -142,7 +141,8 @@ pub fn PromptsListPage() -> Element {
                             }
                         }
                     }
-                }
+                },
+                padding: None,
             }
         }
 

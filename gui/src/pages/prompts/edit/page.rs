@@ -1,4 +1,6 @@
-use crate::components::{Button, ButtonSize, ButtonVariant};
+use crate::components::{
+    Button, ButtonSize, ButtonVariant, TextInput, TextareaInput, ValidationMessage,
+};
 use crate::icons::Icon;
 use crate::layout::router::Route;
 use crate::services::prompt::PromptService;
@@ -138,55 +140,38 @@ pub fn PromptEditPage(id: String) -> Element {
 
             div { class: "bg-white dark:bg-zinc-800 rounded-xl border border-zinc-200 dark:border-zinc-700 p-8 shadow-sm",
                 div { class: "space-y-6",
-                    div {
-                        label { class: "block text-sm font-medium text-zinc-900 dark:text-white mb-2",
-                            "Prompt ID"
-                        }
-                        input {
-                            r#type: "text",
-                            value: "{prompt_id()}",
-                            oninput: move |evt| prompt_id.set(evt.value()),
-                            placeholder: "e.g., generate-rust-code",
-                            class: "block w-full rounded-md border-0 py-1.5 text-zinc-900 dark:text-white shadow-sm ring-1 ring-inset ring-zinc-300 dark:ring-zinc-600 placeholder:text-zinc-400 dark:placeholder:text-zinc-500 focus:ring-2 focus:ring-inset focus:ring-blue-600 dark:bg-zinc-700 sm:text-sm sm:leading-6"
-                        }
-                        p { class: "mt-1 text-xs text-zinc-500 dark:text-zinc-400",
-                            "Human-readable identifier used to reference this prompt in workflows"
-                        }
+                    TextInput {
+                        label: "Prompt ID".to_string(),
+                        value: prompt_id,
+                        oninput: move |value| prompt_id.set(value),
+                        placeholder: Some("e.g., generate-rust-code".to_string()),
+                        help_text: Some("Human-readable identifier used to reference this prompt in workflows".to_string()),
+                        required: Some(true),
+                        disabled: Some(false),
                     }
 
-                    div {
-                        label { class: "block text-sm font-medium text-zinc-900 dark:text-white mb-2",
-                            "Description"
-                        }
-                        input {
-                            r#type: "text",
-                            value: "{description()}",
-                            oninput: move |evt| description.set(evt.value()),
-                            placeholder: "Brief description of what this prompt does",
-                            class: "block w-full rounded-md border-0 py-1.5 text-zinc-900 dark:text-white shadow-sm ring-1 ring-inset ring-zinc-300 dark:ring-zinc-600 placeholder:text-zinc-400 dark:placeholder:text-zinc-500 focus:ring-2 focus:ring-inset focus:ring-blue-600 dark:bg-zinc-700 sm:text-sm sm:leading-6"
-                        }
+                    TextInput {
+                        label: "Description".to_string(),
+                        value: description,
+                        oninput: move |value| description.set(value),
+                        placeholder: Some("Brief description of what this prompt does".to_string()),
+                        help_text: None,
+                        required: Some(false),
+                        disabled: Some(false),
                     }
 
-                    div {
-                        label { class: "block text-sm font-medium text-zinc-900 dark:text-white mb-2",
-                            "Prompt Content"
-                        }
-                        textarea {
-                            value: "{content()}",
-                            oninput: move |evt| content.set(evt.value()),
-                            placeholder: "Enter the prompt template content...",
-                            rows: 15,
-                            class: "block w-full rounded-md border-0 py-1.5 text-zinc-900 dark:text-white shadow-sm ring-1 ring-inset ring-zinc-300 dark:ring-zinc-600 placeholder:text-zinc-400 dark:placeholder:text-zinc-500 focus:ring-2 focus:ring-inset focus:ring-blue-600 dark:bg-zinc-700 sm:text-sm sm:leading-6 font-mono"
-                        }
-                        p { class: "mt-1 text-xs text-zinc-500 dark:text-zinc-400",
-                            "The actual prompt text that will be sent to the AI model"
-                        }
+                    TextareaInput {
+                        label: "Prompt Content".to_string(),
+                        value: content,
+                        oninput: move |value| content.set(value),
+                        placeholder: Some("Enter the prompt template content...".to_string()),
+                        help_text: Some("The actual prompt text that will be sent to the AI model".to_string()),
+                        rows: Some(15),
+                        disabled: Some(false),
                     }
 
-                    if !validation_error().is_empty() {
-                        div { class: "mt-2 text-sm text-red-600 dark:text-red-400",
-                            {validation_error()}
-                        }
+                    ValidationMessage {
+                        message: validation_error,
                     }
                 }
             }
