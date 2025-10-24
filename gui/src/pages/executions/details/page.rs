@@ -1,5 +1,5 @@
-use crate::pages::workflow::details::components::*;
-use crate::pages::workflow::details::hooks::*;
+use crate::pages::executions::details::components::*;
+use crate::pages::executions::details::hooks::*;
 use dioxus::prelude::*;
 
 #[component]

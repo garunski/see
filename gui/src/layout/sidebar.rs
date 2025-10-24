@@ -62,7 +62,7 @@ pub fn Sidebar() -> Element {
                                 class: Some("shrink-0 fill-zinc-500 data-hover:fill-zinc-900 data-active:fill-zinc-900 dark:fill-zinc-400 dark:data-hover:fill-white dark:data-active:fill-white".to_string()),
                                 size: Some("w-4 h-4".to_string()),
                             }
-                            span { class: "truncate", "History" }
+                            span { class: "truncate", "Executions" }
                         }
                         Link {
                             to: Route::PromptsListPage {},

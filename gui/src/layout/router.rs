@@ -26,9 +26,9 @@ pub enum Route {
         WorkflowEditPageNew {},
         #[route("/workflows/edit/:id")]
         WorkflowEditPage { id: String },
-        #[route("/history")]
+        #[route("/executions/history")]
         HistoryPage {},
-        #[route("/history/:id")]
+        #[route("/executions/details/:id")]
         WorkflowDetailsPage { id: String },
         #[route("/prompts")]
         PromptsListPage {},

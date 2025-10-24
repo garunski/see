@@ -32,8 +32,8 @@ pub fn HistoryPage() -> Element {
     rsx! {
         div { class: "space-y-8",
             PageHeader {
-                title: "Workflow History".to_string(),
-                description: "View and manage your previous workflow executions".to_string(),
+                title: "Executions".to_string(),
+                description: "View and manage your workflow executions".to_string(),
                 actions: Some(rsx! {
                     Button {
                         variant: ButtonVariant::Ghost,

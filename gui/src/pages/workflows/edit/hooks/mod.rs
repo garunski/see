@@ -2,7 +2,7 @@ use crate::state::AppStateProvider;
 use dioxus::prelude::*;
 use see_core::WorkflowJson;
 
-use crate::pages::workflow::edit::EditMode;
+use crate::pages::workflows::edit::EditMode;
 
 #[derive(Clone)]
 pub struct WorkflowEditState {
