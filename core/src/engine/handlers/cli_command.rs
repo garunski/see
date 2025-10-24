@@ -1,6 +1,6 @@
 use crate::errors::CoreError;
 use crate::execution::context::ExecutionContext;
-use crate::task_executor::{TaskExecutor, TaskLogger};
+use crate::task_executor::{TaskExecutor, TaskLogger, TaskPersistenceHelper};
 use crate::types::TaskStatus;
 use async_trait::async_trait;
 use dataflow_rs::engine::{
@@ -11,15 +11,19 @@ use dataflow_rs::DataflowError;
 use datalogic_rs::DataLogic;
 use serde_json::{json, Value};
 use std::sync::{Arc, Mutex};
-use tracing::{debug, error, instrument, trace, Instrument};
+use tracing::{debug, error, instrument};
 
 pub struct CliCommandHandler {
     context: Arc<Mutex<ExecutionContext>>,
+    persistence: TaskPersistenceHelper,
 }
 
 impl CliCommandHandler {
     pub fn new(context: Arc<Mutex<ExecutionContext>>) -> Self {
-        Self { context }
+        Self {
+            context: context.clone(),
+            persistence: TaskPersistenceHelper::new(context),
+        }
     }
 
     #[allow(clippy::only_used_in_recursion)]
@@ -110,31 +114,8 @@ impl TaskExecutor for CliCommandHandler {
         debug!("Starting task execution");
         logger.start_task(task_id);
 
-        if let Ok(ctx) = self.context.lock() {
-            if let Some(store) = ctx.get_store() {
-                let task_exec = crate::persistence::models::TaskExecution {
-                    execution_id: ctx.get_execution_id(),
-                    task_id: task_id.to_string(),
-                    task_name: task_id.to_string(),
-                    status: TaskStatus::InProgress,
-                    logs: ctx.get_task_logs(task_id),
-                    start_timestamp: ctx.get_task_start_time(task_id),
-                    end_timestamp: String::new(),
-                };
-                drop(ctx);
-
-                let span = tracing::debug_span!("save_task_start_bg", task_id = %task_id);
-                tokio::spawn(
-                    async move {
-                        trace!("Saving task start state");
-                        if let Err(e) = store.save_task_execution(&task_exec).await {
-                            error!(error = %e, "Failed to save task start");
-                        }
-                    }
-                    .instrument(span),
-                );
-            }
-        }
+        self.persistence
+            .save_task_state_async(task_id, TaskStatus::InProgress);
 
         let formatted_command = if args.is_empty() {
             command.to_string()
@@ -173,31 +154,8 @@ impl TaskExecutor for CliCommandHandler {
             error!(exit_code = ?output.status.code(), stderr = %stderr, "Command failed");
             logger.end_task(task_id);
 
-            if let Ok(ctx) = self.context.lock() {
-                if let Some(store) = ctx.get_store() {
-                    let task_exec = crate::persistence::models::TaskExecution {
-                        execution_id: ctx.get_execution_id(),
-                        task_id: task_id.to_string(),
-                        task_name: task_id.to_string(),
-                        status: TaskStatus::Failed,
-                        logs: ctx.get_task_logs(task_id),
-                        start_timestamp: ctx.get_task_start_time(task_id),
-                        end_timestamp: chrono::Utc::now().to_rfc3339(),
-                    };
-                    drop(ctx);
-
-                    let span = tracing::debug_span!("save_task_failed_bg", task_id = %task_id);
-                    tokio::spawn(
-                        async move {
-                            trace!("Saving failed task state");
-                            if let Err(e) = store.save_task_execution(&task_exec).await {
-                                error!(error = %e, "Failed to save failed task");
-                            }
-                        }
-                        .instrument(span),
-                    );
-                }
-            }
+            self.persistence
+                .save_task_state_async(task_id, TaskStatus::Failed);
 
             return Err(CoreError::CommandExecution(format!(
                 "Command '{}' failed with exit code: {:?}\nstderr: {}",
@@ -238,31 +196,8 @@ impl TaskExecutor for CliCommandHandler {
 
         logger.end_task(task_id);
 
-        if let Ok(ctx) = self.context.lock() {
-            if let Some(store) = ctx.get_store() {
-                let task_exec = crate::persistence::models::TaskExecution {
-                    execution_id: ctx.get_execution_id(),
-                    task_id: task_id.to_string(),
-                    task_name: task_id.to_string(),
-                    status: TaskStatus::Complete,
-                    logs: ctx.get_task_logs(task_id),
-                    start_timestamp: ctx.get_task_start_time(task_id),
-                    end_timestamp: chrono::Utc::now().to_rfc3339(),
-                };
-                drop(ctx);
-
-                let span = tracing::debug_span!("save_task_complete_bg", task_id = %task_id);
-                tokio::spawn(
-                    async move {
-                        trace!("Saving task completion state");
-                        if let Err(e) = store.save_task_execution(&task_exec).await {
-                            error!(error = %e, "Failed to save task completion");
-                        }
-                    }
-                    .instrument(span),
-                );
-            }
-        }
+        self.persistence
+            .save_task_state_async(task_id, TaskStatus::Complete);
 
         Ok(result)
     }
