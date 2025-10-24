@@ -1,7 +1,7 @@
 version: '3'
 
 env:
-  RUST_LOG: s_e_e_core=trace
+  RUST_LOG: s_e_e_core=trace,s_e_e_gui=trace
 
 tasks:
   quality:
@@ -16,10 +16,10 @@ tasks:
   run-gui:
     desc: Run GUI with dx CLI
     cmds:
-      - task: fmt
       - task: tailwind
       - task: icons
       - task: visualizer
+      - task: fmt
       - dx run --package s_e_e_gui
 
   clean:
@@ -62,3 +62,8 @@ tasks:
     cmds:
       - npm install
       - npm run build
+
+  clear-db:
+    desc: Deletes the database completely
+    cmds:
+      - rm -f ~/.s_e_e/audit.redb

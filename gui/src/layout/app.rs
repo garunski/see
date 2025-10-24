@@ -105,6 +105,11 @@ fn AppContent() -> Element {
                 match s_e_e_core::get_global_store() {
                     Ok(store) => match store.list_workflow_executions(50).await {
                         Ok(history) => {
+                            tracing::info!(
+                                "📊 HISTORY LOADED FROM DATABASE: count={}, execution_ids={:?}",
+                                history.len(),
+                                history.iter().map(|h| &h.id).collect::<Vec<_>>()
+                            );
                             history_state.write().set_history(history);
                         }
                         Err(e) => {

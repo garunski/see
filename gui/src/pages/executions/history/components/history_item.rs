@@ -11,6 +11,15 @@ pub fn HistoryItem(
     on_delete_execution: EventHandler<String>,
 ) -> Element {
     let execution_id_for_delete = execution.id.clone();
+
+    // Log each time this component renders
+    tracing::info!(
+        "📋 RENDERING HistoryItem: execution_id={}, workflow_name={}, success={}",
+        execution.id,
+        execution.workflow_name,
+        execution.success
+    );
+
     rsx! {
         div { class: "bg-white dark:bg-zinc-800 rounded-xl border border-zinc-200 dark:border-zinc-700 shadow-sm hover:bg-zinc-50 dark:hover:bg-zinc-700 transition-colors",
             div { class: "flex items-center justify-between p-6",

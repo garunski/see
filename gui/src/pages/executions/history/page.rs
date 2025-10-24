@@ -9,6 +9,7 @@ use super::hooks::{use_deletion_handlers, use_history_data};
 
 #[component]
 pub fn HistoryPage() -> Element {
+    tracing::info!("🚀 HISTORY PAGE COMPONENT RENDERING");
     let _state_provider = use_context::<AppStateProvider>();
 
     // Use custom hooks for data management
@@ -28,6 +29,19 @@ pub fn HistoryPage() -> Element {
     // Get data from state using hooks
     let workflow_history = use_workflow_history();
     let running_workflows = use_running_workflows();
+
+    // Log what we're displaying
+    use_effect(move || {
+        let running = running_workflows();
+        let history = workflow_history();
+        tracing::info!(
+            "🖥️  HISTORY PAGE RENDERING: running_count={}, running_ids={:?}, completed_count={}, completed_ids={:?}",
+            running.len(),
+            running.iter().map(|w| &w.id).collect::<Vec<_>>(),
+            history.len(),
+            history.iter().map(|h| &h.id).collect::<Vec<_>>()
+        );
+    });
 
     rsx! {
         div { class: "space-y-8",
@@ -73,7 +87,16 @@ pub fn HistoryPage() -> Element {
                             }
                         }
                         div { class: "grid gap-6",
-                            for workflow in running_workflows().iter() {
+                            for (index, workflow) in running_workflows().iter().enumerate() {
+                                {
+                                    tracing::info!(
+                                        "🔄 RENDERING RUNNING WORKFLOW #{}: id={}, name={}, status={:?}",
+                                        index + 1,
+                                        workflow.id,
+                                        workflow.workflow_name,
+                                        workflow.status
+                                    );
+                                }
                                 RunningWorkflowItem {
                                     workflow: workflow.clone(),
                                     on_delete_workflow: delete_running_workflow.clone(),
@@ -102,7 +125,16 @@ pub fn HistoryPage() -> Element {
                         }
                     } else {
                         div { class: "grid gap-6",
-                            for execution in workflow_history().iter() {
+                            for (index, execution) in workflow_history().iter().enumerate() {
+                                {
+                                    tracing::info!(
+                                        "📋 RENDERING HISTORY ITEM #{}: id={}, name={}, success={}",
+                                        index + 1,
+                                        execution.id,
+                                        execution.workflow_name,
+                                        execution.success
+                                    );
+                                }
                                 HistoryItem {
                                     execution: execution.clone(),
                                     on_delete_execution: delete_execution.clone(),

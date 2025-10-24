@@ -41,10 +41,25 @@ impl HistoryService {
             .await
             .map_err(|e| HistoryError::FetchRunningWorkflowsFailed(e.to_string()))?;
 
+        tracing::info!(
+            "📊 RUNNING WORKFLOWS FROM DATABASE: total_metadata_count={}, metadata_ids={:?}",
+            metadata.len(),
+            metadata
+                .iter()
+                .map(|m| (&m.id, &m.status))
+                .collect::<Vec<_>>()
+        );
+
         let running: Vec<_> = metadata
             .into_iter()
             .filter(|m| m.status == WorkflowStatus::Running)
             .collect();
+
+        tracing::info!(
+            "📊 FILTERED RUNNING WORKFLOWS: running_count={}, running_ids={:?}",
+            running.len(),
+            running.iter().map(|m| &m.id).collect::<Vec<_>>()
+        );
 
         Ok(running)
     }

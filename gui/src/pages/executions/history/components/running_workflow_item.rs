@@ -11,6 +11,15 @@ pub fn RunningWorkflowItem(
     on_delete_workflow: EventHandler<String>,
 ) -> Element {
     let workflow_id_for_delete = workflow.id.clone();
+
+    // Log each time this component renders
+    tracing::info!(
+        "🏃 RENDERING RunningWorkflowItem: execution_id={}, workflow_name={}, status={:?}",
+        workflow.id,
+        workflow.workflow_name,
+        workflow.status
+    );
+
     rsx! {
         div { class: "bg-white dark:bg-zinc-800 rounded-xl border border-zinc-200 dark:border-zinc-700 shadow-sm hover:bg-zinc-50 dark:hover:bg-zinc-700 transition-colors",
             div { class: "flex items-center justify-between p-6",

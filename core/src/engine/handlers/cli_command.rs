@@ -1,5 +1,5 @@
 use crate::errors::CoreError;
-use crate::execution::context::ExecutionContext;
+use crate::execution::context::{ExecutionContext, ExecutionContextSafe};
 use crate::task_executor::{TaskExecutor, TaskLogger, TaskPersistenceHelper};
 use crate::types::TaskStatus;
 use async_trait::async_trait;
@@ -11,7 +11,7 @@ use dataflow_rs::DataflowError;
 use datalogic_rs::DataLogic;
 use serde_json::{json, Value};
 use std::sync::{Arc, Mutex};
-use tracing::{debug, error, instrument};
+use tracing::{debug, error, info, instrument};
 
 pub struct CliCommandHandler {
     context: Arc<Mutex<ExecutionContext>>,
@@ -195,6 +195,26 @@ impl TaskExecutor for CliCommandHandler {
         });
 
         logger.end_task(task_id);
+
+        // Check if this task should pause for user input
+        if let Some(pause_config) = task_config.get("pause_for_input") {
+            if let Some(prompt) = pause_config.get("prompt").and_then(|v| v.as_str()) {
+                info!(
+                    task_id = %task_id,
+                    prompt = %prompt,
+                    "Pausing workflow for user input"
+                );
+
+                // Pause the workflow
+                self.context.safe_pause_for_input(task_id, prompt)?;
+
+                // Save task as waiting for input
+                self.persistence
+                    .save_task_state_async(task_id, TaskStatus::WaitingForInput);
+
+                return Ok(result);
+            }
+        }
 
         self.persistence
             .save_task_state_async(task_id, TaskStatus::Complete);
