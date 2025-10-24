@@ -4,7 +4,7 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-see_core = { path = "../core" }
+s_e_e_core = { path = "../core" }
 dioxus = { version = "0.6", features = ["desktop", "router"] }
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter", "fmt"] }

@@ -1,6 +1,6 @@
 use crate::state::AppStateProvider;
 use dioxus::prelude::*;
-use see_core::WorkflowDefinition;
+use s_e_e_core::WorkflowDefinition;
 use uuid::Uuid;
 
 use super::EditMode;
@@ -91,7 +91,7 @@ pub fn create_save_workflow_handler(params: SaveWorkflowParams) -> impl FnMut() 
 
         let _ui_state = state_provider.ui;
         spawn(async move {
-            match see_core::get_global_store() {
+            match s_e_e_core::get_global_store() {
                 Ok(store) => {
                     match store
                         .save_settings(&state_provider.settings.read().settings)
@@ -117,7 +117,7 @@ pub fn create_reset_to_default_handler(
     mut can_reset: Signal<bool>,
 ) -> impl FnMut() {
     move || {
-        let default_workflows = see_core::WorkflowDefinition::get_default_workflows();
+        let default_workflows = s_e_e_core::WorkflowDefinition::get_default_workflows();
         if let Some(default_workflow) = default_workflows.iter().find(|w| w.id == id) {
             state_provider
                 .settings
@@ -130,7 +130,7 @@ pub fn create_reset_to_default_handler(
 
             let _ui_state = state_provider.ui;
             spawn(async move {
-                match see_core::get_global_store() {
+                match s_e_e_core::get_global_store() {
                     Ok(store) => {
                         match store
                             .save_settings(&state_provider.settings.read().settings)

@@ -1,6 +1,6 @@
 use super::{StepNavigator, WorkflowProgress};
 use dioxus::prelude::*;
-use see_core::{TaskInfo, TaskStatus, WorkflowResult};
+use s_e_e_core::{TaskInfo, TaskStatus, WorkflowResult};
 
 #[component]
 pub fn WorkflowInfoCard(

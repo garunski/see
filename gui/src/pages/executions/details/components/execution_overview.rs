@@ -1,5 +1,5 @@
 use dioxus::prelude::*;
-use see_core::WorkflowExecution;
+use s_e_e_core::WorkflowExecution;
 
 #[component]
 pub fn ExecutionOverview(execution: WorkflowExecution) -> Element {

@@ -1,5 +1,5 @@
 use dioxus::prelude::*;
-use see_core::TaskInfo;
+use s_e_e_core::TaskInfo;
 
 #[allow(dead_code)]
 #[component]
@@ -28,10 +28,10 @@ pub fn WorkflowFlow(tasks: Vec<TaskInfo>, on_task_click: EventHandler<usize>) ->
                             div {
                                 class: "absolute left-1/2 -top-2 transform -translate-x-1/2 w-4 h-4 rounded-full border-2 border-white dark:border-zinc-900 z-10",
                                 style: format!("background-color: {}", match task.status {
-                                    see_core::TaskStatus::Complete => "#10b981",
-                                    see_core::TaskStatus::Failed => "#ef4444",
-                                    see_core::TaskStatus::InProgress => "#3b82f6",
-                                    see_core::TaskStatus::Pending => "#6b7280",
+                                    s_e_e_core::TaskStatus::Complete => "#10b981",
+                                    s_e_e_core::TaskStatus::Failed => "#ef4444",
+                                    s_e_e_core::TaskStatus::InProgress => "#3b82f6",
+                                    s_e_e_core::TaskStatus::Pending => "#6b7280",
                                 })
                             }
                         }
@@ -46,10 +46,10 @@ pub fn WorkflowFlow(tasks: Vec<TaskInfo>, on_task_click: EventHandler<usize>) ->
                                 div {
                                     class: "absolute left-1/2 -bottom-2 transform -translate-x-1/2 w-4 h-4 rounded-full border-2 border-white dark:border-zinc-900 z-10",
                                     style: format!("background-color: {}", match task.status {
-                                        see_core::TaskStatus::Complete => "#10b981",
-                                        see_core::TaskStatus::Failed => "#ef4444",
-                                        see_core::TaskStatus::InProgress => "#3b82f6",
-                                        see_core::TaskStatus::Pending => "#6b7280",
+                                        s_e_e_core::TaskStatus::Complete => "#10b981",
+                                        s_e_e_core::TaskStatus::Failed => "#ef4444",
+                                        s_e_e_core::TaskStatus::InProgress => "#3b82f6",
+                                        s_e_e_core::TaskStatus::Pending => "#6b7280",
                                     })
                                 }
                             }
@@ -59,10 +59,10 @@ pub fn WorkflowFlow(tasks: Vec<TaskInfo>, on_task_click: EventHandler<usize>) ->
                                 div {
                                     class: "absolute left-1/2 top-full transform -translate-x-1/2 w-0.5 h-6",
                                     style: format!("background-color: {}", match task.status {
-                                        see_core::TaskStatus::Complete => "#10b981",
-                                        see_core::TaskStatus::Failed => "#ef4444",
-                                        see_core::TaskStatus::InProgress => "#3b82f6",
-                                        see_core::TaskStatus::Pending => "#6b7280",
+                                        s_e_e_core::TaskStatus::Complete => "#10b981",
+                                        s_e_e_core::TaskStatus::Failed => "#ef4444",
+                                        s_e_e_core::TaskStatus::InProgress => "#3b82f6",
+                                        s_e_e_core::TaskStatus::Pending => "#6b7280",
                                     })
                                 }
                             }
@@ -72,17 +72,17 @@ pub fn WorkflowFlow(tasks: Vec<TaskInfo>, on_task_click: EventHandler<usize>) ->
                                 div {
                                     class: format!("px-3 py-1 text-sm rounded-full font-medium {}",
                                         match task.status {
-                                            see_core::TaskStatus::Complete => "bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-200",
-                                            see_core::TaskStatus::Failed => "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200",
-                                            see_core::TaskStatus::InProgress => "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200",
-                                            see_core::TaskStatus::Pending => "bg-zinc-100 text-zinc-800 dark:bg-zinc-900 dark:text-zinc-200",
+                                            s_e_e_core::TaskStatus::Complete => "bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-200",
+                                            s_e_e_core::TaskStatus::Failed => "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200",
+                                            s_e_e_core::TaskStatus::InProgress => "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200",
+                                            s_e_e_core::TaskStatus::Pending => "bg-zinc-100 text-zinc-800 dark:bg-zinc-900 dark:text-zinc-200",
                                         }
                                     ),
                                     match task.status {
-                                        see_core::TaskStatus::Complete => "Complete",
-                                        see_core::TaskStatus::Failed => "Failed",
-                                        see_core::TaskStatus::InProgress => "In Progress",
-                                        see_core::TaskStatus::Pending => "Pending",
+                                        s_e_e_core::TaskStatus::Complete => "Complete",
+                                        s_e_e_core::TaskStatus::Failed => "Failed",
+                                        s_e_e_core::TaskStatus::InProgress => "In Progress",
+                                        s_e_e_core::TaskStatus::Pending => "Pending",
                                     }
                                 }
                             }

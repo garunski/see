@@ -1,5 +1,5 @@
 use dioxus::prelude::*;
-use see_core::TaskInfo;
+use s_e_e_core::TaskInfo;
 
 #[component]
 pub fn TaskLogs(

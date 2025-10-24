@@ -1,7 +1,7 @@
 #[allow(dead_code)]
 use crate::components::{Button, ButtonSize, ButtonVariant};
 use dioxus::prelude::*;
-use see_core::TaskStatus;
+use s_e_e_core::TaskStatus;
 
 #[component]
 pub fn StepNavigator(

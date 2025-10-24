@@ -1,7 +1,7 @@
 #[allow(dead_code)]
 use super::{StepNavigator, WorkflowProgress};
 use dioxus::prelude::*;
-use see_core::{TaskInfo, TaskStatus};
+use s_e_e_core::{TaskInfo, TaskStatus};
 
 #[component]
 pub fn TaskViewer(

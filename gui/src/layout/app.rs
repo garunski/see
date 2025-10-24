@@ -2,7 +2,7 @@ use super::router::Route;
 use crate::state::AppStateProvider;
 use dioxus::prelude::*;
 use dioxus_desktop::use_window;
-use see_core::AppSettings;
+use s_e_e_core::AppSettings;
 
 #[component]
 pub fn App() -> Element {
@@ -48,7 +48,7 @@ fn AppContent() -> Element {
     use_context_provider(|| state_provider.clone());
 
     let settings_loader = use_resource(|| async move {
-        match see_core::get_global_store() {
+        match s_e_e_core::get_global_store() {
             Ok(store) => match store.load_settings().await {
                 Ok(Some(loaded)) => Ok(loaded),
                 Ok(None) => Ok(AppSettings::default()),
@@ -68,7 +68,7 @@ fn AppContent() -> Element {
                 .write()
                 .apply_loaded_settings(settings.clone());
 
-            let default_workflows = see_core::WorkflowDefinition::get_default_workflows();
+            let default_workflows = s_e_e_core::WorkflowDefinition::get_default_workflows();
             let mut settings_guard = state_provider.settings.write();
             for default_workflow in default_workflows {
                 let exists = settings_guard
@@ -83,7 +83,7 @@ fn AppContent() -> Element {
 
             let settings_to_save = settings_guard.settings.clone();
             spawn(async move {
-                match see_core::get_global_store() {
+                match s_e_e_core::get_global_store() {
                     Ok(store) => {
                         if let Err(e) = store.save_settings(&settings_to_save).await {
                             eprintln!("Failed to save default workflows: {}", e);
@@ -102,7 +102,7 @@ fn AppContent() -> Element {
         if needs_reload {
             let mut history_state = state_provider.history;
             spawn(async move {
-                match see_core::get_global_store() {
+                match s_e_e_core::get_global_store() {
                     Ok(store) => match store.list_workflow_executions(50).await {
                         Ok(history) => {
                             history_state.write().set_history(history);
@@ -124,7 +124,7 @@ fn AppContent() -> Element {
     use_effect(move || {
         let settings_to_save = state_provider.settings.read().settings.clone();
         spawn(async move {
-            match see_core::get_global_store() {
+            match s_e_e_core::get_global_store() {
                 Ok(store) => {
                     if let Err(e) = store.save_settings(&settings_to_save).await {
                         eprintln!("Failed to save theme settings: {}", e);
@@ -141,9 +141,9 @@ fn AppContent() -> Element {
         div {
             class: format!("min-h-screen bg-white dark:bg-zinc-900 text-zinc-950 dark:text-white {}",
                 match theme_signal() {
-                    see_core::Theme::Light => "light",
-                    see_core::Theme::Dark => "dark",
-                    see_core::Theme::System => {
+                    s_e_e_core::Theme::Light => "light",
+                    s_e_e_core::Theme::Dark => "dark",
+                    s_e_e_core::Theme::System => {
                         if matches!(dark_light::detect(), dark_light::Mode::Dark) {
                             "dark"
                         } else {

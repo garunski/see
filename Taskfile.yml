@@ -1,7 +1,7 @@
 version: '3'
 
 env:
-  RUST_LOG: see_core=trace
+  RUST_LOG: s_e_e_core=trace
 
 tasks:
   quality:

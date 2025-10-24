@@ -8,7 +8,7 @@ use crate::services::prompt::PromptService;
 use crate::state::AppStateProvider;
 use dioxus::prelude::*;
 use dioxus_router::prelude::{use_navigator, Link};
-use see_core::persistence::models::Prompt;
+use s_e_e_core::persistence::models::Prompt;
 
 #[component]
 pub fn PromptEditPage(id: String) -> Element {

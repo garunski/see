@@ -1,4 +1,4 @@
-use see_core::persistence::models::Prompt;
+use s_e_e_core::persistence::models::Prompt;
 
 #[derive(Debug, thiserror::Error)]
 pub enum PromptError {
@@ -18,7 +18,7 @@ pub struct PromptService;
 
 impl PromptService {
     pub async fn fetch_prompts() -> Result<Vec<Prompt>, PromptError> {
-        let store = see_core::get_global_store()
+        let store = s_e_e_core::get_global_store()
             .map_err(|e| PromptError::DatabaseUnavailable(e.to_string()))?;
 
         store
@@ -28,7 +28,7 @@ impl PromptService {
     }
 
     pub async fn create_prompt(prompt: Prompt) -> Result<(), PromptError> {
-        let store = see_core::get_global_store()
+        let store = s_e_e_core::get_global_store()
             .map_err(|e| PromptError::DatabaseUnavailable(e.to_string()))?;
 
         store
@@ -38,7 +38,7 @@ impl PromptService {
     }
 
     pub async fn update_prompt(prompt: Prompt) -> Result<(), PromptError> {
-        let store = see_core::get_global_store()
+        let store = s_e_e_core::get_global_store()
             .map_err(|e| PromptError::DatabaseUnavailable(e.to_string()))?;
 
         store
@@ -48,7 +48,7 @@ impl PromptService {
     }
 
     pub async fn delete_prompt(id: &str) -> Result<(), PromptError> {
-        let store = see_core::get_global_store()
+        let store = s_e_e_core::get_global_store()
             .map_err(|e| PromptError::DatabaseUnavailable(e.to_string()))?;
 
         store

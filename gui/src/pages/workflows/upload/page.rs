@@ -61,7 +61,7 @@ pub fn UploadPage() -> Element {
                     settings_state.write().add_workflow(workflow.clone());
 
                     // Save settings to database
-                    match see_core::get_global_store() {
+                    match s_e_e_core::get_global_store() {
                         Ok(store) => {
                             let settings_to_save = settings_state.read().settings.clone();
                             if let Err(e) = store.save_settings(&settings_to_save).await {

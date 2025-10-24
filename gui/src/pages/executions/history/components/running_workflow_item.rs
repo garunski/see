@@ -3,7 +3,7 @@ use crate::icons::Icon;
 use crate::layout::router::Route;
 use dioxus::prelude::*;
 use dioxus_router::prelude::Link;
-use see_core::WorkflowMetadata;
+use s_e_e_core::WorkflowMetadata;
 
 #[component]
 pub fn RunningWorkflowItem(

@@ -1,5 +1,5 @@
 use clap::Parser;
-use see_core::{execute_workflow, OutputCallback};
+use s_e_e_core::{execute_workflow, OutputCallback};
 
 #[derive(Parser, Debug)]
 #[command(name = "see-cli", version, about = "Run workflows")]
@@ -10,7 +10,7 @@ struct Args {
 
 #[tokio::main]
 async fn main() {
-    let _tracing_guard = see_core::init_tracing(None)
+    let _tracing_guard = s_e_e_core::init_tracing(None)
         .map_err(|e| format!("Failed to initialize tracing: {}", e))
         .expect("Failed to initialize tracing");
 

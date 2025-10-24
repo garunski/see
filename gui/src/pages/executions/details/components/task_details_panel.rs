@@ -1,7 +1,7 @@
 use crate::components::{Button, ButtonSize, ButtonVariant, Slideout};
 use crate::icons::Icon;
 use dioxus::prelude::*;
-use see_core::{TaskInfo, WorkflowExecution};
+use s_e_e_core::{TaskInfo, WorkflowExecution};
 
 #[allow(dead_code)]
 #[component]
@@ -31,10 +31,10 @@ pub fn TaskDetailsPanel(
     // Determine backdrop color based on task status
     let backdrop_class = if let Some(task) = current_task.as_ref() {
         match task.status {
-            see_core::TaskStatus::Complete => "bg-emerald-500/20 backdrop-blur-sm",
-            see_core::TaskStatus::Failed => "bg-red-500/20 backdrop-blur-sm",
-            see_core::TaskStatus::InProgress => "bg-blue-500/20 backdrop-blur-sm",
-            see_core::TaskStatus::Pending => "bg-zinc-500/20 backdrop-blur-sm",
+            s_e_e_core::TaskStatus::Complete => "bg-emerald-500/20 backdrop-blur-sm",
+            s_e_e_core::TaskStatus::Failed => "bg-red-500/20 backdrop-blur-sm",
+            s_e_e_core::TaskStatus::InProgress => "bg-blue-500/20 backdrop-blur-sm",
+            s_e_e_core::TaskStatus::Pending => "bg-zinc-500/20 backdrop-blur-sm",
         }
     } else {
         "bg-zinc-500/20 backdrop-blur-sm"
@@ -102,8 +102,8 @@ pub fn TaskDetailsPanel(
                                             div {
                                                 class: format!("px-2 py-1 rounded text-xs font-medium {}",
                                                     match entry.status {
-                                                        see_core::AuditStatus::Success => "bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-200",
-                                                        see_core::AuditStatus::Failure => "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200",
+                                                        s_e_e_core::AuditStatus::Success => "bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-200",
+                                                        s_e_e_core::AuditStatus::Failure => "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200",
                                                     }
                                                 ),
                                                 "{entry.status}"
@@ -143,17 +143,17 @@ pub fn TaskDetailsPanel(
                     div {
                         class: format!("px-3 py-1 text-sm rounded-full font-medium {}",
                             match task.status {
-                                see_core::TaskStatus::Complete => "bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-200",
-                                see_core::TaskStatus::Failed => "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200",
-                                see_core::TaskStatus::InProgress => "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200",
-                                see_core::TaskStatus::Pending => "bg-zinc-100 text-zinc-800 dark:bg-zinc-900 dark:text-zinc-200",
+                                s_e_e_core::TaskStatus::Complete => "bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-200",
+                                s_e_e_core::TaskStatus::Failed => "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200",
+                                s_e_e_core::TaskStatus::InProgress => "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200",
+                                s_e_e_core::TaskStatus::Pending => "bg-zinc-100 text-zinc-800 dark:bg-zinc-900 dark:text-zinc-200",
                             }
                         ),
                         match task.status {
-                            see_core::TaskStatus::Complete => "Complete",
-                            see_core::TaskStatus::Failed => "Failed",
-                            see_core::TaskStatus::InProgress => "In Progress",
-                            see_core::TaskStatus::Pending => "Pending",
+                            s_e_e_core::TaskStatus::Complete => "Complete",
+                            s_e_e_core::TaskStatus::Failed => "Failed",
+                            s_e_e_core::TaskStatus::InProgress => "In Progress",
+                            s_e_e_core::TaskStatus::Pending => "Pending",
                         }
                     }
                 }

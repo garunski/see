@@ -1,13 +1,13 @@
 [application]
-name = "see"
+name = "s_e_e"
 default_platform = "desktop"
 
 [web.app]
-title = "See Workflow Engine"
+title = "Speculative Execution Engine"
 
 [web.dev]
 proxy = ""
 
 [bundle]
-identifier = "com.see.workflow-engine"
-publisher = "See"
+identifier = "com.s_e_e.workflow-engine"
+publisher = "Speculative Execution Engine"

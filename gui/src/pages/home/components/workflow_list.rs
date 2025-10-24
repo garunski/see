@@ -1,5 +1,5 @@
 use dioxus::prelude::*;
-use see_core::WorkflowDefinition;
+use s_e_e_core::WorkflowDefinition;
 
 use super::WorkflowCard;
 

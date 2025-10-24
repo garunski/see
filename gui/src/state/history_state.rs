@@ -1,4 +1,4 @@
-use see_core::{WorkflowExecutionSummary, WorkflowMetadata};
+use s_e_e_core::{WorkflowExecutionSummary, WorkflowMetadata};
 
 #[derive(Debug, Clone)]
 pub struct HistoryState {

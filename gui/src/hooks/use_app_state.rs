@@ -1,7 +1,7 @@
 use crate::state::AppStateProvider;
 use dioxus::prelude::*;
-use see_core::persistence::models::Prompt;
-use see_core::{WorkflowDefinition, WorkflowExecutionSummary, WorkflowMetadata};
+use s_e_e_core::persistence::models::Prompt;
+use s_e_e_core::{WorkflowDefinition, WorkflowExecutionSummary, WorkflowMetadata};
 
 // Direct context access
 pub fn use_app_state() -> AppStateProvider {

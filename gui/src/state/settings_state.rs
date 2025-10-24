@@ -1,5 +1,5 @@
 use dark_light;
-use see_core::{AppSettings, Theme, WorkflowDefinition};
+use s_e_e_core::{AppSettings, Theme, WorkflowDefinition};
 
 #[derive(Debug, Clone)]
 pub struct SettingsState {

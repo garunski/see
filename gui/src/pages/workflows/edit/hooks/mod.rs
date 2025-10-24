@@ -1,6 +1,6 @@
 use crate::state::AppStateProvider;
 use dioxus::prelude::*;
-use see_core::WorkflowJson;
+use s_e_e_core::WorkflowJson;
 
 use crate::pages::workflows::edit::EditMode;
 

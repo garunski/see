@@ -1,5 +1,5 @@
 use dioxus::prelude::*;
-use see_core::AuditEntry;
+use s_e_e_core::AuditEntry;
 
 #[component]
 pub fn AuditTrail(audit_entries: Vec<AuditEntry>) -> Element {

@@ -1,5 +1,5 @@
-use see_core::persistence::models::WorkflowStatus;
-use see_core::{WorkflowExecutionSummary, WorkflowMetadata};
+use s_e_e_core::persistence::models::WorkflowStatus;
+use s_e_e_core::{WorkflowExecutionSummary, WorkflowMetadata};
 
 #[derive(Debug, thiserror::Error)]
 pub enum HistoryError {
@@ -21,7 +21,7 @@ impl HistoryService {
     pub async fn fetch_workflow_executions(
         limit: usize,
     ) -> Result<Vec<WorkflowExecutionSummary>, HistoryError> {
-        let store = see_core::get_global_store()
+        let store = s_e_e_core::get_global_store()
             .map_err(|e| HistoryError::DatabaseUnavailable(e.to_string()))?;
 
         store
@@ -33,7 +33,7 @@ impl HistoryService {
     pub async fn fetch_running_workflows(
         limit: usize,
     ) -> Result<Vec<WorkflowMetadata>, HistoryError> {
-        let store = see_core::get_global_store()
+        let store = s_e_e_core::get_global_store()
             .map_err(|e| HistoryError::DatabaseUnavailable(e.to_string()))?;
 
         let metadata = store
@@ -61,7 +61,7 @@ impl HistoryService {
     }
 
     pub async fn delete_execution(id: &str) -> Result<(), HistoryError> {
-        let store = see_core::get_global_store()
+        let store = s_e_e_core::get_global_store()
             .map_err(|e| HistoryError::DatabaseUnavailable(e.to_string()))?;
 
         store
@@ -71,7 +71,7 @@ impl HistoryService {
     }
 
     pub async fn delete_running_workflow(id: &str) -> Result<(), HistoryError> {
-        let store = see_core::get_global_store()
+        let store = s_e_e_core::get_global_store()
             .map_err(|e| HistoryError::DatabaseUnavailable(e.to_string()))?;
 
         store

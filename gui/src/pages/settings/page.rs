@@ -3,7 +3,7 @@ use crate::icons::Icon;
 use crate::services::clear_database;
 use crate::state::AppStateProvider;
 use dioxus::prelude::*;
-use see_core::Theme;
+use s_e_e_core::Theme;
 
 #[component]
 pub fn SettingsPage() -> Element {
@@ -18,10 +18,10 @@ pub fn SettingsPage() -> Element {
 
             let _ui_state = state_provider.ui;
             spawn(async move {
-                match see_core::get_global_store() {
+                match s_e_e_core::get_global_store() {
                     Ok(store) => {
                         match store
-                            .save_settings(&see_core::AppSettings {
+                            .save_settings(&s_e_e_core::AppSettings {
                                 theme: new_theme,
                                 workflows: state_provider
                                     .settings
@@ -60,7 +60,7 @@ pub fn SettingsPage() -> Element {
                         state.workflow.write().reset_before_run();
 
                         // Reload settings (will load defaults and trigger app reload)
-                        match see_core::get_global_store() {
+                        match s_e_e_core::get_global_store() {
                             Ok(store) => {
                                 if let Ok(Some(settings)) = store.load_settings().await {
                                     state.settings.write().apply_loaded_settings(settings);

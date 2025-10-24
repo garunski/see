@@ -1,5 +1,5 @@
 use dioxus::prelude::*;
-use see_core::WorkflowExecution;
+use s_e_e_core::WorkflowExecution;
 use std::time::Duration;
 
 const POLLING_INTERVAL_SECS: u64 = 2;
@@ -24,7 +24,7 @@ pub fn use_workflow_execution(
 
         spawn(async move {
             loop {
-                match see_core::get_global_store() {
+                match s_e_e_core::get_global_store() {
                     Ok(store) => match store.get_workflow_with_tasks(&id).await {
                         Ok(exec) => {
                             execution.set(Some(exec.clone()));
@@ -78,8 +78,8 @@ pub fn use_task_navigation(
 pub fn use_filtered_audit(
     execution: Signal<Option<WorkflowExecution>>,
     current_step: Signal<usize>,
-) -> Signal<Vec<see_core::AuditEntry>> {
-    let mut audit_entries = use_signal(Vec::<see_core::AuditEntry>::new);
+) -> Signal<Vec<s_e_e_core::AuditEntry>> {
+    let mut audit_entries = use_signal(Vec::<s_e_e_core::AuditEntry>::new);
 
     use_effect(move || {
         if let Some(exec) = execution() {

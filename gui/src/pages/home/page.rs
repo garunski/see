@@ -4,7 +4,7 @@ use crate::icons::Icon;
 use crate::layout::router::Route;
 use dioxus::prelude::*;
 use dioxus_router::prelude::use_navigator;
-use see_core::WorkflowDefinition;
+use s_e_e_core::WorkflowDefinition;
 
 use super::components::{ActionCard, ActionIcon};
 use super::hooks::use_workflow_execution;
@@ -78,7 +78,7 @@ pub fn HomePage() -> Element {
     rsx! {
         div { class: "space-y-8",
             PageHeader {
-                title: "Welcome to See".to_string(),
+                title: "Welcome to Speculative Execution Engine".to_string(),
                 description: "Your workflow automation platform".to_string(),
                 actions: None,
             }

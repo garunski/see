@@ -1,4 +1,4 @@
-use see_core::persistence::models::Prompt;
+use s_e_e_core::persistence::models::Prompt;
 
 #[derive(Debug, Clone)]
 pub struct PromptState {
