@@ -5,10 +5,6 @@ use dioxus::prelude::*;
 pub enum NotificationType {
     Success,
     Error,
-    #[allow(dead_code)]
-    Info,
-    #[allow(dead_code)]
-    Warning,
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -30,15 +26,11 @@ pub fn Notification(notification: Signal<NotificationData>, on_close: EventHandl
     let icon_name = match notification_data.r#type {
         NotificationType::Success => "check_circle",
         NotificationType::Error => "exclamation_circle",
-        NotificationType::Info => "information_circle",
-        NotificationType::Warning => "exclamation_triangle",
     };
 
     let icon_color = match notification_data.r#type {
         NotificationType::Success => "text-green-400",
         NotificationType::Error => "text-red-400",
-        NotificationType::Info => "text-blue-400",
-        NotificationType::Warning => "text-yellow-400",
     };
 
     rsx! {

@@ -3,7 +3,6 @@ use crate::icons::Icon;
 use dioxus::prelude::*;
 use s_e_e_core::{TaskInfo, WorkflowExecution};
 
-#[allow(dead_code)]
 #[component]
 pub fn TaskDetailsPanel(
     is_open: bool,

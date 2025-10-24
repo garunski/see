@@ -9,7 +9,6 @@ pub mod tracing;
 pub mod types;
 pub mod utils;
 
-// Re-export types for backward compatibility
 pub use types::*;
 
 // Re-export tracing functionality

@@ -1,7 +1,6 @@
 use dioxus::prelude::*;
 use s_e_e_core::TaskInfo;
 
-#[allow(dead_code)]
 #[component]
 pub fn WorkflowFlow(tasks: Vec<TaskInfo>, on_task_click: EventHandler<usize>) -> Element {
     if tasks.is_empty() {

@@ -48,7 +48,7 @@ pub struct WorkflowJson {
 }
 ```
 
-**Backward Compatibility**: The `metadata` field is optional with `#[serde(skip_serializing_if = "Option::is_none")]`, so existing workflows without metadata continue to work.
+**Note**: The `metadata` field is optional with `#[serde(skip_serializing_if = "Option::is_none")]`, so workflows without metadata continue to work.
 
 ### 3. Dioxus Visualizer Page
 

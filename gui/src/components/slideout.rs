@@ -2,7 +2,6 @@ use crate::components::{Button, ButtonSize, ButtonVariant};
 use crate::icons::Icon;
 use dioxus::prelude::*;
 
-#[allow(dead_code)]
 #[component]
 pub fn Slideout(
     is_open: bool,
