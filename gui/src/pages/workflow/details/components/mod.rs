@@ -20,7 +20,7 @@ pub use execution_overview::ExecutionOverview;
 pub use loading_state::LoadingState;
 pub use step_navigator::StepNavigator;
 pub use task_details_panel::TaskDetailsPanel;
-pub use task_logs::TaskLogs;
+// pub use task_logs::TaskLogs; // Not currently used
 // pub use task_viewer::TaskViewer; // Not currently used
 // pub use workflow_info_card::WorkflowInfoCard; // Not currently used
 pub use workflow_flow::WorkflowFlow;

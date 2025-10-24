@@ -39,11 +39,6 @@ pub fn WorkflowDetailsPage(id: String) -> Element {
 
                 AuditTrail { audit_entries: current_task_audit() }
 
-                TaskLogs {
-                    current_task: exec.tasks.get(current_step()).cloned(),
-                    per_task_logs: exec.per_task_logs.clone()
-                }
-
                 ErrorList { errors: exec.errors.clone() }
             }
         }
