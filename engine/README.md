@@ -7,9 +7,7 @@ A high-performance, fully auditable workflow engine with recursive `next_tasks` 
 - **Recursive `next_tasks`**: Tasks can have nested `next_tasks` arrays with unlimited depth
 - **Parallel Execution**: Multiple tasks in `next_tasks` execute simultaneously for optimal performance
 - **Sequential Dependencies**: Tasks execute in proper dependency order
-- **Backward Compatibility**: Full support for existing `dependencies` field
 - **Comprehensive Logging**: Complete audit trail with structured logging at debug, trace, and info levels
-- **Circular Dependency Detection**: Built-in cycle detection with detailed error reporting
 - **Task Handlers**: Extensible system for different task types (CLI, Cursor Agent, Custom)
 - **Error Handling**: Robust error handling with detailed context and recovery
 - **Testing**: Comprehensive test suite with unit and integration tests
@@ -22,9 +20,9 @@ The engine is built with a clean, modular architecture:
 ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
 │   JSON Parser   │───▶│ Dependency Graph│───▶│ Execution Engine│
 │                 │    │                 │    │                 │
-│ • Recursive     │    │ • Cycle Detect  │    │ • Parallel Exec │
-│ • Validation    │    │ • Topo Sort     │    │ • Task Handlers │
-│ • Error Context │    │ • Ready Tasks   │    │ • Audit Trail   │
+│ • Recursive     │    │ • Topo Sort     │    │ • Parallel Exec │
+│ • Validation    │    │ • Ready Tasks   │    │ • Task Handlers │
+│ • Error Context │    │ • Dependencies  │    │ • Audit Trail   │
 └─────────────────┘    └─────────────────┘    └─────────────────┘
          │                       │                       │
          ▼                       ▼                       ▼

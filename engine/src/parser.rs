@@ -125,31 +125,6 @@ fn parse_task_recursive(
     trace!(task_id = %task_id, "Parsing task function");
     let function = parse_task_function(task_json)?;
 
-    // Parse dependencies (for backward compatibility)
-    let dependencies = task_json
-        .get("dependencies")
-        .and_then(|v| v.as_array())
-        .map(|arr| {
-            let deps: Vec<String> = arr
-                .iter()
-                .filter_map(|v| v.as_str())
-                .map(String::from)
-                .collect();
-            trace!(
-                task_id = %task_id,
-                dependencies_count = deps.len(),
-                dependencies = ?deps,
-                "Parsed explicit dependencies"
-            );
-            deps
-        })
-        .unwrap_or_else(|| {
-            trace!(task_id = %task_id, "No explicit dependencies found");
-            Vec::new()
-        });
-
-    // Parent dependency will be added after task creation
-
     // Parse next_tasks recursively
     let mut next_tasks = Vec::new();
     if let Some(next_tasks_array) = task_json.get("next_tasks").and_then(|v| v.as_array()) {
@@ -180,46 +155,24 @@ fn parse_task_recursive(
         trace!(task_id = %task_id, "No next_tasks found");
     }
 
-    let mut task = EngineTask {
+    let task = EngineTask {
         id: task_id.clone(),
         name: task_name,
         function,
         next_tasks,
-        dependencies,
         status: TaskStatus::Pending,
     };
 
     trace!(
         task_id = %task_id,
         task_name = %task.name,
-        dependencies_count = task.dependencies.len(),
         next_tasks_count = task.next_tasks.len(),
         "Created task structure"
     );
 
-    // Update dependencies to include parent if this is a nested task
-    if let Some(parent) = parent_id {
-        if !task.dependencies.contains(&parent.to_string()) {
-            trace!(
-                task_id = %task_id,
-                parent_id = %parent,
-                "Adding parent dependency"
-            );
-            task.dependencies.push(parent.to_string());
-        } else {
-            trace!(
-                task_id = %task_id,
-                parent_id = %parent,
-                "Parent dependency already exists"
-            );
-        }
-    }
-
     debug!(
         task_id = %task_id,
         task_name = %task.name,
-        final_dependencies_count = task.dependencies.len(),
-        final_dependencies = ?task.dependencies,
         next_tasks_count = task.next_tasks.len(),
         "Task parsing completed"
     );

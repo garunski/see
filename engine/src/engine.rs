@@ -1,7 +1,6 @@
 //! Main workflow execution engine with parallel and sequential task execution
 
 use crate::errors::*;
-use crate::graph::DependencyGraph;
 use crate::handlers::{get_function_type, HandlerRegistry};
 use crate::types::*;
 use std::collections::HashSet;
@@ -19,6 +18,44 @@ impl WorkflowEngine {
         Self {
             handlers: Arc::new(HandlerRegistry::new()),
         }
+    }
+
+    /// Get tasks that are ready to execute based on tree structure
+    /// Root tasks are ready if not completed, child tasks are ready if their parent is completed
+    fn get_ready_tasks_from_tree(
+        &self,
+        root_tasks: &[EngineTask],
+        completed_tasks: &HashSet<String>,
+    ) -> Vec<EngineTask> {
+        let mut ready_tasks = Vec::new();
+        
+        // Helper to recursively collect ready tasks from a task's next_tasks
+        fn collect_ready_tasks(
+            tasks: &[EngineTask],
+            completed_tasks: &HashSet<String>,
+            ready_tasks: &mut Vec<EngineTask>,
+        ) {
+            for task in tasks {
+                // If this task is not completed, it's ready
+                if !completed_tasks.contains(&task.id) {
+                    ready_tasks.push(task.clone());
+                } else {
+                    // If this task is completed, check its next_tasks
+                    collect_ready_tasks(&task.next_tasks, completed_tasks, ready_tasks);
+                }
+            }
+        }
+        
+        // Start with root tasks
+        collect_ready_tasks(root_tasks, completed_tasks, &mut ready_tasks);
+        
+        trace!(
+            ready_count = ready_tasks.len(),
+            ready_ids = ?ready_tasks.iter().map(|t| &t.id).collect::<Vec<_>>(),
+            "Found ready tasks from tree"
+        );
+        
+        ready_tasks
     }
 
     /// Execute a workflow
@@ -42,15 +79,6 @@ impl WorkflowEngine {
             workflow.tasks.iter().map(|t| &t.id).collect::<Vec<_>>()
         );
 
-        // Build dependency graph
-        debug!(execution_id = %execution_id, "Building dependency graph");
-        let graph = DependencyGraph::new(workflow.tasks.clone())?;
-        debug!(
-            execution_id = %execution_id,
-            total_tasks = graph.get_all_tasks().len(),
-            "Dependency graph built successfully"
-        );
-
         // Create execution context
         debug!(execution_id = %execution_id, "Creating execution context");
         let mut context = ExecutionContext::new(execution_id.clone(), workflow.name.clone());
@@ -63,7 +91,7 @@ impl WorkflowEngine {
                 execution_id = %execution_id,
                 task_id = %task.id,
                 task_name = %task.name,
-                dependencies = ?task.dependencies,
+                next_tasks_count = task.next_tasks.len(),
                 "Added task to context"
             );
         }
@@ -71,54 +99,50 @@ impl WorkflowEngine {
         // Track execution state
         debug!(execution_id = %execution_id, "Initializing execution state");
         let mut completed_tasks = HashSet::new();
-        let mut remaining_tasks = workflow.tasks.clone();
         let mut audit_trail = Vec::new();
         let mut errors = Vec::new();
         let mut execution_round = 0;
 
         trace!(
             execution_id = %execution_id,
-            initial_remaining = remaining_tasks.len(),
+            initial_tasks = workflow.tasks.len(),
             "Execution state initialized"
         );
 
-        // Main execution loop
-        while !remaining_tasks.is_empty() {
+        // Main execution loop - continue until no more tasks are ready
+        loop {
             execution_round += 1;
 
             debug!(
                 execution_id = %execution_id,
                 round = execution_round,
-                remaining_count = remaining_tasks.len(),
                 completed_count = completed_tasks.len(),
                 "Starting execution round"
             );
 
-            // Get ready tasks (all dependencies completed)
+            // Get ready tasks from tree structure
             trace!(execution_id = %execution_id, "Determining ready tasks");
-            let ready_tasks = graph.get_ready_tasks(&completed_tasks);
+            let ready_tasks = self.get_ready_tasks_from_tree(&workflow.tasks, &completed_tasks);
 
             trace!(
                 execution_id = %execution_id,
                 round = execution_round,
                 ready_count = ready_tasks.len(),
                 completed_count = completed_tasks.len(),
-                remaining_count = remaining_tasks.len(),
                 ready_task_ids = ?ready_tasks.iter().map(|t| &t.id).collect::<Vec<_>>(),
                 "🔍 Execution round: {} ready tasks found",
                 ready_tasks.len()
             );
 
+            // If no tasks are ready, we're done
             if ready_tasks.is_empty() {
-                let error_msg = "No ready tasks found - possible circular dependency or deadlock";
-                error!(
+                debug!(
                     execution_id = %execution_id,
                     round = execution_round,
-                    remaining_tasks = ?remaining_tasks.iter().map(|t| &t.id).collect::<Vec<_>>(),
-                    completed_tasks = ?completed_tasks.iter().collect::<Vec<_>>(),
-                    error = %error_msg
+                    completed_count = completed_tasks.len(),
+                    "No more ready tasks, execution complete"
                 );
-                return Err(EngineError::Execution(error_msg.to_string()));
+                break;
             }
 
             // Execute all ready tasks in parallel
@@ -170,12 +194,11 @@ impl WorkflowEngine {
                     });
 
                     completed_tasks.insert(task.id.clone());
-                    remaining_tasks.retain(|t| t.id != task.id);
 
                     trace!(
                         execution_id = %execution_id,
                         task_id = %task.id,
-                        "Task marked as completed and removed from remaining"
+                        "Task marked as completed"
                     );
                 } else {
                     let error_msg = result.error.unwrap_or_else(|| "Task failed".to_string());
@@ -206,12 +229,11 @@ impl WorkflowEngine {
 
                     // For now, continue with other tasks even if one fails
                     completed_tasks.insert(task.id.clone());
-                    remaining_tasks.retain(|t| t.id != task.id);
 
                     trace!(
                         execution_id = %execution_id,
                         task_id = %task.id,
-                        "Failed task marked as completed and removed from remaining"
+                        "Failed task marked as completed"
                     );
                 }
             }
@@ -219,10 +241,8 @@ impl WorkflowEngine {
             debug!(
                 execution_id = %execution_id,
                 completed_count = completed_tasks.len(),
-                remaining_count = remaining_tasks.len(),
-                "📊 Progress: {} completed, {} remaining",
-                completed_tasks.len(),
-                remaining_tasks.len()
+                "📊 Progress: {} completed",
+                completed_tasks.len()
             );
         }
 
@@ -286,7 +306,7 @@ impl WorkflowEngine {
                 task_id = %task_id,
                 task_name = %task.name,
                 function_type = %function_type,
-                dependencies = ?task.dependencies,
+                next_tasks_count = task.next_tasks.len(),
                 "Preparing task for parallel execution"
             );
 

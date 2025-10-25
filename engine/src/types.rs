@@ -11,7 +11,6 @@ pub struct EngineTask {
     pub name: String,
     pub function: TaskFunction,
     pub next_tasks: Vec<EngineTask>,
-    pub dependencies: Vec<String>, // For backward compatibility
     pub status: TaskStatus,
 }
 

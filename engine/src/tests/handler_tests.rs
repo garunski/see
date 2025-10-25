@@ -14,7 +14,6 @@ fn create_test_task(function: TaskFunction) -> EngineTask {
         name: "Test Task".to_string(),
         function,
         next_tasks: Vec::new(),
-        dependencies: Vec::new(),
         status: TaskStatus::Pending,
     }
 }
