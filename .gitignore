@@ -39,3 +39,4 @@ examples
 typescript_sample
 .task
 node_modules
+coverage/

@@ -3447,6 +3447,7 @@ version = "0.1.0"
 dependencies = [
  "chrono",
  "dirs 5.0.1",
+ "futures",
  "lazy_static",
  "r2d2",
  "r2d2_sqlite",

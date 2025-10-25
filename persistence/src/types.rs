@@ -1,7 +1,7 @@
 //! Additional types for GUI compatibility
 
-use serde::{Deserialize, Serialize};
 use chrono::{DateTime, Utc};
+use serde::{Deserialize, Serialize};
 use tracing::debug;
 
 /// Workflow definition for GUI compatibility
@@ -33,7 +33,7 @@ impl WorkflowDefinition {
             updated_at: now,
         }
     }
-    
+
     /// Create a default workflow definition
     pub fn new_default(name: String, content: String) -> Self {
         debug!("Creating default workflow definition: {}", name);
@@ -49,12 +49,12 @@ impl WorkflowDefinition {
             updated_at: now,
         }
     }
-    
+
     /// Get the name of the workflow
     pub fn get_name(&self) -> &str {
         &self.name
     }
-    
+
     /// Get default workflows
     pub fn get_default_workflows() -> Vec<Self> {
         debug!("Getting default workflows");
@@ -71,7 +71,8 @@ impl WorkflowDefinition {
                             "command": "echo 'Hello World'"
                         }
                     ]
-                }"#.to_string()
+                }"#
+                .to_string(),
             ),
             Self::new_default(
                 "Complex Workflow".to_string(),
@@ -97,7 +98,8 @@ impl WorkflowDefinition {
                             "command": "echo 'Cleaning up...'"
                         }
                     ]
-                }"#.to_string()
+                }"#
+                .to_string(),
             ),
         ]
     }
@@ -114,7 +116,7 @@ pub struct AppSettings {
 
 impl AppSettings {
     /// Create default app settings
-    pub fn default() -> Self {
+    pub fn new_default() -> Self {
         debug!("Creating default app settings");
         Self {
             theme: Theme::System,
