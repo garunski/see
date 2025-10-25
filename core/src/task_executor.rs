@@ -2,7 +2,7 @@ use crate::errors::CoreError;
 use crate::types::TaskStatus;
 use serde_json::Value;
 use std::sync::{Arc, Mutex};
-use tracing::{error, trace, Instrument};
+use tracing::{error, trace, debug, Instrument};
 
 #[allow(async_fn_in_trait)]
 pub trait TaskExecutor: Send + Sync {
@@ -80,21 +80,51 @@ impl TaskPersistenceHelper {
         };
 
         let Some(store) = ctx.get_store() else {
-            return; // No store configured
+            debug!("No store configured, skipping task persistence");
+            return;
         };
 
         let status_clone = status.clone();
-        // TODO: Add task persistence
-        let _task_exec = ();
+        let workflow_id = ctx.get_execution_id().to_string();
+        let _workflow_name = ctx.get_workflow_name().to_string();
+        let task_name = ctx.get_tasks().iter()
+            .find(|t| t.id == task_id)
+            .map(|t| t.name.clone())
+            .unwrap_or_else(|| "Unknown Task".to_string());
+        let logs = ctx.get_task_logs(task_id);
+        let _execution_order = ctx.get_tasks().iter()
+            .position(|t| t.id == task_id)
+            .unwrap_or(0) as i32;
+        
         drop(ctx);
 
         let status_str = status_clone.as_str();
+        let task_id = task_id.to_string(); // Clone for the async block
         let span =
             tracing::debug_span!("save_task_state_bg", task_id = %task_id, status = %status_str);
         tokio::spawn(
             async move {
                 trace!("Saving task state to database");
-                // TODO: Add task execution saving back later
+                
+                // Create task execution
+                let mut task_exec = persistence::TaskExecution::new(workflow_id, task_id.clone(), task_name);
+                task_exec.status = status_str.to_string();
+                task_exec.logs = logs;
+                
+                // Set timestamps based on status
+                match status_str {
+                    "in-progress" => task_exec.mark_started(),
+                    "complete" => task_exec.mark_completed(true, None, None),
+                    "failed" => task_exec.mark_completed(false, None, Some("Task failed".to_string())),
+                    _ => {}
+                }
+                
+                // Save to database
+                if let Err(e) = store.save_task_execution(task_exec).await {
+                    error!("Failed to save task execution: {}", e);
+                } else {
+                    debug!("Task execution saved successfully");
+                }
             }
             .instrument(span),
         );

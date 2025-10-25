@@ -3,7 +3,8 @@ members = [
   "gui",
   # "cli",
   "core",
-  "engine"
+  "engine",
+  "persistence"
 ]
 resolver = "2"
 

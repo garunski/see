@@ -2,6 +2,7 @@
 use crate::{
     errors::CoreError,
     types::{OutputCallback, TaskInfo, TaskStatus},
+    store::Store,
 };
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex, MutexGuard};
@@ -13,7 +14,7 @@ pub struct ExecutionContext {
     output_logs: Vec<String>,
     tasks: Vec<TaskInfo>,
     output_callback: Option<OutputCallback>,
-    // TODO: Add audit store back later
+    store: Option<Arc<dyn Store>>,
     execution_id: String,
     workflow_name: String,
     task_start_times: HashMap<String, String>,
@@ -23,7 +24,7 @@ impl ExecutionContext {
     pub fn new(
         tasks: Vec<TaskInfo>,
         output_callback: Option<OutputCallback>,
-        // TODO: Add audit store back later
+        store: Option<Arc<dyn Store>>,
         execution_id: String,
         workflow_name: String,
     ) -> Arc<Mutex<Self>> {
@@ -33,7 +34,7 @@ impl ExecutionContext {
             output_logs: Vec::new(),
             tasks,
             output_callback,
-            // TODO: Add audit store back later
+            store,
             execution_id,
             workflow_name,
             task_start_times: HashMap::new(),
@@ -103,17 +104,7 @@ impl ExecutionContext {
         self.output_logs.clone()
     }
 
-    pub fn get_tasks(&self) -> Vec<TaskInfo> {
-        self.tasks.clone()
-    }
-
-    pub fn get_execution_id(&self) -> String {
-        self.execution_id.clone()
-    }
-
-    pub fn get_workflow_name(&self) -> String {
-        self.workflow_name.clone()
-    }
+    // Removed duplicate methods - using the new ones below
 
     pub fn get_task_logs(&self, task_id: &str) -> Vec<String> {
         self.per_task_logs.get(task_id).cloned().unwrap_or_default()
@@ -126,8 +117,24 @@ impl ExecutionContext {
             .unwrap_or_else(|| chrono::Utc::now().to_rfc3339())
     }
 
-    pub fn get_store(&self) -> Option<()> {
-        None
+    pub fn get_store(&self) -> Option<Arc<dyn Store>> {
+        self.store.clone()
+    }
+    
+    pub fn set_store(&mut self, store: Arc<dyn Store>) {
+        self.store = Some(store);
+    }
+    
+    pub fn get_execution_id(&self) -> &str {
+        &self.execution_id
+    }
+    
+    pub fn get_workflow_name(&self) -> &str {
+        &self.workflow_name
+    }
+    
+    pub fn get_tasks(&self) -> &[TaskInfo] {
+        &self.tasks
     }
 
     /// Pause a task for user input

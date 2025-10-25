@@ -17,3 +17,5 @@ dirs = "5.0"
 chrono = { version = "0.4", features = ["serde"] }
 tempfile = "3.0"
 engine = { path = "../engine" }
+persistence = { path = "../persistence" }
+lazy_static = "1.4"

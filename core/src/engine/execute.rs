@@ -99,10 +99,10 @@ pub async fn execute_workflow_from_content(
     Ok(core_result)
 }
 
-#[instrument(skip(output_callback), fields(workflow_file = %workflow_file))]
+#[instrument(skip(_output_callback), fields(workflow_file = %workflow_file))]
 pub async fn execute_workflow(
     workflow_file: &str,
-    output_callback: Option<OutputCallback>,
+    _output_callback: Option<OutputCallback>,
 ) -> Result<CoreWorkflowResult, CoreError> {
     debug!("Reading workflow file");
     let workflow_data = fs::read_to_string(workflow_file).await.map_err(|e| {
@@ -112,13 +112,13 @@ pub async fn execute_workflow(
         ))
     })?;
 
-    execute_workflow_from_content(&workflow_data, output_callback).await
+    execute_workflow_from_content(&workflow_data, _output_callback).await
 }
 
-#[instrument(skip(output_callback), fields(workflow_id = %workflow_id))]
+#[instrument(skip(_output_callback), fields(workflow_id = %workflow_id))]
 pub async fn execute_workflow_by_id(
     workflow_id: &str,
-    output_callback: Option<OutputCallback>,
+    _output_callback: Option<OutputCallback>,
 ) -> Result<CoreWorkflowResult, CoreError> {
     debug!("Fetching workflow definition by ID");
     // TODO: Add store back later
@@ -135,182 +135,28 @@ pub async fn execute_workflow_by_id(
 }
 
 /// Resume a workflow that is waiting for user input
-#[instrument(skip(execution_id), fields(execution_id))]
-pub async fn resume_workflow(_execution_id: &str) -> Result<(), CoreError> {
-    // TODO: Add store back later
-
-    info!(
-        execution_id = %execution_id,
-        "Resuming workflow execution"
-    );
-
-    // Load workflow metadata
-    let metadata = store.get_workflow_metadata(execution_id).await?;
-
-    // Check if workflow is actually waiting for input
-    // TODO: Fix workflow status check
-    if false {
-        return Err(CoreError::Validation(format!(
-            "Workflow {} is not waiting for input (status: {:?})",
-            execution_id, metadata.status
-        )));
-    }
-
-    // Load task executions
-    let task_executions = store.get_task_executions(execution_id).await?;
-
-    // Find tasks that are waiting for input
-    let waiting_tasks: Vec<_> = task_executions
-        .iter()
-        .filter(|task| task.status == crate::types::TaskStatus::WaitingForInput)
-        .collect();
-
-    if waiting_tasks.is_empty() {
-        return Err(CoreError::Validation(format!(
-            "No tasks waiting for input in workflow {}",
-            execution_id
-        )));
-    }
-
-    // Resume each waiting task
-    for task in waiting_tasks {
-        let mut updated_task = task.clone();
-        updated_task.status = crate::types::TaskStatus::InProgress;
-        updated_task.end_timestamp = String::new(); // Clear end timestamp
-
-        store.save_task_execution(&updated_task).await?;
-
-        info!(
-            execution_id = %execution_id,
-            task_id = %task.task_id,
-            "Resumed task from waiting state"
-        );
-    }
-
-    // Mark workflow as resumed using new persistence method
-    store.mark_workflow_resumed(execution_id).await?;
-
-    info!(
-        execution_id = %execution_id,
-        "Workflow resumed successfully"
-    );
-
-    Ok(())
+#[instrument(skip(execution_id))]
+pub async fn resume_workflow(execution_id: &str) -> Result<(), CoreError> {
+    info!("Resuming workflow execution: {}", execution_id);
+    
+    // TODO: Implement workflow resumption with new persistence layer
+    Err(CoreError::Validation("Workflow resumption not yet implemented".to_string()))
 }
 
 /// Resume a specific task that is waiting for user input
-#[instrument(skip(execution_id, task_id), fields(execution_id, task_id))]
+#[instrument(skip(execution_id, task_id))]
 pub async fn resume_task(execution_id: &str, task_id: &str) -> Result<(), CoreError> {
-    // TODO: Add store back later
-
-    info!(
-        execution_id = %execution_id,
-        task_id = %task_id,
-        "Resuming specific task"
-    );
-
-    // Load task execution
-    let task_executions = store.get_task_executions(execution_id).await?;
-    let task = task_executions
-        .iter()
-        .find(|t| t.task_id == task_id)
-        .ok_or_else(|| {
-            CoreError::Validation(format!(
-                "Task {} not found in execution {}",
-                task_id, execution_id
-            ))
-        })?;
-
-    // Check if task is waiting for input
-    if task.status != crate::types::TaskStatus::WaitingForInput {
-        return Err(CoreError::Validation(format!(
-            "Task {} is not waiting for input (status: {})",
-            task_id, task.status
-        )));
-    }
-
-    // Update task status
-    let mut updated_task = task.clone();
-    updated_task.status = crate::types::TaskStatus::InProgress;
-    updated_task.end_timestamp = String::new(); // Clear end timestamp
-
-    store.save_task_execution(&updated_task).await?;
-
-    // Check if all tasks are now running or complete
-    let all_tasks = store.get_task_executions(execution_id).await?;
-    let has_waiting_tasks = all_tasks
-        .iter()
-        .any(|t| t.status == crate::types::TaskStatus::WaitingForInput);
-
-    info!(
-        execution_id = %execution_id,
-        task_count = all_tasks.len(),
-        has_waiting_tasks = has_waiting_tasks,
-        "Checking if workflow should be resumed"
-    );
-
-    if !has_waiting_tasks {
-        // Mark workflow as resumed using new persistence method
-        store.mark_workflow_resumed(execution_id).await?;
-
-        info!(
-            execution_id = %execution_id,
-            "All tasks resumed, workflow status updated to Running"
-        );
-    } else {
-        info!(
-            execution_id = %execution_id,
-            "Still has waiting tasks, workflow status remains WaitingForInput"
-        );
-    }
-
-    info!(
-        execution_id = %execution_id,
-        task_id = %task_id,
-        "Task resumed successfully"
-    );
-
-    Ok(())
+    info!("Resuming task execution: {} in workflow {}", task_id, execution_id);
+    
+    // TODO: Implement task resumption with new persistence layer
+    Err(CoreError::Validation("Task resumption not yet implemented".to_string()))
 }
 
 /// Pause a workflow for user input
-#[instrument(skip(execution_id, task_id), fields(execution_id, task_id))]
+#[instrument(skip(execution_id, task_id))]
 pub async fn pause_workflow(execution_id: &str, task_id: &str) -> Result<(), CoreError> {
-    // TODO: Add store back later
-
-    info!(
-        execution_id = %execution_id,
-        task_id = %task_id,
-        "Pausing workflow for user input"
-    );
-
-    // Load task execution
-    let task_executions = store.get_task_executions(execution_id).await?;
-    let task = task_executions
-        .iter()
-        .find(|t| t.task_id == task_id)
-        .ok_or_else(|| {
-            CoreError::Validation(format!(
-                "Task {} not found in execution {}",
-                task_id, execution_id
-            ))
-        })?;
-
-    // Update task status to waiting for input
-    let mut updated_task = task.clone();
-    updated_task.status = crate::types::TaskStatus::WaitingForInput;
-    updated_task.end_timestamp = String::new(); // Clear end timestamp
-
-    store.save_task_execution(&updated_task).await?;
-
-    // Mark workflow as paused
-    store.mark_workflow_paused(execution_id, task_id).await?;
-
-    info!(
-        execution_id = %execution_id,
-        task_id = %task_id,
-        "Workflow paused successfully"
-    );
-
-    Ok(())
+    info!("Pausing workflow execution: {} for task {}", execution_id, task_id);
+    
+    // TODO: Implement workflow pausing with new persistence layer
+    Err(CoreError::Validation("Workflow pausing not yet implemented".to_string()))
 }

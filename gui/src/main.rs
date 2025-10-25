@@ -16,12 +16,22 @@ mod services {
     pub use database::clear_database;
 }
 
-fn main() {
+#[tokio::main]
+async fn main() {
     let _tracing_guard = s_e_e_core::init_tracing(None)
         .map_err(|e| format!("Failed to initialize tracing: {}", e))
         .expect("Failed to initialize tracing");
 
     tracing::info!("GUI starting");
+
+    // Initialize persistence layer
+    tracing::info!("Initializing persistence layer");
+    if let Err(e) = s_e_e_core::init_global_store().await {
+        tracing::error!("Failed to initialize persistence layer: {}", e);
+        eprintln!("Failed to initialize persistence layer: {}", e);
+        std::process::exit(1);
+    }
+    tracing::info!("Persistence layer initialized");
 
     LaunchBuilder::desktop()
         .with_cfg(

@@ -33,6 +33,8 @@ pub enum CoreError {
     #[error("serialization error: {0}")]
     Serialization(String),
 
+    #[error("persistence error: {0}")]
+    Persistence(#[from] persistence::PersistenceError),
 
     #[error("not found: {resource} with ID '{id}'")]
     NotFound { resource: String, id: String },
