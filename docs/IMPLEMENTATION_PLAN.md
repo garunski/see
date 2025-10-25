@@ -32,6 +32,40 @@
 - Log performance metrics (query duration, serialization time)
 - All logging must be testable and configurable
 
+### Single Responsibility Principle (SRP) Requirements
+- **Each file must have a SINGLE, CLEAR responsibility**
+- **NO mixing of concerns** - separate models, operations, errors, etc.
+- **Keep files small and focused** - aim for <200 lines per file
+- **Logical grouping** - related functionality in same file, unrelated in separate files
+- **One model per file** - don't put 7 models in one file
+- **One operation type per file** - don't mix CRUD operations
+- **Separate concerns** - models, store operations, errors, logging in different files
+
+### SRP File Organization Examples
+
+**❌ BAD - Violates SRP:**
+```
+src/
+├── models.rs          # 7 different models in one file
+├── store.rs           # All store operations in one file
+└── everything.rs       # Models + operations + errors + logging
+```
+
+**✅ GOOD - Follows SRP:**
+```
+src/
+├── models/
+│   ├── workflow.rs     # ONLY WorkflowDefinition
+│   ├── execution.rs    # ONLY execution models
+│   └── task.rs         # ONLY TaskExecution
+├── store/
+│   ├── workflow.rs     # ONLY workflow operations
+│   ├── execution.rs    # ONLY execution operations
+│   └── task.rs         # ONLY task operations
+├── errors.rs           # ONLY error types
+└── logging.rs          # ONLY logging setup
+```
+
 ## Phase 1: Complete Design Documents
 
 ### Step 1: GUI Analysis Document
@@ -99,24 +133,56 @@
 ### Step 9: Create Persistence Directory Structure
 - [ ] Create `persistence/` directory
 - [ ] Create `persistence/src/` directory
-- [ ] Create `persistence/Cargo.toml` with redb dependencies
+- [ ] Create `persistence/Cargo.toml` with sqlx dependencies
 - [ ] Create `persistence/src/lib.rs` with public exports
-- [ ] Create `persistence/src/models.rs` with all data types
-- [ ] Create `persistence/src/errors.rs` with PersistenceError
-- [ ] Create `persistence/src/store.rs` with Store implementation
+- [ ] **Create SRP-compliant file structure:**
+  - [ ] Create `persistence/src/models/` directory
+  - [ ] Create `persistence/src/models/mod.rs` with module declarations
+  - [ ] Create `persistence/src/models/workflow.rs` for WorkflowDefinition ONLY
+  - [ ] Create `persistence/src/models/execution.rs` for execution models ONLY
+  - [ ] Create `persistence/src/models/task.rs` for TaskExecution ONLY
+  - [ ] Create `persistence/src/models/prompt.rs` for UserPrompt ONLY
+  - [ ] Create `persistence/src/models/audit.rs` for AuditEvent ONLY
+  - [ ] Create `persistence/src/models/settings.rs` for AppSettings ONLY
+  - [ ] Create `persistence/src/models/enums.rs` for all enums ONLY
+  - [ ] Create `persistence/src/store/` directory
+  - [ ] Create `persistence/src/store/mod.rs` with module declarations
+  - [ ] Create `persistence/src/store/lib.rs` for Store struct and initialization ONLY
+  - [ ] Create `persistence/src/store/workflow.rs` for workflow operations ONLY
+  - [ ] Create `persistence/src/store/execution.rs` for execution operations ONLY
+  - [ ] Create `persistence/src/store/task.rs` for task operations ONLY
+  - [ ] Create `persistence/src/store/prompt.rs` for prompt operations ONLY
+  - [ ] Create `persistence/src/store/settings.rs` for settings operations ONLY
+  - [ ] Create `persistence/src/store/audit.rs` for audit operations ONLY
+  - [ ] Create `persistence/src/store/utils.rs` for utility functions ONLY
+  - [ ] Create `persistence/src/errors.rs` for PersistenceError ONLY
+  - [ ] Create `persistence/src/logging.rs` for logging configuration ONLY
 
-### Step 10: Implement Persistence Models
-- [ ] Implement WorkflowDefinition struct
-- [ ] Implement WorkflowExecution struct
-- [ ] Implement WorkflowExecutionSummary struct
-- [ ] Implement WorkflowMetadata struct
-- [ ] Implement TaskExecution struct
-- [ ] Implement UserPrompt struct
-- [ ] Implement AuditEvent struct
-- [ ] Implement AppSettings struct
-- [ ] Implement WorkflowStatus enum
-- [ ] Implement Theme enum
-- [ ] Add all required derive traits (Debug, Clone, PartialEq, Serialize, Deserialize)
+### Step 10: Implement Persistence Models (SRP-Compliant)
+- [ ] **Implement models/workflow.rs** - WorkflowDefinition struct ONLY
+  - [ ] Add all required derive traits (Debug, Clone, PartialEq, Serialize, Deserialize)
+  - [ ] Add Default implementation
+  - [ ] Add validation methods
+- [ ] **Implement models/execution.rs** - Execution models ONLY
+  - [ ] WorkflowExecution struct
+  - [ ] WorkflowExecutionSummary struct  
+  - [ ] WorkflowMetadata struct
+  - [ ] Add all required derive traits
+- [ ] **Implement models/task.rs** - TaskExecution struct ONLY
+  - [ ] Add all required derive traits
+  - [ ] Add validation methods
+- [ ] **Implement models/prompt.rs** - UserPrompt struct ONLY
+  - [ ] Add all required derive traits
+  - [ ] Add validation methods
+- [ ] **Implement models/audit.rs** - AuditEvent struct ONLY
+  - [ ] Add all required derive traits
+- [ ] **Implement models/settings.rs** - AppSettings struct ONLY
+  - [ ] Add all required derive traits
+  - [ ] Add Default implementation
+- [ ] **Implement models/enums.rs** - All enums ONLY
+  - [ ] WorkflowStatus enum
+  - [ ] Theme enum
+  - [ ] Add all required derive traits and serde rename attributes
 
 ### Step 11: Implement Persistence Errors
 - [ ] Implement PersistenceError enum
@@ -124,18 +190,46 @@
 - [ ] Implement error conversions from redb errors
 - [ ] Implement Display trait for error messages
 
-### Step 12: Implement Store with redb
-- [ ] Define table schemas using redb macros
-- [ ] Implement Store struct with Database handle
-- [ ] Implement Store::new() constructor
-- [ ] Implement workflow CRUD methods (save_workflow, get_workflow, list_workflows, delete_workflow)
-- [ ] Implement execution CRUD methods (save_workflow_execution, get_workflow_execution, list_workflow_executions, delete_workflow_execution)
-- [ ] Implement metadata methods (list_workflow_metadata, delete_workflow_metadata_and_tasks, get_workflow_with_tasks)
-- [ ] Implement task methods (save_task_execution, get_tasks_for_workflow)
-- [ ] Implement prompt methods (save_prompt, list_prompts, delete_prompt)
-- [ ] Implement settings methods (load_settings, save_settings)
-- [ ] Implement audit methods (log_audit_event)
-- [ ] Implement utility methods (clear_all_data)
+### Step 12: Implement Store with sqlx (SRP-Compliant)
+- [ ] **Implement store/lib.rs** - Store struct and initialization ONLY
+  - [ ] Define Store struct with SqlitePool
+  - [ ] Implement Store::new() constructor
+  - [ ] Implement create_tables() helper
+  - [ ] Add comprehensive logging
+- [ ] **Implement store/workflow.rs** - Workflow operations ONLY
+  - [ ] Implement save_workflow method
+  - [ ] Implement get_workflow method
+  - [ ] Implement list_workflows method
+  - [ ] Implement delete_workflow method
+  - [ ] Add comprehensive logging
+- [ ] **Implement store/execution.rs** - Execution operations ONLY
+  - [ ] Implement save_workflow_execution method
+  - [ ] Implement get_workflow_execution method
+  - [ ] Implement list_workflow_executions method
+  - [ ] Implement delete_workflow_execution method
+  - [ ] Implement list_workflow_metadata method
+  - [ ] Implement delete_workflow_metadata_and_tasks method
+  - [ ] Implement get_workflow_with_tasks method
+  - [ ] Add comprehensive logging
+- [ ] **Implement store/task.rs** - Task operations ONLY
+  - [ ] Implement save_task_execution method
+  - [ ] Implement get_tasks_for_workflow method
+  - [ ] Add comprehensive logging
+- [ ] **Implement store/prompt.rs** - Prompt operations ONLY
+  - [ ] Implement save_prompt method
+  - [ ] Implement list_prompts method
+  - [ ] Implement delete_prompt method
+  - [ ] Add comprehensive logging
+- [ ] **Implement store/settings.rs** - Settings operations ONLY
+  - [ ] Implement load_settings method
+  - [ ] Implement save_settings method
+  - [ ] Add comprehensive logging
+- [ ] **Implement store/audit.rs** - Audit operations ONLY
+  - [ ] Implement log_audit_event method
+  - [ ] Add comprehensive logging
+- [ ] **Implement store/utils.rs** - Utility functions ONLY
+  - [ ] Implement clear_all_data method
+  - [ ] Add comprehensive logging
 
 ### Step 13: Test Persistence Crate
 - [ ] Test persistence crate builds - `cargo build -p persistence`
@@ -150,15 +244,27 @@
 
 ## Phase 3: Create Core Crate
 
-### Step 14: Create Core Directory Structure
+### Step 14: Create Core Directory Structure (SRP-Compliant)
 - [ ] Create `core/` directory
 - [ ] Create `core/src/` directory
 - [ ] Create `core/Cargo.toml` with dependencies (persistence, engine)
 - [ ] Create `core/src/lib.rs` with re-exports
-- [ ] Create `core/src/errors.rs` with CoreError
-- [ ] Create `core/src/bridge.rs` with type conversions
-- [ ] Create `core/src/store_singleton.rs` with global store
-- [ ] Create `core/src/api.rs` with execution functions
+- [ ] **Create SRP-compliant file structure:**
+  - [ ] Create `core/src/bridge/` directory
+  - [ ] Create `core/src/bridge/mod.rs` with module declarations
+  - [ ] Create `core/src/bridge/workflow.rs` for workflow conversions ONLY
+  - [ ] Create `core/src/bridge/execution.rs` for execution conversions ONLY
+  - [ ] Create `core/src/bridge/task.rs` for task conversions ONLY
+  - [ ] Create `core/src/bridge/audit.rs` for audit conversions ONLY
+  - [ ] Create `core/src/api/` directory
+  - [ ] Create `core/src/api/mod.rs` with module declarations
+  - [ ] Create `core/src/api/execution.rs` for workflow execution API ONLY
+  - [ ] Create `core/src/api/resume.rs` for task resumption API ONLY
+  - [ ] Create `core/src/api/defaults.rs` for default workflows ONLY
+  - [ ] Create `core/src/api/init.rs` for initialization functions ONLY
+  - [ ] Create `core/src/store_singleton.rs` for global store singleton ONLY
+  - [ ] Create `core/src/errors.rs` for CoreError ONLY
+  - [ ] Create `core/src/logging.rs` for logging configuration ONLY
 
 ### Step 15: Implement Core Error Types
 - [ ] Implement CoreError enum
@@ -312,6 +418,10 @@
 ✓ **ALL major code paths have appropriate logging** (TRACE, DEBUG, INFO, WARN, ERROR)
 ✓ **Each phase passes its own tests AND all previous phase tests**
 ✓ **All tests are deterministic, isolated, and clean up resources**
+✓ **ALL files follow Single Responsibility Principle (SRP)**
+✓ **Each file has ONE clear responsibility** (no mixing models, operations, errors)
+✓ **Files are small and focused** (<200 lines per file)
+✓ **Logical file organization** (models/, store/, api/, bridge/ directories)
 ✓ Persistence crate compiles and passes tests
 ✓ Core crate compiles and passes tests
 ✓ Workspace builds successfully

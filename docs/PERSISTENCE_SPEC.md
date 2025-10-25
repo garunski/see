@@ -57,6 +57,84 @@ CREATE TABLE settings (
 );
 ```
 
+## File Organization and Single Responsibility Principle (SRP)
+
+### File Structure Requirements
+- **Each file must have a SINGLE, CLEAR responsibility**
+- **NO mixing of concerns** - separate models, store operations, errors, etc.
+- **Keep files small and focused** - aim for <200 lines per file
+- **Logical grouping** - related functionality in same file, unrelated in separate files
+
+### Required File Structure
+```
+persistence/
+├── Cargo.toml
+└── src/
+    ├── lib.rs              # Public API exports only
+    ├── models/
+    │   ├── mod.rs          # Module declarations
+    │   ├── workflow.rs     # WorkflowDefinition only
+    │   ├── execution.rs    # WorkflowExecution, WorkflowExecutionSummary, WorkflowMetadata only
+    │   ├── task.rs         # TaskExecution only
+    │   ├── prompt.rs       # UserPrompt only
+    │   ├── audit.rs        # AuditEvent only
+    │   ├── settings.rs     # AppSettings only
+    │   └── enums.rs        # All enums (WorkflowStatus, Theme, etc.)
+    ├── store/
+    │   ├── mod.rs          # Module declarations
+    │   ├── lib.rs          # Store struct and initialization
+    │   ├── workflow.rs     # Workflow CRUD operations only
+    │   ├── execution.rs    # Execution CRUD operations only
+    │   ├── task.rs         # Task operations only
+    │   ├── prompt.rs       # Prompt operations only
+    │   ├── settings.rs     # Settings operations only
+    │   ├── audit.rs        # Audit operations only
+    │   └── utils.rs        # Utility functions (clear_all_data) only
+    ├── errors.rs           # PersistenceError only
+    └── logging.rs          # Logging configuration and helpers only
+```
+
+### File Responsibility Guidelines
+
+**models/workflow.rs** - ONLY WorkflowDefinition:
+```rust
+// ONLY WorkflowDefinition struct and its impl blocks
+// NO other models, NO store operations, NO errors
+```
+
+**models/execution.rs** - ONLY execution-related models:
+```rust
+// ONLY WorkflowExecution, WorkflowExecutionSummary, WorkflowMetadata
+// NO other models, NO store operations, NO errors
+```
+
+**store/workflow.rs** - ONLY workflow store operations:
+```rust
+// ONLY save_workflow, get_workflow, list_workflows, delete_workflow
+// NO other operations, NO models, NO error definitions
+```
+
+**errors.rs** - ONLY error types:
+```rust
+// ONLY PersistenceError enum and its implementations
+// NO models, NO store operations, NO business logic
+```
+
+### SRP Violations to Avoid
+❌ **DON'T** put all models in one file
+❌ **DON'T** put all store operations in one file  
+❌ **DON'T** mix models with store operations
+❌ **DON'T** put error types with business logic
+❌ **DON'T** put logging setup with models
+❌ **DON'T** put utility functions with core operations
+
+### Benefits of SRP Compliance
+- **Easier to find code** - know exactly where to look
+- **Easier to test** - test one responsibility at a time
+- **Easier to maintain** - changes affect minimal files
+- **Easier to review** - smaller, focused files
+- **Better reusability** - focused modules can be reused
+
 ## Store Implementation
 
 ### Store Struct
@@ -654,41 +732,79 @@ tracing-appender = "0.2"
 persistence/
 ├── src/
 │   ├── lib.rs
-│   ├── models.rs
-│   ├── store.rs
-│   └── errors.rs
+│   ├── models/
+│   │   ├── workflow.rs
+│   │   ├── execution.rs
+│   │   ├── task.rs
+│   │   ├── prompt.rs
+│   │   ├── audit.rs
+│   │   ├── settings.rs
+│   │   └── enums.rs
+│   ├── store/
+│   │   ├── lib.rs
+│   │   ├── workflow.rs
+│   │   ├── execution.rs
+│   │   ├── task.rs
+│   │   ├── prompt.rs
+│   │   ├── settings.rs
+│   │   ├── audit.rs
+│   │   └── utils.rs
+│   ├── errors.rs
+│   └── logging.rs
 └── tests/
-    ├── store_tests.rs
-    ├── workflow_tests.rs
-    ├── execution_tests.rs
-    ├── task_tests.rs
-    ├── prompt_tests.rs
-    ├── settings_tests.rs
-    ├── audit_tests.rs
+    ├── models/
+    │   ├── workflow_tests.rs
+    │   ├── execution_tests.rs
+    │   ├── task_tests.rs
+    │   ├── prompt_tests.rs
+    │   ├── audit_tests.rs
+    │   ├── settings_tests.rs
+    │   └── enums_tests.rs
+    ├── store/
+    │   ├── workflow_tests.rs
+    │   ├── execution_tests.rs
+    │   ├── task_tests.rs
+    │   ├── prompt_tests.rs
+    │   ├── settings_tests.rs
+    │   ├── audit_tests.rs
+    │   └── utils_tests.rs
+    ├── errors_tests.rs
+    ├── logging_tests.rs
     ├── concurrency_tests.rs
-    ├── integration_tests.rs
-    └── logging_tests.rs
+    └── integration_tests.rs
 ```
 
 ### Test Coverage Requirements
 
-**Unit Tests** - Test each Store method individually:
-- `tests/workflow_tests.rs` - save_workflow, get_workflow, list_workflows, delete_workflow
-- `tests/execution_tests.rs` - save/get/list/delete workflow executions, list_workflow_metadata, delete_workflow_metadata_and_tasks, get_workflow_with_tasks
-- `tests/task_tests.rs` - save_task_execution, get_tasks_for_workflow
-- `tests/prompt_tests.rs` - save_prompt, list_prompts, delete_prompt
-- `tests/settings_tests.rs` - load_settings, save_settings (including defaults)
-- `tests/audit_tests.rs` - log_audit_event
-- `tests/store_tests.rs` - Store::new(), clear_all_data(), initialization
+**Model Tests** - Test each model individually:
+- `tests/models/workflow_tests.rs` - WorkflowDefinition serialization, validation, defaults
+- `tests/models/execution_tests.rs` - WorkflowExecution, WorkflowExecutionSummary, WorkflowMetadata
+- `tests/models/task_tests.rs` - TaskExecution serialization, validation
+- `tests/models/prompt_tests.rs` - UserPrompt serialization, validation
+- `tests/models/settings_tests.rs` - AppSettings serialization, defaults
+- `tests/models/audit_tests.rs` - AuditEvent serialization, validation
+- `tests/models/enums_tests.rs` - All enum serialization, variants
+
+**Store Tests** - Test each store module individually:
+- `tests/store/workflow_tests.rs` - save_workflow, get_workflow, list_workflows, delete_workflow
+- `tests/store/execution_tests.rs` - save/get/list/delete workflow executions, list_workflow_metadata, delete_workflow_metadata_and_tasks, get_workflow_with_tasks
+- `tests/store/task_tests.rs` - save_task_execution, get_tasks_for_workflow
+- `tests/store/prompt_tests.rs` - save_prompt, list_prompts, delete_prompt
+- `tests/store/settings_tests.rs` - load_settings, save_settings (including defaults)
+- `tests/store/audit_tests.rs` - log_audit_event
+- `tests/store/utils_tests.rs` - clear_all_data
+
+**Error Tests** - Test error handling:
+- `tests/errors_tests.rs` - PersistenceError variants, error conversions, error messages
+
+**Logging Tests** - Test logging functionality:
+- `tests/logging_tests.rs` - Log level configuration, structured logging, error logging
 
 **Integration Tests** - Test real-world scenarios:
 - `tests/integration_tests.rs` - Complete workflow execution flow, multi-table operations, transaction rollback
 
 **Concurrency Tests** - Test multi-process access:
 - `tests/concurrency_tests.rs` - Multiple concurrent readers, write during read, connection pool limits
-
-**Logging Tests** - Test logging functionality:
-- `tests/logging_tests.rs` - Log level configuration, structured logging, error logging
 
 ### Test Requirements Per Section
 
