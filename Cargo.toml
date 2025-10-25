@@ -1,10 +1,8 @@
 [workspace]
 members = [
-  "gui",
+  # "gui",
   # "cli",
-  "core",
   "engine",
-  "persistence"
 ]
 resolver = "2"
 

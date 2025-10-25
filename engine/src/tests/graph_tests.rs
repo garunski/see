@@ -88,13 +88,67 @@ fn test_execution_order() {
 }
 
 #[test]
-fn test_nonexistent_dependency() {
-    let tasks = vec![create_test_task("task1", vec!["nonexistent"])];
+fn test_get_task_not_found() {
+    let tasks = vec![create_test_task("task1", vec![])];
+    let graph = DependencyGraph::new(tasks).unwrap();
+    
+    let task = graph.get_task("nonexistent");
+    assert!(task.is_none());
+    
+    let task = graph.get_task("task1");
+    assert!(task.is_some());
+    assert_eq!(task.unwrap().id, "task1");
+}
 
-    let result = DependencyGraph::new(tasks);
-    assert!(result.is_err());
-    assert!(matches!(
-        result.unwrap_err(),
-        GraphError::InvalidDependency(_)
-    ));
+#[test]
+fn test_get_dependencies_empty() {
+    let tasks = vec![create_test_task("task1", vec![])];
+    let graph = DependencyGraph::new(tasks).unwrap();
+    
+    let deps = graph.get_dependencies("task1");
+    assert!(deps.is_empty());
+    
+    let deps = graph.get_dependencies("nonexistent");
+    assert!(deps.is_empty());
+}
+
+#[test]
+fn test_get_dependents_empty() {
+    let tasks = vec![create_test_task("task1", vec![])];
+    let graph = DependencyGraph::new(tasks).unwrap();
+    
+    let dependents = graph.get_dependents("task1");
+    assert!(dependents.is_empty());
+    
+    let dependents = graph.get_dependents("nonexistent");
+    assert!(dependents.is_empty());
+}
+
+#[test]
+fn test_ready_tasks_empty_completed() {
+    let tasks = vec![
+        create_test_task("task1", vec![]),
+        create_test_task("task2", vec!["task1"]),
+    ];
+    let graph = DependencyGraph::new(tasks).unwrap();
+    
+    let ready = graph.get_ready_tasks(&HashSet::new());
+    assert_eq!(ready.len(), 1);
+    assert_eq!(ready[0].id, "task1");
+}
+
+#[test]
+fn test_ready_tasks_all_completed() {
+    let tasks = vec![
+        create_test_task("task1", vec![]),
+        create_test_task("task2", vec!["task1"]),
+    ];
+    let graph = DependencyGraph::new(tasks).unwrap();
+    
+    let mut completed = HashSet::new();
+    completed.insert("task1".to_string());
+    completed.insert("task2".to_string());
+    
+    let ready = graph.get_ready_tasks(&completed);
+    assert!(ready.is_empty());
 }

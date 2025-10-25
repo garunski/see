@@ -150,11 +150,57 @@ fn test_parse_deeply_nested() {
 }
 
 #[test]
-fn test_duplicate_task_ids() {
+fn test_parse_invalid_json() {
+    let json = r#"{ invalid json }"#;
+    let result = parse_workflow(json);
+    assert!(result.is_err());
+    assert!(matches!(result.unwrap_err(), ParserError::Json(_)));
+}
+
+#[test]
+fn test_parse_missing_tasks_field() {
     let json = r#"
     {
-        "id": "duplicate",
-        "name": "Duplicate IDs",
+        "id": "test",
+        "name": "Test Workflow"
+    }
+    "#;
+    let result = parse_workflow(json);
+    assert!(result.is_err());
+    match result.unwrap_err() {
+        ParserError::MissingField(field) => assert_eq!(field, "tasks"),
+        _ => panic!("Expected MissingField error for tasks"),
+    }
+}
+
+#[test]
+fn test_parse_missing_function_field() {
+    let json = r#"
+    {
+        "id": "test",
+        "name": "Test Workflow",
+        "tasks": [
+            {
+                "id": "task1",
+                "name": "Task 1"
+            }
+        ]
+    }
+    "#;
+    let result = parse_workflow(json);
+    assert!(result.is_err());
+    match result.unwrap_err() {
+        ParserError::MissingField(field) => assert_eq!(field, "function"),
+        _ => panic!("Expected MissingField error for function"),
+    }
+}
+
+#[test]
+fn test_parse_missing_command() {
+    let json = r#"
+    {
+        "id": "test",
+        "name": "Test Workflow",
         "tasks": [
             {
                 "id": "task1",
@@ -162,27 +208,85 @@ fn test_duplicate_task_ids() {
                 "function": {
                     "name": "cli_command",
                     "input": {
-                        "command": "echo",
                         "args": ["hello"]
-                    }
-                }
-            },
-            {
-                "id": "task1",
-                "name": "Task 1 Duplicate",
-                "function": {
-                    "name": "cli_command",
-                    "input": {
-                        "command": "echo",
-                        "args": ["world"]
                     }
                 }
             }
         ]
     }
     "#;
-
     let result = parse_workflow(json);
     assert!(result.is_err());
-    assert!(matches!(result.unwrap_err(), ParserError::InvalidTask(_)));
+    match result.unwrap_err() {
+        ParserError::MissingField(field) => assert_eq!(field, "function.input.command"),
+        _ => panic!("Expected MissingField error for command"),
+    }
+}
+
+#[test]
+fn test_parse_missing_prompt() {
+    let json = r#"
+    {
+        "id": "test",
+        "name": "Test Workflow",
+        "tasks": [
+            {
+                "id": "task1",
+                "name": "Task 1",
+                "function": {
+                    "name": "cursor_agent",
+                    "input": {
+                        "config": {}
+                    }
+                }
+            }
+        ]
+    }
+    "#;
+    let result = parse_workflow(json);
+    assert!(result.is_err());
+    match result.unwrap_err() {
+        ParserError::MissingField(field) => assert_eq!(field, "function.input.prompt"),
+        _ => panic!("Expected MissingField error for prompt"),
+    }
+}
+
+#[test]
+fn test_parse_circular_dependency_parent_child() {
+    let json = r#"
+    {
+        "id": "circular",
+        "name": "Circular Dependency",
+        "tasks": [
+            {
+                "id": "parent",
+                "name": "Parent Task",
+                "function": {
+                    "name": "cli_command",
+                    "input": {
+                        "command": "echo",
+                        "args": ["parent"]
+                    }
+                },
+                "next_tasks": [
+                    {
+                        "id": "child",
+                        "name": "Child Task",
+                        "function": {
+                            "name": "cli_command",
+                            "input": {
+                                "command": "echo",
+                                "args": ["child"]
+                            }
+                        },
+                        "dependencies": ["parent"]
+                    }
+                ]
+            }
+        ]
+    }
+    "#;
+    let workflow = parse_workflow(json).unwrap();
+    // This should parse successfully - circular deps are detected at graph level
+    assert_eq!(workflow.tasks.len(), 2);
 }

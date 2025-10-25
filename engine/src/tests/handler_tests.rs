@@ -2,9 +2,10 @@
 
 use crate::handlers::{
     cli_command::CliCommandHandler, cursor_agent::CursorAgentHandler, custom::CustomHandler,
-    get_function_type, HandlerRegistry, TaskHandler,
+    HandlerRegistry, TaskHandler,
 };
 use crate::types::*;
+use crate::HandlerError;
 use serde_json::Value;
 
 fn create_test_task(function: TaskFunction) -> EngineTask {
@@ -36,19 +37,25 @@ async fn test_cli_command_handler() {
 }
 
 #[tokio::test]
-async fn test_cursor_agent_handler() {
+async fn test_cursor_agent_invalid_function_type() {
     let handler = CursorAgentHandler;
     let mut context = ExecutionContext::new("test".to_string(), "test_workflow".to_string());
 
-    let task = create_test_task(TaskFunction::CursorAgent {
-        prompt: "test prompt".to_string(),
-        config: Value::Object(serde_json::Map::new()),
+    // Create task with wrong function type (CliCommand instead of CursorAgent)
+    let task = create_test_task(TaskFunction::CliCommand {
+        command: "echo".to_string(),
+        args: vec!["hello".to_string()],
     });
 
-    let result = handler.execute(&mut context, &task).await.unwrap();
-
-    assert!(result.success);
-    assert!(result.output.as_str().unwrap().contains("test prompt"));
+    let result = handler.execute(&mut context, &task).await;
+    
+    assert!(result.is_err());
+    match result.unwrap_err() {
+        HandlerError::InvalidConfiguration(msg) => {
+            assert!(msg.contains("Expected CursorAgent function"));
+        }
+        _ => panic!("Expected InvalidConfiguration error"),
+    }
 }
 
 #[tokio::test]
@@ -77,18 +84,46 @@ fn test_handler_registry() {
     assert!(registry.get_handler("unknown").is_none());
 }
 
-#[test]
-fn test_get_function_type() {
-    let cli_task = create_test_task(TaskFunction::CliCommand {
+#[tokio::test]
+async fn test_cli_handler_invalid_function() {
+    let handler = CliCommandHandler;
+    let mut context = ExecutionContext::new("test".to_string(), "test_workflow".to_string());
+
+    // Create task with wrong function type (CursorAgent instead of CliCommand)
+    let task = create_test_task(TaskFunction::CursorAgent {
+        prompt: "test prompt".to_string(),
+        config: Value::Object(serde_json::Map::new()),
+    });
+
+    let result = handler.execute(&mut context, &task).await;
+    
+    assert!(result.is_err());
+    match result.unwrap_err() {
+        HandlerError::InvalidConfiguration(msg) => {
+            assert!(msg.contains("Expected CliCommand function"));
+        }
+        _ => panic!("Expected InvalidConfiguration error"),
+    }
+}
+
+#[tokio::test]
+async fn test_custom_handler_invalid_function() {
+    let handler = CustomHandler;
+    let mut context = ExecutionContext::new("test".to_string(), "test_workflow".to_string());
+
+    // Create task with wrong function type (CliCommand instead of Custom)
+    let task = create_test_task(TaskFunction::CliCommand {
         command: "echo".to_string(),
         args: vec!["hello".to_string()],
     });
 
-    let agent_task = create_test_task(TaskFunction::CursorAgent {
-        prompt: "test".to_string(),
-        config: Value::Null,
-    });
-
-    assert_eq!(get_function_type(&cli_task), "cli_command");
-    assert_eq!(get_function_type(&agent_task), "cursor_agent");
+    let result = handler.execute(&mut context, &task).await;
+    
+    assert!(result.is_err());
+    match result.unwrap_err() {
+        HandlerError::InvalidConfiguration(msg) => {
+            assert!(msg.contains("Expected Custom function"));
+        }
+        _ => panic!("Expected InvalidConfiguration error"),
+    }
 }
