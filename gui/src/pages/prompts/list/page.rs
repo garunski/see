@@ -2,13 +2,13 @@ use crate::components::{EmptyState, List, ListItemWithLink, PageHeader, SectionC
 use crate::hooks::use_prompts;
 use crate::icons::Icon;
 use crate::layout::router::Route;
-use crate::services::prompt::PromptService;
+use crate::services::prompt::UserPromptService;
 use crate::state::AppStateProvider;
 use dioxus::prelude::*;
 use dioxus_router::prelude::Link;
 
 #[component]
-pub fn PromptsListPage() -> Element {
+pub fn UserPromptsListPage() -> Element {
     let state_provider = use_context::<AppStateProvider>();
     let prompts = use_prompts();
 
@@ -18,7 +18,7 @@ pub fn PromptsListPage() -> Element {
         if state_provider_clone.prompts.read().needs_reload {
             let mut state_provider = state_provider_clone.clone();
             spawn(async move {
-                match PromptService::fetch_prompts().await {
+                match UserPromptService::fetch_prompts().await {
                     Ok(loaded_prompts) => {
                         state_provider.prompts.write().load_prompts(loaded_prompts);
                     }
@@ -37,7 +37,7 @@ pub fn PromptsListPage() -> Element {
                 description: "Manage your prompt templates".to_string(),
                 actions: Some(rsx! {
                     Link {
-                        to: Route::PromptEditPageNew {},
+                        to: Route::UserPromptEditPageNew {},
                         class: "inline-flex items-center gap-x-1.5 rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600",
                         Icon {
                             name: "plus".to_string(),
@@ -45,14 +45,14 @@ pub fn PromptsListPage() -> Element {
                             size: Some("h-5 w-5".to_string()),
                             variant: Some("outline".to_string()),
                         }
-                        "Create Prompt"
+                        "Create UserPrompt"
                     }
                 }),
             }
 
-            if prompts().is_empty() {
+            if prompts.read().is_empty() {
                 SectionCard {
-                    title: Some("All Prompts".to_string()),
+                    title: Some("All UserPrompts".to_string()),
                     children: rsx! {
                         EmptyState {
                             message: "No prompts yet. Create your first prompt to get started.".to_string(),
@@ -62,7 +62,7 @@ pub fn PromptsListPage() -> Element {
                 }
             } else {
                 List {
-                    for prompt in prompts().iter() {
+                    for prompt in prompts.read().iter() {
                         ListItemWithLink {
                             icon_name: "prompts".to_string(),
                             icon_variant: Some("outline".to_string()),
@@ -73,14 +73,14 @@ pub fn PromptsListPage() -> Element {
                                         {prompt.description.clone()}
                                     }
                                     div { class: "text-xs text-gray-500 dark:text-gray-400",
-                                        "Created: {prompt.created_at}"
+                                        "Template: {prompt.template.len()} characters"
                                     }
                                 }
                             }),
                             right_content: None,
                             link_to: rsx! {
                                 Link {
-                                    to: Route::PromptEditPage { id: prompt.id.clone() },
+                                    to: Route::UserPromptEditPage { id: prompt.id.clone() },
                                     span { class: "absolute inset-x-0 -top-px bottom-0" }
                                     {prompt.id.clone()}
                                 }

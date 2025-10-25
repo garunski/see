@@ -18,13 +18,13 @@ pub fn WorkflowCard(props: WorkflowCardProps) -> Element {
             class: "rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 p-4 hover:bg-zinc-50 dark:hover:bg-zinc-700 hover:shadow-md transition-colors cursor-pointer",
             onclick: move |_| {
                 let workflow_id = workflow.id.clone();
-                let workflow_name = workflow.get_name();
+                let workflow_name = workflow.get_name().to_string();
                 execute_workflow(workflow_name, workflow_id);
             },
             div { class: "flex items-start justify-between",
                 div { class: "flex-1 min-w-0",
                     h3 { class: "text-sm font-semibold text-zinc-900 dark:text-white truncate",
-                        {workflow.get_name()}
+                        {workflow.get_name().to_string()}
                     }
                     div { class: "mt-1 flex items-center gap-2",
                         if workflow.is_default {

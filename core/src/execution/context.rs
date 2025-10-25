@@ -1,11 +1,12 @@
 #![allow(clippy::result_large_err)]
 use crate::{
     errors::CoreError,
-    types::{OutputCallback, TaskInfo, TaskStatus},
+    types::OutputCallback,
     store::Store,
 };
+use persistence::TaskInfo;
 use std::collections::HashMap;
-use std::sync::{Arc, Mutex, MutexGuard};
+use std::sync::{Arc, Mutex};
 use tracing::{debug, trace};
 
 pub struct ExecutionContext {
@@ -66,7 +67,7 @@ impl ExecutionContext {
         self.current_task_id = Some(task_id.to_string());
         self.task_start_times
             .insert(task_id.to_string(), chrono::Utc::now().to_rfc3339());
-        self.update_task_status(task_id, TaskStatus::InProgress);
+        self.update_task_status(task_id, "in-progress");
     }
 
     pub fn end_task(&mut self, task_id: &str) {
@@ -79,7 +80,7 @@ impl ExecutionContext {
         self.current_task_id = None;
     }
 
-    pub fn update_task_status(&mut self, task_id: &str, status: TaskStatus) {
+    pub fn update_task_status(&mut self, task_id: &str, status: &str) {
         trace!(
             task_id = %task_id,
             status = %status,
@@ -88,7 +89,7 @@ impl ExecutionContext {
             "Updating task status"
         );
         if let Some(task) = self.tasks.iter_mut().find(|t| t.id == task_id) {
-            task.status = status;
+            task.status = status.to_string();
         }
     }
 
@@ -151,7 +152,7 @@ impl ExecutionContext {
         ));
 
         // Update task status
-        self.update_task_status(task_id, TaskStatus::WaitingForInput);
+        self.update_task_status(task_id, "waiting-for-input");
 
         // Set current task to None since it's paused
         self.current_task_id = None;
@@ -168,7 +169,7 @@ impl ExecutionContext {
             .find(|t| t.id == task_id)
             .ok_or_else(|| CoreError::Validation(format!("Task {} not found", task_id)))?;
 
-        if task.status != TaskStatus::WaitingForInput {
+        if task.status != "waiting-for-input" {
             return Err(CoreError::Validation(format!(
                 "Task {} is not waiting for input (status: {})",
                 task_id, task.status
@@ -182,7 +183,7 @@ impl ExecutionContext {
         ));
 
         // Update task status back to InProgress
-        self.update_task_status(task_id, TaskStatus::InProgress);
+        self.update_task_status(task_id, "in-progress");
 
         // Set as current task
         self.current_task_id = Some(task_id.to_string());
@@ -194,142 +195,14 @@ impl ExecutionContext {
     pub fn has_waiting_tasks(&self) -> bool {
         self.tasks
             .iter()
-            .any(|t| t.status == TaskStatus::WaitingForInput)
+            .any(|t| t.status == "waiting-for-input")
     }
 
     /// Get all tasks waiting for input
     pub fn get_waiting_tasks(&self) -> Vec<&TaskInfo> {
         self.tasks
             .iter()
-            .filter(|t| t.status == TaskStatus::WaitingForInput)
+            .filter(|t| t.status == "waiting-for-input")
             .collect()
-    }
-}
-
-pub trait ExecutionContextSafe {
-    fn safe_log(&self, msg: &str) -> Result<(), CoreError>;
-
-    fn safe_update_task_status(&self, task_id: &str, status: TaskStatus) -> Result<(), CoreError>;
-
-    fn safe_pause_for_input(&self, task_id: &str, prompt: &str) -> Result<(), CoreError>;
-    fn safe_resume_task(&self, task_id: &str) -> Result<(), CoreError>;
-    fn safe_has_waiting_tasks(&self) -> Result<bool, CoreError>;
-    fn safe_get_waiting_tasks(&self) -> Result<Vec<TaskInfo>, CoreError>;
-
-    fn lock_with_retry<F, R>(&self, operation: F, max_retries: usize) -> Result<R, CoreError>
-    where
-        F: Fn(&MutexGuard<ExecutionContext>) -> Result<R, CoreError>;
-}
-
-impl ExecutionContextSafe for Arc<Mutex<ExecutionContext>> {
-    fn safe_log(&self, msg: &str) -> Result<(), CoreError> {
-        let mut ctx = self
-            .lock()
-            .map_err(|e| {
-                tracing::error!(
-                    error = %e,
-                    message = %msg,
-                    "Failed to lock execution context for logging - this may indicate workflow interruption"
-                );
-                CoreError::MutexLock(format!("Failed to lock context: {}", e))
-            })?;
-        ctx.log(msg);
-        Ok(())
-    }
-
-    fn safe_update_task_status(&self, task_id: &str, status: TaskStatus) -> Result<(), CoreError> {
-        let mut ctx = self
-            .lock()
-            .map_err(|e| {
-                tracing::error!(
-                    error = %e,
-                    task_id = %task_id,
-                    status = %status,
-                    "Failed to lock execution context for task status update - this may indicate workflow interruption"
-                );
-                CoreError::MutexLock(format!("Failed to lock context: {}", e))
-            })?;
-        ctx.update_task_status(task_id, status);
-        Ok(())
-    }
-
-    fn safe_pause_for_input(&self, task_id: &str, prompt: &str) -> Result<(), CoreError> {
-        let mut ctx = self
-            .lock()
-            .map_err(|e| {
-                tracing::error!(
-                    error = %e,
-                    task_id = %task_id,
-                    prompt = %prompt,
-                    "Failed to lock execution context for pause_for_input - this may indicate workflow interruption"
-                );
-                CoreError::MutexLock(format!("Failed to lock context: {}", e))
-            })?;
-        ctx.pause_for_input(task_id, prompt)
-    }
-
-    fn safe_resume_task(&self, task_id: &str) -> Result<(), CoreError> {
-        let mut ctx = self
-            .lock()
-            .map_err(|e| {
-                tracing::error!(
-                    error = %e,
-                    task_id = %task_id,
-                    "Failed to lock execution context for resume_task - this may indicate workflow interruption"
-                );
-                CoreError::MutexLock(format!("Failed to lock context: {}", e))
-            })?;
-        ctx.resume_task(task_id)
-    }
-
-    fn safe_has_waiting_tasks(&self) -> Result<bool, CoreError> {
-        let ctx = self
-            .lock()
-            .map_err(|e| {
-                tracing::error!(
-                    error = %e,
-                    "Failed to lock execution context for has_waiting_tasks - this may indicate workflow interruption"
-                );
-                CoreError::MutexLock(format!("Failed to lock context: {}", e))
-            })?;
-        Ok(ctx.has_waiting_tasks())
-    }
-
-    fn safe_get_waiting_tasks(&self) -> Result<Vec<TaskInfo>, CoreError> {
-        let ctx = self
-            .lock()
-            .map_err(|e| {
-                tracing::error!(
-                    error = %e,
-                    "Failed to lock execution context for get_waiting_tasks - this may indicate workflow interruption"
-                );
-                CoreError::MutexLock(format!("Failed to lock context: {}", e))
-            })?;
-        Ok(ctx
-            .get_waiting_tasks()
-            .iter()
-            .map(|t| (*t).clone())
-            .collect())
-    }
-
-    fn lock_with_retry<F, R>(&self, operation: F, max_retries: usize) -> Result<R, CoreError>
-    where
-        F: Fn(&MutexGuard<ExecutionContext>) -> Result<R, CoreError>,
-    {
-        for attempt in 0..max_retries {
-            match self.lock() {
-                Ok(guard) => return operation(&guard),
-                Err(e) if attempt == max_retries - 1 => {
-                    return Err(CoreError::MutexLock(format!(
-                        "Failed to acquire lock after {} attempts: {}",
-                        max_retries, e
-                    )));
-                }
-                Err(_) => {
-                    std::thread::sleep(std::time::Duration::from_millis(10 * (attempt + 1) as u64));
-                }
-            }
-        }
-        unreachable!()
     }
 }

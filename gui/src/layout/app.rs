@@ -68,20 +68,9 @@ fn AppContent() -> Element {
                 .write()
                 .apply_loaded_settings(settings.clone());
 
-            let default_workflows = s_e_e_core::WorkflowDefinition::get_default_workflows();
-            let mut settings_guard = state_provider.settings.write();
-            for default_workflow in default_workflows {
-                let exists = settings_guard
-                    .settings
-                    .workflows
-                    .iter()
-                    .any(|w| w.id == default_workflow.id);
-                if !exists {
-                    settings_guard.add_workflow(default_workflow);
-                }
-            }
+            // Workflows are now managed separately from settings
 
-            let settings_to_save = settings_guard.settings.clone();
+            let settings_to_save = settings.clone();
             spawn(async move {
                 match s_e_e_core::get_global_store() {
                     Ok(store) => {
@@ -103,14 +92,25 @@ fn AppContent() -> Element {
             let mut history_state = state_provider.history;
             spawn(async move {
                 match s_e_e_core::get_global_store() {
-                    Ok(store) => match store.list_workflow_executions(50).await {
+                    Ok(store) => match store.list_workflow_executions().await {
                         Ok(history) => {
                             tracing::info!(
                                 "📊 HISTORY LOADED FROM DATABASE: count={}, execution_ids={:?}",
                                 history.len(),
                                 history.iter().map(|h| &h.id).collect::<Vec<_>>()
                             );
-                            history_state.write().set_history(history);
+                            // Convert WorkflowExecution to WorkflowExecutionSummary
+                            let summaries = history.into_iter().map(|exec| s_e_e_core::WorkflowExecutionSummary {
+                                id: exec.id,
+                                workflow_name: exec.workflow_name,
+                                status: exec.status,
+                                created_at: exec.created_at,
+                                completed_at: exec.completed_at,
+                                success: exec.success,
+                                task_count: exec.tasks.len(),
+                                timestamp: exec.timestamp,
+                            }).collect();
+                            history_state.write().set_history(summaries);
                         }
                         Err(e) => {
                             eprintln!("Failed to load history: {}", e);
@@ -124,7 +124,7 @@ fn AppContent() -> Element {
         }
     });
 
-    let theme_signal = use_memo(move || state_provider.settings.read().settings.theme);
+    let theme_signal = use_memo(move || state_provider.settings.read().settings.theme.clone());
 
     use_effect(move || {
         let settings_to_save = state_provider.settings.read().settings.clone();

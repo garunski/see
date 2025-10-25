@@ -1,88 +1,17 @@
 use crate::{
     errors::CoreError,
-    types::{
-        AuditEntry as CoreAuditEntry, AuditStatus as CoreAuditStatus, OutputCallback,
-        TaskInfo as CoreTaskInfo, TaskStatus as CoreTaskStatus,
-        WorkflowResult as CoreWorkflowResult,
-    },
+    types::{OutputCallback, WorkflowResult},
 };
-use engine::{
-    execute_workflow_from_json, AuditEntry as EngineAuditEntry, AuditStatus as EngineAuditStatus,
-    TaskInfo as EngineTaskInfo, TaskStatus as EngineTaskStatus,
-    WorkflowResult as EngineWorkflowResult,
-};
+use engine::execute_workflow_from_json;
 use serde_json::Value;
 use tokio::fs;
 use tracing::{debug, info, instrument};
-
-/// Convert engine TaskStatus to core TaskStatus
-fn convert_task_status(status: EngineTaskStatus) -> CoreTaskStatus {
-    match status {
-        EngineTaskStatus::Pending => CoreTaskStatus::Pending,
-        EngineTaskStatus::InProgress => CoreTaskStatus::InProgress,
-        EngineTaskStatus::Complete => CoreTaskStatus::Complete,
-        EngineTaskStatus::Failed => CoreTaskStatus::Failed,
-        EngineTaskStatus::WaitingForInput => CoreTaskStatus::WaitingForInput,
-    }
-}
-
-/// Convert engine AuditStatus to core AuditStatus
-fn convert_audit_status(status: EngineAuditStatus) -> CoreAuditStatus {
-    match status {
-        EngineAuditStatus::Success => CoreAuditStatus::Success,
-        EngineAuditStatus::Failure => CoreAuditStatus::Failure,
-    }
-}
-
-/// Convert engine TaskInfo to core TaskInfo
-fn convert_task_info(task: EngineTaskInfo) -> CoreTaskInfo {
-    CoreTaskInfo {
-        id: task.id,
-        name: task.name,
-        status: convert_task_status(task.status),
-    }
-}
-
-/// Convert engine AuditEntry to core AuditEntry
-fn convert_audit_entry(entry: EngineAuditEntry) -> CoreAuditEntry {
-    CoreAuditEntry {
-        task_id: entry.task_id,
-        status: convert_audit_status(entry.status),
-        timestamp: entry.timestamp,
-        changes_count: entry.changes_count,
-        message: entry.message,
-    }
-}
-
-/// Convert engine WorkflowResult to core WorkflowResult
-fn convert_workflow_result(engine_result: EngineWorkflowResult) -> CoreWorkflowResult {
-    CoreWorkflowResult {
-        success: engine_result.success,
-        workflow_name: engine_result.workflow_name,
-        task_count: engine_result.tasks.len(),
-        execution_id: uuid::Uuid::new_v4().to_string(), // Generate new execution ID
-        tasks: engine_result
-            .tasks
-            .into_iter()
-            .map(convert_task_info)
-            .collect(),
-        final_context: Value::Object(serde_json::Map::new()), // Empty context for now
-        audit_trail: engine_result
-                .audit_trail
-            .into_iter()
-            .map(convert_audit_entry)
-            .collect(),
-        per_task_logs: engine_result.per_task_logs,
-        errors: engine_result.errors,
-        output_logs: Vec::new(), // Empty for now
-    }
-}
 
 #[instrument(skip(workflow_data, _output_callback), fields(execution_id))]
 pub async fn execute_workflow_from_content(
     workflow_data: &str,
     _output_callback: Option<OutputCallback>,
-) -> Result<CoreWorkflowResult, CoreError> {
+) -> Result<WorkflowResult, CoreError> {
     info!("Using new workflow engine");
 
     // Execute workflow using the new engine
@@ -91,11 +20,20 @@ pub async fn execute_workflow_from_content(
         .map_err(|e| CoreError::WorkflowExecution(format!("Workflow execution failed: {}", e)))?;
 
     // Convert to core format
-    let core_result = convert_workflow_result(engine_result);
+    let core_result = WorkflowResult {
+        success: engine_result.success,
+        workflow_name: engine_result.workflow_name,
+        task_count: engine_result.tasks.len(),
+        execution_id: uuid::Uuid::new_v4().to_string(),
+        tasks: engine_result.tasks,
+        final_context: Value::Object(serde_json::Map::new()),
+        audit_trail: engine_result.audit_trail,
+        per_task_logs: engine_result.per_task_logs,
+        errors: engine_result.errors,
+        output_logs: Vec::new(),
+    };
 
-    // TODO: Add persistence later
     info!("Workflow execution completed with ID: {}", core_result.execution_id);
-
     Ok(core_result)
 }
 
@@ -103,7 +41,7 @@ pub async fn execute_workflow_from_content(
 pub async fn execute_workflow(
     workflow_file: &str,
     _output_callback: Option<OutputCallback>,
-) -> Result<CoreWorkflowResult, CoreError> {
+) -> Result<WorkflowResult, CoreError> {
     debug!("Reading workflow file");
     let workflow_data = fs::read_to_string(workflow_file).await.map_err(|e| {
         CoreError::WorkflowExecution(format!(
@@ -119,7 +57,7 @@ pub async fn execute_workflow(
 pub async fn execute_workflow_by_id(
     workflow_id: &str,
     _output_callback: Option<OutputCallback>,
-) -> Result<CoreWorkflowResult, CoreError> {
+) -> Result<WorkflowResult, CoreError> {
     debug!("Fetching workflow definition by ID");
     // TODO: Add store back later
     // let workflow_definition = store.get_workflow_definition(workflow_id).await?;

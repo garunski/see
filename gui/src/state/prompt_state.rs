@@ -1,12 +1,12 @@
-use s_e_e_core::persistence::models::Prompt;
+use s_e_e_core::UserPrompt;
 
 #[derive(Debug, Clone)]
-pub struct PromptState {
-    pub prompts: Vec<Prompt>,
+pub struct UserPromptState {
+    pub prompts: Vec<UserPrompt>,
     pub needs_reload: bool,
 }
 
-impl Default for PromptState {
+impl Default for UserPromptState {
     fn default() -> Self {
         Self {
             prompts: Vec::new(),
@@ -15,17 +15,17 @@ impl Default for PromptState {
     }
 }
 
-impl PromptState {
-    pub fn load_prompts(&mut self, prompts: Vec<Prompt>) {
+impl UserPromptState {
+    pub fn load_prompts(&mut self, prompts: Vec<UserPrompt>) {
         self.prompts = prompts;
         self.needs_reload = false;
     }
 
-    pub fn add_prompt(&mut self, prompt: Prompt) {
+    pub fn add_prompt(&mut self, prompt: UserPrompt) {
         self.prompts.push(prompt);
     }
 
-    pub fn update_prompt(&mut self, id: String, updated_prompt: Prompt) {
+    pub fn update_prompt(&mut self, id: String, updated_prompt: UserPrompt) {
         if let Some(prompt) = self.prompts.iter_mut().find(|p| p.id == id) {
             *prompt = updated_prompt;
         }
@@ -35,11 +35,11 @@ impl PromptState {
         self.prompts.retain(|p| p.id != id);
     }
 
-    pub fn get_prompt(&self, id: String) -> Option<&Prompt> {
+    pub fn get_prompt(&self, id: String) -> Option<&UserPrompt> {
         self.prompts.iter().find(|p| p.id == id)
     }
 
-    pub fn get_prompts(&self) -> &Vec<Prompt> {
+    pub fn get_prompts(&self) -> &Vec<UserPrompt> {
         &self.prompts
     }
 }

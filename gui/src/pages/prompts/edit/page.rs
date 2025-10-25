@@ -4,14 +4,14 @@ use crate::components::{
 };
 use crate::icons::Icon;
 use crate::layout::router::Route;
-use crate::services::prompt::PromptService;
+use crate::services::prompt::UserPromptService;
 use crate::state::AppStateProvider;
 use dioxus::prelude::*;
 use dioxus_router::prelude::{use_navigator, Link};
-use s_e_e_core::persistence::models::Prompt;
+use s_e_e_core::UserPrompt;
 
 #[component]
-pub fn PromptEditPage(id: String) -> Element {
+pub fn UserPromptEditPage(id: String) -> Element {
     let state_provider = use_context::<AppStateProvider>();
     let navigator = use_navigator();
 
@@ -41,8 +41,8 @@ pub fn PromptEditPage(id: String) -> Element {
                 .get_prompt(prompt_id_for_effect.clone())
             {
                 prompt_id.set(prompt.id.clone());
-                description.set(prompt.description.clone());
-                content.set(prompt.content.clone());
+                description.set(prompt.description.clone().unwrap_or_default());
+                content.set(prompt.template.clone());
             }
         }
     });
@@ -84,7 +84,7 @@ pub fn PromptEditPage(id: String) -> Element {
             let prompt_id = prompt_id.clone();
             let mut show_notification = show_notification;
             spawn(async move {
-                match PromptService::delete_prompt(&prompt_id).await {
+                match UserPromptService::delete_prompt(&prompt_id).await {
                     Ok(_) => {
                         state_provider.prompts.write().remove_prompt(prompt_id);
                         show_notification(
@@ -93,7 +93,7 @@ pub fn PromptEditPage(id: String) -> Element {
                             "The prompt has been successfully deleted.".to_string(),
                         );
                         // Navigate back to list page after successful deletion
-                        navigator.push(Route::PromptsListPage {});
+                        navigator.push(Route::UserPromptsListPage {});
                     }
                     Err(e) => {
                         validation_error.set(format!("Failed to delete prompt: {}", e));
@@ -112,12 +112,12 @@ pub fn PromptEditPage(id: String) -> Element {
     rsx! {
         div { class: "space-y-8",
             PageHeader {
-                title: if is_new { "Create Prompt".to_string() } else { "Edit Prompt".to_string() },
+                title: if is_new { "Create UserPrompt".to_string() } else { "Edit UserPrompt".to_string() },
                 description: if is_new { "Create a new prompt template".to_string() } else { "Edit prompt template".to_string() },
                 actions: Some(rsx! {
                     div { class: "flex items-center gap-3",
                         Link {
-                            to: Route::PromptsListPage {},
+                            to: Route::UserPromptsListPage {},
                             class: "inline-flex items-center gap-x-1.5 rounded-md bg-zinc-100 dark:bg-zinc-800 px-3 py-2 text-sm font-semibold text-zinc-900 dark:text-zinc-100 shadow-sm hover:bg-zinc-200 dark:hover:bg-zinc-700",
                             Icon {
                                 name: "arrow_left".to_string(),
@@ -166,21 +166,14 @@ pub fn PromptEditPage(id: String) -> Element {
                             validation_error.set(String::new());
                             is_saving.set(true);
 
-                            let prompt = Prompt {
+                            let prompt = UserPrompt {
                                 id: prompt_id().trim().to_string(),
-                                content: content().trim().to_string(),
-                                description: description().trim().to_string(),
-                                created_at: if is_new {
-                                    chrono::Utc::now().to_rfc3339()
-                                } else {
-                                    // Keep existing created_at for updates
-                                    state_provider
-                                        .prompts
-                                        .read()
-                                        .get_prompt(id.clone())
-                                        .map(|p| p.created_at.clone())
-                                        .unwrap_or_else(|| chrono::Utc::now().to_rfc3339())
-                                },
+                                name: prompt_id().trim().to_string(),
+                                description: Some(description().trim().to_string()),
+                                template: content().trim().to_string(),
+                                variables: Vec::new(),
+                                tags: Vec::new(),
+                                metadata: serde_json::Value::Object(serde_json::Map::new()),
                             };
 
                             let mut state_provider = state_provider.clone();
@@ -188,9 +181,9 @@ pub fn PromptEditPage(id: String) -> Element {
                             let mut show_notification = show_notification;
                             spawn(async move {
                                 let result = if is_new {
-                                    PromptService::create_prompt(prompt.clone()).await
+                                    UserPromptService::create_prompt(prompt.clone()).await
                                 } else {
-                                    PromptService::update_prompt(prompt.clone()).await
+                                    UserPromptService::update_prompt(prompt.clone()).await
                                 };
 
                                 match result {
@@ -283,7 +276,7 @@ pub fn PromptEditPage(id: String) -> Element {
         if !is_new {
             ConfirmDialog {
                 show: show_delete_dialog(),
-                title: "Delete Prompt?".to_string(),
+                title: "Delete UserPrompt?".to_string(),
                 message: format!("Are you sure you want to delete the prompt '{}'? This action cannot be undone.", prompt_id()),
                 confirm_text: "Delete".to_string(),
                 cancel_text: "Cancel".to_string(),
@@ -295,8 +288,8 @@ pub fn PromptEditPage(id: String) -> Element {
 }
 
 #[component]
-pub fn PromptEditPageNew() -> Element {
+pub fn UserPromptEditPageNew() -> Element {
     rsx! {
-        PromptEditPage { id: "".to_string() }
+        UserPromptEditPage { id: "".to_string() }
     }
 }

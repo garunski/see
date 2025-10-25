@@ -6,7 +6,7 @@ use uuid::Uuid;
 use tracing::debug;
 
 /// Represents a workflow definition (template) in the database
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct Workflow {
     pub id: String,
     pub name: String,

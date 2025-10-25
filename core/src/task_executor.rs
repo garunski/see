@@ -1,5 +1,4 @@
 use crate::errors::CoreError;
-use crate::types::TaskStatus;
 use serde_json::Value;
 use std::sync::{Arc, Mutex};
 use tracing::{error, trace, debug, Instrument};
@@ -73,7 +72,7 @@ impl TaskPersistenceHelper {
     }
 
     /// Save task state (start/failed/complete) to database asynchronously
-    pub fn save_task_state_async(&self, task_id: &str, status: TaskStatus) {
+    pub fn save_task_state_async(&self, task_id: &str, status: &str) {
         let Ok(ctx) = self.context.lock() else {
             error!("Failed to lock context for task persistence");
             return;
@@ -84,7 +83,7 @@ impl TaskPersistenceHelper {
             return;
         };
 
-        let status_clone = status.clone();
+        let status_str = status.to_string();
         let workflow_id = ctx.get_execution_id().to_string();
         let _workflow_name = ctx.get_workflow_name().to_string();
         let task_name = ctx.get_tasks().iter()
@@ -97,8 +96,6 @@ impl TaskPersistenceHelper {
             .unwrap_or(0) as i32;
         
         drop(ctx);
-
-        let status_str = status_clone.as_str();
         let task_id = task_id.to_string(); // Clone for the async block
         let span =
             tracing::debug_span!("save_task_state_bg", task_id = %task_id, status = %status_str);
@@ -108,11 +105,11 @@ impl TaskPersistenceHelper {
                 
                 // Create task execution
                 let mut task_exec = persistence::TaskExecution::new(workflow_id, task_id.clone(), task_name);
-                task_exec.status = status_str.to_string();
+                task_exec.status = status_str.clone();
                 task_exec.logs = logs;
                 
                 // Set timestamps based on status
-                match status_str {
+                match status_str.as_str() {
                     "in-progress" => task_exec.mark_started(),
                     "complete" => task_exec.mark_completed(true, None, None),
                     "failed" => task_exec.mark_completed(false, None, Some("Task failed".to_string())),

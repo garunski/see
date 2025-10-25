@@ -6,7 +6,7 @@ pub mod workflows;
 
 pub use executions::{HistoryPage, WorkflowDetailsPage};
 pub use home::HomePage;
-pub use prompts::{PromptEditPage, PromptEditPageNew, PromptsListPage};
+pub use prompts::{UserPromptEditPage, UserPromptEditPageNew, UserPromptsListPage};
 pub use settings::SettingsPage;
 pub use workflows::{
     UploadPage, WorkflowEditPage, WorkflowEditPageNew, WorkflowVisualizerPage, WorkflowsListPage,

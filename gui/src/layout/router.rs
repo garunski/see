@@ -1,7 +1,7 @@
 use crate::components::{Button, ButtonSize, ButtonVariant};
 use crate::icons::Icon;
 use crate::pages::{
-    HistoryPage, HomePage, PromptEditPage, PromptEditPageNew, PromptsListPage, SettingsPage,
+    HistoryPage, HomePage, UserPromptEditPage, UserPromptEditPageNew, UserPromptsListPage, SettingsPage,
     UploadPage, WorkflowDetailsPage, WorkflowEditPage, WorkflowEditPageNew, WorkflowVisualizerPage,
     WorkflowsListPage,
 };
@@ -31,11 +31,11 @@ pub enum Route {
         #[route("/executions/details/:id")]
         WorkflowDetailsPage { id: String },
         #[route("/prompts")]
-        PromptsListPage {},
+        UserPromptsListPage {},
         #[route("/prompts/new")]
-        PromptEditPageNew {},
+        UserPromptEditPageNew {},
         #[route("/prompts/edit/:id")]
-        PromptEditPage { id: String },
+        UserPromptEditPage { id: String },
         #[route("/settings")]
         SettingsPage {},
     #[end_layout]

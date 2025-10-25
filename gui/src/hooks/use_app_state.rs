@@ -1,6 +1,6 @@
 use crate::state::AppStateProvider;
 use dioxus::prelude::*;
-use s_e_e_core::persistence::models::Prompt;
+use s_e_e_core::UserPrompt;
 use s_e_e_core::{WorkflowDefinition, WorkflowExecutionSummary, WorkflowMetadata};
 
 // Direct context access
@@ -14,7 +14,7 @@ pub fn use_workflows() -> Memo<Vec<WorkflowDefinition>> {
     use_memo(move || state.settings.read().get_workflows().clone())
 }
 
-pub fn use_prompts() -> Memo<Vec<Prompt>> {
+pub fn use_prompts() -> Memo<Vec<UserPrompt>> {
     let state = use_app_state();
     use_memo(move || state.prompts.read().get_prompts().clone())
 }

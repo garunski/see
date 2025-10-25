@@ -132,7 +132,7 @@ pub fn HistoryPage() -> Element {
                                         index + 1,
                                         execution.id,
                                         execution.workflow_name,
-                                        execution.success
+                                        execution.success.unwrap_or(false)
                                     );
                                 }
                                 HistoryItem {

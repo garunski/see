@@ -26,12 +26,14 @@ pub fn WorkflowFlow(tasks: Vec<TaskInfo>, on_task_click: EventHandler<usize>) ->
                         if i > 0 {
                             div {
                                 class: "absolute left-1/2 -top-2 transform -translate-x-1/2 w-4 h-4 rounded-full border-2 border-white dark:border-zinc-900 z-10",
-                                style: format!("background-color: {}", match task.status {
-                                    s_e_e_core::TaskStatus::Complete => "#10b981",
-                                    s_e_e_core::TaskStatus::Failed => "#ef4444",
-                                    s_e_e_core::TaskStatus::InProgress => "#3b82f6",
-                                    s_e_e_core::TaskStatus::Pending => "#6b7280",
-                                    s_e_e_core::TaskStatus::WaitingForInput => "#f59e0b",
+                                style: format!("background-color: {}", match task.status.as_str() {
+                                    "complete" => "#10b981",
+                                    "failed" => "#ef4444",
+                                    "in-progress" => "#3b82f6",
+                                    "pending" => "#6b7280",
+                                    "waiting-for-input" => "#f59e0b",
+                                    _ => "#6b7280",
+                                    _ => "#6b7280",
                                 })
                             }
                         }
@@ -45,12 +47,13 @@ pub fn WorkflowFlow(tasks: Vec<TaskInfo>, on_task_click: EventHandler<usize>) ->
                             if i < tasks.len() - 1 {
                                 div {
                                     class: "absolute left-1/2 -bottom-2 transform -translate-x-1/2 w-4 h-4 rounded-full border-2 border-white dark:border-zinc-900 z-10",
-                                    style: format!("background-color: {}", match task.status {
-                                        s_e_e_core::TaskStatus::Complete => "#10b981",
-                                        s_e_e_core::TaskStatus::Failed => "#ef4444",
-                                        s_e_e_core::TaskStatus::InProgress => "#3b82f6",
-                                        s_e_e_core::TaskStatus::Pending => "#6b7280",
-                                        s_e_e_core::TaskStatus::WaitingForInput => "#f59e0b",
+                                    style: format!("background-color: {}", match task.status.as_str() {
+                                        "complete" => "#10b981",
+                                        "failed" => "#ef4444",
+                                        "in-progress" => "#3b82f6",
+                                        "pending" => "#6b7280",
+                                        "waiting-for-input" => "#f59e0b",
+                                    _ => "#6b7280",
                                     })
                                 }
                             }
@@ -59,12 +62,13 @@ pub fn WorkflowFlow(tasks: Vec<TaskInfo>, on_task_click: EventHandler<usize>) ->
                             if i < tasks.len() - 1 {
                                 div {
                                     class: "absolute left-1/2 top-full transform -translate-x-1/2 w-0.5 h-6",
-                                    style: format!("background-color: {}", match task.status {
-                                        s_e_e_core::TaskStatus::Complete => "#10b981",
-                                        s_e_e_core::TaskStatus::Failed => "#ef4444",
-                                        s_e_e_core::TaskStatus::InProgress => "#3b82f6",
-                                        s_e_e_core::TaskStatus::Pending => "#6b7280",
-                                        s_e_e_core::TaskStatus::WaitingForInput => "#f59e0b",
+                                    style: format!("background-color: {}", match task.status.as_str() {
+                                        "complete" => "#10b981",
+                                        "failed" => "#ef4444",
+                                        "in-progress" => "#3b82f6",
+                                        "pending" => "#6b7280",
+                                        "waiting-for-input" => "#f59e0b",
+                                    _ => "#6b7280",
                                     })
                                 }
                             }
@@ -73,20 +77,22 @@ pub fn WorkflowFlow(tasks: Vec<TaskInfo>, on_task_click: EventHandler<usize>) ->
                                 h4 { class: "text-base font-semibold text-zinc-950 dark:text-white", "{task.name}" }
                                 div {
                                     class: format!("px-3 py-1 text-sm rounded-full font-medium {}",
-                                        match task.status {
-                                            s_e_e_core::TaskStatus::Complete => "bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-200",
-                                            s_e_e_core::TaskStatus::Failed => "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200",
-                                            s_e_e_core::TaskStatus::InProgress => "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200",
-                                            s_e_e_core::TaskStatus::Pending => "bg-zinc-100 text-zinc-800 dark:bg-zinc-900 dark:text-zinc-200",
-                                            s_e_e_core::TaskStatus::WaitingForInput => "bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200",
+                                        match task.status.as_str() {
+                                            "complete" => "bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-200",
+                                            "failed" => "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200",
+                                            "in-progress" => "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200",
+                                            "pending" => "bg-zinc-100 text-zinc-800 dark:bg-zinc-900 dark:text-zinc-200",
+                                            "waiting-for-input" => "bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200",
+                                            _ => "bg-zinc-100 text-zinc-800 dark:bg-zinc-900 dark:text-zinc-200",
                                         }
                                     ),
-                                    match task.status {
-                                        s_e_e_core::TaskStatus::Complete => "Complete",
-                                        s_e_e_core::TaskStatus::Failed => "Failed",
-                                        s_e_e_core::TaskStatus::InProgress => "In Progress",
-                                        s_e_e_core::TaskStatus::Pending => "Pending",
-                                        s_e_e_core::TaskStatus::WaitingForInput => "Waiting for Input",
+                                    match task.status.as_str() {
+                                        "complete" => "Complete",
+                                        "failed" => "Failed",
+                                        "in-progress" => "In Progress",
+                                        "pending" => "Pending",
+                                        "waiting-for-input" => "Waiting for Input",
+                                        _ => "Unknown",
                                     }
                                 }
                             }

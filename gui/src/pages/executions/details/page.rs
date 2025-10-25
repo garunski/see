@@ -33,7 +33,7 @@ fn ResumeButton(execution_id: String, task: TaskInfo) -> Element {
                     spawn(async move {
                         tracing::info!("Resume button clicked for execution {} task {}", execution_id_clone, task_id_clone);
 
-                        match s_e_e_core::engine::resume_task(&execution_id_clone, &task_id_clone).await {
+                        match s_e_e_core::resume_task(&execution_id_clone, &task_id_clone).await {
                             Ok(_) => {
                                 tracing::info!("Task resumed successfully");
                                 // TODO: Refresh the page or update state in Phase 6
@@ -87,7 +87,7 @@ pub fn WorkflowDetailsPage(id: String) -> Element {
 
                 // Resume button for waiting tasks
                 if let Some(task) = exec.tasks.get(selected_task_index()) {
-                    if task.status == s_e_e_core::TaskStatus::WaitingForInput {
+                    if task.status == "waiting-for-input".to_string() {
                         ResumeButton { execution_id: execution_id.clone(), task: task.clone() }
                     }
                 }

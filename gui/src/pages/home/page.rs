@@ -18,9 +18,9 @@ pub fn WorkflowExecutionItem(workflow: WorkflowDefinition) -> Element {
         li {
             class: "relative flex justify-between gap-x-6 px-4 py-5 hover:bg-gray-50 sm:px-6 dark:hover:bg-white/[0.025] cursor-pointer",
             onclick: move |_| {
-                let workflow_name = workflow.get_name();
+                let workflow_name = workflow.get_name().to_string();
                 let workflow_id = workflow.id.clone();
-                execute_workflow(workflow_name, workflow_id);
+                execute_workflow(workflow_name.to_string(), workflow_id);
                 navigator.push(Route::HistoryPage {});
             },
             div { class: "flex min-w-0 gap-x-4",
@@ -34,7 +34,7 @@ pub fn WorkflowExecutionItem(workflow: WorkflowDefinition) -> Element {
                 }
                 div { class: "min-w-0 flex-auto",
                     p { class: "text-sm/6 font-semibold text-gray-900 dark:text-white",
-                        {workflow.get_name()}
+                        {workflow.get_name().to_string()}
                     }
                     div { class: "mt-1 flex items-center gap-2",
                         if workflow.is_default {

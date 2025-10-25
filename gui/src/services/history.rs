@@ -1,4 +1,4 @@
-use s_e_e_core::persistence::models::WorkflowStatus;
+use s_e_e_core::WorkflowStatus;
 use s_e_e_core::{WorkflowExecutionSummary, WorkflowMetadata};
 
 #[derive(Debug, thiserror::Error)]
@@ -24,10 +24,24 @@ impl HistoryService {
         let store = s_e_e_core::get_global_store()
             .map_err(|e| HistoryError::DatabaseUnavailable(e.to_string()))?;
 
-        store
-            .list_workflow_executions(limit)
+        let executions = store
+            .list_workflow_executions()
             .await
-            .map_err(|e| HistoryError::FetchExecutionsFailed(e.to_string()))
+            .map_err(|e| HistoryError::FetchExecutionsFailed(e.to_string()))?;
+        
+        // Convert WorkflowExecution to WorkflowExecutionSummary
+        let summaries = executions.into_iter().map(|exec| WorkflowExecutionSummary {
+            id: exec.id,
+            workflow_name: exec.workflow_name,
+            status: exec.status,
+            created_at: exec.created_at,
+            completed_at: exec.completed_at,
+            success: exec.success,
+            task_count: exec.tasks.len(),
+            timestamp: exec.timestamp,
+        }).collect();
+        
+        Ok(summaries)
     }
 
     pub async fn fetch_running_workflows(
@@ -37,7 +51,7 @@ impl HistoryService {
             .map_err(|e| HistoryError::DatabaseUnavailable(e.to_string()))?;
 
         let metadata = store
-            .list_workflow_metadata(limit)
+            .list_workflow_metadata()
             .await
             .map_err(|e| HistoryError::FetchRunningWorkflowsFailed(e.to_string()))?;
 
@@ -52,7 +66,7 @@ impl HistoryService {
 
         let running: Vec<_> = metadata
             .into_iter()
-            .filter(|m| m.status == WorkflowStatus::Running)
+            .filter(|m| m.status == "running")
             .collect();
 
         tracing::info!(

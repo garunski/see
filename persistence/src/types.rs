@@ -50,6 +50,11 @@ impl WorkflowDefinition {
         }
     }
     
+    /// Get the name of the workflow
+    pub fn get_name(&self) -> &str {
+        &self.name
+    }
+    
     /// Get default workflows
     pub fn get_default_workflows() -> Vec<Self> {
         debug!("Getting default workflows");
@@ -138,6 +143,7 @@ pub struct WorkflowExecutionSummary {
     pub completed_at: Option<DateTime<Utc>>,
     pub success: Option<bool>,
     pub task_count: usize,
+    pub timestamp: DateTime<Utc>,
 }
 
 /// Workflow metadata for GUI compatibility
@@ -149,6 +155,9 @@ pub struct WorkflowMetadata {
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
     pub task_count: usize,
+    pub workflow_name: String,
+    pub start_timestamp: DateTime<Utc>,
+    pub task_ids: Vec<String>,
 }
 
 /// Workflow JSON for GUI compatibility
@@ -189,6 +198,60 @@ impl WorkflowStatus {
             WorkflowStatus::Paused => "paused",
         }
     }
+}
+
+/// Task status for GUI compatibility
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub enum TaskStatus {
+    Pending,
+    InProgress,
+    Complete,
+    Failed,
+    WaitingForInput,
+}
+
+impl TaskStatus {
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            TaskStatus::Pending => "pending",
+            TaskStatus::InProgress => "in-progress",
+            TaskStatus::Complete => "complete",
+            TaskStatus::Failed => "failed",
+            TaskStatus::WaitingForInput => "waiting-for-input",
+        }
+    }
+}
+
+/// Audit status for GUI compatibility
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub enum AuditStatus {
+    Success,
+    Failure,
+}
+
+impl AuditStatus {
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            AuditStatus::Success => "success",
+            AuditStatus::Failure => "failure",
+        }
+    }
+}
+
+impl std::fmt::Display for AuditStatus {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.as_str())
+    }
+}
+
+/// Audit entry for GUI compatibility
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub struct AuditEntry {
+    pub task_id: String,
+    pub status: AuditStatus,
+    pub timestamp: String,
+    pub changes_count: usize,
+    pub message: String,
 }
 
 /// Audit event for GUI compatibility

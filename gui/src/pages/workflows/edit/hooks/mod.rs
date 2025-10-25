@@ -46,10 +46,10 @@ pub fn use_workflow_edit(id: String) -> WorkflowEditState {
                 .get_workflow(workflow_id_for_effect.clone())
             {
                 content.set(workflow.content.clone());
-                workflow_name.set(workflow.get_name());
-                edited_workflow_name.set(workflow.get_name());
+                workflow_name.set(workflow.get_name().to_string());
+                edited_workflow_name.set(workflow.get_name().to_string());
                 original_content.set(workflow.content.clone());
-                original_name.set(workflow.get_name());
+                original_name.set(workflow.get_name().to_string());
                 can_reset.set(workflow.is_default && workflow.is_edited);
             }
         }

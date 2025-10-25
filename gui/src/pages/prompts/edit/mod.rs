@@ -1,3 +1,3 @@
 pub mod page;
 
-pub use page::{PromptEditPage, PromptEditPageNew};
+pub use page::{UserPromptEditPage, UserPromptEditPageNew};

@@ -31,8 +31,12 @@ pub fn read_and_parse_workflow_file(file_path: String) -> Result<WorkflowDefinit
     // Create WorkflowDefinition
     Ok(WorkflowDefinition {
         id: workflow_id,
+        name: "Imported Workflow".to_string(),
+        description: Some("Imported from file".to_string()),
         content,
         is_default: false,
         is_edited: false,
+        created_at: chrono::Utc::now(),
+        updated_at: chrono::Utc::now(),
     })
 }

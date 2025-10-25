@@ -1,3 +1,3 @@
 pub mod page;
 
-pub use page::PromptsListPage;
+pub use page::UserPromptsListPage;

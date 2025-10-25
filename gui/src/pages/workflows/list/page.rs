@@ -45,7 +45,7 @@ pub fn WorkflowsListPage() -> Element {
                         ListItemWithLink {
                             icon_name: "workflows".to_string(),
                             icon_variant: Some("outline".to_string()),
-                            title: workflow.get_name(),
+                            title: workflow.get_name().to_string(),
                             subtitle: Some(rsx! {
                                 if workflow.is_default {
                                     span { class: "inline-flex items-center rounded-md bg-blue-50 dark:bg-blue-900/20 px-2 py-1 text-xs font-medium text-blue-700 dark:text-blue-300 ring-1 ring-inset ring-blue-700/10",
@@ -72,7 +72,7 @@ pub fn WorkflowsListPage() -> Element {
                                 Link {
                                     to: Route::WorkflowEditPage { id: workflow.id.clone() },
                                     span { class: "absolute inset-x-0 -top-px bottom-0" }
-                                    {workflow.get_name()}
+                                    {workflow.get_name().to_string()}
                                 }
                             },
                         }

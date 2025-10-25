@@ -26,13 +26,18 @@ pub fn use_workflow_execution(
             loop {
                 match s_e_e_core::get_global_store() {
                     Ok(store) => match store.get_workflow_with_tasks(&id).await {
-                        Ok(exec) => {
+                        Ok(Some(exec)) => {
                             execution.set(Some(exec.clone()));
                             loading.set(false);
 
-                            if exec.success || !exec.errors.is_empty() {
+                            if exec.success.unwrap_or(false) || !exec.errors.is_empty() {
                                 break;
                             }
+                        }
+                        Ok(None) => {
+                            error.set(Some("Workflow not found".to_string()));
+                            loading.set(false);
+                            break;
                         }
                         Err(e) => {
                             error.set(Some(format!("Failed to load workflow: {}", e)));

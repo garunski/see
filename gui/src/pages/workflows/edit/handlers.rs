@@ -66,9 +66,13 @@ pub fn create_save_workflow_handler(params: SaveWorkflowParams) -> impl FnMut() 
 
         let workflow = WorkflowDefinition {
             id: final_id.clone(),
+            name: "Workflow".to_string(),
+            description: Some("Workflow description".to_string()),
             content: final_content.clone(),
             is_default: false,
             is_edited: false,
+            created_at: chrono::Utc::now(),
+            updated_at: chrono::Utc::now(),
         };
 
         if is_new {
@@ -125,7 +129,7 @@ pub fn create_reset_to_default_handler(
                 .reset_workflow_to_default(id.clone(), default_workflow.content.clone());
 
             content.set(default_workflow.content.clone());
-            workflow_name.set(default_workflow.get_name());
+            workflow_name.set(default_workflow.get_name().to_string().to_string());
             can_reset.set(false);
 
             let _ui_state = state_provider.ui;

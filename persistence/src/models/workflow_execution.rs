@@ -5,9 +5,10 @@ use chrono::{DateTime, Utc};
 use uuid::Uuid;
 use tracing::debug;
 use super::workflow::Workflow;
+use std::collections::HashMap;
 
 /// Represents a workflow execution in the database
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct WorkflowExecution {
     pub id: String,
     pub workflow_id: String,             // Link to Workflow
@@ -20,24 +21,39 @@ pub struct WorkflowExecution {
     pub error_message: Option<String>,
     pub result: Option<serde_json::Value>,
     pub metadata: serde_json::Value,
+    // GUI compatibility fields
+    pub workflow_name: String,
+    pub timestamp: DateTime<Utc>,
+    pub tasks: Vec<crate::types::TaskInfo>,
+    pub audit_trail: Vec<crate::types::AuditEntry>,
+    pub per_task_logs: HashMap<String, Vec<String>>,
+    pub errors: Vec<String>,
 }
 
 impl WorkflowExecution {
     /// Create a new workflow execution
     pub fn new(workflow: Workflow) -> Self {
         debug!("Creating new workflow execution for workflow: {}", workflow.name);
+        let now = Utc::now();
         Self {
             id: Uuid::new_v4().to_string(),
             workflow_id: workflow.id.clone(),
-            workflow_snapshot: workflow,
+            workflow_snapshot: workflow.clone(),
             status: "pending".to_string(),
-            created_at: Utc::now(),
+            created_at: now,
             started_at: None,
             completed_at: None,
             success: None,
             error_message: None,
             result: None,
             metadata: serde_json::Value::Object(serde_json::Map::new()),
+            // GUI compatibility fields
+            workflow_name: workflow.name.clone(),
+            timestamp: now,
+            tasks: Vec::new(),
+            audit_trail: Vec::new(),
+            per_task_logs: HashMap::new(),
+            errors: Vec::new(),
         }
     }
     

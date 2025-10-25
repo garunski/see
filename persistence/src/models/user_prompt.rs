@@ -5,7 +5,7 @@ use uuid::Uuid;
 use tracing::debug;
 
 /// Represents a user-defined prompt in the database
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct UserPrompt {
     pub id: String,
     pub name: String,

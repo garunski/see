@@ -31,7 +31,7 @@ fn TaskResumeButton(task: TaskInfo, execution_id: String) -> Element {
                     spawn(async move {
                         tracing::info!("Resume button clicked for task {}", task_id_clone);
 
-                        match s_e_e_core::engine::resume_task(&execution_id_clone, &task_id_clone).await {
+                        match s_e_e_core::resume_task(&execution_id_clone, &task_id_clone).await {
                             Ok(_) => {
                                 tracing::info!("Task resumed successfully");
                                 // TODO: Refresh the page or update state in Phase 6
@@ -81,12 +81,13 @@ pub fn TaskDetailsPanel(
 
     // Determine backdrop color based on task status
     let backdrop_class = if let Some(task) = current_task.as_ref() {
-        match task.status {
-            s_e_e_core::TaskStatus::Complete => "bg-emerald-500/20 backdrop-blur-sm",
-            s_e_e_core::TaskStatus::Failed => "bg-red-500/20 backdrop-blur-sm",
-            s_e_e_core::TaskStatus::InProgress => "bg-blue-500/20 backdrop-blur-sm",
-            s_e_e_core::TaskStatus::Pending => "bg-zinc-500/20 backdrop-blur-sm",
-            s_e_e_core::TaskStatus::WaitingForInput => "bg-amber-500/20 backdrop-blur-sm",
+        match task.status.as_str() {
+            "complete" => "bg-emerald-500/20 backdrop-blur-sm",
+            "failed" => "bg-red-500/20 backdrop-blur-sm",
+            "in-progress" => "bg-blue-500/20 backdrop-blur-sm",
+            "pending" => "bg-zinc-500/20 backdrop-blur-sm",
+            "waiting-for-input" => "bg-amber-500/20 backdrop-blur-sm",
+            _ => "bg-zinc-500/20 backdrop-blur-sm",
         }
     } else {
         "bg-zinc-500/20 backdrop-blur-sm"
@@ -174,7 +175,7 @@ pub fn TaskDetailsPanel(
                         }
 
                         // Resume button for waiting tasks
-                        if task.status == s_e_e_core::TaskStatus::WaitingForInput {
+                        if task.status == "waiting-for-input" {
                             if let Some(exec) = execution.as_ref() {
                                 TaskResumeButton {
                                     task: task.clone(),
@@ -211,20 +212,22 @@ pub fn TaskDetailsPanel(
                 if let Some(task) = current_task.as_ref() {
                     div {
                         class: format!("px-3 py-1 text-sm rounded-full font-medium {}",
-                            match task.status {
-                                s_e_e_core::TaskStatus::Complete => "bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-200",
-                                s_e_e_core::TaskStatus::Failed => "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200",
-                                s_e_e_core::TaskStatus::InProgress => "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200",
-                                s_e_e_core::TaskStatus::Pending => "bg-zinc-100 text-zinc-800 dark:bg-zinc-900 dark:text-zinc-200",
-                                s_e_e_core::TaskStatus::WaitingForInput => "bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200",
+                            match task.status.as_str() {
+                                "complete" => "bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-200",
+                                "failed" => "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200",
+                                "in-progress" => "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200",
+                                "pending" => "bg-zinc-100 text-zinc-800 dark:bg-zinc-900 dark:text-zinc-200",
+                                "waiting-for-input" => "bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200",
+                                _ => "bg-zinc-100 text-zinc-800 dark:bg-zinc-900 dark:text-zinc-200",
                             }
                         ),
-                        match task.status {
-                            s_e_e_core::TaskStatus::Complete => "Complete",
-                            s_e_e_core::TaskStatus::Failed => "Failed",
-                            s_e_e_core::TaskStatus::InProgress => "In Progress",
-                            s_e_e_core::TaskStatus::Pending => "Pending",
-                            s_e_e_core::TaskStatus::WaitingForInput => "Waiting for Input",
+                        match task.status.as_str() {
+                            "complete" => "Complete",
+                            "failed" => "Failed",
+                            "in-progress" => "In Progress",
+                            "pending" => "Pending",
+                            "waiting-for-input" => "Waiting for Input",
+                            _ => "Unknown",
                         }
                     }
                 }

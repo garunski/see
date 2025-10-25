@@ -90,6 +90,12 @@ impl InstanceManager {
         self.workflow_execution_store.list(1000, 0).await
     }
     
+    /// Get all task executions
+    pub async fn get_all_task_executions(&self) -> Result<Vec<TaskExecution>, PersistenceError> {
+        debug!("Getting all task executions");
+        self.task_execution_store.list(1000, 0).await
+    }
+    
     /// Create a task execution with instance ID
     pub async fn create_task_execution(&self, mut task: TaskExecution) -> Result<(), PersistenceError> {
         debug!("Creating task execution for instance {}: {}", self.instance_id, task.id);
@@ -232,5 +238,17 @@ impl InstanceManager {
     /// Get settings store reference
     pub fn settings_store(&self) -> &SettingsStore {
         &self.settings_store
+    }
+    
+    /// Delete a user prompt
+    pub async fn delete_user_prompt(&self, id: &str) -> Result<(), PersistenceError> {
+        debug!("Deleting user prompt: {}", id);
+        self.user_prompt_store.delete(id).await
+    }
+    
+    /// Delete a workflow execution
+    pub async fn delete_workflow_execution(&self, id: &str) -> Result<(), PersistenceError> {
+        debug!("Deleting workflow execution: {}", id);
+        self.workflow_execution_store.delete(id).await
     }
 }

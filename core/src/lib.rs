@@ -1,46 +1,40 @@
-pub mod engine;
+//! S_E_E Core - Minimal coordination layer for workflow execution
+//!
+//! This crate provides a minimal interface between the GUI/CLI and the engine/persistence layers.
+//! It should not contain business logic - that belongs in the engine and persistence crates.
+
 pub mod errors;
 pub mod execution;
-pub mod json_parser;
 pub mod store;
 pub mod task_executor;
 pub mod tracing;
 pub mod types;
-pub mod utils;
 
 pub use types::*;
 
 // Re-export tracing functionality
 pub use tracing::{init_tracing, TracingGuard};
 
-// Re-export persistence functionality
+// Re-export persistence functionality for convenience
 pub use persistence::{initialize_database, PersistenceError};
 pub use persistence::{
     Workflow, WorkflowExecution, TaskExecution, UserPrompt, AiPrompt, Setting,
     WorkflowDefinition, AppSettings, Theme, WorkflowExecutionSummary, WorkflowMetadata,
-    WorkflowJson, TaskInfo, WorkflowStatus, AuditEvent
+    WorkflowJson, TaskInfo, WorkflowStatus, AuditEvent, TaskStatus, AuditEntry, AuditStatus
 };
 
-pub use crate::engine::execute::{
-    execute_workflow, execute_workflow_by_id, execute_workflow_from_content, pause_workflow,
-    resume_task, resume_workflow,
+// Re-export engine functionality
+pub use engine::{
+    execute_workflow_from_json, parse_workflow,
 };
-pub use crate::store::{SimpleStore, Store, PersistenceStore};
+
+// Re-export store functionality
+pub use store::{Store, PersistenceStore};
 
 use std::sync::Arc;
-use crate::errors::CoreError;
-// Tracing macros are available globally when tracing is enabled
 
-// Global singleton for store access
-lazy_static::lazy_static! {
-    static ref GLOBAL_STORE: Arc<std::sync::RwLock<Option<Arc<dyn Store>>>> = 
-        Arc::new(std::sync::RwLock::new(None));
-}
-
-/// Initialize the global store with persistence layer
-pub async fn init_global_store() -> Result<(), CoreError> {
-    println!("Initializing global store with persistence layer");
-    
+/// Create a persistence store instance
+pub async fn create_persistence_store() -> Result<PersistenceStore, errors::CoreError> {
     // Initialize persistence database
     initialize_database("~/.s_e_e/workflows.db").await?;
     
@@ -48,26 +42,39 @@ pub async fn init_global_store() -> Result<(), CoreError> {
     let instance_manager = persistence::get_instance_manager().await?;
     
     // Create persistence store
-    let store = Arc::new(PersistenceStore::new(instance_manager));
-    
-    // Store in global singleton
-    let mut store_guard = GLOBAL_STORE.write()
-        .map_err(|e| CoreError::MutexLock(format!("Failed to lock global store: {}", e)))?;
-    *store_guard = Some(store);
-    
-    println!("Global store initialized successfully");
-    Ok(())
+    Ok(PersistenceStore::new(instance_manager))
 }
 
-/// Get the global store instance
-pub fn get_global_store() -> Result<Arc<dyn Store>, CoreError> {
-    let store_guard = GLOBAL_STORE.read()
-        .map_err(|e| CoreError::MutexLock(format!("Failed to lock global store: {}", e)))?;
-    
-    store_guard.as_ref()
-        .ok_or_else(|| {
-            eprintln!("Global store not initialized");
-            CoreError::Persistence(persistence::PersistenceError::Connection("Global store not initialized".to_string()))
-        })
-        .map(|store| store.clone())
+/// Get the global store instance (for GUI compatibility)
+pub fn get_global_store() -> Result<Arc<dyn Store>, errors::CoreError> {
+    // For now, create a new store instance each time
+    // TODO: Implement proper global store management
+    Err(errors::CoreError::Validation("Global store not implemented in new architecture".to_string()))
+}
+
+/// Execute workflow by ID (for GUI compatibility)
+pub async fn execute_workflow_by_id(
+    workflow_id: &str,
+    _output_callback: Option<OutputCallback>,
+) -> Result<WorkflowResult, errors::CoreError> {
+    // TODO: Implement workflow execution by ID
+    Err(errors::CoreError::Validation("Workflow execution by ID not implemented".to_string()))
+}
+
+/// Resume task (for GUI compatibility)
+pub async fn resume_task(execution_id: &str, task_id: &str) -> Result<(), errors::CoreError> {
+    // TODO: Implement task resumption
+    Err(errors::CoreError::Validation("Task resumption not implemented".to_string()))
+}
+
+/// Resume workflow (for GUI compatibility)
+pub async fn resume_workflow(execution_id: &str) -> Result<(), errors::CoreError> {
+    // TODO: Implement workflow resumption
+    Err(errors::CoreError::Validation("Workflow resumption not implemented".to_string()))
+}
+
+/// Pause workflow (for GUI compatibility)
+pub async fn pause_workflow(execution_id: &str, task_id: &str) -> Result<(), errors::CoreError> {
+    // TODO: Implement workflow pausing
+    Err(errors::CoreError::Validation("Workflow pausing not implemented".to_string()))
 }
