@@ -886,37 +886,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2a2330da5de22e8a3cb63252ce2abb30116bf5265e89c0e01bc17015ce30a476"
 
 [[package]]
-name = "dataflow-rs"
-version = "2.0.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6d2a85c7228487ce3c454352ad924f23255d4282f6780d45bae8ba58f393311a"
-dependencies = [
- "async-trait",
- "chrono",
- "datalogic-rs",
- "log",
- "serde",
- "serde_json",
- "thiserror 2.0.17",
- "tokio",
- "uuid",
-]
-
-[[package]]
-name = "datalogic-rs"
-version = "4.0.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "40e7f71276de1fb97b28740b9a6efa90ac8dc27e6927c93e9abc4d282a48653d"
-dependencies = [
- "chrono",
- "lazy_static",
- "regex",
- "serde_json",
- "smallvec",
- "thiserror 2.0.17",
-]
-
-[[package]]
 name = "dconf_rs"
 version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4028,8 +3997,6 @@ dependencies = [
  "async-trait",
  "bincode",
  "chrono",
- "dataflow-rs",
- "datalogic-rs",
  "dirs 5.0.1",
  "redb",
  "serde",

@@ -146,13 +146,20 @@ pub fn TaskDetailsPanel(
                                     class: "space-y-3",
                                     for entry in task_audit.iter() {
                                         div {
-                                            class: "flex items-center justify-between text-sm",
+                                            class: "flex items-start justify-between text-sm py-2 border-b border-zinc-200 dark:border-zinc-700 last:border-b-0",
                                             div {
-                                                class: "text-zinc-500 dark:text-zinc-400",
-                                                "{entry.timestamp}"
+                                                class: "flex-1",
+                                                div {
+                                                    class: "text-zinc-500 dark:text-zinc-400 text-xs",
+                                                    "{entry.timestamp}"
+                                                }
+                                                div {
+                                                    class: "text-zinc-900 dark:text-zinc-100 mt-1",
+                                                    "{entry.message}"
+                                                }
                                             }
                                             div {
-                                                class: format!("px-2 py-1 rounded text-xs font-medium {}",
+                                                class: format!("px-2 py-1 rounded text-xs font-medium ml-3 {}",
                                                     match entry.status {
                                                         s_e_e_core::AuditStatus::Success => "bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-200",
                                                         s_e_e_core::AuditStatus::Failure => "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200",

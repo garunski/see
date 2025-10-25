@@ -368,6 +368,7 @@ impl AuditStore for RedbStore {
             let task_prefix = Self::task_prefix(&execution_id);
             let mut tasks = Vec::new();
             let mut per_task_logs = std::collections::HashMap::new();
+            let mut audit_trail = Vec::new();
 
             for item in tasks_table.iter()? {
                 let (key, value) = item?;
@@ -375,13 +376,67 @@ impl AuditStore for RedbStore {
                 if key_str.starts_with(&task_prefix) {
                     let task_exec: TaskExecution = Self::deserialize(value.value())?;
 
+                    let task_status = task_exec.status.clone();
                     tasks.push(crate::types::TaskInfo {
                         id: task_exec.task_id.clone(),
                         name: task_exec.task_name.clone(),
-                        status: task_exec.status,
+                        status: task_status.clone(),
                     });
 
                     per_task_logs.insert(task_exec.task_id.clone(), task_exec.logs.clone());
+
+                    // Build audit trail from task execution
+                    if !task_exec.start_timestamp.is_empty() {
+                        audit_trail.push(crate::types::AuditEntry {
+                            task_id: task_exec.task_id.clone(),
+                            timestamp: task_exec.start_timestamp.clone(),
+                            status: crate::types::AuditStatus::Success,
+                            changes_count: 0,
+                            message: format!("Started task: {}", task_exec.task_name),
+                        });
+                    }
+                    if !task_exec.end_timestamp.is_empty() {
+                        let status = match task_status {
+                            crate::types::TaskStatus::Complete => {
+                                crate::types::AuditStatus::Success
+                            }
+                            crate::types::TaskStatus::Failed => crate::types::AuditStatus::Failure,
+                            _ => crate::types::AuditStatus::Success,
+                        };
+                        let message = match task_status {
+                            crate::types::TaskStatus::Complete => {
+                                format!("Completed task: {}", task_exec.task_name)
+                            }
+                            crate::types::TaskStatus::Failed => {
+                                format!("Failed task: {}", task_exec.task_name)
+                            }
+                            _ => format!("Finished task: {}", task_exec.task_name),
+                        };
+                        audit_trail.push(crate::types::AuditEntry {
+                            task_id: task_exec.task_id.clone(),
+                            timestamp: task_exec.end_timestamp.clone(),
+                            status,
+                            changes_count: 0,
+                            message,
+                        });
+                    }
+
+                    // Add audit entries for each log entry to show detailed execution
+                    for (i, log_entry) in task_exec.logs.iter().enumerate() {
+                        if log_entry.contains("Executing CLI command:")
+                            || log_entry.contains("Output:")
+                            || log_entry.contains("Error:")
+                            || log_entry.contains("Command executed successfully")
+                        {
+                            audit_trail.push(crate::types::AuditEntry {
+                                task_id: task_exec.task_id.clone(),
+                                timestamp: task_exec.start_timestamp.clone(), // Use start time for log entries
+                                status: crate::types::AuditStatus::Success,
+                                changes_count: i + 1,
+                                message: log_entry.clone(),
+                            });
+                        }
+                    }
                 }
             }
 
@@ -400,7 +455,7 @@ impl AuditStore for RedbStore {
                 timestamp: metadata.start_timestamp,
                 success: metadata.status == crate::persistence::models::WorkflowStatus::Complete,
                 tasks: ordered_tasks,
-                audit_trail: vec![],
+                audit_trail,
                 per_task_logs,
                 errors: if metadata.status == crate::persistence::models::WorkflowStatus::Failed {
                     vec!["Workflow failed".to_string()]

@@ -3,15 +3,11 @@ use crate::execution::context::{ExecutionContext, ExecutionContextSafe};
 use crate::task_executor::{TaskExecutor, TaskLogger, TaskPersistenceHelper};
 use crate::types::TaskStatus;
 use async_trait::async_trait;
-use dataflow_rs::engine::{
-    message::{Change, Message},
-    AsyncFunctionHandler, FunctionConfig,
-};
-use dataflow_rs::DataflowError;
-use datalogic_rs::DataLogic;
 use serde_json::{json, Value};
 use std::sync::{Arc, Mutex};
 use tracing::{debug, error, info, instrument};
+
+use crate::engine::custom_engine::{CustomTask, TaskFunction, TaskHandler, TaskResult};
 
 pub struct CliCommandHandler {
     context: Arc<Mutex<ExecutionContext>>,
@@ -225,43 +221,39 @@ impl TaskExecutor for CliCommandHandler {
     }
 }
 
+// Custom engine TaskHandler implementation
 #[async_trait]
-impl AsyncFunctionHandler for CliCommandHandler {
+impl TaskHandler for CliCommandHandler {
     async fn execute(
         &self,
-        message: &mut Message,
-        config: &FunctionConfig,
-        _datalogic: Arc<DataLogic>,
-    ) -> dataflow_rs::Result<(usize, Vec<Change>)> {
-        let input = match config {
-            FunctionConfig::Custom { input, .. } => {
-                debug!(input = ?input, "Handler received input configuration");
-                input
+        context: &Arc<Mutex<ExecutionContext>>,
+        task: &CustomTask,
+    ) -> Result<TaskResult, CoreError> {
+        // Extract task configuration from CustomTask
+        let task_config = match &task.function {
+            TaskFunction::CliCommand { command, args } => {
+                json!({
+                    "command": command,
+                    "args": args,
+                    "task_id": task.id
+                })
             }
             _ => {
-                return Err(DataflowError::Validation(
-                    "Invalid configuration".to_string(),
-                ))
+                return Err(CoreError::Validation(format!(
+                    "Expected CliCommand function, got: {:?}",
+                    task.function
+                )));
             }
         };
 
-        let logger = crate::task_executor::ContextTaskLogger::new(self.context.clone());
+        // Use existing TaskExecutor logic
+        let logger = crate::task_executor::ContextTaskLogger::new(context.clone());
+        let result = TaskExecutor::execute(self, &task_config, &logger).await?;
 
-        let result = TaskExecutor::execute(self, input, &logger)
-            .await
-            .map_err(|e| DataflowError::function_execution(e.to_string(), None))?;
-
-        if let Some(Value::Object(ref mut map)) = message.context.get_mut("data") {
-            map.insert("cli_output".to_string(), result.clone());
-        }
-
-        Ok((
-            200,
-            vec![Change {
-                path: Arc::from("cli_output"),
-                old_value: Arc::new(Value::Null),
-                new_value: Arc::new(result),
-            }],
-        ))
+        Ok(TaskResult {
+            success: true,
+            output: result,
+            error: None,
+        })
     }
 }

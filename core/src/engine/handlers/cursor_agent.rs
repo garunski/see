@@ -3,15 +3,11 @@ use crate::execution::context::{ExecutionContext, ExecutionContextSafe};
 use crate::task_executor::{TaskExecutor, TaskLogger, TaskPersistenceHelper};
 use crate::types::TaskStatus;
 use async_trait::async_trait;
-use dataflow_rs::engine::{
-    message::{Change, Message},
-    AsyncFunctionHandler, FunctionConfig,
-};
-use dataflow_rs::DataflowError;
-use datalogic_rs::DataLogic;
 use serde_json::{json, Value};
 use std::sync::{Arc, Mutex};
 use tracing::{debug, error, info, instrument};
+
+use crate::engine::custom_engine::{CustomTask, TaskFunction, TaskHandler, TaskResult};
 
 pub struct CursorAgentHandler {
     context: Arc<Mutex<ExecutionContext>>,
@@ -285,40 +281,40 @@ impl TaskExecutor for CursorAgentHandler {
     }
 }
 
+// Custom engine TaskHandler implementation
 #[async_trait]
-impl AsyncFunctionHandler for CursorAgentHandler {
+impl TaskHandler for CursorAgentHandler {
     async fn execute(
         &self,
-        message: &mut Message,
-        config: &FunctionConfig,
-        _datalogic: Arc<DataLogic>,
-    ) -> dataflow_rs::Result<(usize, Vec<Change>)> {
-        let input = match config {
-            FunctionConfig::Custom { input, .. } => input,
+        context: &Arc<Mutex<ExecutionContext>>,
+        task: &CustomTask,
+    ) -> Result<TaskResult, CoreError> {
+        // Extract task configuration from CustomTask
+        let task_config = match &task.function {
+            TaskFunction::CursorAgent { prompt, config } => {
+                let mut config_obj = config.clone();
+                if let Some(obj) = config_obj.as_object_mut() {
+                    obj.insert("prompt".to_string(), Value::String(prompt.clone()));
+                    obj.insert("task_id".to_string(), Value::String(task.id.clone()));
+                }
+                config_obj
+            }
             _ => {
-                return Err(DataflowError::Validation(
-                    "Invalid configuration".to_string(),
-                ))
+                return Err(CoreError::Validation(format!(
+                    "Expected CursorAgent function, got: {:?}",
+                    task.function
+                )));
             }
         };
 
-        let logger = crate::task_executor::ContextTaskLogger::new(self.context.clone());
+        // Use existing TaskExecutor logic
+        let logger = crate::task_executor::ContextTaskLogger::new(context.clone());
+        let result = TaskExecutor::execute(self, &task_config, &logger).await?;
 
-        let result = TaskExecutor::execute(self, input, &logger)
-            .await
-            .map_err(|e| DataflowError::function_execution(e.to_string(), None))?;
-
-        if let Some(Value::Object(ref mut map)) = message.context.get_mut("data") {
-            map.insert("cursor_agent_output".to_string(), result.clone());
-        }
-
-        Ok((
-            200,
-            vec![Change {
-                path: Arc::from("cursor_agent_output"),
-                old_value: Arc::new(Value::Null),
-                new_value: Arc::new(result),
-            }],
-        ))
+        Ok(TaskResult {
+            success: true,
+            output: result,
+            error: None,
+        })
     }
 }

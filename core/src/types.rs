@@ -135,6 +135,8 @@ pub struct AuditEntry {
     pub status: AuditStatus,
     pub timestamp: String,
     pub changes_count: usize,
+    #[serde(default)]
+    pub message: String,
 }
 
 #[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]
