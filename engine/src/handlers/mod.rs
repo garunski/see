@@ -1,7 +1,7 @@
 //! Task handlers for executing different types of tasks
 
-use crate::types::*;
 use crate::errors::*;
+use crate::types::*;
 use async_trait::async_trait;
 use std::collections::HashMap;
 use tracing::{debug, trace, warn};
@@ -25,13 +25,19 @@ impl HandlerRegistry {
     pub fn new() -> Self {
         debug!("Creating new handler registry");
         let mut handlers: HashMap<String, Box<dyn TaskHandler>> = HashMap::new();
-        
+
         trace!("Registering CLI command handler");
-        handlers.insert("cli_command".to_string(), Box::new(cli_command::CliCommandHandler));
-        
+        handlers.insert(
+            "cli_command".to_string(),
+            Box::new(cli_command::CliCommandHandler),
+        );
+
         trace!("Registering Cursor agent handler");
-        handlers.insert("cursor_agent".to_string(), Box::new(cursor_agent::CursorAgentHandler));
-        
+        handlers.insert(
+            "cursor_agent".to_string(),
+            Box::new(cursor_agent::CursorAgentHandler),
+        );
+
         trace!("Registering custom handler");
         handlers.insert("custom".to_string(), Box::new(custom::CustomHandler));
 
@@ -47,7 +53,7 @@ impl HandlerRegistry {
     pub fn get_handler(&self, function_type: &str) -> Option<&dyn TaskHandler> {
         trace!(function_type = %function_type, "Looking up handler");
         let result = self.handlers.get(function_type).map(|h| h.as_ref());
-        
+
         match result {
             Some(_) => {
                 debug!(function_type = %function_type, "Handler found");
@@ -56,7 +62,7 @@ impl HandlerRegistry {
                 warn!(function_type = %function_type, "Handler not found");
             }
         }
-        
+
         result
     }
 
@@ -83,13 +89,13 @@ pub fn get_function_type(task: &EngineTask) -> &'static str {
         TaskFunction::CursorAgent { .. } => "cursor_agent",
         TaskFunction::Custom { .. } => "custom",
     };
-    
+
     trace!(
         task_id = %task.id,
         function_type = %function_type,
         "Determined function type for task"
     );
-    
+
     function_type
 }
 

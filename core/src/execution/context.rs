@@ -13,7 +13,7 @@ pub struct ExecutionContext {
     output_logs: Vec<String>,
     tasks: Vec<TaskInfo>,
     output_callback: Option<OutputCallback>,
-    audit_store: Option<Arc<dyn crate::AuditStore>>,
+    // TODO: Add audit store back later
     execution_id: String,
     workflow_name: String,
     task_start_times: HashMap<String, String>,
@@ -23,7 +23,7 @@ impl ExecutionContext {
     pub fn new(
         tasks: Vec<TaskInfo>,
         output_callback: Option<OutputCallback>,
-        audit_store: Option<Arc<dyn crate::AuditStore>>,
+        // TODO: Add audit store back later
         execution_id: String,
         workflow_name: String,
     ) -> Arc<Mutex<Self>> {
@@ -33,7 +33,7 @@ impl ExecutionContext {
             output_logs: Vec::new(),
             tasks,
             output_callback,
-            audit_store,
+            // TODO: Add audit store back later
             execution_id,
             workflow_name,
             task_start_times: HashMap::new(),
@@ -126,8 +126,8 @@ impl ExecutionContext {
             .unwrap_or_else(|| chrono::Utc::now().to_rfc3339())
     }
 
-    pub fn get_store(&self) -> Option<Arc<dyn crate::AuditStore>> {
-        self.audit_store.clone()
+    pub fn get_store(&self) -> Option<()> {
+        None
     }
 
     /// Pause a task for user input

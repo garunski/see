@@ -7,33 +7,42 @@ use std::fs;
 async fn test_simple_workflow_from_file() {
     let json = fs::read_to_string("examples/simple.json").unwrap();
     let result = execute_workflow_from_json(&json).await.unwrap();
-    
+
     assert!(result.success);
     assert_eq!(result.workflow_name, "Simple Sequential Workflow");
     assert_eq!(result.tasks.len(), 2);
-    assert!(result.tasks.iter().all(|t| t.status == TaskStatus::Complete));
+    assert!(result
+        .tasks
+        .iter()
+        .all(|t| t.status == TaskStatus::Complete));
 }
 
 #[tokio::test]
 async fn test_parallel_workflow_from_file() {
     let json = fs::read_to_string("examples/parallel.json").unwrap();
     let result = execute_workflow_from_json(&json).await.unwrap();
-    
+
     assert!(result.success);
     assert_eq!(result.workflow_name, "Parallel Execution Workflow");
     assert_eq!(result.tasks.len(), 4); // root + 3 parallel tasks
-    assert!(result.tasks.iter().all(|t| t.status == TaskStatus::Complete));
+    assert!(result
+        .tasks
+        .iter()
+        .all(|t| t.status == TaskStatus::Complete));
 }
 
 #[tokio::test]
 async fn test_nested_workflow_from_file() {
     let json = fs::read_to_string("examples/nested.json").unwrap();
     let result = execute_workflow_from_json(&json).await.unwrap();
-    
+
     assert!(result.success);
     assert_eq!(result.workflow_name, "Nested Dependencies Workflow");
     assert_eq!(result.tasks.len(), 6); // root + level1a + level1b + level2a + level2b + level2c
-    assert!(result.tasks.iter().all(|t| t.status == TaskStatus::Complete));
+    assert!(result
+        .tasks
+        .iter()
+        .all(|t| t.status == TaskStatus::Complete));
 }
 
 #[tokio::test]
@@ -85,11 +94,14 @@ async fn test_mixed_function_types() {
     "#;
 
     let result = execute_workflow_from_json(json).await.unwrap();
-    
+
     assert!(result.success);
     assert_eq!(result.workflow_name, "Mixed Function Types");
     assert_eq!(result.tasks.len(), 3);
-    assert!(result.tasks.iter().all(|t| t.status == TaskStatus::Complete));
+    assert!(result
+        .tasks
+        .iter()
+        .all(|t| t.status == TaskStatus::Complete));
 }
 
 #[tokio::test]
@@ -115,7 +127,7 @@ async fn test_error_handling() {
     "#;
 
     let result = execute_workflow_from_json(json).await.unwrap();
-    
+
     // The workflow should complete but with errors
     assert!(!result.success);
     assert!(!result.errors.is_empty());
@@ -125,7 +137,7 @@ async fn test_error_handling() {
 #[tokio::test]
 async fn test_large_parallel_workflow() {
     let mut tasks = Vec::new();
-    
+
     // Create 10 parallel tasks
     for i in 1..=10 {
         tasks.push(format!(
@@ -143,7 +155,7 @@ async fn test_large_parallel_workflow() {
             i, i, i
         ));
     }
-    
+
     let json = format!(
         r#"{{
             "id": "large_parallel",
@@ -167,11 +179,14 @@ async fn test_large_parallel_workflow() {
     );
 
     let result = execute_workflow_from_json(&json).await.unwrap();
-    
+
     assert!(result.success);
     assert_eq!(result.workflow_name, "Large Parallel Workflow");
     assert_eq!(result.tasks.len(), 11); // root + 10 parallel tasks
-    assert!(result.tasks.iter().all(|t| t.status == TaskStatus::Complete));
+    assert!(result
+        .tasks
+        .iter()
+        .all(|t| t.status == TaskStatus::Complete));
 }
 
 #[tokio::test]
@@ -249,9 +264,12 @@ async fn test_deep_nesting() {
     "#;
 
     let result = execute_workflow_from_json(json).await.unwrap();
-    
+
     assert!(result.success);
     assert_eq!(result.workflow_name, "Deep Nesting Test");
     assert_eq!(result.tasks.len(), 5); // level1 through level5
-    assert!(result.tasks.iter().all(|t| t.status == TaskStatus::Complete));
+    assert!(result
+        .tasks
+        .iter()
+        .all(|t| t.status == TaskStatus::Complete));
 }

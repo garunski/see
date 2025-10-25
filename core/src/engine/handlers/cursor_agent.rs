@@ -7,7 +7,7 @@ use serde_json::{json, Value};
 use std::sync::{Arc, Mutex};
 use tracing::{debug, error, info, instrument};
 
-use crate::engine::custom_engine::{CustomTask, TaskFunction, TaskHandler, TaskResult};
+use engine::{EngineTask as CustomTask, TaskFunction, TaskResult, handlers::TaskHandler};
 
 pub struct CursorAgentHandler {
     context: Arc<Mutex<ExecutionContext>>,

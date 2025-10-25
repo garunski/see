@@ -2,7 +2,6 @@ pub mod engine;
 pub mod errors;
 pub mod execution;
 pub mod json_parser;
-pub mod persistence;
 pub mod store;
 pub mod task_executor;
 pub mod tracing;
@@ -14,16 +13,9 @@ pub use types::*;
 // Re-export tracing functionality
 pub use tracing::{init_tracing, TracingGuard};
 
-// Re-export store functionality
-pub use store::get_global_store;
 
 pub use crate::engine::execute::{
     execute_workflow, execute_workflow_by_id, execute_workflow_from_content, pause_workflow,
     resume_task, resume_workflow,
 };
-pub use crate::persistence::models::{
-    AppSettings, NodePosition, Prompt, TaskExecution, Theme, WorkflowDefinition, WorkflowExecution,
-    WorkflowExecutionSummary, WorkflowJson, WorkflowMetadata, WorkflowStatus,
-    WorkflowVisualizationMetadata,
-};
-pub use crate::persistence::store::{AuditStore, RedbStore};
+pub use crate::store::SimpleStore;

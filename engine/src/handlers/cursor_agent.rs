@@ -1,10 +1,10 @@
 //! Cursor agent handler for AI-powered task execution
 
-use crate::types::*;
 use crate::errors::*;
+use crate::types::*;
 use async_trait::async_trait;
 use serde_json::Value;
-use tracing::{debug, trace, error, instrument};
+use tracing::{debug, error, instrument, trace};
 
 /// Cursor agent handler
 pub struct CursorAgentHandler;
@@ -30,7 +30,7 @@ impl super::TaskHandler for CursorAgentHandler {
                 "Invalid function type - expected CursorAgent"
             );
             return Err(HandlerError::InvalidConfiguration(
-                "Expected CursorAgent function".to_string()
+                "Expected CursorAgent function".to_string(),
             ));
         };
 
@@ -42,7 +42,10 @@ impl super::TaskHandler for CursorAgentHandler {
             "Parsed Cursor agent parameters"
         );
 
-        context.log_task(task.id.clone(), format!("Executing Cursor Agent with prompt: {}", prompt));
+        context.log_task(
+            task.id.clone(),
+            format!("Executing Cursor Agent with prompt: {}", prompt),
+        );
 
         debug!(
             execution_id = %context.execution_id,
@@ -60,8 +63,11 @@ impl super::TaskHandler for CursorAgentHandler {
         );
 
         let simulated_response = format!("Simulated response to: {}", prompt);
-        
-        context.log_task(task.id.clone(), format!("Agent response: {}", simulated_response));
+
+        context.log_task(
+            task.id.clone(),
+            format!("Agent response: {}", simulated_response),
+        );
 
         debug!(
             execution_id = %context.execution_id,

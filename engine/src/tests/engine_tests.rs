@@ -76,7 +76,10 @@ async fn test_parallel_execution() {
 
     assert!(result.success);
     assert_eq!(result.tasks.len(), 2);
-    assert!(result.tasks.iter().all(|t| t.status == TaskStatus::Complete));
+    assert!(result
+        .tasks
+        .iter()
+        .all(|t| t.status == TaskStatus::Complete));
 }
 
 #[tokio::test]
@@ -120,5 +123,8 @@ async fn test_sequential_execution() {
 
     assert!(result.success);
     assert_eq!(result.tasks.len(), 2);
-    assert!(result.tasks.iter().all(|t| t.status == TaskStatus::Complete));
+    assert!(result
+        .tasks
+        .iter()
+        .all(|t| t.status == TaskStatus::Complete));
 }

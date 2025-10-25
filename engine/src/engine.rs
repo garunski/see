@@ -1,12 +1,12 @@
 //! Main workflow execution engine with parallel and sequential task execution
 
-use crate::types::*;
 use crate::errors::*;
 use crate::graph::DependencyGraph;
-use crate::handlers::{HandlerRegistry, get_function_type};
+use crate::handlers::{get_function_type, HandlerRegistry};
+use crate::types::*;
 use std::collections::HashSet;
 use std::sync::Arc;
-use tracing::{debug, error, info, trace, warn, instrument};
+use tracing::{debug, error, info, instrument, trace, warn};
 
 /// Main workflow execution engine
 pub struct WorkflowEngine {
@@ -23,9 +23,12 @@ impl WorkflowEngine {
 
     /// Execute a workflow
     #[instrument(skip(self), fields(workflow_id = %workflow.id, workflow_name = %workflow.name, task_count = workflow.tasks.len()))]
-    pub async fn execute_workflow(&self, workflow: EngineWorkflow) -> Result<WorkflowResult, EngineError> {
+    pub async fn execute_workflow(
+        &self,
+        workflow: EngineWorkflow,
+    ) -> Result<WorkflowResult, EngineError> {
         let execution_id = uuid::Uuid::new_v4().to_string();
-        
+
         info!(
             execution_id = %execution_id,
             workflow_name = %workflow.name,
@@ -47,11 +50,11 @@ impl WorkflowEngine {
             total_tasks = graph.get_all_tasks().len(),
             "Dependency graph built successfully"
         );
-        
+
         // Create execution context
         debug!(execution_id = %execution_id, "Creating execution context");
         let mut context = ExecutionContext::new(execution_id.clone(), workflow.name.clone());
-        
+
         // Add all tasks to context
         debug!(execution_id = %execution_id, "Adding tasks to execution context");
         for task in &workflow.tasks {
@@ -72,7 +75,7 @@ impl WorkflowEngine {
         let mut audit_trail = Vec::new();
         let mut errors = Vec::new();
         let mut execution_round = 0;
-        
+
         trace!(
             execution_id = %execution_id,
             initial_remaining = remaining_tasks.len(),
@@ -82,7 +85,7 @@ impl WorkflowEngine {
         // Main execution loop
         while !remaining_tasks.is_empty() {
             execution_round += 1;
-            
+
             debug!(
                 execution_id = %execution_id,
                 round = execution_round,
@@ -90,11 +93,11 @@ impl WorkflowEngine {
                 completed_count = completed_tasks.len(),
                 "Starting execution round"
             );
-            
+
             // Get ready tasks (all dependencies completed)
             trace!(execution_id = %execution_id, "Determining ready tasks");
             let ready_tasks = graph.get_ready_tasks(&completed_tasks);
-            
+
             trace!(
                 execution_id = %execution_id,
                 round = execution_round,
@@ -126,7 +129,7 @@ impl WorkflowEngine {
                 "Executing ready tasks in parallel"
             );
             let results = self.execute_round(ready_tasks, &mut context).await?;
-            
+
             // Process results
             debug!(
                 execution_id = %execution_id,
@@ -134,7 +137,7 @@ impl WorkflowEngine {
                 result_count = results.len(),
                 "Processing task execution results"
             );
-            
+
             for (task, result) in results {
                 trace!(
                     execution_id = %execution_id,
@@ -143,7 +146,7 @@ impl WorkflowEngine {
                     success = result.success,
                     "Processing task result"
                 );
-                
+
                 if result.success {
                     info!(
                         execution_id = %execution_id,
@@ -151,7 +154,7 @@ impl WorkflowEngine {
                         task_name = %task.name,
                         "✅ Task completed successfully"
                     );
-                    
+
                     // Add to audit trail
                     debug!(
                         execution_id = %execution_id,
@@ -165,10 +168,10 @@ impl WorkflowEngine {
                         changes_count: 1,
                         message: format!("Completed task: {}", task.name),
                     });
-                    
+
                     completed_tasks.insert(task.id.clone());
                     remaining_tasks.retain(|t| t.id != task.id);
-                    
+
                     trace!(
                         execution_id = %execution_id,
                         task_id = %task.id,
@@ -183,13 +186,13 @@ impl WorkflowEngine {
                         error = %error_msg,
                         "❌ Task failed"
                     );
-                    
+
                     debug!(
                         execution_id = %execution_id,
                         task_id = %task.id,
                         "Adding failure to audit trail"
                     );
-                    
+
                     // Add to audit trail
                     audit_trail.push(AuditEntry {
                         task_id: task.id.clone(),
@@ -198,13 +201,13 @@ impl WorkflowEngine {
                         changes_count: 0,
                         message: format!("Failed task: {} - {}", task.name, error_msg),
                     });
-                    
+
                     errors.push(format!("Task {}: {}", task.id, error_msg));
-                    
+
                     // For now, continue with other tasks even if one fails
                     completed_tasks.insert(task.id.clone());
                     remaining_tasks.retain(|t| t.id != task.id);
-                    
+
                     trace!(
                         execution_id = %execution_id,
                         task_id = %task.id,
@@ -224,7 +227,7 @@ impl WorkflowEngine {
         }
 
         let success = errors.is_empty();
-        
+
         info!(
             execution_id = %execution_id,
             completed_tasks = completed_tasks.len(),
@@ -234,15 +237,19 @@ impl WorkflowEngine {
         );
 
         // Build task info for result
-        let tasks = workflow.tasks.iter().map(|t| TaskInfo {
-            id: t.id.clone(),
-            name: t.name.clone(),
-            status: if completed_tasks.contains(&t.id) {
-                TaskStatus::Complete
-            } else {
-                TaskStatus::Failed
-            },
-        }).collect();
+        let tasks = workflow
+            .tasks
+            .iter()
+            .map(|t| TaskInfo {
+                id: t.id.clone(),
+                name: t.name.clone(),
+                status: if completed_tasks.contains(&t.id) {
+                    TaskStatus::Complete
+                } else {
+                    TaskStatus::Failed
+                },
+            })
+            .collect();
 
         Ok(WorkflowResult {
             success,
@@ -266,14 +273,14 @@ impl WorkflowEngine {
             ready_count = ready_tasks.len(),
             "Starting parallel execution of ready tasks"
         );
-        
+
         let mut handles = Vec::new();
-        
+
         // Spawn parallel execution for each ready task
         for task in ready_tasks {
             let task_id = task.id.clone();
             let function_type = get_function_type(&task);
-            
+
             trace!(
                 execution_id = %context.execution_id,
                 task_id = %task_id,
@@ -282,7 +289,7 @@ impl WorkflowEngine {
                 dependencies = ?task.dependencies,
                 "Preparing task for parallel execution"
             );
-            
+
             info!(
                 execution_id = %context.execution_id,
                 task_id = %task_id,
@@ -298,12 +305,12 @@ impl WorkflowEngine {
                 task_id = %task_id,
                 "Spawning async task for parallel execution"
             );
-            
+
             let task_clone = task.clone();
             let mut context_clone = context.clone();
             let function_type_clone = function_type.to_string();
             let handlers_clone = Arc::clone(&self.handlers);
-            
+
             let handle = tokio::spawn(async move {
                 trace!(
                     execution_id = %context_clone.execution_id,
@@ -311,7 +318,7 @@ impl WorkflowEngine {
                     function_type = %function_type_clone,
                     "Starting task execution in async context"
                 );
-                
+
                 let handler = match handlers_clone.get_handler(&function_type_clone) {
                     Some(h) => h,
                     None => {
@@ -321,20 +328,26 @@ impl WorkflowEngine {
                             function_type = %function_type_clone,
                             "No handler found for function type"
                         );
-                        return (task_clone, TaskResult {
-                            success: false,
-                            output: serde_json::Value::Null,
-                            error: Some(format!("No handler found for function type: {}", function_type_clone)),
-                        });
+                        return (
+                            task_clone,
+                            TaskResult {
+                                success: false,
+                                output: serde_json::Value::Null,
+                                error: Some(format!(
+                                    "No handler found for function type: {}",
+                                    function_type_clone
+                                )),
+                            },
+                        );
                     }
                 };
-                
+
                 debug!(
                     execution_id = %context_clone.execution_id,
                     task_id = %task_clone.id,
                     "Calling task handler"
                 );
-                
+
                 match handler.execute(&mut context_clone, &task_clone).await {
                     Ok(result) => {
                         trace!(
@@ -344,7 +357,7 @@ impl WorkflowEngine {
                             "Task handler completed successfully"
                         );
                         (task_clone, result)
-                    },
+                    }
                     Err(e) => {
                         error!(
                             execution_id = %context_clone.execution_id,
@@ -352,15 +365,18 @@ impl WorkflowEngine {
                             error = %e,
                             "Task handler failed"
                         );
-                        (task_clone, TaskResult {
-                            success: false,
-                            output: serde_json::Value::Null,
-                            error: Some(e.to_string()),
-                        })
+                        (
+                            task_clone,
+                            TaskResult {
+                                success: false,
+                                output: serde_json::Value::Null,
+                                error: Some(e.to_string()),
+                            },
+                        )
                     }
                 }
             });
-            
+
             handles.push(handle);
         }
 
@@ -370,7 +386,7 @@ impl WorkflowEngine {
             handle_count = handles.len(),
             "Waiting for all parallel tasks to complete"
         );
-        
+
         let mut results = Vec::new();
         for (i, handle) in handles.into_iter().enumerate() {
             trace!(
@@ -378,7 +394,7 @@ impl WorkflowEngine {
                 handle_index = i,
                 "Waiting for task handle to complete"
             );
-            
+
             match handle.await {
                 Ok(result) => {
                     trace!(
@@ -388,7 +404,7 @@ impl WorkflowEngine {
                         "Task handle completed successfully"
                     );
                     results.push(result);
-                },
+                }
                 Err(e) => {
                     error!(
                         execution_id = %context.execution_id,
@@ -396,7 +412,10 @@ impl WorkflowEngine {
                         error = %e,
                         "Task execution panicked"
                     );
-                    return Err(EngineError::Execution(format!("Task execution panicked: {}", e)));
+                    return Err(EngineError::Execution(format!(
+                        "Task execution panicked: {}",
+                        e
+                    )));
                 }
             }
         }
@@ -407,7 +426,7 @@ impl WorkflowEngine {
             result_count = results.len(),
             "Merging context updates from parallel execution"
         );
-        
+
         for (task, _) in &results {
             if let Some(task_logs) = context.per_task_logs.get(&task.id) {
                 trace!(
@@ -416,7 +435,9 @@ impl WorkflowEngine {
                     log_count = task_logs.len(),
                     "Merging task logs back to context"
                 );
-                context.per_task_logs.insert(task.id.clone(), task_logs.clone());
+                context
+                    .per_task_logs
+                    .insert(task.id.clone(), task_logs.clone());
             }
         }
 
@@ -435,4 +456,3 @@ impl Default for WorkflowEngine {
         Self::new()
     }
 }
-

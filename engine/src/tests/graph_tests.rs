@@ -1,8 +1,8 @@
 //! Graph tests for the new workflow engine
 
+use crate::errors::*;
 use crate::graph::*;
 use crate::types::*;
-use crate::errors::*;
 use std::collections::HashSet;
 
 fn create_test_task(id: &str, dependencies: Vec<&str>) -> EngineTask {
@@ -28,7 +28,7 @@ fn test_simple_dependency_graph() {
     ];
 
     let graph = DependencyGraph::new(tasks).unwrap();
-    
+
     // Initially, only task1 should be ready
     let ready = graph.get_ready_tasks(&HashSet::new());
     assert_eq!(ready.len(), 1);
@@ -52,7 +52,10 @@ fn test_circular_dependency_detection() {
 
     let result = DependencyGraph::new(tasks);
     assert!(result.is_err());
-    assert!(matches!(result.unwrap_err(), GraphError::CircularDependency(_)));
+    assert!(matches!(
+        result.unwrap_err(),
+        GraphError::CircularDependency(_)
+    ));
 }
 
 #[test]
@@ -66,18 +69,18 @@ fn test_execution_order() {
 
     let graph = DependencyGraph::new(tasks).unwrap();
     let order = graph.get_execution_order().unwrap();
-    
+
     // task1 should come first
     assert_eq!(order[0], "task1");
-    
+
     // task2 and task3 should come after task1
     let task1_pos = order.iter().position(|x| x == "task1").unwrap();
     let task2_pos = order.iter().position(|x| x == "task2").unwrap();
     let task3_pos = order.iter().position(|x| x == "task3").unwrap();
-    
+
     assert!(task2_pos > task1_pos);
     assert!(task3_pos > task1_pos);
-    
+
     // task4 should come after both task2 and task3
     let task4_pos = order.iter().position(|x| x == "task4").unwrap();
     assert!(task4_pos > task2_pos);
@@ -86,11 +89,12 @@ fn test_execution_order() {
 
 #[test]
 fn test_nonexistent_dependency() {
-    let tasks = vec![
-        create_test_task("task1", vec!["nonexistent"]),
-    ];
+    let tasks = vec![create_test_task("task1", vec!["nonexistent"])];
 
     let result = DependencyGraph::new(tasks);
     assert!(result.is_err());
-    assert!(matches!(result.unwrap_err(), GraphError::InvalidDependency(_)));
+    assert!(matches!(
+        result.unwrap_err(),
+        GraphError::InvalidDependency(_)
+    ));
 }

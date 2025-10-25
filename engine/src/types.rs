@@ -19,20 +19,11 @@ pub struct EngineTask {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub enum TaskFunction {
     #[serde(rename = "cli_command")]
-    CliCommand {
-        command: String,
-        args: Vec<String>,
-    },
+    CliCommand { command: String, args: Vec<String> },
     #[serde(rename = "cursor_agent")]
-    CursorAgent {
-        prompt: String,
-        config: Value,
-    },
+    CursorAgent { prompt: String, config: Value },
     #[serde(rename = "custom")]
-    Custom {
-        name: String,
-        input: Value,
-    },
+    Custom { name: String, input: Value },
 }
 
 /// Workflow structure containing tasks
@@ -130,18 +121,18 @@ impl ExecutionContext {
             tasks: HashMap::new(),
         }
     }
-    
+
     pub fn log(&mut self, message: String) {
         self.output_logs.push(message);
     }
-    
+
     pub fn log_task(&mut self, task_id: String, message: String) {
         self.per_task_logs
             .entry(task_id)
             .or_insert_with(Vec::new)
             .push(message);
     }
-    
+
     pub fn update_task_status(&mut self, task_id: String, status: TaskStatus) {
         if let Some(task) = self.tasks.get_mut(&task_id) {
             task.status = status;

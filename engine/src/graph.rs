@@ -1,9 +1,9 @@
 //! Dependency graph for task execution ordering and circular dependency detection
 
-use crate::types::*;
 use crate::errors::*;
+use crate::types::*;
 use std::collections::{HashMap, HashSet, VecDeque};
-use tracing::{debug, trace, warn, error, instrument};
+use tracing::{debug, error, instrument, trace, warn};
 
 /// Dependency graph for managing task execution order
 #[derive(Debug, Clone)]
@@ -79,7 +79,9 @@ impl DependencyGraph {
         debug!("Checking for circular dependencies");
         if graph.has_circular_dependency() {
             error!("Circular dependency detected in graph");
-            return Err(GraphError::CircularDependency("Circular dependency detected".to_string()));
+            return Err(GraphError::CircularDependency(
+                "Circular dependency detected".to_string(),
+            ));
         }
 
         debug!(
@@ -92,7 +94,11 @@ impl DependencyGraph {
 
     /// Build dependencies for a specific task by ID
     #[instrument(skip(self), fields(task_id = %task_id, dependencies_count = dependencies.len()))]
-    fn build_dependencies_for_task_id(&mut self, task_id: &str, dependencies: &[String]) -> Result<(), GraphError> {
+    fn build_dependencies_for_task_id(
+        &mut self,
+        task_id: &str,
+        dependencies: &[String],
+    ) -> Result<(), GraphError> {
         trace!(
             task_id = %task_id,
             dependencies = ?dependencies,
@@ -100,7 +106,8 @@ impl DependencyGraph {
         );
 
         // Initialize dependency list
-        self.dependencies.insert(task_id.to_string(), dependencies.to_vec());
+        self.dependencies
+            .insert(task_id.to_string(), dependencies.to_vec());
 
         // Validate that all dependencies exist
         for dep_id in dependencies {
@@ -110,9 +117,10 @@ impl DependencyGraph {
                     dependency_id = %dep_id,
                     "Task depends on non-existent task"
                 );
-                return Err(GraphError::InvalidDependency(
-                    format!("Task {} depends on non-existent task {}", task_id, dep_id)
-                ));
+                return Err(GraphError::InvalidDependency(format!(
+                    "Task {} depends on non-existent task {}",
+                    task_id, dep_id
+                )));
             }
         }
 
@@ -158,7 +166,8 @@ impl DependencyGraph {
             "Finding ready tasks"
         );
 
-        let ready_tasks: Vec<EngineTask> = self.tasks
+        let ready_tasks: Vec<EngineTask> = self
+            .tasks
             .values()
             .filter(|task| {
                 // Task is not completed
@@ -217,7 +226,7 @@ impl DependencyGraph {
             task_id = %task_id,
             "Visiting task in DFS"
         );
-        
+
         visited.insert(task_id.to_string());
         rec_stack.insert(task_id.to_string());
 
@@ -228,7 +237,7 @@ impl DependencyGraph {
                 dependencies = ?dependencies,
                 "Checking dependencies for cycles"
             );
-            
+
             for dep_id in dependencies {
                 if !visited.contains(dep_id) {
                     trace!(
@@ -267,10 +276,12 @@ impl DependencyGraph {
     #[instrument(skip(self))]
     pub fn get_execution_order(&self) -> Result<Vec<String>, GraphError> {
         debug!("Starting topological sort");
-        
+
         if self.has_circular_dependency() {
             error!("Cannot sort circular graph");
-            return Err(GraphError::CircularDependency("Cannot sort circular graph".to_string()));
+            return Err(GraphError::CircularDependency(
+                "Cannot sort circular graph".to_string(),
+            ));
         }
 
         let mut in_degree = HashMap::new();
@@ -280,15 +291,19 @@ impl DependencyGraph {
         // Calculate in-degrees
         debug!("Calculating in-degrees for all tasks");
         for task_id in self.tasks.keys() {
-            let degree = self.dependencies.get(task_id).map(|deps| deps.len()).unwrap_or(0);
+            let degree = self
+                .dependencies
+                .get(task_id)
+                .map(|deps| deps.len())
+                .unwrap_or(0);
             in_degree.insert(task_id.clone(), degree);
-            
+
             trace!(
                 task_id = %task_id,
                 in_degree = degree,
                 "Calculated in-degree for task"
             );
-            
+
             if degree == 0 {
                 trace!(
                     task_id = %task_id,
@@ -319,7 +334,7 @@ impl DependencyGraph {
                     dependents = ?dependents,
                     "Processing dependents"
                 );
-                
+
                 for dep_id in dependents {
                     if let Some(degree) = in_degree.get_mut(dep_id) {
                         *degree -= 1;
@@ -329,7 +344,7 @@ impl DependencyGraph {
                             new_degree = *degree,
                             "Reduced in-degree for dependent"
                         );
-                        
+
                         if *degree == 0 {
                             trace!(
                                 task_id = %task_id,
@@ -357,7 +372,9 @@ impl DependencyGraph {
                 total_tasks = self.tasks.len(),
                 "Not all tasks were processed, graph has cycles"
             );
-            return Err(GraphError::CircularDependency("Graph has cycles".to_string()));
+            return Err(GraphError::CircularDependency(
+                "Graph has cycles".to_string(),
+            ));
         }
 
         Ok(result)
@@ -368,7 +385,7 @@ impl DependencyGraph {
     pub fn get_task(&self, task_id: &str) -> Option<&EngineTask> {
         trace!(task_id = %task_id, "Looking up task by ID");
         let result = self.tasks.get(task_id);
-        
+
         match result {
             Some(task) => {
                 trace!(
@@ -381,7 +398,7 @@ impl DependencyGraph {
                 trace!(task_id = %task_id, "Task not found");
             }
         }
-        
+
         result
     }
 
@@ -423,4 +440,3 @@ impl DependencyGraph {
         dependents
     }
 }
-

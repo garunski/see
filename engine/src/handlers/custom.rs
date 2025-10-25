@@ -1,10 +1,10 @@
 //! Custom handler for unknown or user-defined function types
 
-use crate::types::*;
 use crate::errors::*;
+use crate::types::*;
 use async_trait::async_trait;
 use serde_json::Value;
-use tracing::{debug, trace, error, instrument};
+use tracing::{debug, error, instrument, trace};
 
 /// Custom handler for unknown function types
 pub struct CustomHandler;
@@ -30,7 +30,7 @@ impl super::TaskHandler for CustomHandler {
                 "Invalid function type - expected Custom"
             );
             return Err(HandlerError::InvalidConfiguration(
-                "Expected Custom function".to_string()
+                "Expected Custom function".to_string(),
             ));
         };
 
@@ -42,7 +42,10 @@ impl super::TaskHandler for CustomHandler {
             "Parsed custom function parameters"
         );
 
-        context.log_task(task.id.clone(), format!("Executing custom function: {}", name));
+        context.log_task(
+            task.id.clone(),
+            format!("Executing custom function: {}", name),
+        );
         context.log_task(task.id.clone(), format!("Input: {}", input));
 
         debug!(

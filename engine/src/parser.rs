@@ -1,10 +1,10 @@
 //! JSON parser for workflow definitions with recursive next_tasks support
 
-use crate::types::*;
 use crate::errors::*;
+use crate::types::*;
 use serde_json::Value;
 use std::collections::HashSet;
-use tracing::{debug, trace, warn, error, instrument};
+use tracing::{debug, error, instrument, trace, warn};
 
 /// Parse a workflow from JSON string
 #[instrument]
@@ -64,7 +64,9 @@ pub fn parse_workflow_from_value(workflow_json: &Value) -> Result<EngineWorkflow
             unique_ids_count = task_ids.len(),
             "Duplicate task IDs detected"
         );
-        return Err(ParserError::InvalidTask("Duplicate task IDs found".to_string()));
+        return Err(ParserError::InvalidTask(
+            "Duplicate task IDs found".to_string(),
+        ));
     }
 
     debug!(
@@ -107,7 +109,10 @@ fn parse_task_recursive(
             task_id = %task_id,
             "Duplicate task ID detected"
         );
-        return Err(ParserError::InvalidTask(format!("Duplicate task ID: {}", task_id)));
+        return Err(ParserError::InvalidTask(format!(
+            "Duplicate task ID: {}",
+            task_id
+        )));
     }
 
     let task_name = task_json
@@ -125,7 +130,8 @@ fn parse_task_recursive(
         .get("dependencies")
         .and_then(|v| v.as_array())
         .map(|arr| {
-            let deps: Vec<String> = arr.iter()
+            let deps: Vec<String> = arr
+                .iter()
                 .filter_map(|v| v.as_str())
                 .map(String::from)
                 .collect();
@@ -152,23 +158,19 @@ fn parse_task_recursive(
             next_tasks_count = next_tasks_array.len(),
             "Found next_tasks, parsing recursively"
         );
-        
+
         for (i, next_task_json) in next_tasks_array.iter().enumerate() {
             trace!(
                 task_id = %task_id,
                 next_task_index = i,
                 "Parsing next task"
             );
-            
-            let next_task = parse_task_recursive(
-                next_task_json,
-                all_tasks,
-                Some(&task_id),
-                task_ids,
-            )?;
+
+            let next_task =
+                parse_task_recursive(next_task_json, all_tasks, Some(&task_id), task_ids)?;
             next_tasks.push(next_task);
         }
-        
+
         debug!(
             task_id = %task_id,
             next_tasks_count = next_tasks.len(),
@@ -237,13 +239,11 @@ fn parse_task_recursive(
 #[instrument(skip(task_json), fields(task_id = ?task_json.get("id").and_then(|v| v.as_str())))]
 fn parse_task_function(task_json: &Value) -> Result<TaskFunction, ParserError> {
     trace!("Starting task function parsing");
-    
-    let function = task_json
-        .get("function")
-        .ok_or_else(|| {
-            error!("Missing function field in task");
-            ParserError::MissingField("function".to_string())
-        })?;
+
+    let function = task_json.get("function").ok_or_else(|| {
+        error!("Missing function field in task");
+        ParserError::MissingField("function".to_string())
+    })?;
 
     let function_type = function
         .get("name")
@@ -258,13 +258,11 @@ fn parse_task_function(task_json: &Value) -> Result<TaskFunction, ParserError> {
     match function_type {
         "cli_command" => {
             trace!("Parsing CLI command function");
-            
-            let input = function
-                .get("input")
-                .ok_or_else(|| {
-                    error!(function_type = %function_type, "Missing input field for CLI command");
-                    ParserError::MissingField("function.input".to_string())
-                })?;
+
+            let input = function.get("input").ok_or_else(|| {
+                error!(function_type = %function_type, "Missing input field for CLI command");
+                ParserError::MissingField("function.input".to_string())
+            })?;
 
             let command = input
                 .get("command")
@@ -279,7 +277,8 @@ fn parse_task_function(task_json: &Value) -> Result<TaskFunction, ParserError> {
                 .get("args")
                 .and_then(|v| v.as_array())
                 .map(|arr| {
-                    let args: Vec<String> = arr.iter()
+                    let args: Vec<String> = arr
+                        .iter()
                         .filter_map(|v| v.as_str())
                         .map(String::from)
                         .collect();
@@ -307,13 +306,11 @@ fn parse_task_function(task_json: &Value) -> Result<TaskFunction, ParserError> {
         }
         "cursor_agent" => {
             trace!("Parsing Cursor agent function");
-            
-            let input = function
-                .get("input")
-                .ok_or_else(|| {
-                    error!(function_type = %function_type, "Missing input field for Cursor agent");
-                    ParserError::MissingField("function.input".to_string())
-                })?;
+
+            let input = function.get("input").ok_or_else(|| {
+                error!(function_type = %function_type, "Missing input field for Cursor agent");
+                ParserError::MissingField("function.input".to_string())
+            })?;
 
             let prompt = input
                 .get("prompt")
@@ -325,7 +322,7 @@ fn parse_task_function(task_json: &Value) -> Result<TaskFunction, ParserError> {
                 .to_string();
 
             let config = input.clone();
-            
+
             trace!(
                 function_type = %function_type,
                 prompt_length = prompt.len(),
@@ -347,15 +344,12 @@ fn parse_task_function(task_json: &Value) -> Result<TaskFunction, ParserError> {
                 function_type = %function_type,
                 "Parsing custom function"
             );
-            
+
             let name = function_type.to_string();
-            let input = function
-                .get("input")
-                .cloned()
-                .unwrap_or_else(|| {
-                    trace!(function_type = %function_type, "No input provided, using empty object");
-                    Value::Object(serde_json::Map::new())
-                });
+            let input = function.get("input").cloned().unwrap_or_else(|| {
+                trace!(function_type = %function_type, "No input provided, using empty object");
+                Value::Object(serde_json::Map::new())
+            });
 
             trace!(
                 function_type = %function_type,
@@ -374,4 +368,3 @@ fn parse_task_function(task_json: &Value) -> Result<TaskFunction, ParserError> {
         }
     }
 }
-

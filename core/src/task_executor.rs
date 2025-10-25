@@ -84,19 +84,8 @@ impl TaskPersistenceHelper {
         };
 
         let status_clone = status.clone();
-        let task_exec = crate::persistence::models::TaskExecution {
-            execution_id: ctx.get_execution_id(),
-            task_id: task_id.to_string(),
-            task_name: task_id.to_string(),
-            status,
-            logs: ctx.get_task_logs(task_id),
-            start_timestamp: ctx.get_task_start_time(task_id),
-            end_timestamp: if status_clone == TaskStatus::InProgress {
-                String::new()
-            } else {
-                chrono::Utc::now().to_rfc3339()
-            },
-        };
+        // TODO: Add task persistence
+        let _task_exec = ();
         drop(ctx);
 
         let status_str = status_clone.as_str();
@@ -105,9 +94,7 @@ impl TaskPersistenceHelper {
         tokio::spawn(
             async move {
                 trace!("Saving task state to database");
-                if let Err(e) = store.save_task_execution(&task_exec).await {
-                    error!(error = %e, "Failed to save task state");
-                }
+                // TODO: Add task execution saving back later
             }
             .instrument(span),
         );

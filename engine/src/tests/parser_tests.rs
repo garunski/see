@@ -1,7 +1,7 @@
 //! Parser tests for the new workflow engine
 
-use crate::parser::*;
 use crate::errors::*;
+use crate::parser::*;
 
 #[test]
 fn test_parse_simple_workflow() {
@@ -80,16 +80,16 @@ fn test_parse_nested_next_tasks() {
 
     let workflow = parse_workflow(json).unwrap();
     assert_eq!(workflow.tasks.len(), 3); // root + 2 children
-    
+
     // Find root task
     let root_task = workflow.tasks.iter().find(|t| t.id == "root").unwrap();
     assert_eq!(root_task.next_tasks.len(), 2);
     assert_eq!(root_task.dependencies.len(), 0);
-    
+
     // Find child tasks
     let child1 = workflow.tasks.iter().find(|t| t.id == "child1").unwrap();
     let child2 = workflow.tasks.iter().find(|t| t.id == "child2").unwrap();
-    
+
     assert_eq!(child1.dependencies, vec!["root"]);
     assert_eq!(child2.dependencies, vec!["root"]);
 }
@@ -144,7 +144,7 @@ fn test_parse_deeply_nested() {
 
     let workflow = parse_workflow(json).unwrap();
     assert_eq!(workflow.tasks.len(), 3); // level1 + level2 + level3
-    
+
     let level3 = workflow.tasks.iter().find(|t| t.id == "level3").unwrap();
     assert_eq!(level3.dependencies, vec!["level2"]);
 }

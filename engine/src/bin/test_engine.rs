@@ -10,7 +10,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     tracing_subscriber::fmt::init();
 
     let args: Vec<String> = env::args().collect();
-    
+
     if args.len() < 2 {
         eprintln!("Usage: {} <workflow_file>", args[0]);
         eprintln!("Example: {} examples/simple.json", args[0]);
@@ -18,7 +18,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
 
     let workflow_file = &args[1];
-    
+
     // Read workflow file
     let json = fs::read_to_string(workflow_file)
         .map_err(|e| format!("Failed to read file {}: {}", workflow_file, e))?;
@@ -37,22 +37,25 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             println!("  - Workflow: {}", result.workflow_name);
             println!("  - Tasks: {}", result.tasks.len());
             println!("  - Errors: {}", result.errors.len());
-            
+
             if !result.errors.is_empty() {
                 println!("❌ Errors:");
                 for error in &result.errors {
                     println!("  - {}", error);
                 }
             }
-            
+
             println!("\n📋 Task Details:");
             for task in &result.tasks {
                 println!("  - {}: {:?}", task.name, task.status);
             }
-            
+
             println!("\n📝 Audit Trail:");
             for entry in &result.audit_trail {
-                println!("  - {}: {} ({:?})", entry.timestamp, entry.message, entry.status);
+                println!(
+                    "  - {}: {} ({:?})",
+                    entry.timestamp, entry.message, entry.status
+                );
             }
         }
         Err(e) => {
