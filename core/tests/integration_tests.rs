@@ -1,6 +1,6 @@
 // Integration tests ONLY
 
-use core::*;
+use s_e_e_core::*;
 use std::sync::Arc;
 use std::sync::atomic::{AtomicUsize, Ordering};
 

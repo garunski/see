@@ -1,6 +1,6 @@
 // Workflow conversion tests ONLY
 
-use core::bridge::*;
+use s_e_e_core::{bridge::*, CoreError};
 use persistence::WorkflowDefinition;
 
 #[test]
@@ -58,7 +58,7 @@ fn test_workflow_definition_to_engine_valid() {
         updated_at: chrono::Utc::now(),
     };
     
-    let result = core::bridge::workflow::workflow_definition_to_engine(&workflow);
+    let result = workflow::workflow_definition_to_engine(&workflow);
     assert!(result.is_ok(), "Valid workflow should convert successfully");
     
     let engine_workflow = result.unwrap();
@@ -81,11 +81,11 @@ fn test_workflow_definition_to_engine_invalid_json() {
         updated_at: chrono::Utc::now(),
     };
     
-    let result = core::bridge::workflow::workflow_definition_to_engine(&workflow);
+    let result = workflow::workflow_definition_to_engine(&workflow);
     assert!(result.is_err(), "Invalid JSON should fail conversion");
     
     match result.unwrap_err() {
-        core::CoreError::Engine(engine::EngineError::Parser(_)) => {}, // Expected
+        CoreError::Engine(engine::EngineError::Parser(_)) => {}, // Expected
         other => panic!("Expected Parser error, got: {:?}", other),
     }
 }
@@ -103,11 +103,11 @@ fn test_workflow_definition_to_engine_missing_fields() {
         updated_at: chrono::Utc::now(),
     };
     
-    let result = core::bridge::workflow::workflow_definition_to_engine(&workflow);
+    let result = workflow::workflow_definition_to_engine(&workflow);
     assert!(result.is_err(), "Missing fields should fail conversion");
     
     match result.unwrap_err() {
-        core::CoreError::Engine(engine::EngineError::Parser(_)) => {}, // Expected
+        CoreError::Engine(engine::EngineError::Parser(_)) => {}, // Expected
         other => panic!("Expected Parser error, got: {:?}", other),
     }
 }

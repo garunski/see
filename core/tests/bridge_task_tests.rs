@@ -1,6 +1,6 @@
 // Task conversion tests ONLY
 
-use core::bridge::*;
+use s_e_e_core::bridge::*;
 use engine::{TaskInfo, TaskStatus as EngineTaskStatus};
 use persistence::TaskStatus as PersistenceTaskStatus;
 use std::collections::HashMap;
@@ -23,7 +23,7 @@ fn test_task_status_conversion() {
             status: engine_status,
         };
         
-        let task_execution = core::bridge::task::task_info_to_execution(
+        let task_execution = task::task_info_to_execution(
             &task_info,
             "workflow-1",
             &HashMap::new(),
@@ -48,7 +48,7 @@ fn test_task_output_extraction() {
         status: EngineTaskStatus::Complete,
     };
     
-    let task_execution = core::bridge::task::task_info_to_execution(
+    let task_execution = task::task_info_to_execution(
         &task_info,
         "workflow-1",
         &per_task_logs,
@@ -66,7 +66,7 @@ fn test_task_output_extraction() {
         status: EngineTaskStatus::Complete,
     };
     
-    let task_execution2 = core::bridge::task::task_info_to_execution(
+    let task_execution2 = task::task_info_to_execution(
         &task_info2,
         "workflow-1",
         &per_task_logs,
@@ -93,7 +93,7 @@ fn test_task_error_extraction() {
         status: EngineTaskStatus::Failed,
     };
     
-    let task_execution = core::bridge::task::task_info_to_execution(
+    let task_execution = task::task_info_to_execution(
         &task_info,
         "workflow-1",
         &HashMap::new(),
@@ -111,7 +111,7 @@ fn test_task_error_extraction() {
         status: EngineTaskStatus::Failed,
     };
     
-    let task_execution2 = core::bridge::task::task_info_to_execution(
+    let task_execution2 = task::task_info_to_execution(
         &task_info2,
         "workflow-1",
         &HashMap::new(),
@@ -129,7 +129,7 @@ fn test_task_error_extraction() {
         status: EngineTaskStatus::Complete,
     };
     
-    let task_execution3 = core::bridge::task::task_info_to_execution(
+    let task_execution3 = task::task_info_to_execution(
         &task_info3,
         "workflow-1",
         &HashMap::new(),

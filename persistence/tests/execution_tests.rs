@@ -4,6 +4,7 @@
 
 use persistence::{Store, WorkflowExecution, WorkflowStatus, TaskExecution, TaskStatus};
 use chrono::Utc;
+use std::collections::HashMap;
 
 async fn create_test_store() -> Store {
     Store::new(":memory:").await.unwrap()
@@ -16,9 +17,12 @@ fn create_test_execution() -> WorkflowExecution {
         status: WorkflowStatus::Complete,
         created_at: Utc::now(),
         completed_at: Some(Utc::now()),
-        success: true,
+        success: Some(true),
         tasks: vec![],
         timestamp: Utc::now(),
+        audit_trail: Vec::new(),
+        per_task_logs: HashMap::new(),
+        errors: Vec::new(),
     }
 }
 
@@ -47,7 +51,7 @@ async fn test_get_workflow_execution_success() {
     assert_eq!(retrieved_execution.id, "exec-1");
     assert_eq!(retrieved_execution.workflow_name, "Test Workflow");
     assert_eq!(retrieved_execution.status, WorkflowStatus::Complete);
-    assert!(retrieved_execution.success);
+    assert_eq!(retrieved_execution.success, Some(true));
 }
 
 #[tokio::test]

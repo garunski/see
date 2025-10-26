@@ -1,6 +1,6 @@
 // Workflow execution API tests ONLY
 
-use core::*;
+use s_e_e_core::*;
 use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
 
@@ -154,7 +154,7 @@ fn test_invalid_workflow_execution() {
             let result = rt.block_on(execute_workflow_by_id(&invalid_workflow.id, None));
             
             match result {
-                Err(CoreError::Engine(_)) => {}, // Expected for invalid JSON
+                Err(CoreError::Execution(_)) => {}, // Expected for invalid JSON
                 Err(other) => panic!("Expected Engine error, got: {:?}", other),
                 Ok(_) => panic!("Should have failed for invalid JSON"),
             }

@@ -1,10 +1,10 @@
 // Default workflows tests ONLY
 
-use core::*;
+use s_e_e_core::api::defaults;
 
 #[test]
 fn test_default_workflows() {
-    let defaults = crate::api::defaults::get_default_workflows();
+    let defaults = defaults::get_default_workflows();
     
     assert!(!defaults.is_empty(), "Should have default workflows");
     
@@ -23,7 +23,7 @@ fn test_default_workflows() {
 
 #[test]
 fn test_default_workflows_content_valid() {
-    let defaults = crate::api::defaults::get_default_workflows();
+    let defaults = defaults::get_default_workflows();
     
     for workflow in &defaults {
         // Test that the content is valid JSON
@@ -41,7 +41,7 @@ fn test_default_workflows_content_valid() {
 
 #[test]
 fn test_default_workflows_unique_ids() {
-    let defaults = crate::api::defaults::get_default_workflows();
+    let defaults = defaults::get_default_workflows();
     let mut ids = std::collections::HashSet::new();
     
     for workflow in &defaults {

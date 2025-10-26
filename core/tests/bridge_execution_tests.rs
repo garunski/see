@@ -1,6 +1,6 @@
 // Execution conversion tests ONLY
 
-use core::bridge::*;
+use s_e_e_core::bridge::*;
 use engine::WorkflowResult as EngineWorkflowResult;
 
 #[test]
@@ -15,7 +15,7 @@ fn test_engine_result_to_core_result() {
     };
     
     let execution_id = "exec-123".to_string();
-    let core_result = core::bridge::workflow::engine_result_to_core_result(engine_result, execution_id.clone());
+    let core_result = workflow::engine_result_to_core_result(engine_result, execution_id.clone());
     
     assert!(core_result.success);
     assert_eq!(core_result.workflow_name, "Test Workflow");
@@ -62,7 +62,7 @@ fn test_engine_result_to_core_result_with_data() {
     };
     
     let execution_id = "exec-456".to_string();
-    let core_result = core::bridge::workflow::engine_result_to_core_result(engine_result, execution_id.clone());
+    let core_result = workflow::engine_result_to_core_result(engine_result, execution_id.clone());
     
     assert!(!core_result.success);
     assert_eq!(core_result.workflow_name, "Failed Workflow");

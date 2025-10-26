@@ -1,6 +1,6 @@
 // Audit conversion tests ONLY
 
-use core::bridge::*;
+use s_e_e_core::{bridge::*, CoreError};
 use engine::{AuditEntry, AuditStatus as EngineAuditStatus};
 use persistence::AuditStatus as PersistenceAuditStatus;
 use chrono::Datelike;
@@ -22,7 +22,7 @@ fn test_audit_status_conversion() {
             message: "Test".to_string(),
         };
         
-        let audit_event = core::bridge::audit::audit_entry_to_event(&audit_entry).unwrap();
+        let audit_event = audit::audit_entry_to_event(&audit_entry).unwrap();
         assert_eq!(audit_event.status, expected_persistence_status);
     }
 }
@@ -45,7 +45,7 @@ fn test_timestamp_parsing() {
             message: "Test".to_string(),
         };
         
-        let result = core::bridge::audit::audit_entry_to_event(&audit_entry);
+        let result = audit::audit_entry_to_event(&audit_entry);
         assert!(result.is_ok(), "Failed to parse timestamp: {}", timestamp_str);
         
         let audit_event = result.unwrap();
@@ -73,11 +73,11 @@ fn test_invalid_timestamp_parsing() {
             message: "Test".to_string(),
         };
         
-        let result = core::bridge::audit::audit_entry_to_event(&audit_entry);
+        let result = audit::audit_entry_to_event(&audit_entry);
         assert!(result.is_err(), "Should fail for invalid timestamp: {}", timestamp_str);
         
         match result.unwrap_err() {
-            core::CoreError::Execution(msg) => {
+            CoreError::Execution(msg) => {
                 assert!(msg.contains("Invalid timestamp"));
             },
             other => panic!("Expected Execution error, got: {:?}", other),

@@ -1,6 +1,6 @@
 // Task resumption API tests ONLY
 
-use core::*;
+use s_e_e_core::*;
 
 #[test]
 fn test_resume_task_not_found() {

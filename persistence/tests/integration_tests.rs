@@ -4,6 +4,7 @@
 
 use persistence::{Store, WorkflowDefinition, WorkflowExecution, WorkflowStatus, TaskExecution, TaskStatus, UserPrompt, AppSettings, AuditEvent, Theme};
 use chrono::Utc;
+use std::collections::HashMap;
 
 async fn create_test_store() -> Store {
     Store::new(":memory:").await.unwrap()
@@ -34,9 +35,12 @@ async fn test_complete_workflow_execution_flow() {
         status: WorkflowStatus::Running,
         created_at: Utc::now(),
         completed_at: None,
-        success: false,
+        success: Some(false),
         tasks: vec![],
         timestamp: Utc::now(),
+        audit_trail: Vec::new(),
+        per_task_logs: HashMap::new(),
+        errors: Vec::new(),
     };
     
     store.save_workflow_execution(execution.clone()).await.unwrap();
@@ -87,7 +91,7 @@ async fn test_complete_workflow_execution_flow() {
     let mut updated_execution = execution;
     updated_execution.status = WorkflowStatus::Complete;
     updated_execution.completed_at = Some(Utc::now());
-    updated_execution.success = false; // One task failed
+    updated_execution.success = Some(false); // One task failed
     
     store.save_workflow_execution(updated_execution).await.unwrap();
     
@@ -234,7 +238,7 @@ async fn test_workflow_execution_with_prompts_and_settings() {
         id: "exec-exec-1".to_string(),
         workflow_name: "Execution Workflow".to_string(),
         status: WorkflowStatus::Complete,
-        success: true,
+        success: Some(true),
         ..Default::default()
     };
     
@@ -246,7 +250,7 @@ async fn test_workflow_execution_with_prompts_and_settings() {
     
     let executions = store.list_workflow_executions().await.unwrap();
     assert_eq!(executions.len(), 1);
-    assert!(executions[0].success);
+    assert_eq!(executions[0].success, Some(true));
     
     let prompts = store.list_prompts().await.unwrap();
     assert_eq!(prompts.len(), 2);
