@@ -26,18 +26,13 @@ pub fn use_workflow_execution(
             loop {
                 match s_e_e_core::get_global_store() {
                     Ok(store) => match store.get_workflow_with_tasks(&id).await {
-                        Ok(Some(exec)) => {
+                        Ok(exec) => {
                             execution.set(Some(exec.clone()));
                             loading.set(false);
 
                             if exec.success.unwrap_or(false) || !exec.errors.is_empty() {
                                 break;
                             }
-                        }
-                        Ok(None) => {
-                            error.set(Some("Workflow not found".to_string()));
-                            loading.set(false);
-                            break;
                         }
                         Err(e) => {
                             error.set(Some(format!("Failed to load workflow: {}", e)));
@@ -93,7 +88,7 @@ pub fn use_filtered_audit(
                 .audit_trail
                 .iter()
                 .filter(|entry| current_task_id.as_ref() == Some(&entry.task_id))
-                .cloned()
+                .map(|event| s_e_e_core::audit_event_to_entry(event))
                 .collect();
             audit_entries.set(filtered);
         } else {

@@ -121,8 +121,11 @@ impl Store {
         let executions = self.list_workflow_executions().await?;
         let metadata = executions.into_iter().map(|exec| WorkflowMetadata {
             id: exec.id,
-            name: exec.workflow_name,
+            name: exec.workflow_name.clone(),
             status: exec.status.to_string(),
+            workflow_name: exec.workflow_name,
+            start_timestamp: exec.created_at,
+            task_ids: exec.tasks.iter().map(|t| t.id.clone()).collect(),
         }).collect();
         
         log_db_operation_success("list_workflow_metadata", "workflow_executions", 0);

@@ -62,6 +62,19 @@ impl Default for TaskStatus {
     }
 }
 
+impl TaskStatus {
+    /// Convert TaskStatus to string representation
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            TaskStatus::Pending => "pending",
+            TaskStatus::InProgress => "in_progress",
+            TaskStatus::Complete => "complete",
+            TaskStatus::Failed => "failed",
+            TaskStatus::WaitingForInput => "waiting_for_input",
+        }
+    }
+}
+
 /// Result of workflow execution
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct WorkflowResult {
@@ -98,6 +111,15 @@ pub enum AuditStatus {
     Success,
     #[serde(rename = "failure")]
     Failure,
+}
+
+impl std::fmt::Display for AuditStatus {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            AuditStatus::Success => write!(f, "Success"),
+            AuditStatus::Failure => write!(f, "Failure"),
+        }
+    }
 }
 
 /// Execution context for task handlers

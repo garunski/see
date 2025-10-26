@@ -1,8 +1,7 @@
 // Task conversions ONLY
 
-use engine::TaskInfo;
+use engine::{TaskInfo, TaskStatus as EngineTaskStatus};
 use persistence::{TaskExecution, TaskStatus as PersistenceTaskStatus};
-use engine::TaskStatus as EngineTaskStatus;
 use std::collections::HashMap;
 
 /// Convert TaskInfo to TaskExecution
@@ -55,5 +54,23 @@ pub fn task_info_to_execution(
         error,
         created_at: workflow_created_at,
         completed_at,
+    }
+}
+
+/// Convert TaskExecution to TaskInfo (for GUI compatibility)
+pub fn task_execution_to_info(task: &TaskExecution) -> TaskInfo {
+    // Convert persistence TaskStatus to engine TaskStatus
+    let engine_status = match task.status {
+        PersistenceTaskStatus::Pending => EngineTaskStatus::Pending,
+        PersistenceTaskStatus::InProgress => EngineTaskStatus::InProgress,
+        PersistenceTaskStatus::Complete => EngineTaskStatus::Complete,
+        PersistenceTaskStatus::Failed => EngineTaskStatus::Failed,
+        PersistenceTaskStatus::WaitingForInput => EngineTaskStatus::WaitingForInput,
+    };
+    
+    TaskInfo {
+        id: task.id.clone(),
+        name: task.name.clone(),
+        status: engine_status,
     }
 }

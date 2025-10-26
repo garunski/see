@@ -175,7 +175,7 @@ pub fn TaskDetailsPanel(
                         }
 
                         // Resume button for waiting tasks
-                        if task.status == "waiting-for-input" {
+                        if task.status.as_str() == "waiting_for_input" {
                             if let Some(exec) = execution.as_ref() {
                                 TaskResumeButton {
                                     task: task.clone(),

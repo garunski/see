@@ -44,9 +44,12 @@ pub async fn execute_workflow_by_id(
         status: WorkflowStatus::Running,
         created_at: now,
         completed_at: None,
-        success: false,
+        success: None,
         tasks: Vec::new(),  // Will be populated after execution
         timestamp: now,
+        audit_trail: Vec::new(),
+        per_task_logs: std::collections::HashMap::new(),
+        errors: Vec::new(),
     };
     
     // Step 5: Save Initial Execution to Persistence

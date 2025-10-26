@@ -166,14 +166,19 @@ pub fn UserPromptEditPage(id: String) -> Element {
                             validation_error.set(String::new());
                             is_saving.set(true);
 
+                            let now = chrono::Utc::now();
+                            let content_str = content().trim().to_string();
                             let prompt = UserPrompt {
                                 id: prompt_id().trim().to_string(),
                                 name: prompt_id().trim().to_string(),
+                                content: content_str.clone(),
                                 description: Some(description().trim().to_string()),
-                                template: content().trim().to_string(),
+                                template: content_str,
                                 variables: Vec::new(),
                                 tags: Vec::new(),
                                 metadata: serde_json::Value::Object(serde_json::Map::new()),
+                                created_at: now,
+                                updated_at: now,
                             };
 
                             let mut state_provider = state_provider.clone();

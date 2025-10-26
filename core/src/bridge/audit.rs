@@ -29,3 +29,20 @@ pub fn audit_entry_to_event(
         message: entry.message.clone(),
     })
 }
+
+/// Convert AuditEvent to AuditEntry (for GUI compatibility)
+pub fn audit_event_to_entry(event: &AuditEvent) -> AuditEntry {
+    // Convert persistence AuditStatus to engine AuditStatus
+    let engine_status = match event.status {
+        PersistenceAuditStatus::Success => EngineAuditStatus::Success,
+        PersistenceAuditStatus::Failure => EngineAuditStatus::Failure,
+    };
+    
+    AuditEntry {
+        task_id: event.task_id.clone(),
+        status: engine_status,
+        timestamp: event.timestamp.to_rfc3339(),
+        changes_count: event.changes_count,
+        message: event.message.clone(),
+    }
+}

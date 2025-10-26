@@ -1,10 +1,7 @@
 // Core error types ONLY
 
-use std::{fmt, option, convert};
-use thiserror::Error;
-
 /// Main error type for core crate operations
-#[derive(Error, Debug)]
+#[derive(thiserror::Error, Debug)]
 pub enum CoreError {
     #[error("Engine error: {0}")]
     Engine(#[from] engine::EngineError),

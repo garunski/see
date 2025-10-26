@@ -16,11 +16,15 @@ impl Store {
     /// Create a new store instance
     pub async fn new(db_path: &str) -> Result<Self, PersistenceError> {
         log_db_operation_start("connect", "database");
+        tracing::info!("Attempting to connect to database: {}", db_path);
         
         // Enable WAL mode for better concurrency
         let pool = SqlitePool::connect(&format!("sqlite:{}", db_path))
             .await
-            .map_err(|e| PersistenceError::Database(e.to_string()))?;
+            .map_err(|e| {
+                tracing::error!("Database connection failed: {}", e);
+                PersistenceError::Database(e.to_string())
+            })?;
 
         // Enable WAL mode
         sqlx::query("PRAGMA journal_mode=WAL")

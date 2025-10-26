@@ -33,8 +33,11 @@ pub fn workflow_result_to_execution(
         },
         created_at,
         completed_at: Some(now),
-        success: result.success,
+        success: Some(result.success),
         tasks: task_executions,
         timestamp: now,
+        audit_trail: Vec::new(), // Will be populated separately
+        per_task_logs: result.per_task_logs,
+        errors: result.errors,
     }
 }

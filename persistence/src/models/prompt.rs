@@ -4,6 +4,7 @@
 
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
+use serde_json::Value;
 
 /// User-defined prompt template
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -11,6 +12,11 @@ pub struct UserPrompt {
     pub id: String,
     pub name: String,
     pub content: String,
+    pub description: Option<String>,
+    pub template: String,
+    pub variables: Vec<String>,
+    pub tags: Vec<String>,
+    pub metadata: Value,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
 }
@@ -22,6 +28,11 @@ impl Default for UserPrompt {
             id: uuid::Uuid::new_v4().to_string(),
             name: String::new(),
             content: String::new(),
+            description: None,
+            template: String::new(),
+            variables: Vec::new(),
+            tags: Vec::new(),
+            metadata: Value::Object(serde_json::Map::new()),
             created_at: now,
             updated_at: now,
         }
@@ -46,7 +57,8 @@ impl UserPrompt {
 
     /// Update the prompt content and timestamp
     pub fn update_content(&mut self, content: String) {
-        self.content = content;
+        self.content = content.clone();
+        self.template = content;
         self.updated_at = Utc::now();
     }
 

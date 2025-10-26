@@ -1,7 +1,7 @@
 [workspace]
 members = [
-  # "gui",
-  # "cli",
+  "gui",
+  "cli",
   "engine",
   "persistence",
   "core",

@@ -87,14 +87,14 @@ pub fn WorkflowDetailsPage(id: String) -> Element {
 
                 // Resume button for waiting tasks
                 if let Some(task) = exec.tasks.get(selected_task_index()) {
-                    if task.status == "waiting-for-input".to_string() {
-                        ResumeButton { execution_id: execution_id.clone(), task: task.clone() }
+                    if task.status.as_str() == "waiting_for_input" {
+                        ResumeButton { execution_id: execution_id.clone(), task: s_e_e_core::task_execution_to_info(task) }
                     }
                 }
 
                 if !exec.tasks.is_empty() {
                     WorkflowFlow {
-                        tasks: exec.tasks.clone(),
+                        tasks: exec.tasks.iter().map(|t| s_e_e_core::task_execution_to_info(t)).collect(),
                         on_task_click: move |task_index| {
                             selected_task_index.set(task_index);
                             is_panel_open.set(true);
@@ -111,7 +111,7 @@ pub fn WorkflowDetailsPage(id: String) -> Element {
         // Task Details Panel - rendered outside main content for true overlay
         TaskDetailsPanel {
             is_open: is_panel_open(),
-            current_task: execution().and_then(|exec| exec.tasks.get(selected_task_index()).cloned()),
+            current_task: execution().and_then(|exec| exec.tasks.get(selected_task_index()).map(|t| s_e_e_core::task_execution_to_info(t))),
             current_task_index: selected_task_index(),
             total_tasks: execution().map(|exec| exec.tasks.len()).unwrap_or(0),
             execution: execution(),

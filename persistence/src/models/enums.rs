@@ -55,6 +55,19 @@ pub enum TaskStatus {
     WaitingForInput,
 }
 
+impl TaskStatus {
+    /// Convert TaskStatus to string representation
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            TaskStatus::Pending => "pending",
+            TaskStatus::InProgress => "in_progress",
+            TaskStatus::Complete => "complete",
+            TaskStatus::Failed => "failed",
+            TaskStatus::WaitingForInput => "waiting_for_input",
+        }
+    }
+}
+
 /// Audit entry status (re-exported from engine)
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub enum AuditStatus {
@@ -62,4 +75,13 @@ pub enum AuditStatus {
     Success,
     #[serde(rename = "failure")]
     Failure,
+}
+
+impl std::fmt::Display for AuditStatus {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            AuditStatus::Success => write!(f, "Success"),
+            AuditStatus::Failure => write!(f, "Failure"),
+        }
+    }
 }

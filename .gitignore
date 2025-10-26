@@ -40,3 +40,4 @@ typescript_sample
 .task
 node_modules
 coverage/
+data/
