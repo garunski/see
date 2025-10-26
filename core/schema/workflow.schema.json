@@ -1,0 +1,182 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://see.workflow/schema/v1.0.0",
+  "title": "Workflow Schema",
+  "description": "Schema for workflow definitions with tasks and dependencies",
+  "version": "1.0.0",
+  "type": "object",
+  "required": ["id", "name", "tasks"],
+  "properties": {
+    "id": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Unique identifier for the workflow"
+    },
+    "name": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Human-readable workflow name"
+    },
+    "tasks": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/Task"
+      },
+      "description": "Array of root-level tasks"
+    }
+  },
+  "definitions": {
+    "Task": {
+      "type": "object",
+      "required": ["id", "name", "function"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Unique identifier for the task within the workflow"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Human-readable task name"
+        },
+        "function": {
+          "$ref": "#/definitions/Function"
+        },
+        "next_tasks": {
+          "type": "array",
+          "default": [],
+          "description": "Optional array of tasks that execute after this task",
+          "items": {
+            "$ref": "#/definitions/Task"
+          }
+        }
+      }
+    },
+    "Function": {
+      "description": "Task function with oneOf constraints",
+      "oneOf": [
+        {
+          "$ref": "#/definitions/CliCommandFunction"
+        },
+        {
+          "$ref": "#/definitions/CursorAgentFunction"
+        },
+        {
+          "$ref": "#/definitions/UserInputFunction"
+        },
+        {
+          "$ref": "#/definitions/CustomFunction"
+        }
+      ]
+    },
+    "CliCommandFunction": {
+      "type": "object",
+      "description": "CLI command execution function",
+      "required": ["name", "input"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "const": "cli_command"
+        },
+        "input": {
+          "type": "object",
+          "required": ["command"],
+          "properties": {
+            "command": {
+              "type": "string",
+              "minLength": 1,
+              "description": "The command to execute"
+            },
+            "args": {
+              "type": "array",
+              "default": [],
+              "description": "Command arguments",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    },
+    "CursorAgentFunction": {
+      "type": "object",
+      "description": "Cursor AI agent function",
+      "required": ["name", "input"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "const": "cursor_agent"
+        },
+        "input": {
+          "type": "object",
+          "required": ["prompt"],
+          "properties": {
+            "prompt": {
+              "type": "string",
+              "minLength": 1,
+              "description": "The prompt to send to the agent"
+            },
+            "config": {
+              "type": "object",
+              "description": "Agent configuration",
+              "default": {}
+            }
+          }
+        }
+      }
+    },
+    "UserInputFunction": {
+      "type": "object",
+      "description": "User input function",
+      "required": ["name", "input"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "const": "user_input"
+        },
+        "input": {
+          "type": "object",
+          "required": ["prompt", "input_type"],
+          "properties": {
+            "prompt": {
+              "type": "string",
+              "minLength": 1,
+              "description": "The prompt to display to the user"
+            },
+            "input_type": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Type of input expected (string, number, boolean, etc.)"
+            },
+            "required": {
+              "type": "boolean",
+              "default": true,
+              "description": "Whether the input is required"
+            },
+            "default": {
+              "description": "Default value if user doesn't provide input"
+            }
+          }
+        }
+      }
+    },
+    "CustomFunction": {
+      "type": "object",
+      "description": "Custom function",
+      "required": ["name", "input"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "const": "custom"
+        },
+        "input": {
+          "type": "object",
+          "description": "Custom function input data (any valid JSON object)",
+          "default": {}
+        }
+      }
+    }
+  }
+}

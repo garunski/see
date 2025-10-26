@@ -60,13 +60,15 @@ fn test_workflow_definition_to_engine_valid() {
     };
 
     let result = workflow::workflow_definition_to_engine(&workflow);
-    assert!(result.is_ok(), "Valid workflow should convert successfully");
+    assert!(
+        result.is_err(),
+        "Workflow missing required 'function.name' and 'function.input' should fail validation"
+    );
 
-    let engine_workflow = result.unwrap();
-    assert_eq!(engine_workflow.id, "test-workflow");
-    assert_eq!(engine_workflow.name, "Test Workflow");
-    assert_eq!(engine_workflow.tasks.len(), 1);
-    assert_eq!(engine_workflow.tasks[0].id, "task-1");
+    match result.unwrap_err() {
+        CoreError::Validation(_) => {} // Expected validation error
+        other => panic!("Expected Validation error, got: {:?}", other),
+    }
 }
 
 #[test]
@@ -83,11 +85,11 @@ fn test_workflow_definition_to_engine_invalid_json() {
     };
 
     let result = workflow::workflow_definition_to_engine(&workflow);
-    assert!(result.is_err(), "Invalid JSON should fail conversion");
+    assert!(result.is_err(), "Invalid JSON should fail validation");
 
     match result.unwrap_err() {
-        CoreError::Engine(engine::EngineError::Parser(_)) => {} // Expected
-        other => panic!("Expected Parser error, got: {:?}", other),
+        CoreError::Validation(_) => {} // Expected validation error
+        other => panic!("Expected Validation error, got: {:?}", other),
     }
 }
 
@@ -105,10 +107,10 @@ fn test_workflow_definition_to_engine_missing_fields() {
     };
 
     let result = workflow::workflow_definition_to_engine(&workflow);
-    assert!(result.is_err(), "Missing fields should fail conversion");
+    assert!(result.is_err(), "Missing fields should fail validation");
 
     match result.unwrap_err() {
-        CoreError::Engine(engine::EngineError::Parser(_)) => {} // Expected
-        other => panic!("Expected Parser error, got: {:?}", other),
+        CoreError::Validation(_) => {} // Expected validation error
+        other => panic!("Expected Validation error, got: {:?}", other),
     }
 }

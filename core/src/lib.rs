@@ -6,6 +6,7 @@ pub mod bridge;
 pub mod errors;
 pub mod logging;
 pub mod store_singleton;
+pub mod validation;
 
 // Re-export persistence types
 pub use persistence::{
@@ -47,6 +48,9 @@ pub use crate::bridge::task::task_execution_to_info;
 
 // Re-export function types
 pub use crate::bridge::OutputCallback;
+
+// Re-export validation functions
+pub use crate::validation::{validate_workflow_json, validate_workflow_json_simple};
 
 #[cfg(test)]
 mod execution_integration_tests;

@@ -15,11 +15,15 @@ pub fn read_and_parse_workflow_file(file_path: String) -> Result<WorkflowDefinit
     let content = fs::read_to_string(&file_path)
         .map_err(|e| format!("Failed to read file '{}': {}", file_path, e))?;
 
+    // Validate workflow using JSON Schema
+    s_e_e_core::validate_workflow_json(&content)
+        .map_err(|e| format!("Validation failed:\n{}", e))?;
+
     // Parse JSON to extract name
     let json_value: serde_json::Value = serde_json::from_str(&content)
         .map_err(|e| format!("Invalid JSON in workflow file: {}", e))?;
 
-    let _workflow_name = json_value
+    let workflow_name = json_value
         .get("name")
         .and_then(|v| v.as_str())
         .unwrap_or("Unnamed Workflow")
@@ -31,7 +35,7 @@ pub fn read_and_parse_workflow_file(file_path: String) -> Result<WorkflowDefinit
     // Create WorkflowDefinition
     Ok(WorkflowDefinition {
         id: workflow_id,
-        name: "Imported Workflow".to_string(),
+        name: workflow_name,
         description: Some("Imported from file".to_string()),
         content,
         is_default: false,

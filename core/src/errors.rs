@@ -1,5 +1,7 @@
 // Core error types ONLY
 
+use crate::validation::ValidationErrors;
+
 /// Main error type for core crate operations
 #[derive(thiserror::Error, Debug)]
 pub enum CoreError {
@@ -32,6 +34,9 @@ pub enum CoreError {
 
     #[error("Workflow is waiting for user input")]
     WorkflowWaitingForInput,
+
+    #[error("Validation error: {0}")]
+    Validation(#[from] ValidationErrors),
 }
 
 impl From<String> for CoreError {

@@ -18,7 +18,8 @@ fn create_test_workflow() -> WorkflowDefinition {
                     "id": "task-1",
                     "name": "Echo Hello",
                     "function": {
-                        "cli_command": {
+                        "name": "cli_command",
+                        "input": {
                             "command": "echo",
                             "args": ["Hello, World!"]
                         }

@@ -60,12 +60,20 @@ pub fn UploadPage() -> Element {
                     // Add workflow to settings
                     settings_state.write().add_workflow(workflow.clone());
 
-                    // Save settings to database
+                    // Save to database
                     match s_e_e_core::get_global_store() {
                         Ok(store) => {
+                            // Save individual workflow to workflows table
+                            if let Err(e) = store.save_workflow(&workflow).await {
+                                error_signal.set(format!("Failed to save workflow to database: {}", e));
+                                saving_signal.set(false);
+                                return;
+                            }
+
+                            // Save settings to database
                             let settings_to_save = settings_state.read().settings.clone();
                             if let Err(e) = store.save_settings(&settings_to_save).await {
-                                error_signal.set(format!("Failed to save workflow: {}", e));
+                                error_signal.set(format!("Failed to save settings: {}", e));
                                 saving_signal.set(false);
                                 return;
                             }

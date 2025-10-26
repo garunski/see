@@ -41,17 +41,10 @@ pub fn create_save_workflow_handler(params: SaveWorkflowParams) -> impl FnMut() 
             }
         }
 
-        if let Err(e) = serde_json::from_str::<serde_json::Value>(&final_content) {
-            validation_error.set(format!("Invalid JSON: {}", e));
+        // Validate the workflow JSON using JSON Schema
+        if let Err(e) = s_e_e_core::validate_workflow_json(&final_content) {
+            validation_error.set(format!("Validation failed:\n{}", e));
             return;
-        }
-
-        // Validate that JSON has a name field
-        if let Ok(json) = serde_json::from_str::<serde_json::Value>(&final_content) {
-            if json.get("name").and_then(|v| v.as_str()).is_none() {
-                validation_error.set("JSON must contain a 'name' field".to_string());
-                return;
-            }
         }
 
         validation_error.set(String::new());

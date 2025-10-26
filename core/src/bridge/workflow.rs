@@ -1,6 +1,7 @@
 // Workflow conversions ONLY
 
 use crate::errors::CoreError;
+use crate::validation;
 use engine::{EngineWorkflow, WorkflowResult as EngineWorkflowResult};
 use persistence::WorkflowDefinition;
 use std::sync::Arc;
@@ -24,7 +25,10 @@ pub type OutputCallback = Arc<dyn Fn(String) + Send + Sync>;
 pub fn workflow_definition_to_engine(
     workflow: &WorkflowDefinition,
 ) -> Result<EngineWorkflow, CoreError> {
-    // Parse JSON content to get tasks
+    // Step 1: Validate the workflow content using JSON Schema
+    validation::validate_workflow_json(&workflow.content).map_err(CoreError::Validation)?;
+
+    // Step 2: Parse JSON content to get tasks (now we know it's valid)
     let parsed = engine::parse_workflow(&workflow.content)
         .map_err(|e| CoreError::Engine(engine::EngineError::Parser(e)))?;
 
