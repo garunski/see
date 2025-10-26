@@ -8,6 +8,7 @@ A lightweight workflow execution engine built on [dataflow-rs](https://crates.io
 - **Multi-step workflow execution** - All tasks execute in sequence with full context passing
 - **CLI command execution** - Execute shell commands as workflow tasks
 - **User input support** - Interactively request and process user input during workflow execution
+- **Task ordering** - Preserves exact workflow structure for correct task display order
 - **Audit trail** - Full tracking of task execution with timestamps and changes
 - **Context management** - Task outputs are automatically stored and available for inspection
 - **JSON-based workflows** - Define workflows using dataflow-rs's JSON format
@@ -281,9 +282,28 @@ cargo run -p s_e_e_cli -- --file engine/examples/user_input_parallel.json
 cargo run -p s_e_e_cli -- --file engine/examples/user_input_nested.json
 ```
 
-## Testing
+## Task Ordering
 
-Tests were removed as part of the repo repair and will be re-authored later.
+Workflow executions now preserve the exact workflow structure for correct task ordering in the GUI.
+
+### Features
+
+- Complete workflow snapshot stored in each execution record
+- Tasks display in correct execution order
+- Self-contained execution records with full context
+- Historical audit trail preserved
+
+### How It Works
+
+Each workflow execution automatically includes a `workflow_snapshot` that stores the complete workflow JSON structure at the time of execution. This allows the GUI to display tasks in the correct order based on the workflow's hierarchical structure, ensuring users see tasks in the exact sequence they executed.
+
+The snapshot preserves:
+- Complete task structure with nested `next_tasks`
+- Original function definitions
+- Task relationships and dependencies
+- Execution order information
+
+## Testing
 
 ## Development
 

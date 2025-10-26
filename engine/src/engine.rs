@@ -30,7 +30,8 @@ impl WorkflowEngine {
     ) -> Vec<EngineTask> {
         let mut ready_tasks = Vec::new();
 
-        // Helper to recursively collect ready tasks from a task's next_tasks
+        // Helper to collect ready tasks from a task's next_tasks
+        // Only collects direct children that are ready (no deep recursion)
         fn collect_ready_tasks(
             tasks: &[EngineTask],
             completed_tasks: &HashSet<String>,
@@ -38,9 +39,8 @@ impl WorkflowEngine {
             ready_tasks: &mut Vec<EngineTask>,
         ) {
             for task in tasks {
-                // Skip if already completed
+                // If already completed, don't add this task, check its next_tasks recursively
                 if completed_tasks.contains(&task.id) {
-                    // If this task is completed, check its next_tasks
                     collect_ready_tasks(
                         &task.next_tasks,
                         completed_tasks,
@@ -50,20 +50,24 @@ impl WorkflowEngine {
                     continue;
                 }
 
-                // Skip if waiting for input
+                // Skip if waiting for input (don't recurse into next_tasks)
                 if waiting_for_input.contains(&task.id) {
                     debug!("Task {} skipped - waiting for input", task.id);
                     continue;
                 }
 
-                // This task is ready to execute
+                // This task is ready to execute - add it but DON'T recurse into next_tasks
+                // Children will be added on the next round after this task completes
                 ready_tasks.push(task.clone());
             }
         }
 
-        // Start with root tasks
+        // Start with root tasks (filter to only tasks where is_root=true)
+        let root_only_tasks: Vec<EngineTask> =
+            root_tasks.iter().filter(|t| t.is_root).cloned().collect();
+
         collect_ready_tasks(
-            root_tasks,
+            &root_only_tasks,
             completed_tasks,
             waiting_for_input,
             &mut ready_tasks,

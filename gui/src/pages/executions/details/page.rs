@@ -64,16 +64,19 @@ fn TaskFlowVisualizer(
     on_task_click: EventHandler<usize>,
 ) -> Element {
     // Build task map for fast lookup
-    let task_map: std::collections::HashMap<_, _> = execution.tasks.iter()
+    let task_map: std::collections::HashMap<_, _> = execution
+        .tasks
+        .iter()
         .map(|t| (t.id.clone(), t.clone()))
         .collect();
-    
+
     // Reorder tasks based on snapshot
     let ordered_tasks: Vec<_> = if ordered_task_ids.is_empty() {
         // Fall back to original order if snapshot is empty
         execution.tasks.clone()
     } else {
-        ordered_task_ids.iter()
+        ordered_task_ids
+            .iter()
             .filter_map(|id| task_map.get(id).cloned())
             .collect()
     };

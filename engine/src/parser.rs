@@ -161,12 +161,14 @@ fn parse_task_recursive(
         function,
         next_tasks,
         status: TaskStatus::Pending,
+        is_root: parent_id.is_none(), // Root task if no parent
     };
 
     trace!(
         task_id = %task_id,
         task_name = %task.name,
         next_tasks_count = task.next_tasks.len(),
+        is_root = task.is_root,
         "Created task structure"
     );
 
@@ -291,6 +293,49 @@ fn parse_task_function(task_json: &Value) -> Result<TaskFunction, ParserError> {
             );
 
             Ok(TaskFunction::CursorAgent { prompt, config })
+        }
+        "user_input" => {
+            trace!("Parsing user input function");
+
+            let input = function.get("input").ok_or_else(|| {
+                error!(function_type = %function_type, "Missing input field for user input");
+                ParserError::MissingField("function.input".to_string())
+            })?;
+
+            let prompt = input
+                .get("prompt")
+                .and_then(|v| v.as_str())
+                .ok_or_else(|| {
+                    error!(function_type = %function_type, "Missing prompt field");
+                    ParserError::MissingField("function.input.prompt".to_string())
+                })?
+                .to_string();
+
+            let input_type = input
+                .get("input_type")
+                .and_then(|v| v.as_str())
+                .unwrap_or("string")
+                .to_string();
+
+            let required = input
+                .get("required")
+                .and_then(|v| v.as_bool())
+                .unwrap_or(true);
+
+            let default = input.get("default").cloned();
+
+            debug!(
+                function_type = %function_type,
+                prompt_length = prompt.len(),
+                "Successfully parsed user input function"
+            );
+
+            Ok(TaskFunction::UserInput {
+                prompt,
+                input_type,
+                required,
+                default,
+            })
         }
         _ => {
             trace!(

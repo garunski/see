@@ -12,6 +12,8 @@ pub struct EngineTask {
     pub function: TaskFunction,
     pub next_tasks: Vec<EngineTask>,
     pub status: TaskStatus,
+    #[serde(default)]
+    pub is_root: bool, // True for tasks that are root-level in the workflow
 }
 
 /// Task function types supported by the engine

@@ -16,6 +16,7 @@ async fn test_per_task_logs_captured() {
             },
             next_tasks: vec![],
             status: TaskStatus::Pending,
+            is_root: true,
         }],
     };
 
@@ -44,6 +45,7 @@ async fn test_parallel_tasks_separate_logs() {
                 },
                 next_tasks: vec![],
                 status: TaskStatus::Pending,
+                is_root: true,
             },
             EngineTask {
                 id: "task2".to_string(),
@@ -54,6 +56,7 @@ async fn test_parallel_tasks_separate_logs() {
                 },
                 next_tasks: vec![],
                 status: TaskStatus::Pending,
+                is_root: true,
             },
         ],
     };
@@ -85,6 +88,7 @@ async fn test_error_capture_in_logs() {
             },
             next_tasks: vec![],
             status: TaskStatus::Pending,
+            is_root: true,
         }],
     };
 

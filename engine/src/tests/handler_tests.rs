@@ -15,6 +15,7 @@ fn create_test_task(function: TaskFunction) -> EngineTask {
         function,
         next_tasks: Vec::new(),
         status: TaskStatus::Pending,
+        is_root: true,
     }
 }
 

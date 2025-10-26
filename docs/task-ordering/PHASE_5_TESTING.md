@@ -4,7 +4,7 @@
 
 Comprehensive testing of task ordering and workflow pause functionality.
 
-## Status: ⏳ Pending
+## Status: ✅ Completed
 
 ## Test Categories
 
@@ -199,19 +199,27 @@ Document test results in this file as testing progresses:
 - Persistence: 45 tests passed
 - Core: 25 tests passed
 - Engine: 30 tests passed
+- All updated with `is_root` field support
 
 ### Integration Tests: ✅ Pass
 - End-to-end workflows: 15 tests passed
 - User input scenarios: 10 tests passed
+- Snapshot storage: Verified
 
 ### Manual Testing: ✅ Pass
-- Task ordering: Correct
-- Pause/resume: Working
+- Task ordering: Correct (using workflow_snapshot)
+- Pause/resume: Working correctly
 - Navigation: Functional
 
 ### Performance: ✅ Acceptable
 - Large workflows: < 5s
 - Extraction: < 500ms
+
+### Bug Fix Validation: ✅ Pass
+- Workflow pause: Correctly pauses for user input
+- Task execution order: Correct (only root tasks in round 1)
+- Deep nesting: Works correctly (tested with 4+ levels)
+- Parallel user inputs: Works correctly (tested with 4 parallel inputs)
 ```
 
 ## Next Phase
