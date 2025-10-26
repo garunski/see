@@ -69,6 +69,41 @@ pub async fn execute_workflow_by_id(
         .await
         .map_err(CoreError::Engine)?;
 
+    // Step 7: Check if workflow is waiting for input
+    let has_input_waiting = engine_result
+        .tasks
+        .iter()
+        .any(|t| matches!(t.status, engine::TaskStatus::WaitingForInput));
+
+    if has_input_waiting {
+        tracing::info!("Workflow paused - waiting for user input");
+        
+        // Update execution status to indicate waiting
+        let mut updated_execution = initial_execution.clone();
+        updated_execution.status = WorkflowStatus::Running;
+        
+        store
+            .save_workflow_execution(updated_execution)
+            .await
+            .map_err(CoreError::Persistence)?;
+
+        // Stream progress via OutputCallback
+        if let Some(ref callback) = callback {
+            callback("Workflow paused - waiting for user input".to_string());
+        }
+
+        // Return special status indicating waiting for input
+        return Ok(WorkflowResult {
+            success: false,
+            workflow_name: engine_result.workflow_name,
+            execution_id,
+            tasks: engine_result.tasks,
+            audit_trail: engine_result.audit_trail,
+            per_task_logs: engine_result.per_task_logs,
+            errors: vec!["Waiting for user input".to_string()],
+        });
+    }
+
     // Step 7: Stream Progress via OutputCallback
     if let Some(ref callback) = callback {
         callback("Workflow execution completed".to_string());

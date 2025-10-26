@@ -23,7 +23,22 @@ pub async fn resume_task(execution_id: &str, task_id: &str) -> Result<(), CoreEr
         .find(|t| t.id == task_id)
         .ok_or_else(|| CoreError::TaskNotFound(task_id.to_string()))?;
 
-    // Step 3: Validate Task Status
+    // Step 3: Check if task has input value
+    if task.status == TaskStatus::WaitingForInput {
+        // If waiting for input but no input provided, error
+        if task.user_input.is_none() {
+            tracing::error!(
+                execution_id = %execution_id,
+                task_id = %task_id,
+                "Task is waiting for input but no input provided"
+            );
+            return Err(CoreError::Execution(
+                "Task is waiting for input but no input provided".to_string(),
+            ));
+        }
+    }
+
+    // Step 4: Validate Task Status
     if task.status != TaskStatus::WaitingForInput {
         return Err(CoreError::Execution(format!(
             "Task {} is not waiting for input (status: {:?})",
@@ -31,7 +46,7 @@ pub async fn resume_task(execution_id: &str, task_id: &str) -> Result<(), CoreEr
         )));
     }
 
-    // Step 4: Resume Task Execution via Engine
+    // Step 5: Resume Task Execution via Engine
     // Note: Engine doesn't currently support task resumption
     // This is a placeholder for future implementation
 
@@ -39,7 +54,7 @@ pub async fn resume_task(execution_id: &str, task_id: &str) -> Result<(), CoreEr
     // let engine = engine::WorkflowEngine::new();
     // let result = engine.resume_task(execution_id, task_id).await?;
 
-    // Step 5: Update Task Status in Persistence
+    // Step 6: Update Task Status in Persistence
     let mut updated_task = task.clone();
     updated_task.status = TaskStatus::Complete;
     updated_task.completed_at = Some(chrono::Utc::now());
@@ -49,7 +64,7 @@ pub async fn resume_task(execution_id: &str, task_id: &str) -> Result<(), CoreEr
         .await
         .map_err(CoreError::Persistence)?;
 
-    // Step 6: Update Execution if All Tasks Complete
+    // Step 7: Update Execution if All Tasks Complete
     let all_tasks_complete = execution
         .tasks
         .iter()
@@ -66,7 +81,7 @@ pub async fn resume_task(execution_id: &str, task_id: &str) -> Result<(), CoreEr
             .map_err(CoreError::Persistence)?;
     }
 
-    // Step 7: Return Success
+    // Step 8: Return Success
     tracing::info!("Task {} resumed successfully", task_id);
     Ok(())
 }

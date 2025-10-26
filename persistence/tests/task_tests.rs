@@ -19,6 +19,9 @@ fn create_test_task() -> TaskExecution {
         error: None,
         created_at: Utc::now(),
         completed_at: Some(Utc::now()),
+        user_input: None,
+        input_request_id: None,
+        prompt_id: None,
     }
 }
 
@@ -153,6 +156,9 @@ async fn test_task_execution_serialization() {
         error: None,
         created_at: Utc::now(),
         completed_at: None,
+        user_input: None,
+        input_request_id: None,
+        prompt_id: None,
     };
 
     // Save task

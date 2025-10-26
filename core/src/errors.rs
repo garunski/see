@@ -17,6 +17,21 @@ pub enum CoreError {
 
     #[error("Execution error: {0}")]
     Execution(String),
+
+    #[error("Invalid input type: {0}")]
+    InvalidInputType(String),
+
+    #[error("Input value required but not provided")]
+    InputRequired,
+
+    #[error("Input validation failed: {0}")]
+    InputValidationFailed(String),
+
+    #[error("Task is not waiting for input")]
+    TaskNotWaitingForInput,
+
+    #[error("Workflow is waiting for user input")]
+    WorkflowWaitingForInput,
 }
 
 impl From<String> for CoreError {

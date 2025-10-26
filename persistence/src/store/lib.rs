@@ -50,6 +50,7 @@ impl Store {
             "CREATE TABLE IF NOT EXISTS workflows (id TEXT PRIMARY KEY, data JSON NOT NULL)",
             "CREATE TABLE IF NOT EXISTS workflow_executions (id TEXT PRIMARY KEY, data JSON NOT NULL)",
             "CREATE TABLE IF NOT EXISTS task_executions (id TEXT PRIMARY KEY, data JSON NOT NULL)",
+            "CREATE TABLE IF NOT EXISTS user_input_requests (id TEXT PRIMARY KEY, data JSON NOT NULL)",
             "CREATE TABLE IF NOT EXISTS user_prompts (id TEXT PRIMARY KEY, data JSON NOT NULL)",
             "CREATE TABLE IF NOT EXISTS audit_events (id TEXT PRIMARY KEY, data JSON NOT NULL)",
             "CREATE TABLE IF NOT EXISTS settings (id TEXT PRIMARY KEY, data JSON NOT NULL)",

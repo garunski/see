@@ -23,6 +23,13 @@ pub enum TaskFunction {
     CursorAgent { prompt: String, config: Value },
     #[serde(rename = "custom")]
     Custom { name: String, input: Value },
+    #[serde(rename = "user_input")]
+    UserInput {
+        prompt: String,
+        input_type: String,
+        required: bool,
+        default: Option<Value>,
+    },
 }
 
 /// Workflow structure containing tasks

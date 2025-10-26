@@ -2,7 +2,7 @@
 
 use crate::handlers::{
     cli_command::CliCommandHandler, cursor_agent::CursorAgentHandler, custom::CustomHandler,
-    HandlerRegistry, TaskHandler,
+    user_input::UserInputHandler, HandlerRegistry, TaskHandler,
 };
 use crate::types::*;
 use crate::HandlerError;
@@ -116,6 +116,7 @@ fn test_handler_registry() {
     assert!(registry.get_handler("cli_command").is_some());
     assert!(registry.get_handler("cursor_agent").is_some());
     assert!(registry.get_handler("custom").is_some());
+    assert!(registry.get_handler("user_input").is_some());
     assert!(registry.get_handler("unknown").is_none());
 }
 
@@ -158,6 +159,91 @@ async fn test_custom_handler_invalid_function() {
     match result.unwrap_err() {
         HandlerError::InvalidConfiguration(msg) => {
             assert!(msg.contains("Expected Custom function"));
+        }
+        _ => panic!("Expected InvalidConfiguration error"),
+    }
+}
+
+#[tokio::test]
+async fn test_user_input_handler() {
+    let handler = UserInputHandler;
+    let mut context = ExecutionContext::new("test".to_string(), "test_workflow".to_string());
+
+    let task = create_test_task(TaskFunction::UserInput {
+        prompt: "Please enter your name:".to_string(),
+        input_type: "string".to_string(),
+        required: true,
+        default: None,
+    });
+
+    // Add task to context
+    context.tasks.insert("test_task".to_string(), task.clone());
+
+    let result = handler.execute(&mut context, &task).await.unwrap();
+
+    // Should return success but waiting for input
+    assert!(result.success);
+    
+    // Check output contains waiting_for_input flag
+    assert!(result.output.get("waiting_for_input").unwrap().as_bool().unwrap());
+    assert_eq!(
+        result.output.get("prompt").unwrap().as_str().unwrap(),
+        "Please enter your name:"
+    );
+    assert_eq!(
+        result.output.get("input_type").unwrap().as_str().unwrap(),
+        "string"
+    );
+    assert!(result.output.get("required").unwrap().as_bool().unwrap());
+    
+    // Check task status was updated
+    assert_eq!(context.tasks.get("test_task").unwrap().status, TaskStatus::WaitingForInput);
+    
+    // Check logs were created
+    assert!(context.per_task_logs.contains_key("test_task"));
+    let logs = &context.per_task_logs["test_task"];
+    assert!(logs.iter().any(|log| log.contains("Waiting for user input")));
+}
+
+#[tokio::test]
+async fn test_user_input_handler_with_default() {
+    let handler = UserInputHandler;
+    let mut context = ExecutionContext::new("test".to_string(), "test_workflow".to_string());
+
+    let task = create_test_task(TaskFunction::UserInput {
+        prompt: "Enter a number:".to_string(),
+        input_type: "number".to_string(),
+        required: false,
+        default: Some(Value::Number(serde_json::Number::from(42))),
+    });
+
+    let result = handler.execute(&mut context, &task).await.unwrap();
+
+    assert!(result.success);
+    assert!(result.output.get("waiting_for_input").unwrap().as_bool().unwrap());
+    
+    // Check default value is included
+    let default_value = result.output.get("default");
+    assert!(default_value.is_some());
+}
+
+#[tokio::test]
+async fn test_user_input_handler_invalid_function() {
+    let handler = UserInputHandler;
+    let mut context = ExecutionContext::new("test".to_string(), "test_workflow".to_string());
+
+    // Create task with wrong function type (CliCommand instead of UserInput)
+    let task = create_test_task(TaskFunction::CliCommand {
+        command: "echo".to_string(),
+        args: vec!["hello".to_string()],
+    });
+
+    let result = handler.execute(&mut context, &task).await;
+
+    assert!(result.is_err());
+    match result.unwrap_err() {
+        HandlerError::InvalidConfiguration(msg) => {
+            assert!(msg.contains("Expected UserInput function"));
         }
         _ => panic!("Expected InvalidConfiguration error"),
     }

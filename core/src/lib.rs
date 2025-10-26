@@ -16,6 +16,7 @@ pub use persistence::{
     TaskExecution,
     TaskStatus, // Re-export from persistence (has as_str method)
     Theme,
+    UserInputRequest,
     UserPrompt,
     WorkflowDefinition,
     WorkflowExecution,
@@ -31,7 +32,7 @@ pub use engine::{AuditEntry, EngineWorkflow, TaskInfo};
 pub type WorkflowJson = EngineWorkflow;
 
 // Re-export core types
-pub use crate::api::{execute_workflow_by_id, resume_task};
+pub use crate::api::{execute_workflow_by_id, get_pending_inputs, get_tasks_waiting_for_input, provide_user_input, resume_task};
 pub use crate::bridge::WorkflowResult;
 pub use crate::errors::CoreError;
 pub use crate::logging::{init_tracing, TracingGuard};

@@ -85,3 +85,42 @@ impl std::fmt::Display for AuditStatus {
         }
     }
 }
+
+/// User input type
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub enum InputType {
+    #[serde(rename = "string")]
+    String,
+    #[serde(rename = "number")]
+    Number,
+    #[serde(rename = "boolean")]
+    Boolean,
+}
+
+impl std::fmt::Display for InputType {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            InputType::String => write!(f, "string"),
+            InputType::Number => write!(f, "number"),
+            InputType::Boolean => write!(f, "boolean"),
+        }
+    }
+}
+
+/// Input request status
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub enum InputRequestStatus {
+    #[serde(rename = "pending")]
+    Pending,
+    #[serde(rename = "fulfilled")]
+    Fulfilled,
+}
+
+impl std::fmt::Display for InputRequestStatus {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            InputRequestStatus::Pending => write!(f, "pending"),
+            InputRequestStatus::Fulfilled => write!(f, "fulfilled"),
+        }
+    }
+}

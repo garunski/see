@@ -61,6 +61,9 @@ async fn test_complete_workflow_execution_flow() {
         error: None,
         created_at: Utc::now(),
         completed_at: Some(Utc::now()),
+        user_input: None,
+        input_request_id: None,
+        prompt_id: None,
     };
 
     let task2 = TaskExecution {
@@ -72,6 +75,9 @@ async fn test_complete_workflow_execution_flow() {
         error: Some("Task 2 failed with error".to_string()),
         created_at: Utc::now(),
         completed_at: Some(Utc::now()),
+        user_input: None,
+        input_request_id: None,
+        prompt_id: None,
     };
 
     store.save_task_execution(task1.clone()).await.unwrap();

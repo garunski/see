@@ -56,6 +56,9 @@ pub fn task_info_to_execution(
         error,
         created_at: workflow_created_at,
         completed_at,
+        user_input: None,
+        input_request_id: None,
+        prompt_id: None,
     }
 }
 

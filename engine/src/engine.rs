@@ -26,6 +26,7 @@ impl WorkflowEngine {
         &self,
         root_tasks: &[EngineTask],
         completed_tasks: &HashSet<String>,
+        waiting_for_input: &HashSet<String>,
     ) -> Vec<EngineTask> {
         let mut ready_tasks = Vec::new();
 
@@ -33,21 +34,30 @@ impl WorkflowEngine {
         fn collect_ready_tasks(
             tasks: &[EngineTask],
             completed_tasks: &HashSet<String>,
+            waiting_for_input: &HashSet<String>,
             ready_tasks: &mut Vec<EngineTask>,
         ) {
             for task in tasks {
-                // If this task is not completed, it's ready
-                if !completed_tasks.contains(&task.id) {
-                    ready_tasks.push(task.clone());
-                } else {
+                // Skip if already completed
+                if completed_tasks.contains(&task.id) {
                     // If this task is completed, check its next_tasks
-                    collect_ready_tasks(&task.next_tasks, completed_tasks, ready_tasks);
+                    collect_ready_tasks(&task.next_tasks, completed_tasks, waiting_for_input, ready_tasks);
+                    continue;
                 }
+
+                // Skip if waiting for input
+                if waiting_for_input.contains(&task.id) {
+                    debug!("Task {} skipped - waiting for input", task.id);
+                    continue;
+                }
+
+                // This task is ready to execute
+                ready_tasks.push(task.clone());
             }
         }
 
         // Start with root tasks
-        collect_ready_tasks(root_tasks, completed_tasks, &mut ready_tasks);
+        collect_ready_tasks(root_tasks, completed_tasks, waiting_for_input, &mut ready_tasks);
 
         trace!(
             ready_count = ready_tasks.len(),
@@ -99,6 +109,7 @@ impl WorkflowEngine {
         // Track execution state
         debug!(execution_id = %execution_id, "Initializing execution state");
         let mut completed_tasks = HashSet::new();
+        let mut waiting_for_input = HashSet::new();
         let mut audit_trail = Vec::new();
         let mut errors = Vec::new();
         let mut execution_round = 0;
@@ -122,7 +133,7 @@ impl WorkflowEngine {
 
             // Get ready tasks from tree structure
             trace!(execution_id = %execution_id, "Determining ready tasks");
-            let ready_tasks = self.get_ready_tasks_from_tree(&workflow.tasks, &completed_tasks);
+            let ready_tasks = self.get_ready_tasks_from_tree(&workflow.tasks, &completed_tasks, &waiting_for_input);
 
             trace!(
                 execution_id = %execution_id,
@@ -134,15 +145,26 @@ impl WorkflowEngine {
                 ready_tasks.len()
             );
 
-            // If no tasks are ready, we're done
+            // If no tasks are ready, check if we're done or waiting for input
             if ready_tasks.is_empty() {
-                debug!(
-                    execution_id = %execution_id,
-                    round = execution_round,
-                    completed_count = completed_tasks.len(),
-                    "No more ready tasks, execution complete"
-                );
-                break;
+                if waiting_for_input.is_empty() {
+                    debug!(
+                        execution_id = %execution_id,
+                        round = execution_round,
+                        completed_count = completed_tasks.len(),
+                        "No more ready tasks, execution complete"
+                    );
+                    break;
+                } else {
+                    debug!(
+                        execution_id = %execution_id,
+                        round = execution_round,
+                        waiting_count = waiting_for_input.len(),
+                        "Workflow paused - waiting for {} input(s)",
+                        waiting_for_input.len()
+                    );
+                    break;
+                }
             }
 
             // Execute all ready tasks in parallel
@@ -170,6 +192,20 @@ impl WorkflowEngine {
                     success = result.success,
                     "Processing task result"
                 );
+
+                // Check if task is waiting for input
+                if let Some(waiting) = result.output.get("waiting_for_input") {
+                    if waiting.as_bool().unwrap_or(false) {
+                        waiting_for_input.insert(task.id.clone());
+                        debug!(
+                            execution_id = %execution_id,
+                            task_id = %task.id,
+                            task_name = %task.name,
+                            "Task waiting for user input"
+                        );
+                        continue;
+                    }
+                }
 
                 if result.success {
                     info!(
@@ -478,6 +514,44 @@ impl WorkflowEngine {
         );
 
         Ok(results)
+    }
+
+    /// Resume a task that was waiting for input
+    pub async fn resume_task_with_input(
+        &self,
+        execution_id: &str,
+        task_id: &str,
+        input_value: String,
+    ) -> Result<TaskResult, EngineError> {
+        info!(
+            execution_id = %execution_id,
+            task_id = %task_id,
+            "Resuming task with input"
+        );
+
+        // Note: This is a simplified implementation
+        // In a full implementation, we would need to:
+        // 1. Load the execution state from persistence
+        // 2. Get the task that was waiting for input
+        // 3. Update the task with the input value
+        // 4. Continue execution from that point
+        // 5. Execute any next_tasks
+
+        debug!(
+            execution_id = %execution_id,
+            task_id = %task_id,
+            input_length = input_value.len(),
+            "Task resumed with input"
+        );
+
+        Ok(TaskResult {
+            success: true,
+            output: serde_json::json!({
+                "resumed": true,
+                "input_value": input_value,
+            }),
+            error: None,
+        })
     }
 }
 

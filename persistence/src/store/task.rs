@@ -69,4 +69,107 @@ impl Store {
         log_db_operation_success("get_tasks_for_workflow", "task_executions", 0);
         Ok(tasks)
     }
+
+    /// Save task with user input
+    pub async fn save_task_with_input(&self, task: TaskExecution) -> Result<(), String> {
+        self.save_task_execution(task).await
+    }
+
+    /// Get all tasks waiting for input
+    pub async fn get_tasks_waiting_for_input(&self) -> Result<Vec<TaskExecution>, String> {
+        log_db_operation_start("get_tasks_waiting_for_input", "task_executions");
+
+        let rows = sqlx::query("SELECT data FROM task_executions")
+            .fetch_all(self.pool())
+            .await
+            .map_err(|e| {
+                log_db_operation_error("get_tasks_waiting_for_input", "task_executions", &e.to_string());
+                format!("Database error: {}", e)
+            })?;
+
+        let mut tasks = Vec::new();
+        for row in rows {
+            let json_data: String = row.get("data");
+            log_deserialization("TaskExecution", json_data.len());
+
+            let task: TaskExecution = serde_json::from_str(&json_data).map_err(|e| {
+                log_db_operation_error("get_tasks_waiting_for_input", "task_executions", &e.to_string());
+                format!("Deserialization error: {}", e)
+            })?;
+
+            if task.is_waiting_for_input() {
+                tasks.push(task);
+            }
+        }
+
+        log_db_operation_success("get_tasks_waiting_for_input", "task_executions", 0);
+        Ok(tasks)
+    }
+
+    /// Get tasks waiting for input in a specific workflow
+    pub async fn get_tasks_waiting_for_input_in_workflow(
+        &self,
+        workflow_id: &str,
+    ) -> Result<Vec<TaskExecution>, String> {
+        log_db_operation_start("get_tasks_waiting_for_input_in_workflow", "task_executions");
+
+        let rows = sqlx::query("SELECT data FROM task_executions")
+            .fetch_all(self.pool())
+            .await
+            .map_err(|e| {
+                log_db_operation_error("get_tasks_waiting_for_input_in_workflow", "task_executions", &e.to_string());
+                format!("Database error: {}", e)
+            })?;
+
+        let mut tasks = Vec::new();
+        for row in rows {
+            let json_data: String = row.get("data");
+            log_deserialization("TaskExecution", json_data.len());
+
+            let task: TaskExecution = serde_json::from_str(&json_data).map_err(|e| {
+                log_db_operation_error("get_tasks_waiting_for_input_in_workflow", "task_executions", &e.to_string());
+                format!("Deserialization error: {}", e)
+            })?;
+
+            if task.workflow_id == workflow_id && task.is_waiting_for_input() {
+                tasks.push(task);
+            }
+        }
+
+        log_db_operation_success("get_tasks_waiting_for_input_in_workflow", "task_executions", 0);
+        Ok(tasks)
+    }
+
+    /// Get task with input request
+    pub async fn get_task_with_input_request(
+        &self,
+        task_id: &str,
+    ) -> Result<Option<TaskExecution>, String> {
+        log_db_operation_start("get_task_with_input_request", "task_executions");
+
+        let row = sqlx::query("SELECT data FROM task_executions WHERE id = ?")
+            .bind(task_id)
+            .fetch_optional(self.pool())
+            .await
+            .map_err(|e| {
+                log_db_operation_error("get_task_with_input_request", "task_executions", &e.to_string());
+                format!("Database error: {}", e)
+            })?;
+
+        let Some(row) = row else {
+            log_db_operation_success("get_task_with_input_request", "task_executions", 0);
+            return Ok(None);
+        };
+
+        let json_data: String = row.get("data");
+        log_deserialization("TaskExecution", json_data.len());
+
+        let task: TaskExecution = serde_json::from_str(&json_data).map_err(|e| {
+            log_db_operation_error("get_task_with_input_request", "task_executions", &e.to_string());
+            format!("Deserialization error: {}", e)
+        })?;
+
+        log_db_operation_success("get_task_with_input_request", "task_executions", 0);
+        Ok(Some(task))
+    }
 }

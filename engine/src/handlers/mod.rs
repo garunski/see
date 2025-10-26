@@ -41,6 +41,12 @@ impl HandlerRegistry {
         trace!("Registering custom handler");
         handlers.insert("custom".to_string(), Box::new(custom::CustomHandler));
 
+        trace!("Registering user input handler");
+        handlers.insert(
+            "user_input".to_string(),
+            Box::new(user_input::UserInputHandler),
+        );
+
         debug!(
             registered_handlers = handlers.len(),
             handler_types = ?handlers.keys().collect::<Vec<_>>(),
@@ -88,6 +94,7 @@ pub fn get_function_type(task: &EngineTask) -> &'static str {
         TaskFunction::CliCommand { .. } => "cli_command",
         TaskFunction::CursorAgent { .. } => "cursor_agent",
         TaskFunction::Custom { .. } => "custom",
+        TaskFunction::UserInput { .. } => "user_input",
     };
 
     trace!(
@@ -103,3 +110,4 @@ pub fn get_function_type(task: &EngineTask) -> &'static str {
 pub mod cli_command;
 pub mod cursor_agent;
 pub mod custom;
+pub mod user_input;

@@ -17,6 +17,9 @@ pub struct TaskExecution {
     pub error: Option<String>,
     pub created_at: DateTime<Utc>,
     pub completed_at: Option<DateTime<Utc>>,
+    pub user_input: Option<String>,
+    pub input_request_id: Option<String>,
+    pub prompt_id: Option<String>,
 }
 
 impl Default for TaskExecution {
@@ -31,6 +34,9 @@ impl Default for TaskExecution {
             error: None,
             created_at: now,
             completed_at: None,
+            user_input: None,
+            input_request_id: None,
+            prompt_id: None,
         }
     }
 }
@@ -74,5 +80,15 @@ impl TaskExecution {
     /// Check if task is waiting for input
     pub fn is_waiting_for_input(&self) -> bool {
         matches!(self.status, TaskStatus::WaitingForInput)
+    }
+
+    /// Check if task has user input
+    pub fn has_user_input(&self) -> bool {
+        self.user_input.is_some()
+    }
+
+    /// Get input request ID
+    pub fn get_input_request_id(&self) -> Option<&str> {
+        self.input_request_id.as_deref()
     }
 }
