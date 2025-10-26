@@ -76,11 +76,11 @@ fn AppContent() -> Element {
                         // Load workflows from database
                         match store.list_workflows().await {
                             Ok(workflows) => {
-                                tracing::info!("📋 WORKFLOWS LOADED FROM DATABASE: count={}, workflow_ids={:?}", 
-                                    workflows.len(), 
+                                tracing::info!("📋 WORKFLOWS LOADED FROM DATABASE: count={}, workflow_ids={:?}",
+                                    workflows.len(),
                                     workflows.iter().map(|w| &w.id).collect::<Vec<_>>()
                                 );
-                                
+
                                 // Add workflows to settings state
                                 settings_state.write().workflows = workflows;
                             }
@@ -88,7 +88,7 @@ fn AppContent() -> Element {
                                 eprintln!("Failed to load workflows from database: {}", e);
                             }
                         }
-                        
+
                         // Save settings to ensure consistency
                         let settings_to_save = settings_state.read().settings.clone();
                         if let Err(e) = store.save_settings(&settings_to_save).await {
