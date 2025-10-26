@@ -72,11 +72,16 @@ async fn test_list_workflows_empty() {
 async fn test_list_workflows_multiple() {
     let store = create_test_store().await;
 
-    // Create multiple workflows
+    use chrono::Utc;
+
+    // Create multiple workflows with distinct timestamps
+    // workflow-2 has later timestamp, so should appear first when sorted DESC
     let workflow1 = WorkflowDefinition {
         id: "workflow-1".to_string(),
         name: "Workflow 1".to_string(),
         content: r#"{"id":"1","name":"1","tasks":[]}"#.to_string(),
+        created_at: Utc::now() - chrono::Duration::seconds(10),
+        updated_at: Utc::now() - chrono::Duration::seconds(10),
         ..Default::default()
     };
 
@@ -84,6 +89,8 @@ async fn test_list_workflows_multiple() {
         id: "workflow-2".to_string(),
         name: "Workflow 2".to_string(),
         content: r#"{"id":"2","name":"2","tasks":[]}"#.to_string(),
+        created_at: Utc::now(),
+        updated_at: Utc::now(),
         ..Default::default()
     };
 
@@ -95,9 +102,9 @@ async fn test_list_workflows_multiple() {
     let workflows = store.list_workflows().await.unwrap();
     assert_eq!(workflows.len(), 2);
 
-    // Check that workflows are ordered by ID
-    assert_eq!(workflows[0].id, "workflow-1");
-    assert_eq!(workflows[1].id, "workflow-2");
+    // Check that workflows are ordered by created_at DESC (newest first)
+    assert_eq!(workflows[0].id, "workflow-2"); // Newest first
+    assert_eq!(workflows[1].id, "workflow-1");
 }
 
 #[tokio::test]

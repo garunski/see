@@ -14,6 +14,11 @@ fn create_test_execution() -> WorkflowExecution {
     WorkflowExecution {
         id: "exec-1".to_string(),
         workflow_name: "Test Workflow".to_string(),
+        workflow_snapshot: serde_json::json!({
+            "id": "test",
+            "name": "Test Workflow",
+            "tasks": []
+        }),
         status: WorkflowStatus::Complete,
         created_at: Utc::now(),
         completed_at: Some(Utc::now()),
@@ -76,19 +81,35 @@ async fn test_list_workflow_executions_empty() {
 #[tokio::test]
 async fn test_list_workflow_executions_multiple() {
     let store = create_test_store().await;
+    use chrono::Utc;
 
-    // Create multiple executions
+    // Create multiple executions with distinct timestamps
+    // exec-2 has later timestamp, so should appear first when sorted DESC
     let execution1 = WorkflowExecution {
         id: "exec-1".to_string(),
         workflow_name: "Workflow 1".to_string(),
+        workflow_snapshot: serde_json::json!({
+            "id": "workflow-1",
+            "name": "Workflow 1",
+            "tasks": []
+        }),
         status: WorkflowStatus::Complete,
+        created_at: Utc::now() - chrono::Duration::seconds(10),
+        timestamp: Utc::now() - chrono::Duration::seconds(10),
         ..Default::default()
     };
 
     let execution2 = WorkflowExecution {
         id: "exec-2".to_string(),
         workflow_name: "Workflow 2".to_string(),
+        workflow_snapshot: serde_json::json!({
+            "id": "workflow-2",
+            "name": "Workflow 2",
+            "tasks": []
+        }),
         status: WorkflowStatus::Failed,
+        created_at: Utc::now(),
+        timestamp: Utc::now(),
         ..Default::default()
     };
 
@@ -100,9 +121,9 @@ async fn test_list_workflow_executions_multiple() {
     let executions = store.list_workflow_executions().await.unwrap();
     assert_eq!(executions.len(), 2);
 
-    // Check that executions are ordered by ID
-    assert_eq!(executions[0].id, "exec-1");
-    assert_eq!(executions[1].id, "exec-2");
+    // Check that executions are ordered by created_at DESC (newest first)
+    assert_eq!(executions[0].id, "exec-2"); // Newest first
+    assert_eq!(executions[1].id, "exec-1");
 }
 
 #[tokio::test]

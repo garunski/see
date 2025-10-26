@@ -73,13 +73,15 @@ impl Store {
     pub async fn list_workflows(&self) -> Result<Vec<WorkflowDefinition>, String> {
         log_db_operation_start("list_workflows", "workflows");
 
-        let rows = sqlx::query("SELECT data FROM workflows ORDER BY id")
-            .fetch_all(self.pool())
-            .await
-            .map_err(|e| {
-                log_db_operation_error("list_workflows", "workflows", &e.to_string());
-                format!("Database error: {}", e)
-            })?;
+        let rows = sqlx::query(
+            "SELECT data FROM workflows ORDER BY json_extract(data, '$.created_at') DESC",
+        )
+        .fetch_all(self.pool())
+        .await
+        .map_err(|e| {
+            log_db_operation_error("list_workflows", "workflows", &e.to_string());
+            format!("Database error: {}", e)
+        })?;
 
         let mut workflows = Vec::new();
         for row in rows {

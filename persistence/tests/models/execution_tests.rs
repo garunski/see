@@ -11,10 +11,11 @@ fn test_workflow_execution_default() {
     
     assert!(!execution.id.is_empty());
     assert!(execution.workflow_name.is_empty());
+    assert_eq!(execution.workflow_snapshot, serde_json::json!({}));
     assert_eq!(execution.status, WorkflowStatus::Pending);
     assert!(execution.created_at <= Utc::now());
     assert!(execution.completed_at.is_none());
-    assert!(!execution.success);
+    assert!(execution.success.is_none());
     assert!(execution.tasks.is_empty());
     assert!(execution.timestamp <= Utc::now());
 }
@@ -24,12 +25,20 @@ fn test_workflow_execution_serialization() {
     let execution = WorkflowExecution {
         id: "exec-1".to_string(),
         workflow_name: "Test Workflow".to_string(),
+        workflow_snapshot: serde_json::json!({
+            "id": "test",
+            "name": "Test Workflow",
+            "tasks": []
+        }),
         status: WorkflowStatus::Complete,
         created_at: Utc::now(),
         completed_at: Some(Utc::now()),
-        success: true,
+        success: Some(true),
         tasks: vec![],
         timestamp: Utc::now(),
+        audit_trail: Vec::new(),
+        per_task_logs: std::collections::HashMap::new(),
+        errors: Vec::new(),
     };
     
     // Test serialization
@@ -47,19 +56,59 @@ fn test_workflow_execution_serialization() {
 }
 
 #[test]
+fn test_workflow_execution_serialization_with_snapshot() {
+    let execution = WorkflowExecution {
+        id: "exec-1".to_string(),
+        workflow_name: "Test Workflow".to_string(),
+        workflow_snapshot: serde_json::json!({
+            "id": "test",
+            "name": "Test Workflow",
+            "tasks": [
+                {"id": "task1", "name": "Task 1"},
+                {"id": "task2", "name": "Task 2"}
+            ]
+        }),
+        status: WorkflowStatus::Complete,
+        created_at: Utc::now(),
+        completed_at: Some(Utc::now()),
+        success: Some(true),
+        tasks: vec![],
+        timestamp: Utc::now(),
+        audit_trail: Vec::new(),
+        per_task_logs: std::collections::HashMap::new(),
+        errors: Vec::new(),
+    };
+    
+    let json = serde_json::to_string(&execution).unwrap();
+    let deserialized: WorkflowExecution = serde_json::from_str(&json).unwrap();
+    
+    assert_eq!(deserialized.workflow_snapshot, execution.workflow_snapshot);
+    assert_eq!(deserialized.id, execution.id);
+    assert_eq!(deserialized.workflow_name, execution.workflow_name);
+}
+
+#[test]
 fn test_workflow_execution_to_summary() {
     let execution = WorkflowExecution {
         id: "exec-1".to_string(),
         workflow_name: "Test Workflow".to_string(),
+        workflow_snapshot: serde_json::json!({
+            "id": "test",
+            "name": "Test Workflow",
+            "tasks": []
+        }),
         status: WorkflowStatus::Complete,
         created_at: Utc::now(),
         completed_at: Some(Utc::now()),
-        success: true,
+        success: Some(true),
         tasks: vec![
             TaskExecution::default(),
             TaskExecution::default(),
         ],
         timestamp: Utc::now(),
+        audit_trail: Vec::new(),
+        per_task_logs: std::collections::HashMap::new(),
+        errors: Vec::new(),
     };
     
     let summary = execution.to_summary();

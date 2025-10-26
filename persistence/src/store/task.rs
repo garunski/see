@@ -43,13 +43,15 @@ impl Store {
     ) -> Result<Vec<TaskExecution>, String> {
         log_db_operation_start("get_tasks_for_workflow", "task_executions");
 
-        let rows = sqlx::query("SELECT data FROM task_executions")
-            .fetch_all(self.pool())
-            .await
-            .map_err(|e| {
-                log_db_operation_error("get_tasks_for_workflow", "task_executions", &e.to_string());
-                format!("Database error: {}", e)
-            })?;
+        let rows = sqlx::query(
+            "SELECT data FROM task_executions ORDER BY json_extract(data, '$.created_at') ASC",
+        )
+        .fetch_all(self.pool())
+        .await
+        .map_err(|e| {
+            log_db_operation_error("get_tasks_for_workflow", "task_executions", &e.to_string());
+            format!("Database error: {}", e)
+        })?;
 
         let mut tasks = Vec::new();
         for row in rows {
@@ -65,6 +67,9 @@ impl Store {
                 tasks.push(task);
             }
         }
+
+        // Tasks are now in chronological order (ASC by created_at)
+        // keeping original order they were executed
 
         log_db_operation_success("get_tasks_for_workflow", "task_executions", 0);
         Ok(tasks)

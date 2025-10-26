@@ -35,6 +35,14 @@ async fn test_complete_workflow_execution_flow() {
     let execution = WorkflowExecution {
         id: "integration-exec-1".to_string(),
         workflow_name: "Integration Test Workflow".to_string(),
+        workflow_snapshot: serde_json::json!({
+            "id": "integration",
+            "name": "Integration Test",
+            "tasks": [
+                {"id": "task1", "name": "Task 1"},
+                {"id": "task2", "name": "Task 2"}
+            ]
+        }),
         status: WorkflowStatus::Running,
         created_at: Utc::now(),
         completed_at: None,

@@ -12,6 +12,7 @@ use std::collections::HashMap;
 pub struct WorkflowExecution {
     pub id: String,
     pub workflow_name: String,
+    pub workflow_snapshot: serde_json::Value,
     pub status: WorkflowStatus,
     pub created_at: DateTime<Utc>,
     pub completed_at: Option<DateTime<Utc>>,
@@ -53,6 +54,7 @@ impl Default for WorkflowExecution {
         Self {
             id: uuid::Uuid::new_v4().to_string(),
             workflow_name: String::new(),
+            workflow_snapshot: serde_json::json!({}),
             status: WorkflowStatus::Pending,
             created_at: now,
             completed_at: None,

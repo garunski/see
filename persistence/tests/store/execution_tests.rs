@@ -13,12 +13,20 @@ fn create_test_execution() -> WorkflowExecution {
     WorkflowExecution {
         id: "exec-1".to_string(),
         workflow_name: "Test Workflow".to_string(),
+        workflow_snapshot: serde_json::json!({
+            "id": "test",
+            "name": "Test Workflow",
+            "tasks": []
+        }),
         status: WorkflowStatus::Complete,
         created_at: Utc::now(),
         completed_at: Some(Utc::now()),
-        success: true,
+        success: Some(true),
         tasks: vec![],
         timestamp: Utc::now(),
+        audit_trail: Vec::new(),
+        per_task_logs: std::collections::HashMap::new(),
+        errors: Vec::new(),
     }
 }
 
