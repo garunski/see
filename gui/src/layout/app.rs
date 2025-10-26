@@ -68,18 +68,35 @@ fn AppContent() -> Element {
                 .write()
                 .apply_loaded_settings(settings.clone());
 
-            // Workflows are now managed separately from settings
-
-            let settings_to_save = settings.clone();
+            // Load workflows from database
+            let mut settings_state = state_provider.settings;
             spawn(async move {
                 match s_e_e_core::get_global_store() {
                     Ok(store) => {
+                        // Load workflows from database
+                        match store.list_workflows().await {
+                            Ok(workflows) => {
+                                tracing::info!("📋 WORKFLOWS LOADED FROM DATABASE: count={}, workflow_ids={:?}", 
+                                    workflows.len(), 
+                                    workflows.iter().map(|w| &w.id).collect::<Vec<_>>()
+                                );
+                                
+                                // Add workflows to settings state
+                                settings_state.write().workflows = workflows;
+                            }
+                            Err(e) => {
+                                eprintln!("Failed to load workflows from database: {}", e);
+                            }
+                        }
+                        
+                        // Save settings to ensure consistency
+                        let settings_to_save = settings_state.read().settings.clone();
                         if let Err(e) = store.save_settings(&settings_to_save).await {
-                            eprintln!("Failed to save default workflows: {}", e);
+                            eprintln!("Failed to save settings: {}", e);
                         }
                     }
                     Err(e) => {
-                        eprintln!("Failed to get global store for saving settings: {}", e);
+                        eprintln!("Failed to get global store for loading workflows: {}", e);
                     }
                 }
             });
