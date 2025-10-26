@@ -2,7 +2,7 @@ use crate::icons::Icon;
 use crate::pages::executions::details::components::*;
 use crate::pages::executions::details::hooks::*;
 use dioxus::prelude::*;
-use s_e_e_core::TaskInfo;
+use s_e_e_core::{TaskInfo, WorkflowExecution};
 
 #[component]
 fn ResumeButton(execution_id: String, task: TaskInfo) -> Element {
@@ -58,10 +58,42 @@ fn ResumeButton(execution_id: String, task: TaskInfo) -> Element {
 }
 
 #[component]
+fn TaskFlowVisualizer(
+    execution: WorkflowExecution,
+    ordered_task_ids: Vec<String>,
+    on_task_click: EventHandler<usize>,
+) -> Element {
+    // Build task map for fast lookup
+    let task_map: std::collections::HashMap<_, _> = execution.tasks.iter()
+        .map(|t| (t.id.clone(), t.clone()))
+        .collect();
+    
+    // Reorder tasks based on snapshot
+    let ordered_tasks: Vec<_> = if ordered_task_ids.is_empty() {
+        // Fall back to original order if snapshot is empty
+        execution.tasks.clone()
+    } else {
+        ordered_task_ids.iter()
+            .filter_map(|id| task_map.get(id).cloned())
+            .collect()
+    };
+
+    rsx! {
+        if !ordered_tasks.is_empty() {
+            WorkflowFlow {
+                tasks: ordered_tasks.iter().map(s_e_e_core::task_execution_to_info).collect(),
+                on_task_click
+            }
+        }
+    }
+}
+
+#[component]
 pub fn WorkflowDetailsPage(id: String) -> Element {
     let (execution, loading, error) = use_workflow_execution(id.clone());
     let (current_step, _total_tasks) = use_task_navigation(execution);
     let current_task_audit = use_filtered_audit(execution, current_step);
+    let ordered_task_ids = use_task_order_from_snapshot(execution);
 
     // Panel state
     let mut is_panel_open = use_signal(|| false);
@@ -92,13 +124,13 @@ pub fn WorkflowDetailsPage(id: String) -> Element {
                     }
                 }
 
-                if !exec.tasks.is_empty() {
-                    WorkflowFlow {
-                        tasks: exec.tasks.iter().map(s_e_e_core::task_execution_to_info).collect(),
-                        on_task_click: move |task_index| {
-                            selected_task_index.set(task_index);
-                            is_panel_open.set(true);
-                        }
+                // Display tasks in correct execution order
+                TaskFlowVisualizer {
+                    execution: exec.clone(),
+                    ordered_task_ids: ordered_task_ids(),
+                    on_task_click: move |task_index: usize| {
+                        selected_task_index.set(task_index);
+                        is_panel_open.set(true);
                     }
                 }
 

@@ -1,6 +1,7 @@
 use dioxus::prelude::*;
 use s_e_e_core::WorkflowExecution;
 use std::time::Duration;
+use serde_json::Value;
 
 const POLLING_INTERVAL_SECS: u64 = 2;
 
@@ -97,4 +98,37 @@ pub fn use_filtered_audit(
     });
 
     audit_entries
+}
+
+/// Extract task IDs in execution order from workflow snapshot
+pub fn use_task_order_from_snapshot(
+    execution: Signal<Option<WorkflowExecution>>,
+) -> Memo<Vec<String>> {
+    use_memo(move || {
+        execution()
+            .map(|exec| extract_task_ids_recursive(&exec.workflow_snapshot))
+            .unwrap_or_default()
+    })
+}
+
+/// Recursively extract task IDs from workflow JSON preserving execution order
+fn extract_task_ids_recursive(value: &Value) -> Vec<String> {
+    let mut task_ids = Vec::new();
+    
+    if let Some(tasks) = value.get("tasks").and_then(|v| v.as_array()) {
+        for task in tasks {
+            if let Some(task_id) = task.get("id").and_then(|v| v.as_str()) {
+                task_ids.push(task_id.to_string());
+                
+                // Recursively get next_tasks
+                if let Some(next_tasks) = task.get("next_tasks").and_then(|v| v.as_array()) {
+                    for next_task in next_tasks {
+                        task_ids.extend(extract_task_ids_recursive(next_task));
+                    }
+                }
+            }
+        }
+    }
+    
+    task_ids
 }
