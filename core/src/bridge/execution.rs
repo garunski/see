@@ -27,6 +27,8 @@ pub fn workflow_result_to_execution(
         })
         .collect();
 
+    let now = chrono::Utc::now();
+
     WorkflowExecution {
         id: execution_id,
         workflow_name: result.workflow_name,

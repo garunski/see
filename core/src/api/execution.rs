@@ -79,10 +79,31 @@ pub async fn execute_workflow_by_id(
     if has_input_waiting {
         tracing::debug!("Workflow paused - waiting for user input: {}", workflow_id);
 
-        // Update execution status to indicate waiting
-        let mut updated_execution = initial_execution.clone();
-        updated_execution.status = WorkflowStatus::Running;
+        // Convert Engine Result to Persistence Types BEFORE saving
+        let waiting_execution = workflow_result_to_execution(
+            engine_result.clone(),
+            execution_id.clone(),
+            initial_execution.created_at,
+        );
 
+        // Preserve the workflow snapshot for task ordering
+        let mut updated_execution = waiting_execution.clone();
+        updated_execution.workflow_snapshot = initial_execution.workflow_snapshot;
+
+        // Update status to Running (waiting for input)
+        updated_execution.status = WorkflowStatus::Running;
+        updated_execution.completed_at = None; // Not completed yet
+        updated_execution.success = None; // Unknown until input provided
+
+        // Save Task Executions to Persistence
+        for task in &updated_execution.tasks {
+            store
+                .save_task_execution(task.clone())
+                .await
+                .map_err(CoreError::Persistence)?;
+        }
+
+        // Save the execution with tasks
         store
             .save_workflow_execution(updated_execution)
             .await
@@ -155,6 +176,10 @@ pub async fn execute_workflow_by_id(
         errors: engine_result.errors,
     };
 
-    tracing::info!("Workflow execution completed: {} (execution_id: {})", result.success, result.execution_id);
+    tracing::info!(
+        "Workflow execution completed: {} (execution_id: {})",
+        result.success,
+        result.execution_id
+    );
     Ok(result)
 }

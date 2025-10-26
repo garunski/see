@@ -106,8 +106,24 @@ pub fn WorkflowDetailsPage(id: String) -> Element {
     let mut is_panel_open = use_signal(|| false);
     let mut selected_task_index = use_signal(|| 0);
 
-    // Clone id for use in closures
-    let execution_id = id.clone();
+    // Build ordered task list to match what's displayed in WorkflowFlow
+    // Return Vec of TaskInfo so we can use indices directly
+    let ordered_task_infos = use_memo(move || {
+        if let Some(exec) = execution() {
+            let task_map: std::collections::HashMap<_, _> = exec
+                .tasks
+                .iter()
+                .map(|t| (t.id.clone(), s_e_e_core::task_execution_to_info(t)))
+                .collect();
+
+            ordered_task_ids()
+                .iter()
+                .filter_map(|id| task_map.get(id).cloned())
+                .collect::<Vec<_>>()
+        } else {
+            Vec::new()
+        }
+    });
 
     rsx! {
         div { class: "space-y-8",
@@ -123,13 +139,6 @@ pub fn WorkflowDetailsPage(id: String) -> Element {
 
             if let Some(exec) = execution() {
                 ExecutionOverview { execution: exec.clone() }
-
-                // Resume button for waiting tasks
-                if let Some(task) = exec.tasks.get(selected_task_index()) {
-                    if task.status.as_str() == "waiting_for_input" {
-                        ResumeButton { execution_id: execution_id.clone(), task: s_e_e_core::task_execution_to_info(task) }
-                    }
-                }
 
                 // Display tasks in correct execution order
                 TaskFlowVisualizer {
@@ -150,9 +159,9 @@ pub fn WorkflowDetailsPage(id: String) -> Element {
         // Task Details Panel - rendered outside main content for true overlay
         TaskDetailsPanel {
             is_open: is_panel_open(),
-            current_task: execution().and_then(|exec| exec.tasks.get(selected_task_index()).map(s_e_e_core::task_execution_to_info)),
+            current_task: ordered_task_infos().get(selected_task_index()).cloned(),
             current_task_index: selected_task_index(),
-            total_tasks: execution().map(|exec| exec.tasks.len()).unwrap_or(0),
+            total_tasks: ordered_task_infos().len(),
             execution: execution(),
             on_close: move |_| is_panel_open.set(false),
             on_previous: move |_| {
@@ -163,7 +172,7 @@ pub fn WorkflowDetailsPage(id: String) -> Element {
             },
             on_next: move |_| {
                 let current = selected_task_index();
-                let total = execution().map(|exec| exec.tasks.len()).unwrap_or(0);
+                let total = ordered_task_infos().len();
                 if current < total.saturating_sub(1) {
                     selected_task_index.set(current + 1);
                 }
