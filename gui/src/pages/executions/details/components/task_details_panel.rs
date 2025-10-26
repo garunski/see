@@ -1,59 +1,7 @@
-use crate::components::{Button, ButtonSize, ButtonVariant, Slideout};
+use crate::components::{Button, ButtonSize, ButtonVariant, Slideout, UserInputForm};
 use crate::icons::Icon;
 use dioxus::prelude::*;
 use s_e_e_core::{TaskInfo, WorkflowExecution};
-
-#[component]
-fn TaskResumeButton(task: TaskInfo, execution_id: String) -> Element {
-    let task_id = task.id.clone();
-
-    rsx! {
-        div {
-            class: "mt-4 p-3 bg-amber-50 border border-amber-200 rounded",
-            div { class: "flex items-center gap-2 mb-2",
-                Icon {
-                    name: "pause".to_string(),
-                    class: Some("text-amber-600".to_string()),
-                    size: Some("w-4 h-4".to_string()),
-                    variant: Some("outline".to_string()),
-                }
-                span { class: "text-amber-800 font-medium", "Waiting for Input" }
-            }
-            p { class: "text-amber-700 text-sm mb-3",
-                "This task is paused and waiting for user input."
-            }
-            button {
-                class: "px-3 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded text-sm font-medium transition-colors inline-flex items-center gap-2",
-                onclick: move |_| {
-                    let execution_id_clone = execution_id.clone();
-                    let task_id_clone = task_id.clone();
-
-                    spawn(async move {
-                        tracing::info!("Resume button clicked for task {}", task_id_clone);
-
-                        match s_e_e_core::resume_task(&execution_id_clone, &task_id_clone).await {
-                            Ok(_) => {
-                                tracing::info!("Task resumed successfully");
-                                // TODO: Refresh the page or update state in Phase 6
-                            }
-                            Err(e) => {
-                                tracing::error!("Failed to resume task: {}", e);
-                                // TODO: Show error message to user in Phase 6
-                            }
-                        }
-                    });
-                },
-                Icon {
-                    name: "play".to_string(),
-                    class: Some("w-4 h-4".to_string()),
-                    size: None,
-                    variant: Some("outline".to_string()),
-                }
-                "Resume Task"
-            }
-        }
-    }
-}
 
 #[component]
 pub fn TaskDetailsPanel(
@@ -220,12 +168,35 @@ pub fn TaskDetailsPanel(
                             }
                         }
 
-                        // Resume button for waiting tasks
-                        if task.status.as_str() == "waiting_for_input" {
-                            if let Some(exec) = execution.as_ref() {
-                                TaskResumeButton {
-                                    task: task.clone(),
-                                    execution_id: exec.id.clone()
+                        // Input form for waiting tasks
+                        if task.status.as_str() == "waiting_for_input" || task.status.as_str() == "WaitingForInput" {
+                            div {
+                                class: "mt-4 p-4 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg",
+
+                                div {
+                                    class: "flex items-center gap-2 mb-3",
+                                    Icon {
+                                        name: "pause".to_string(),
+                                        class: Some("text-amber-600 dark:text-amber-400".to_string()),
+                                        size: Some("w-5 h-5".to_string()),
+                                        variant: Some("outline".to_string()),
+                                    }
+                                    h3 {
+                                        class: "text-amber-900 dark:text-amber-100 font-semibold",
+                                        "Input Required"
+                                    }
+                                }
+
+                                p {
+                                    class: "text-amber-700 dark:text-amber-200 text-sm mb-4",
+                                    "This task is waiting for user input."
+                                }
+
+                                if let Some(exec) = execution.as_ref() {
+                                    UserInputForm {
+                                        task: task.clone(),
+                                        execution_id: Some(exec.id.clone())
+                                    }
                                 }
                             }
                         }

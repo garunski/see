@@ -99,4 +99,3 @@ impl super::TaskHandler for UserInputHandler {
         Ok(result)
     }
 }
-

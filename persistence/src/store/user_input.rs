@@ -68,14 +68,21 @@ impl Store {
     }
 
     /// Get input request by task execution ID
-    pub async fn get_input_request_by_task(&self, task_id: &str) -> Result<Option<UserInputRequest>, String> {
+    pub async fn get_input_request_by_task(
+        &self,
+        task_id: &str,
+    ) -> Result<Option<UserInputRequest>, String> {
         log_db_operation_start("get_input_request_by_task", "user_input_requests");
 
         let rows = sqlx::query("SELECT data FROM user_input_requests")
             .fetch_all(self.pool())
             .await
             .map_err(|e| {
-                log_db_operation_error("get_input_request_by_task", "user_input_requests", &e.to_string());
+                log_db_operation_error(
+                    "get_input_request_by_task",
+                    "user_input_requests",
+                    &e.to_string(),
+                );
                 format!("Database error: {}", e)
             })?;
 
@@ -84,7 +91,11 @@ impl Store {
             log_deserialization("UserInputRequest", json_data.len());
 
             let request: UserInputRequest = serde_json::from_str(&json_data).map_err(|e| {
-                log_db_operation_error("get_input_request_by_task", "user_input_requests", &e.to_string());
+                log_db_operation_error(
+                    "get_input_request_by_task",
+                    "user_input_requests",
+                    &e.to_string(),
+                );
                 format!("Deserialization error: {}", e)
             })?;
 
@@ -109,7 +120,11 @@ impl Store {
             .fetch_all(self.pool())
             .await
             .map_err(|e| {
-                log_db_operation_error("get_pending_inputs_for_workflow", "user_input_requests", &e.to_string());
+                log_db_operation_error(
+                    "get_pending_inputs_for_workflow",
+                    "user_input_requests",
+                    &e.to_string(),
+                );
                 format!("Database error: {}", e)
             })?;
 
@@ -119,7 +134,11 @@ impl Store {
             log_deserialization("UserInputRequest", json_data.len());
 
             let request: UserInputRequest = serde_json::from_str(&json_data).map_err(|e| {
-                log_db_operation_error("get_pending_inputs_for_workflow", "user_input_requests", &e.to_string());
+                log_db_operation_error(
+                    "get_pending_inputs_for_workflow",
+                    "user_input_requests",
+                    &e.to_string(),
+                );
                 format!("Deserialization error: {}", e)
             })?;
 
@@ -142,7 +161,11 @@ impl Store {
             .fetch_all(self.pool())
             .await
             .map_err(|e| {
-                log_db_operation_error("get_all_pending_inputs", "user_input_requests", &e.to_string());
+                log_db_operation_error(
+                    "get_all_pending_inputs",
+                    "user_input_requests",
+                    &e.to_string(),
+                );
                 format!("Database error: {}", e)
             })?;
 
@@ -152,7 +175,11 @@ impl Store {
             log_deserialization("UserInputRequest", json_data.len());
 
             let request: UserInputRequest = serde_json::from_str(&json_data).map_err(|e| {
-                log_db_operation_error("get_all_pending_inputs", "user_input_requests", &e.to_string());
+                log_db_operation_error(
+                    "get_all_pending_inputs",
+                    "user_input_requests",
+                    &e.to_string(),
+                );
                 format!("Deserialization error: {}", e)
             })?;
 
@@ -166,11 +193,7 @@ impl Store {
     }
 
     /// Mark input request as fulfilled
-    pub async fn fulfill_input_request(
-        &self,
-        id: &str,
-        value: String,
-    ) -> Result<(), String> {
+    pub async fn fulfill_input_request(&self, id: &str, value: String) -> Result<(), String> {
         log_db_operation_start("fulfill_input_request", "user_input_requests");
 
         // Get existing request
@@ -205,7 +228,11 @@ impl Store {
             .execute(self.pool())
             .await
             .map_err(|e| {
-                log_db_operation_error("delete_input_request", "user_input_requests", &e.to_string());
+                log_db_operation_error(
+                    "delete_input_request",
+                    "user_input_requests",
+                    &e.to_string(),
+                );
                 format!("Database error: {}", e)
             })?;
 
@@ -213,4 +240,3 @@ impl Store {
         Ok(())
     }
 }
-

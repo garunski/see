@@ -39,7 +39,13 @@ pub fn WorkflowFlow(tasks: Vec<TaskInfo>, on_task_click: EventHandler<usize>) ->
 
                         // Task card
                         div {
-                            class: "relative bg-zinc-50 dark:bg-zinc-800 rounded-xl border border-zinc-200 dark:border-zinc-700 p-6 shadow-sm cursor-pointer hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors",
+                            class: format!("relative bg-zinc-50 dark:bg-zinc-800 rounded-xl border p-6 shadow-sm cursor-pointer hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors {}",
+                                if task.status.as_str() == "waiting-for-input" || task.status.as_str() == "WaitingForInput" {
+                                    "border-amber-300 dark:border-amber-700 animate-pulse"
+                                } else {
+                                    "border-zinc-200 dark:border-zinc-700"
+                                }
+                            ),
                             onclick: move |_| on_task_click.call(i),
 
                             // Bottom connection point indicator (except for last task)

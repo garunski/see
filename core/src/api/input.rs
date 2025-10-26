@@ -8,12 +8,12 @@ use persistence::{TaskExecution, TaskStatus, UserInputRequest};
 use tracing::{debug, info};
 
 /// Provide user input for a waiting task
-/// 
+///
 /// # Arguments
 /// * `execution_id` - The workflow execution ID
 /// * `task_id` - The task execution ID
 /// * `input_value` - The user-provided input value
-/// 
+///
 /// # Returns
 /// * `Ok(())` if input was provided successfully
 /// * `Err(CoreError)` if input could not be provided
@@ -108,10 +108,10 @@ pub async fn provide_user_input(
 }
 
 /// Get pending input requests for a workflow
-/// 
+///
 /// # Arguments
 /// * `workflow_id` - The workflow execution ID
-/// 
+///
 /// # Returns
 /// * `Ok(Vec<UserInputRequest>)` - List of pending input requests
 /// * `Err(CoreError)` if requests could not be retrieved
@@ -138,10 +138,10 @@ pub async fn get_pending_inputs(workflow_id: &str) -> Result<Vec<UserInputReques
 }
 
 /// Get all tasks waiting for input in a workflow
-/// 
+///
 /// # Arguments
 /// * `workflow_id` - The workflow execution ID
-/// 
+///
 /// # Returns
 /// * `Ok(Vec<TaskExecution>)` - List of tasks waiting for input
 /// * `Err(CoreError)` if tasks could not be retrieved
@@ -170,11 +170,11 @@ pub async fn get_tasks_waiting_for_input(
 }
 
 /// Validate input value against input type
-/// 
+///
 /// # Arguments
 /// * `value` - The input value to validate
 /// * `input_type` - The expected input type
-/// 
+///
 /// # Returns
 /// * `Ok(())` if value is valid
 /// * `Err(CoreError)` if value is invalid
@@ -189,21 +189,17 @@ fn validate_input_value(value: &str, input_type: &persistence::InputType) -> Res
             }
             Ok(())
         }
-        persistence::InputType::Number => {
-            value
-                .parse::<f64>()
-                .map_err(|e| CoreError::Execution(format!("Invalid number format: {}", e)))
-                .map(|_| ())
-        }
-        persistence::InputType::Boolean => {
-            match value.to_lowercase().as_str() {
-                "true" | "false" | "1" | "0" | "yes" | "no" => Ok(()),
-                _ => Err(CoreError::Execution(format!(
-                    "Invalid boolean format: expected true/false/1/0/yes/no, got {}",
-                    value
-                ))),
-            }
-        }
+        persistence::InputType::Number => value
+            .parse::<f64>()
+            .map_err(|e| CoreError::Execution(format!("Invalid number format: {}", e)))
+            .map(|_| ()),
+        persistence::InputType::Boolean => match value.to_lowercase().as_str() {
+            "true" | "false" | "1" | "0" | "yes" | "no" => Ok(()),
+            _ => Err(CoreError::Execution(format!(
+                "Invalid boolean format: expected true/false/1/0/yes/no, got {}",
+                value
+            ))),
+        },
     }
 }
 
@@ -235,4 +231,3 @@ mod tests {
         assert!(validate_input_value("maybe", &persistence::InputType::Boolean).is_err());
     }
 }
-

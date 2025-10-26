@@ -77,11 +77,11 @@ pub async fn execute_workflow_by_id(
 
     if has_input_waiting {
         tracing::info!("Workflow paused - waiting for user input");
-        
+
         // Update execution status to indicate waiting
         let mut updated_execution = initial_execution.clone();
         updated_execution.status = WorkflowStatus::Running;
-        
+
         store
             .save_workflow_execution(updated_execution)
             .await

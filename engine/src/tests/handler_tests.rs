@@ -183,9 +183,14 @@ async fn test_user_input_handler() {
 
     // Should return success but waiting for input
     assert!(result.success);
-    
+
     // Check output contains waiting_for_input flag
-    assert!(result.output.get("waiting_for_input").unwrap().as_bool().unwrap());
+    assert!(result
+        .output
+        .get("waiting_for_input")
+        .unwrap()
+        .as_bool()
+        .unwrap());
     assert_eq!(
         result.output.get("prompt").unwrap().as_str().unwrap(),
         "Please enter your name:"
@@ -195,14 +200,19 @@ async fn test_user_input_handler() {
         "string"
     );
     assert!(result.output.get("required").unwrap().as_bool().unwrap());
-    
+
     // Check task status was updated
-    assert_eq!(context.tasks.get("test_task").unwrap().status, TaskStatus::WaitingForInput);
-    
+    assert_eq!(
+        context.tasks.get("test_task").unwrap().status,
+        TaskStatus::WaitingForInput
+    );
+
     // Check logs were created
     assert!(context.per_task_logs.contains_key("test_task"));
     let logs = &context.per_task_logs["test_task"];
-    assert!(logs.iter().any(|log| log.contains("Waiting for user input")));
+    assert!(logs
+        .iter()
+        .any(|log| log.contains("Waiting for user input")));
 }
 
 #[tokio::test]
@@ -220,8 +230,13 @@ async fn test_user_input_handler_with_default() {
     let result = handler.execute(&mut context, &task).await.unwrap();
 
     assert!(result.success);
-    assert!(result.output.get("waiting_for_input").unwrap().as_bool().unwrap());
-    
+    assert!(result
+        .output
+        .get("waiting_for_input")
+        .unwrap()
+        .as_bool()
+        .unwrap());
+
     // Check default value is included
     let default_value = result.output.get("default");
     assert!(default_value.is_some());

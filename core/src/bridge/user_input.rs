@@ -6,12 +6,10 @@ use persistence::{InputRequestStatus, InputType, UserInputRequest};
 use serde_json::Value;
 
 /// Convert persistence UserInputRequest to engine-compatible format
-/// 
+///
 /// Since the engine doesn't have a separate UserInputRequest type,
 /// we convert to a format that can be used by the engine layer.
-pub fn persistence_to_engine_input_request(
-    input: &UserInputRequest,
-) -> Result<Value, String> {
+pub fn persistence_to_engine_input_request(input: &UserInputRequest) -> Result<Value, String> {
     let engine_value = serde_json::json!({
         "id": input.id,
         "task_execution_id": input.task_execution_id,
@@ -26,17 +24,15 @@ pub fn persistence_to_engine_input_request(
         "fulfilled_at": input.fulfilled_at.map(|dt| dt.to_rfc3339()),
         "fulfilled_value": input.fulfilled_value,
     });
-    
+
     Ok(engine_value)
 }
 
 /// Convert engine-compatible value to persistence UserInputRequest
-pub fn engine_to_persistence_input_request(
-    value: &Value,
-) -> Result<UserInputRequest, String> {
+pub fn engine_to_persistence_input_request(value: &Value) -> Result<UserInputRequest, String> {
     let input: UserInputRequest = serde_json::from_value(value.clone())
         .map_err(|e| format!("Failed to deserialize UserInputRequest: {}", e))?;
-    
+
     Ok(input)
 }
 
@@ -91,7 +87,10 @@ mod tests {
     fn test_parse_input_types() {
         assert!(matches!(parse_input_type("string"), Ok(InputType::String)));
         assert!(matches!(parse_input_type("number"), Ok(InputType::Number)));
-        assert!(matches!(parse_input_type("boolean"), Ok(InputType::Boolean)));
+        assert!(matches!(
+            parse_input_type("boolean"),
+            Ok(InputType::Boolean)
+        ));
         assert!(parse_input_type("invalid").is_err());
     }
 
@@ -108,4 +107,3 @@ mod tests {
         assert!(parse_input_request_status("invalid").is_err());
     }
 }
-

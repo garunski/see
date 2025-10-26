@@ -41,7 +41,12 @@ impl WorkflowEngine {
                 // Skip if already completed
                 if completed_tasks.contains(&task.id) {
                     // If this task is completed, check its next_tasks
-                    collect_ready_tasks(&task.next_tasks, completed_tasks, waiting_for_input, ready_tasks);
+                    collect_ready_tasks(
+                        &task.next_tasks,
+                        completed_tasks,
+                        waiting_for_input,
+                        ready_tasks,
+                    );
                     continue;
                 }
 
@@ -57,7 +62,12 @@ impl WorkflowEngine {
         }
 
         // Start with root tasks
-        collect_ready_tasks(root_tasks, completed_tasks, waiting_for_input, &mut ready_tasks);
+        collect_ready_tasks(
+            root_tasks,
+            completed_tasks,
+            waiting_for_input,
+            &mut ready_tasks,
+        );
 
         trace!(
             ready_count = ready_tasks.len(),
@@ -133,7 +143,11 @@ impl WorkflowEngine {
 
             // Get ready tasks from tree structure
             trace!(execution_id = %execution_id, "Determining ready tasks");
-            let ready_tasks = self.get_ready_tasks_from_tree(&workflow.tasks, &completed_tasks, &waiting_for_input);
+            let ready_tasks = self.get_ready_tasks_from_tree(
+                &workflow.tasks,
+                &completed_tasks,
+                &waiting_for_input,
+            );
 
             trace!(
                 execution_id = %execution_id,

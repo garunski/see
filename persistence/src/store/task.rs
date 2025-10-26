@@ -83,7 +83,11 @@ impl Store {
             .fetch_all(self.pool())
             .await
             .map_err(|e| {
-                log_db_operation_error("get_tasks_waiting_for_input", "task_executions", &e.to_string());
+                log_db_operation_error(
+                    "get_tasks_waiting_for_input",
+                    "task_executions",
+                    &e.to_string(),
+                );
                 format!("Database error: {}", e)
             })?;
 
@@ -93,7 +97,11 @@ impl Store {
             log_deserialization("TaskExecution", json_data.len());
 
             let task: TaskExecution = serde_json::from_str(&json_data).map_err(|e| {
-                log_db_operation_error("get_tasks_waiting_for_input", "task_executions", &e.to_string());
+                log_db_operation_error(
+                    "get_tasks_waiting_for_input",
+                    "task_executions",
+                    &e.to_string(),
+                );
                 format!("Deserialization error: {}", e)
             })?;
 
@@ -117,7 +125,11 @@ impl Store {
             .fetch_all(self.pool())
             .await
             .map_err(|e| {
-                log_db_operation_error("get_tasks_waiting_for_input_in_workflow", "task_executions", &e.to_string());
+                log_db_operation_error(
+                    "get_tasks_waiting_for_input_in_workflow",
+                    "task_executions",
+                    &e.to_string(),
+                );
                 format!("Database error: {}", e)
             })?;
 
@@ -127,7 +139,11 @@ impl Store {
             log_deserialization("TaskExecution", json_data.len());
 
             let task: TaskExecution = serde_json::from_str(&json_data).map_err(|e| {
-                log_db_operation_error("get_tasks_waiting_for_input_in_workflow", "task_executions", &e.to_string());
+                log_db_operation_error(
+                    "get_tasks_waiting_for_input_in_workflow",
+                    "task_executions",
+                    &e.to_string(),
+                );
                 format!("Deserialization error: {}", e)
             })?;
 
@@ -136,7 +152,11 @@ impl Store {
             }
         }
 
-        log_db_operation_success("get_tasks_waiting_for_input_in_workflow", "task_executions", 0);
+        log_db_operation_success(
+            "get_tasks_waiting_for_input_in_workflow",
+            "task_executions",
+            0,
+        );
         Ok(tasks)
     }
 
@@ -152,7 +172,11 @@ impl Store {
             .fetch_optional(self.pool())
             .await
             .map_err(|e| {
-                log_db_operation_error("get_task_with_input_request", "task_executions", &e.to_string());
+                log_db_operation_error(
+                    "get_task_with_input_request",
+                    "task_executions",
+                    &e.to_string(),
+                );
                 format!("Database error: {}", e)
             })?;
 
@@ -165,7 +189,11 @@ impl Store {
         log_deserialization("TaskExecution", json_data.len());
 
         let task: TaskExecution = serde_json::from_str(&json_data).map_err(|e| {
-            log_db_operation_error("get_task_with_input_request", "task_executions", &e.to_string());
+            log_db_operation_error(
+                "get_task_with_input_request",
+                "task_executions",
+                &e.to_string(),
+            );
             format!("Deserialization error: {}", e)
         })?;
 

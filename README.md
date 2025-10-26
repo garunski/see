@@ -7,6 +7,7 @@ A lightweight workflow execution engine built on [dataflow-rs](https://crates.io
 
 - **Multi-step workflow execution** - All tasks execute in sequence with full context passing
 - **CLI command execution** - Execute shell commands as workflow tasks
+- **User input support** - Interactively request and process user input during workflow execution
 - **Audit trail** - Full tracking of task execution with timestamps and changes
 - **Context management** - Task outputs are automatically stored and available for inspection
 - **JSON-based workflows** - Define workflows using dataflow-rs's JSON format
@@ -42,6 +43,30 @@ Or build and run:
 ```bash
 cargo build -p s_e_e_cli --release
 ./target/release/cli --file workflow.json
+```
+
+**Interactive Input Support:**
+- Workflows with user input tasks will pause execution
+- Prompts are displayed in the terminal
+- Input validation ensures correct data types
+- Workflow automatically resumes after input is provided
+
+**Example Session:**
+```bash
+$ cargo run -p s_e_e_cli -- --file user_input_simple.json
+
+Starting workflow: Simple User Input Workflow
+[Task 1/3] Display Greeting: Complete
+[Task 2/3] Get User Name: Waiting for input...
+
+Please enter your name:
+> John Doe
+
+Input received: John Doe
+[Task 2/3] Get User Name: Complete
+[Task 3/3] Thank You: Complete
+
+Workflow completed successfully!
 ```
 
 ### GUI: Desktop app
@@ -93,6 +118,9 @@ cargo run -p s_e_e_gui
 - Drag-and-drop node positioning
 - Zoom and pan controls
 - Execution history viewer
+- Interactive user input forms for workflows requiring input
+- Visual indicators for tasks waiting for input (amber/yellow highlighting)
+- Pending input count display and filtering
 
 ### Workflow Format
 
@@ -129,6 +157,75 @@ Workflows are defined in JSON using the dataflow-rs format:
 }
 ```
 
+### User Input Workflows
+
+Workflows can request user input during execution. When a task requires input, the workflow pauses until the input is provided.
+
+**Example: Simple Input Workflow**
+
+```json
+{
+  "id": "simple-input",
+  "name": "Simple User Input Workflow",
+  "tasks": [
+    {
+      "id": "greeting",
+      "name": "Display Greeting",
+      "function": {
+        "cli_command": {
+          "command": "echo",
+          "args": ["Hello! What's your name?"]
+        }
+      },
+      "next_tasks": [
+        {
+          "id": "get-name",
+          "name": "Get User Name",
+          "function": {
+            "user_input": {
+              "prompt": "Please enter your name:",
+              "input_type": "string",
+              "required": true,
+              "default": null
+            }
+          },
+          "next_tasks": [
+            {
+              "id": "thank-you",
+              "name": "Thank You",
+              "function": {
+                "cli_command": {
+                  "command": "echo",
+                  "args": ["Thank you for your input!"]
+                }
+              },
+              "next_tasks": []
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
+```
+
+**Input Types:**
+- `string` - Any text input
+- `number` - Numeric input (integer or float)
+- `boolean` - Boolean input (true/false, yes/no, 1/0)
+
+**Input Properties:**
+- `prompt` - The message shown to the user
+- `input_type` - Type of input expected (string, number, boolean)
+- `required` - Whether input is required (true/false)
+- `default` - Optional default value
+
+**Workflow Behavior:**
+- Tasks with `user_input` pause workflow execution
+- Input can be provided via CLI prompts or GUI forms
+- After input is provided, the workflow automatically resumes
+- Multiple parallel input tasks can request input simultaneously
+
 ## Workflow Visualizer
 
 The GUI includes an interactive workflow visualizer built with React Flow. See [WORKFLOW_VISUALIZER.md](./WORKFLOW_VISUALIZER.md) for detailed documentation.
@@ -145,6 +242,44 @@ The GUI includes an interactive workflow visualizer built with React Flow. See [
 - Zoom and pan controls
 - Node positions persist in workflow metadata
 - Fully responsive and interactive
+
+## Example Workflows
+
+The project includes example workflows demonstrating different features:
+
+**Location:** `engine/examples/`
+
+### Basic Examples
+- `simple.json` - Basic workflow with CLI commands
+- `parallel.json` - Parallel task execution
+- `nested.json` - Nested task dependencies
+
+### User Input Examples
+- `user_input_simple.json` - Single input request
+- `user_input_parallel.json` - Multiple parallel input requests
+- `user_input_nested.json` - Sequential nested input requests
+
+### Running Examples
+
+**Simple CLI workflow:**
+```bash
+cargo run -p s_e_e_cli -- --file engine/examples/simple.json
+```
+
+**User input workflow:**
+```bash
+cargo run -p s_e_e_cli -- --file engine/examples/user_input_simple.json
+```
+
+**Parallel input workflow:**
+```bash
+cargo run -p s_e_e_cli -- --file engine/examples/user_input_parallel.json
+```
+
+**Nested input workflow:**
+```bash
+cargo run -p s_e_e_cli -- --file engine/examples/user_input_nested.json
+```
 
 ## Testing
 
@@ -174,9 +309,12 @@ task clean           # Clean build artifacts
 ## Architecture
 
 - **Engine**: Built on dataflow-rs, processes messages through workflows
-- **Custom Function Handler**: `CliCommandHandler` implements the `AsyncFunctionHandler` trait to execute CLI commands
+- **Custom Function Handlers**: 
+  - `CliCommandHandler` - Executes CLI commands
+  - `UserInputHandler` - Handles user input requests and pauses/resumes workflow execution
 - **Message & Context**: Each workflow execution maintains a message with context that stores task outputs
 - **Audit Trail**: Every task execution is tracked with status, timestamp, and changes
+- **Input Management**: User inputs are tracked with requests, validation, and fulfillment status
 
 ## JSON Parser
 

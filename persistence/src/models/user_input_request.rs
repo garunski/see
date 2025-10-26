@@ -72,7 +72,9 @@ impl UserInputRequest {
             }
             InputRequestStatus::Pending => {
                 if self.fulfilled_at.is_some() {
-                    return Err("Pending requests should not have fulfillment timestamp".to_string());
+                    return Err(
+                        "Pending requests should not have fulfillment timestamp".to_string()
+                    );
                 }
                 if self.fulfilled_value.is_some() {
                     return Err("Pending requests should not have a value".to_string());
@@ -93,4 +95,3 @@ impl UserInputRequest {
         matches!(self.status, InputRequestStatus::Pending)
     }
 }
-
