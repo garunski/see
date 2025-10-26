@@ -136,7 +136,7 @@ async fn test_read_during_write() {
         let mut read_count = 0;
         while read_count < 50 {
             let workflows = reader_store.list_workflows().await.unwrap();
-            assert!(workflows.len() >= 1); // At least the initial workflow
+            assert!(!workflows.is_empty()); // At least the initial workflow
 
             let retrieved = reader_store.get_workflow("initial").await.unwrap();
             assert!(retrieved.is_some());

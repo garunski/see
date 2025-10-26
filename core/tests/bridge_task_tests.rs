@@ -33,7 +33,7 @@ fn test_task_status_conversion() {
             &task_info,
             "workflow-1",
             &HashMap::new(),
-            &vec![],
+            &[],
             chrono::Utc::now(),
             chrono::Utc::now(),
         );
@@ -61,7 +61,7 @@ fn test_task_output_extraction() {
         &task_info,
         "workflow-1",
         &per_task_logs,
-        &vec![],
+        &[],
         chrono::Utc::now(),
         chrono::Utc::now(),
     );
@@ -79,7 +79,7 @@ fn test_task_output_extraction() {
         &task_info2,
         "workflow-1",
         &per_task_logs,
-        &vec![],
+        &[],
         chrono::Utc::now(),
         chrono::Utc::now(),
     );

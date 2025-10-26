@@ -1,4 +1,3 @@
-use s_e_e_core::WorkflowStatus;
 use s_e_e_core::{WorkflowExecutionSummary, WorkflowMetadata};
 
 #[derive(Debug, thiserror::Error)]
@@ -19,7 +18,7 @@ pub struct HistoryService;
 
 impl HistoryService {
     pub async fn fetch_workflow_executions(
-        limit: usize,
+        _limit: usize,
     ) -> Result<Vec<WorkflowExecutionSummary>, HistoryError> {
         let store = s_e_e_core::get_global_store()
             .map_err(|e| HistoryError::DatabaseUnavailable(e.to_string()))?;
@@ -48,7 +47,7 @@ impl HistoryService {
     }
 
     pub async fn fetch_running_workflows(
-        limit: usize,
+        _limit: usize,
     ) -> Result<Vec<WorkflowMetadata>, HistoryError> {
         let store = s_e_e_core::get_global_store()
             .map_err(|e| HistoryError::DatabaseUnavailable(e.to_string()))?;

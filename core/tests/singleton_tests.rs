@@ -95,7 +95,7 @@ fn test_store_thread_safety() {
                 .collect();
 
             // Wait for all tasks to complete
-            for (_i, handle) in handles.into_iter().enumerate() {
+            for handle in handles.into_iter() {
                 let store = rt.block_on(handle).unwrap();
                 assert!(
                     Arc::strong_count(&store) > 1,

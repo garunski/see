@@ -9,7 +9,7 @@ pub fn task_info_to_execution(
     task: &TaskInfo,
     workflow_id: &str,
     per_task_logs: &HashMap<String, Vec<String>>,
-    errors: &Vec<String>,
+    errors: &[String],
     workflow_created_at: chrono::DateTime<chrono::Utc>,
     workflow_completed_at: chrono::DateTime<chrono::Utc>,
 ) -> TaskExecution {

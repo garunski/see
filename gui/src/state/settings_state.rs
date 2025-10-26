@@ -25,10 +25,6 @@ impl Default for SettingsState {
 }
 
 impl SettingsState {
-    pub fn change_theme(&mut self, theme: Theme) {
-        self.settings.theme = theme;
-    }
-
     pub fn apply_loaded_settings(&mut self, settings: AppSettings) {
         self.settings = settings;
     }

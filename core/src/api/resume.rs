@@ -13,7 +13,7 @@ pub async fn resume_task(execution_id: &str, task_id: &str) -> Result<(), CoreEr
     let execution = store
         .get_workflow_execution(execution_id)
         .await
-        .map_err(|e| CoreError::Persistence(e))?
+        .map_err(CoreError::Persistence)?
         .ok_or_else(|| CoreError::WorkflowNotFound(execution_id.to_string()))?;
 
     // Step 2: Find TaskExecution by task_id
@@ -47,7 +47,7 @@ pub async fn resume_task(execution_id: &str, task_id: &str) -> Result<(), CoreEr
     store
         .save_task_execution(updated_task)
         .await
-        .map_err(|e| CoreError::Persistence(e))?;
+        .map_err(CoreError::Persistence)?;
 
     // Step 6: Update Execution if All Tasks Complete
     let all_tasks_complete = execution
@@ -63,7 +63,7 @@ pub async fn resume_task(execution_id: &str, task_id: &str) -> Result<(), CoreEr
         store
             .save_workflow_execution(updated_execution)
             .await
-            .map_err(|e| CoreError::Persistence(e))?;
+            .map_err(CoreError::Persistence)?;
     }
 
     // Step 7: Return Success

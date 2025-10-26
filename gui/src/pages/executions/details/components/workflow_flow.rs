@@ -33,7 +33,6 @@ pub fn WorkflowFlow(tasks: Vec<TaskInfo>, on_task_click: EventHandler<usize>) ->
                                     "pending" => "#6b7280",
                                     "waiting-for-input" => "#f59e0b",
                                     _ => "#6b7280",
-                                    _ => "#6b7280",
                                 })
                             }
                         }

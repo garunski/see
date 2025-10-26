@@ -21,7 +21,7 @@ pub async fn execute_workflow_by_id(
     let workflow = store
         .get_workflow(workflow_id)
         .await
-        .map_err(|e| CoreError::Persistence(e))?
+        .map_err(CoreError::Persistence)?
         .ok_or_else(|| CoreError::WorkflowNotFound(workflow_id.to_string()))?;
 
     // Step 2: Validate Workflow Content
@@ -60,14 +60,14 @@ pub async fn execute_workflow_by_id(
     store
         .save_workflow_execution(initial_execution.clone())
         .await
-        .map_err(|e| CoreError::Persistence(e))?;
+        .map_err(CoreError::Persistence)?;
 
     // Step 6: Execute Workflow Through Engine
     let engine = WorkflowEngine::new();
     let engine_result = engine
         .execute_workflow(engine_workflow)
         .await
-        .map_err(|e| CoreError::Engine(e))?;
+        .map_err(CoreError::Engine)?;
 
     // Step 7: Stream Progress via OutputCallback
     if let Some(ref callback) = callback {
@@ -87,7 +87,7 @@ pub async fn execute_workflow_by_id(
         store
             .save_task_execution(task.clone())
             .await
-            .map_err(|e| CoreError::Persistence(e))?;
+            .map_err(CoreError::Persistence)?;
     }
 
     // Step 10: Save Audit Events to Persistence
@@ -96,14 +96,14 @@ pub async fn execute_workflow_by_id(
         store
             .log_audit_event(audit_event)
             .await
-            .map_err(|e| CoreError::Persistence(e))?;
+            .map_err(CoreError::Persistence)?;
     }
 
     // Step 11: Update Final Execution Record
     store
         .save_workflow_execution(final_execution.clone())
         .await
-        .map_err(|e| CoreError::Persistence(e))?;
+        .map_err(CoreError::Persistence)?;
 
     // Step 12: Return WorkflowResult
     let result = WorkflowResult {

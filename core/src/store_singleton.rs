@@ -32,7 +32,7 @@ pub fn get_global_store() -> Result<Arc<Store>, String> {
 fn get_database_path() -> Result<String, String> {
     // For testing, use a local database file
     let data_dir = "/Users/garunnvagidov/code/see/data";
-    std::fs::create_dir_all(&data_dir)
+    std::fs::create_dir_all(data_dir)
         .map_err(|e| format!("Failed to create data directory: {}", e))?;
     let db_path = format!("{}/data.db", data_dir);
     tracing::info!("Using database path: {}", db_path);

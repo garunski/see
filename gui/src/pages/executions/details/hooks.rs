@@ -88,7 +88,7 @@ pub fn use_filtered_audit(
                 .audit_trail
                 .iter()
                 .filter(|entry| current_task_id.as_ref() == Some(&entry.task_id))
-                .map(|event| s_e_e_core::audit_event_to_entry(event))
+                .map(s_e_e_core::audit_event_to_entry)
                 .collect();
             audit_entries.set(filtered);
         } else {

@@ -42,9 +42,10 @@ pub struct TaskResult {
 }
 
 /// Task execution status
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Default)]
 pub enum TaskStatus {
     #[serde(rename = "pending")]
+    #[default]
     Pending,
     #[serde(rename = "in_progress")]
     InProgress,
@@ -54,12 +55,6 @@ pub enum TaskStatus {
     Failed,
     #[serde(rename = "waiting_for_input")]
     WaitingForInput,
-}
-
-impl Default for TaskStatus {
-    fn default() -> Self {
-        TaskStatus::Pending
-    }
 }
 
 impl TaskStatus {
@@ -148,10 +143,7 @@ impl ExecutionContext {
     }
 
     pub fn log_task(&mut self, task_id: String, message: String) {
-        self.per_task_logs
-            .entry(task_id)
-            .or_insert_with(Vec::new)
-            .push(message);
+        self.per_task_logs.entry(task_id).or_default().push(message);
     }
 
     pub fn update_task_status(&mut self, task_id: String, status: TaskStatus) {
