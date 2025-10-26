@@ -1,15 +1,15 @@
 //! Store operations for persistence layer
-//! 
+//!
 //! Each store operation is in its own file following Single Responsibility Principle.
 
-pub mod lib;
-pub mod workflow;
+pub mod audit;
 pub mod execution;
-pub mod task;
+pub mod lib;
 pub mod prompt;
 pub mod settings;
-pub mod audit;
+pub mod task;
 pub mod utils;
+pub mod workflow;
 
 // Re-export Store struct
 pub use lib::Store;

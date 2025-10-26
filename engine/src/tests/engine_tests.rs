@@ -106,7 +106,7 @@ async fn test_workflow_handler_not_found() {
     let workflow = parse_workflow(json).unwrap();
     let engine = WorkflowEngine::new();
     let result = engine.execute_workflow(workflow).await.unwrap();
-    
+
     // The workflow completes successfully even with unknown handlers
     // The engine treats unknown handlers as failed tasks but doesn't fail the entire workflow
     assert!(result.success);
@@ -152,14 +152,17 @@ async fn test_workflow_with_failing_dependency() {
     let workflow = parse_workflow(json).unwrap();
     let engine = WorkflowEngine::new();
     let result = engine.execute_workflow(workflow).await.unwrap();
-    
+
     // Workflow should complete but with errors
     assert!(!result.success);
     assert!(!result.errors.is_empty());
-    
+
     // Both tasks should be marked complete (even failed ones)
     assert_eq!(result.tasks.len(), 2);
-    assert!(result.tasks.iter().all(|t| t.status == TaskStatus::Complete));
+    assert!(result
+        .tasks
+        .iter()
+        .all(|t| t.status == TaskStatus::Complete));
 }
 
 #[tokio::test]
@@ -175,7 +178,7 @@ async fn test_empty_workflow() {
     let workflow = parse_workflow(json).unwrap();
     let engine = WorkflowEngine::new();
     let result = engine.execute_workflow(workflow).await.unwrap();
-    
+
     assert!(result.success);
     assert_eq!(result.workflow_name, "Empty Workflow");
     assert!(result.tasks.is_empty());

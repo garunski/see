@@ -1,11 +1,11 @@
 //! Execution models
-//! 
+//!
 //! This file contains ONLY execution-related models following Single Responsibility Principle.
 
+use crate::models::{AuditEvent, TaskExecution, WorkflowStatus};
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use crate::models::{WorkflowStatus, TaskExecution, AuditEvent};
 
 /// Full workflow execution record
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -41,10 +41,10 @@ pub struct WorkflowExecutionSummary {
 pub struct WorkflowMetadata {
     pub id: String,
     pub name: String,
-    pub status: String,  // "running" or other status
-    pub workflow_name: String,  // For GUI compatibility
-    pub start_timestamp: DateTime<Utc>,  // For GUI compatibility
-    pub task_ids: Vec<String>,  // For GUI compatibility
+    pub status: String,                 // "running" or other status
+    pub workflow_name: String,          // For GUI compatibility
+    pub start_timestamp: DateTime<Utc>, // For GUI compatibility
+    pub task_ids: Vec<String>,          // For GUI compatibility
 }
 
 impl Default for WorkflowExecution {

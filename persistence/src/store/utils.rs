@@ -1,22 +1,22 @@
 //! Utility store operations
-//! 
+//!
 //! This file contains ONLY utility functions following Single Responsibility Principle.
 
-use crate::logging::{log_db_operation_start, log_db_operation_success, log_db_operation_error};
 use super::Store;
+use crate::logging::{log_db_operation_error, log_db_operation_start, log_db_operation_success};
 
 impl Store {
     /// Clear all data from all tables
     pub async fn clear_all_data(&self) -> Result<(), String> {
         log_db_operation_start("clear_all_data", "all");
-        
+
         let tables = [
             "workflows",
-            "workflow_executions", 
+            "workflow_executions",
             "task_executions",
             "user_prompts",
             "audit_events",
-            "settings"
+            "settings",
         ];
 
         for table in &tables {
@@ -28,7 +28,7 @@ impl Store {
                     format!("Database error: {}", e)
                 })?;
         }
-        
+
         log_db_operation_success("clear_all_data", "all", 0);
         Ok(())
     }

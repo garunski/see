@@ -1,5 +1,5 @@
 //! PersistenceError definitions
-//! 
+//!
 //! This file contains ONLY error types following Single Responsibility Principle.
 
 use thiserror::Error;
@@ -9,16 +9,16 @@ use thiserror::Error;
 pub enum PersistenceError {
     #[error("Database error: {0}")]
     Database(String),
-    
+
     #[error("Serialization error: {0}")]
     Serialization(#[from] serde_json::Error),
-    
+
     #[error("IO error: {0}")]
     Io(#[from] std::io::Error),
-    
+
     #[error("Transaction error: {0}")]
     Transaction(String),
-    
+
     #[error("Connection pool error: {0}")]
     ConnectionPool(String),
 }

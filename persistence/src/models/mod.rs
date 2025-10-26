@@ -1,20 +1,20 @@
 //! Data models for persistence layer
-//! 
+//!
 //! Each model is in its own file following Single Responsibility Principle.
 
-pub mod workflow;
-pub mod execution;
-pub mod task;
-pub mod prompt;
 pub mod audit;
-pub mod settings;
 pub mod enums;
+pub mod execution;
+pub mod prompt;
+pub mod settings;
+pub mod task;
+pub mod workflow;
 
 // Re-export all models
-pub use workflow::WorkflowDefinition;
-pub use execution::{WorkflowExecution, WorkflowExecutionSummary, WorkflowMetadata};
-pub use task::TaskExecution;
-pub use prompt::UserPrompt;
 pub use audit::AuditEvent;
+pub use enums::{AuditStatus, TaskStatus, Theme, WorkflowStatus};
+pub use execution::{WorkflowExecution, WorkflowExecutionSummary, WorkflowMetadata};
+pub use prompt::UserPrompt;
 pub use settings::AppSettings;
-pub use enums::{WorkflowStatus, Theme, TaskStatus, AuditStatus};
+pub use task::TaskExecution;
+pub use workflow::WorkflowDefinition;

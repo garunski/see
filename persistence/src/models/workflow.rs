@@ -1,5 +1,5 @@
 //! WorkflowDefinition model
-//! 
+//!
 //! This file contains ONLY WorkflowDefinition struct following Single Responsibility Principle.
 
 use chrono::{DateTime, Utc};
@@ -11,7 +11,7 @@ pub struct WorkflowDefinition {
     pub id: String,
     pub name: String,
     pub description: Option<String>,
-    pub content: String,  // JSON string
+    pub content: String, // JSON string
     pub is_default: bool,
     pub is_edited: bool,
     pub created_at: DateTime<Utc>,
@@ -87,11 +87,11 @@ impl WorkflowDefinition {
         if self.content.is_empty() {
             return Err("Workflow content cannot be empty".to_string());
         }
-        
+
         // Validate JSON content
         serde_json::from_str::<serde_json::Value>(&self.content)
             .map_err(|e| format!("Invalid JSON content: {}", e))?;
-        
+
         Ok(())
     }
 }

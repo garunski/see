@@ -128,4 +128,3 @@ impl super::TaskHandler for CliCommandHandler {
         Ok(result)
     }
 }
-

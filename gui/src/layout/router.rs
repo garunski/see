@@ -1,9 +1,9 @@
 use crate::components::{Button, ButtonSize, ButtonVariant};
 use crate::icons::Icon;
 use crate::pages::{
-    HistoryPage, HomePage, UserPromptEditPage, UserPromptEditPageNew, UserPromptsListPage, SettingsPage,
-    UploadPage, WorkflowDetailsPage, WorkflowEditPage, WorkflowEditPageNew, WorkflowVisualizerPage,
-    WorkflowsListPage,
+    HistoryPage, HomePage, SettingsPage, UploadPage, UserPromptEditPage, UserPromptEditPageNew,
+    UserPromptsListPage, WorkflowDetailsPage, WorkflowEditPage, WorkflowEditPageNew,
+    WorkflowVisualizerPage, WorkflowsListPage,
 };
 use dioxus::prelude::*;
 use dioxus_router::prelude::{Link, Outlet, Routable};

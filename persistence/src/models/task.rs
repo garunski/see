@@ -1,10 +1,10 @@
 //! TaskExecution model
-//! 
+//!
 //! This file contains ONLY TaskExecution struct following Single Responsibility Principle.
 
+use crate::models::TaskStatus;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
-use crate::models::TaskStatus;
 
 /// Individual task execution record
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -47,7 +47,7 @@ impl TaskExecution {
         if self.name.is_empty() {
             return Err("Task name cannot be empty".to_string());
         }
-        
+
         // Validate status consistency
         match self.status {
             TaskStatus::Complete | TaskStatus::Failed => {
@@ -62,7 +62,7 @@ impl TaskExecution {
             }
             _ => {} // Pending, InProgress are fine
         }
-        
+
         Ok(())
     }
 

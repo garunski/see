@@ -47,7 +47,7 @@ async fn test_cursor_agent_invalid_function_type() {
     });
 
     let result = handler.execute(&mut context, &task).await;
-    
+
     assert!(result.is_err());
     match result.unwrap_err() {
         HandlerError::InvalidConfiguration(msg) => {
@@ -95,7 +95,7 @@ async fn test_cli_handler_invalid_function() {
     });
 
     let result = handler.execute(&mut context, &task).await;
-    
+
     assert!(result.is_err());
     match result.unwrap_err() {
         HandlerError::InvalidConfiguration(msg) => {
@@ -117,7 +117,7 @@ async fn test_custom_handler_invalid_function() {
     });
 
     let result = handler.execute(&mut context, &task).await;
-    
+
     assert!(result.is_err());
     match result.unwrap_err() {
         HandlerError::InvalidConfiguration(msg) => {

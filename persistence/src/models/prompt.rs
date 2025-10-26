@@ -1,5 +1,5 @@
 //! UserPrompt model
-//! 
+//!
 //! This file contains ONLY UserPrompt struct following Single Responsibility Principle.
 
 use chrono::{DateTime, Utc};
@@ -51,7 +51,7 @@ impl UserPrompt {
         if self.content.is_empty() {
             return Err("Prompt content cannot be empty".to_string());
         }
-        
+
         Ok(())
     }
 

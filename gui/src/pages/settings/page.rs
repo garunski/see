@@ -8,8 +8,6 @@ use dioxus::prelude::*;
 pub fn SettingsPage() -> Element {
     let state_provider = use_context::<AppStateProvider>();
 
-
-
     let mut show_confirm_dialog = use_signal(|| false);
 
     let clear_database_handler = {

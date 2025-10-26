@@ -28,19 +28,22 @@ impl HistoryService {
             .list_workflow_executions()
             .await
             .map_err(|e| HistoryError::FetchExecutionsFailed(e.to_string()))?;
-        
+
         // Convert WorkflowExecution to WorkflowExecutionSummary
-        let summaries = executions.into_iter().map(|exec| WorkflowExecutionSummary {
-            id: exec.id,
-            workflow_name: exec.workflow_name,
-            status: exec.status,
-            created_at: exec.created_at,
-            completed_at: exec.completed_at,
-            success: exec.success,
-            task_count: exec.tasks.len(),
-            timestamp: exec.timestamp,
-        }).collect();
-        
+        let summaries = executions
+            .into_iter()
+            .map(|exec| WorkflowExecutionSummary {
+                id: exec.id,
+                workflow_name: exec.workflow_name,
+                status: exec.status,
+                created_at: exec.created_at,
+                completed_at: exec.completed_at,
+                success: exec.success,
+                task_count: exec.tasks.len(),
+                timestamp: exec.timestamp,
+            })
+            .collect();
+
         Ok(summaries)
     }
 

@@ -1,10 +1,10 @@
 // Bridge module - Type conversions between engine and persistence
 
-pub mod workflow;
+pub mod audit;
 pub mod execution;
 pub mod task;
-pub mod audit;
+pub mod workflow;
 
 // Re-export bridge types
-pub use workflow::WorkflowResult;
 pub use workflow::OutputCallback;
+pub use workflow::WorkflowResult;

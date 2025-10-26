@@ -1,9 +1,9 @@
 //! AppSettings model
-//! 
+//!
 //! This file contains ONLY AppSettings struct following Single Responsibility Principle.
 
-use serde::{Deserialize, Serialize};
 use crate::models::Theme;
+use serde::{Deserialize, Serialize};
 
 /// Application configuration settings
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]

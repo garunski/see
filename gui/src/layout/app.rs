@@ -100,16 +100,19 @@ fn AppContent() -> Element {
                                 history.iter().map(|h| &h.id).collect::<Vec<_>>()
                             );
                             // Convert WorkflowExecution to WorkflowExecutionSummary
-                            let summaries = history.into_iter().map(|exec| s_e_e_core::WorkflowExecutionSummary {
-                                id: exec.id,
-                                workflow_name: exec.workflow_name,
-                                status: exec.status,
-                                created_at: exec.created_at,
-                                completed_at: exec.completed_at,
-                                success: exec.success,
-                                task_count: exec.tasks.len(),
-                                timestamp: exec.timestamp,
-                            }).collect();
+                            let summaries = history
+                                .into_iter()
+                                .map(|exec| s_e_e_core::WorkflowExecutionSummary {
+                                    id: exec.id,
+                                    workflow_name: exec.workflow_name,
+                                    status: exec.status,
+                                    created_at: exec.created_at,
+                                    completed_at: exec.completed_at,
+                                    success: exec.success,
+                                    task_count: exec.tasks.len(),
+                                    timestamp: exec.timestamp,
+                                })
+                                .collect();
                             history_state.write().set_history(summaries);
                         }
                         Err(e) => {

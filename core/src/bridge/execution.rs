@@ -10,19 +10,23 @@ pub fn workflow_result_to_execution(
     created_at: chrono::DateTime<chrono::Utc>,
 ) -> WorkflowExecution {
     let now = chrono::Utc::now();
-    
+
     // Convert tasks
-    let task_executions = result.tasks.iter()
-        .map(|task| crate::bridge::task::task_info_to_execution(
-            task,
-            &execution_id,
-            &result.per_task_logs,
-            &result.errors,
-            created_at,
-            now,
-        ))
+    let task_executions = result
+        .tasks
+        .iter()
+        .map(|task| {
+            crate::bridge::task::task_info_to_execution(
+                task,
+                &execution_id,
+                &result.per_task_logs,
+                &result.errors,
+                created_at,
+                now,
+            )
+        })
         .collect();
-    
+
     WorkflowExecution {
         id: execution_id,
         workflow_name: result.workflow_name,

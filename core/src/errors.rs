@@ -5,16 +5,16 @@
 pub enum CoreError {
     #[error("Engine error: {0}")]
     Engine(#[from] engine::EngineError),
-    
+
     #[error("Persistence error: {0}")]
     Persistence(String),
-    
+
     #[error("Workflow not found: {0}")]
     WorkflowNotFound(String),
-    
+
     #[error("Task not found: {0}")]
     TaskNotFound(String),
-    
+
     #[error("Execution error: {0}")]
     Execution(String),
 }

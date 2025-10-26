@@ -1,5 +1,5 @@
 //! Enums for persistence layer
-//! 
+//!
 //! This file contains ONLY enum definitions following Single Responsibility Principle.
 
 use serde::{Deserialize, Serialize};

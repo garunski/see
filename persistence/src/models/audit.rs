@@ -1,10 +1,10 @@
 //! AuditEvent model
-//! 
+//!
 //! This file contains ONLY AuditEvent struct following Single Responsibility Principle.
 
+use crate::models::AuditStatus;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
-use crate::models::AuditStatus;
 
 /// Audit trail entry
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -42,7 +42,7 @@ impl AuditEvent {
         if self.message.is_empty() {
             return Err("Audit message cannot be empty".to_string());
         }
-        
+
         Ok(())
     }
 

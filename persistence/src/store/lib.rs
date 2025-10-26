@@ -1,11 +1,11 @@
 //! Store struct and initialization
-//! 
+//!
 //! This file contains ONLY Store struct and initialization following Single Responsibility Principle.
 
-use sqlx::SqlitePool;
-use std::sync::Arc;
 use crate::errors::PersistenceError;
 use crate::logging::{log_db_operation_start, log_db_operation_success};
+use sqlx::SqlitePool;
+use std::sync::Arc;
 
 /// Main store struct for database operations
 pub struct Store {
@@ -17,7 +17,7 @@ impl Store {
     pub async fn new(db_path: &str) -> Result<Self, PersistenceError> {
         log_db_operation_start("connect", "database");
         tracing::info!("Attempting to connect to database: {}", db_path);
-        
+
         // Enable WAL mode for better concurrency
         let pool = SqlitePool::connect(&format!("sqlite:{}", db_path))
             .await
@@ -36,7 +36,7 @@ impl Store {
         Self::create_tables(&pool).await?;
 
         log_db_operation_success("connect", "database", 0);
-        
+
         Ok(Self {
             pool: Arc::new(pool),
         })
@@ -45,7 +45,7 @@ impl Store {
     /// Create all required tables
     async fn create_tables(pool: &SqlitePool) -> Result<(), PersistenceError> {
         log_db_operation_start("create_tables", "all");
-        
+
         let tables = [
             "CREATE TABLE IF NOT EXISTS workflows (id TEXT PRIMARY KEY, data JSON NOT NULL)",
             "CREATE TABLE IF NOT EXISTS workflow_executions (id TEXT PRIMARY KEY, data JSON NOT NULL)",

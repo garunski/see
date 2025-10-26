@@ -1,16 +1,16 @@
 // Workflow conversions ONLY
 
-use std::sync::Arc;
+use crate::errors::CoreError;
 use engine::{EngineWorkflow, WorkflowResult as EngineWorkflowResult};
 use persistence::WorkflowDefinition;
-use crate::errors::CoreError;
+use std::sync::Arc;
 
 /// Enhanced WorkflowResult with execution_id for GUI tracking
 #[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]
 pub struct WorkflowResult {
     pub success: bool,
     pub workflow_name: String,
-    pub execution_id: String,  // Added for GUI tracking
+    pub execution_id: String, // Added for GUI tracking
     pub tasks: Vec<engine::TaskInfo>,
     pub audit_trail: Vec<engine::AuditEntry>,
     pub per_task_logs: std::collections::HashMap<String, Vec<String>>,
@@ -22,17 +22,17 @@ pub type OutputCallback = Arc<dyn Fn(String) + Send + Sync>;
 
 /// Convert WorkflowDefinition to EngineWorkflow
 pub fn workflow_definition_to_engine(
-    workflow: &WorkflowDefinition
+    workflow: &WorkflowDefinition,
 ) -> Result<EngineWorkflow, CoreError> {
     // Parse JSON content to get tasks
     let parsed = engine::parse_workflow(&workflow.content)
         .map_err(|e| CoreError::Engine(engine::EngineError::Parser(e)))?;
-    
+
     // EngineWorkflow is created by parse_workflow with:
     // - id: extracted from JSON
     // - name: extracted from JSON
     // - tasks: parsed from JSON tasks array
-    
+
     Ok(parsed)
 }
 

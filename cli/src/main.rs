@@ -45,7 +45,8 @@ async fn main() {
         }
     };
 
-    let workflow_id = workflow_json.get("id")
+    let workflow_id = workflow_json
+        .get("id")
         .and_then(|v| v.as_str())
         .unwrap_or("default");
 
@@ -56,11 +57,13 @@ async fn main() {
 
     let workflow_definition = s_e_e_core::WorkflowDefinition {
         id: workflow_id.to_string(),
-        name: workflow_json.get("name")
+        name: workflow_json
+            .get("name")
             .and_then(|v| v.as_str())
             .unwrap_or("Unnamed Workflow")
             .to_string(),
-        description: workflow_json.get("description")
+        description: workflow_json
+            .get("description")
             .and_then(|v| v.as_str())
             .map(|s| s.to_string()),
         content: workflow_content,
@@ -88,7 +91,9 @@ async fn main() {
             );
             println!(
                 "Workflow '{}' completed: success={} tasks={}",
-                result.workflow_name, result.success, result.tasks.len()
+                result.workflow_name,
+                result.success,
+                result.tasks.len()
             );
         }
         Err(e) => {

@@ -14,10 +14,11 @@ pub fn task_info_to_execution(
     workflow_completed_at: chrono::DateTime<chrono::Utc>,
 ) -> TaskExecution {
     // Extract output from per_task_logs
-    let output = per_task_logs.get(&task.id)
+    let output = per_task_logs
+        .get(&task.id)
         .map(|logs| logs.join("\n"))
         .filter(|s| !s.is_empty());
-    
+
     // Convert engine TaskStatus to persistence TaskStatus
     let persistence_status = match task.status {
         EngineTaskStatus::Pending => PersistenceTaskStatus::Pending,
@@ -26,25 +27,26 @@ pub fn task_info_to_execution(
         EngineTaskStatus::Failed => PersistenceTaskStatus::Failed,
         EngineTaskStatus::WaitingForInput => PersistenceTaskStatus::WaitingForInput,
     };
-    
+
     // Extract error if task failed
     let error = if matches!(task.status, EngineTaskStatus::Failed) {
         // Try to find task-specific error in errors vec
-        errors.iter()
+        errors
+            .iter()
             .find(|e| e.contains(&task.id))
             .cloned()
             .or_else(|| Some("Task failed".to_string()))
     } else {
         None
     };
-    
+
     // Estimate timestamps (engine doesn't provide per-task timestamps)
     let completed_at = match task.status {
         EngineTaskStatus::Complete | EngineTaskStatus::Failed => Some(workflow_completed_at),
         EngineTaskStatus::WaitingForInput => None,
         _ => None,
     };
-    
+
     TaskExecution {
         id: task.id.clone(),
         workflow_id: workflow_id.to_string(),
@@ -67,7 +69,7 @@ pub fn task_execution_to_info(task: &TaskExecution) -> TaskInfo {
         PersistenceTaskStatus::Failed => EngineTaskStatus::Failed,
         PersistenceTaskStatus::WaitingForInput => EngineTaskStatus::WaitingForInput,
     };
-    
+
     TaskInfo {
         id: task.id.clone(),
         name: task.name.clone(),

@@ -28,7 +28,7 @@ impl WorkflowEngine {
         completed_tasks: &HashSet<String>,
     ) -> Vec<EngineTask> {
         let mut ready_tasks = Vec::new();
-        
+
         // Helper to recursively collect ready tasks from a task's next_tasks
         fn collect_ready_tasks(
             tasks: &[EngineTask],
@@ -45,16 +45,16 @@ impl WorkflowEngine {
                 }
             }
         }
-        
+
         // Start with root tasks
         collect_ready_tasks(root_tasks, completed_tasks, &mut ready_tasks);
-        
+
         trace!(
             ready_count = ready_tasks.len(),
             ready_ids = ?ready_tasks.iter().map(|t| &t.id).collect::<Vec<_>>(),
             "Found ready tasks from tree"
         );
-        
+
         ready_tasks
     }
 

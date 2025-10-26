@@ -1,7 +1,7 @@
 // Workflow conversion tests ONLY
 
-use s_e_e_core::{bridge::*, CoreError};
 use persistence::WorkflowDefinition;
+use s_e_e_core::{bridge::*, CoreError};
 
 #[test]
 fn test_workflow_result_creation() {
@@ -14,7 +14,7 @@ fn test_workflow_result_creation() {
         per_task_logs: std::collections::HashMap::new(),
         errors: vec![],
     };
-    
+
     assert!(result.success);
     assert_eq!(result.workflow_name, "Test Workflow");
     assert_eq!(result.execution_id, "exec-123");
@@ -25,7 +25,7 @@ fn test_output_callback_type() {
     let callback: OutputCallback = std::sync::Arc::new(|msg: String| {
         assert_eq!(msg, "test");
     });
-    
+
     callback("test".to_string());
 }
 
@@ -51,16 +51,17 @@ fn test_workflow_definition_to_engine_valid() {
                     "next_tasks": []
                 }
             ]
-        }"#.to_string(),
+        }"#
+        .to_string(),
         is_default: false,
         is_edited: false,
         created_at: chrono::Utc::now(),
         updated_at: chrono::Utc::now(),
     };
-    
+
     let result = workflow::workflow_definition_to_engine(&workflow);
     assert!(result.is_ok(), "Valid workflow should convert successfully");
-    
+
     let engine_workflow = result.unwrap();
     assert_eq!(engine_workflow.id, "test-workflow");
     assert_eq!(engine_workflow.name, "Test Workflow");
@@ -80,12 +81,12 @@ fn test_workflow_definition_to_engine_invalid_json() {
         created_at: chrono::Utc::now(),
         updated_at: chrono::Utc::now(),
     };
-    
+
     let result = workflow::workflow_definition_to_engine(&workflow);
     assert!(result.is_err(), "Invalid JSON should fail conversion");
-    
+
     match result.unwrap_err() {
-        CoreError::Engine(engine::EngineError::Parser(_)) => {}, // Expected
+        CoreError::Engine(engine::EngineError::Parser(_)) => {} // Expected
         other => panic!("Expected Parser error, got: {:?}", other),
     }
 }
@@ -102,12 +103,12 @@ fn test_workflow_definition_to_engine_missing_fields() {
         created_at: chrono::Utc::now(),
         updated_at: chrono::Utc::now(),
     };
-    
+
     let result = workflow::workflow_definition_to_engine(&workflow);
     assert!(result.is_err(), "Missing fields should fail conversion");
-    
+
     match result.unwrap_err() {
-        CoreError::Engine(engine::EngineError::Parser(_)) => {}, // Expected
+        CoreError::Engine(engine::EngineError::Parser(_)) => {} // Expected
         other => panic!("Expected Parser error, got: {:?}", other),
     }
 }

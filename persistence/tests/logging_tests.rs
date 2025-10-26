@@ -1,8 +1,11 @@
 //! Tests for logging functionality
-//! 
+//!
 //! Tests log level configuration, structured logging following Single Responsibility Principle.
 
-use persistence::logging::{init_logging, log_db_operation_start, log_db_operation_success, log_db_operation_error, log_serialization, log_deserialization};
+use persistence::logging::{
+    init_logging, log_db_operation_error, log_db_operation_start, log_db_operation_success,
+    log_deserialization, log_serialization,
+};
 use std::sync::Once;
 
 static INIT: Once = Once::new();
@@ -17,7 +20,7 @@ fn init_test_logging() {
 #[test]
 fn test_log_db_operation_start() {
     init_test_logging();
-    
+
     // This should not panic
     log_db_operation_start("test_operation", "test_table");
 }
@@ -25,7 +28,7 @@ fn test_log_db_operation_start() {
 #[test]
 fn test_log_db_operation_success() {
     init_test_logging();
-    
+
     // This should not panic
     log_db_operation_success("test_operation", "test_table", 100);
 }
@@ -33,7 +36,7 @@ fn test_log_db_operation_success() {
 #[test]
 fn test_log_db_operation_error() {
     init_test_logging();
-    
+
     // This should not panic
     log_db_operation_error("test_operation", "test_table", "Test error message");
 }
@@ -41,7 +44,7 @@ fn test_log_db_operation_error() {
 #[test]
 fn test_log_serialization() {
     init_test_logging();
-    
+
     // This should not panic
     log_serialization("test_object", 1024);
 }
@@ -49,7 +52,7 @@ fn test_log_serialization() {
 #[test]
 fn test_log_deserialization() {
     init_test_logging();
-    
+
     // This should not panic
     log_deserialization("test_object", 2048);
 }
@@ -57,7 +60,7 @@ fn test_log_deserialization() {
 #[test]
 fn test_logging_multiple_operations() {
     init_test_logging();
-    
+
     // Test multiple logging operations
     for i in 0..10 {
         log_db_operation_start(&format!("operation_{}", i), "test_table");
@@ -69,7 +72,7 @@ fn test_logging_multiple_operations() {
 #[test]
 fn test_logging_error_scenarios() {
     init_test_logging();
-    
+
     // Test various error scenarios
     let error_messages = vec![
         "Connection timeout",
@@ -78,7 +81,7 @@ fn test_logging_error_scenarios() {
         "Deadlock detected",
         "Permission denied",
     ];
-    
+
     for error_msg in error_messages {
         log_db_operation_error("error_test", "test_table", error_msg);
     }
@@ -87,10 +90,10 @@ fn test_logging_error_scenarios() {
 #[test]
 fn test_logging_large_data() {
     init_test_logging();
-    
+
     // Test logging with large data sizes
     let large_sizes = vec![1024, 10240, 102400, 1048576]; // 1KB, 10KB, 100KB, 1MB
-    
+
     for size in large_sizes {
         log_serialization("large_object", size);
         log_deserialization("large_object", size);

@@ -1,16 +1,17 @@
 //! Logging configuration and helpers
-//! 
+//!
 //! This file contains ONLY logging setup following Single Responsibility Principle.
 
-use tracing::{info, debug, warn, error, instrument};
-use tracing_subscriber::{fmt, EnvFilter};
-use tracing_appender::{non_blocking, rolling};
 use std::path::Path;
+use tracing::{debug, error, info, instrument, warn};
+use tracing_appender::{non_blocking, rolling};
+use tracing_subscriber::{fmt, EnvFilter};
 
 /// Initialize logging with optional file output
-pub fn init_logging(log_file: Option<&Path>) -> Result<non_blocking::WorkerGuard, Box<dyn std::error::Error>> {
-    let filter = EnvFilter::try_from_default_env()
-        .unwrap_or_else(|_| EnvFilter::new("info"));
+pub fn init_logging(
+    log_file: Option<&Path>,
+) -> Result<non_blocking::WorkerGuard, Box<dyn std::error::Error>> {
+    let filter = EnvFilter::try_from_default_env().unwrap_or_else(|_| EnvFilter::new("info"));
 
     let (writer, guard) = if let Some(log_path) = log_file {
         let file_appender = rolling::daily(log_path.parent().unwrap(), "persistence.log");

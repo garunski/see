@@ -1,12 +1,12 @@
 // Default workflows ONLY
 
-use persistence::WorkflowDefinition;
 use chrono::Utc;
+use persistence::WorkflowDefinition;
 
 /// Get default workflow templates
 pub fn get_default_workflows() -> Vec<WorkflowDefinition> {
     let now = Utc::now();
-    
+
     vec![
         WorkflowDefinition {
             id: "default-simple".to_string(),
@@ -28,7 +28,8 @@ pub fn get_default_workflows() -> Vec<WorkflowDefinition> {
                         "next_tasks": []
                     }
                 ]
-            }"#.to_string(),
+            }"#
+            .to_string(),
             is_default: true,
             is_edited: false,
             created_at: now,
@@ -65,7 +66,8 @@ pub fn get_default_workflows() -> Vec<WorkflowDefinition> {
                         "next_tasks": []
                     }
                 ]
-            }"#.to_string(),
+            }"#
+            .to_string(),
             is_default: true,
             is_edited: false,
             created_at: now,
@@ -103,7 +105,8 @@ pub fn get_default_workflows() -> Vec<WorkflowDefinition> {
                         ]
                     }
                 ]
-            }"#.to_string(),
+            }"#
+            .to_string(),
             is_default: true,
             is_edited: false,
             created_at: now,
