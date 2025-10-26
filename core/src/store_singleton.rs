@@ -16,7 +16,7 @@ pub async fn init_global_store() -> Result<(), String> {
         .set(Arc::new(store))
         .map_err(|_| "Store already initialized".to_string())?;
 
-    tracing::info!("Global store initialized successfully");
+    tracing::debug!("Global store initialized successfully");
     Ok(())
 }
 
@@ -30,11 +30,13 @@ pub fn get_global_store() -> Result<Arc<Store>, String> {
 
 /// Get the database path for the store
 fn get_database_path() -> Result<String, String> {
-    // For testing, use a local database file
-    let data_dir = "/Users/garunnvagidov/code/see/data";
-    std::fs::create_dir_all(data_dir)
+    // Use user home directory for database
+    let home_dir =
+        std::env::var("HOME").map_err(|_| "HOME environment variable not set".to_string())?;
+    let data_dir = format!("{}/.s_e_e", home_dir);
+    std::fs::create_dir_all(&data_dir)
         .map_err(|e| format!("Failed to create data directory: {}", e))?;
     let db_path = format!("{}/data.db", data_dir);
-    tracing::info!("Using database path: {}", db_path);
+    tracing::debug!("Using database path: {}", db_path);
     Ok(db_path)
 }

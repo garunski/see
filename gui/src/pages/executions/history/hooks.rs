@@ -10,7 +10,7 @@ pub fn use_history_data() -> (Signal<bool>, Signal<Option<String>>, impl Fn() + 
     let refresh_data = {
         let state_provider = state_provider.clone();
         move || {
-            tracing::info!("🔄 REFRESH DATA CALLED");
+            tracing::debug!("refresh data called");
             let mut state_provider = state_provider.clone();
             let mut is_loading = is_loading;
             let mut error = error;
@@ -21,12 +21,12 @@ pub fn use_history_data() -> (Signal<bool>, Signal<Option<String>>, impl Fn() + 
 
                 match HistoryService::refresh_all(50).await {
                     Ok((executions, running)) => {
-                        tracing::info!(
-                            "🔄 HISTORY DATA REFRESH: executions_count={}, running_count={}, execution_ids={:?}, running_ids={:?}",
-                            executions.len(),
-                            running.len(),
-                            executions.iter().map(|e| &e.id).collect::<Vec<_>>(),
-                            running.iter().map(|r| &r.id).collect::<Vec<_>>()
+                        tracing::debug!(
+                            executions_count = executions.len(),
+                            running_count = running.len(),
+                            execution_ids = ?executions.iter().map(|e| &e.id).collect::<Vec<_>>(),
+                            running_ids = ?running.iter().map(|r| &r.id).collect::<Vec<_>>(),
+                            "refreshed history data"
                         );
                         state_provider.history.write().set_history(executions);
                         state_provider

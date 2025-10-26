@@ -19,12 +19,17 @@ impl Store {
         tracing::info!("Attempting to connect to database: {}", db_path);
 
         // Enable WAL mode for better concurrency
-        let pool = SqlitePool::connect(&format!("sqlite:{}", db_path))
-            .await
-            .map_err(|e| {
-                tracing::error!("Database connection failed: {}", e);
-                PersistenceError::Database(e.to_string())
-            })?;
+        // Note: sqlx requires specific formats for absolute paths on macOS
+        let connection_string = if db_path.starts_with('/') {
+            format!("sqlite://file:{}?mode=rwc", db_path)
+        } else {
+            format!("sqlite://{}", db_path)
+        };
+
+        let pool = SqlitePool::connect(&connection_string).await.map_err(|e| {
+            tracing::error!("Database connection failed: {}", e);
+            PersistenceError::Database(e.to_string())
+        })?;
 
         // Enable WAL mode
         sqlx::query("PRAGMA journal_mode=WAL")

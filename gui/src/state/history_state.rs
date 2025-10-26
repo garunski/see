@@ -30,10 +30,10 @@ impl HistoryState {
     }
 
     pub fn set_running_workflows(&mut self, running: Vec<WorkflowMetadata>) {
-        tracing::info!(
-            "💾 SETTING RUNNING WORKFLOWS IN STATE: count={}, ids={:?}",
-            running.len(),
-            running.iter().map(|w| &w.id).collect::<Vec<_>>()
+        tracing::debug!(
+            count = running.len(),
+            ids = ?running.iter().map(|w| &w.id).collect::<Vec<_>>(),
+            "setting running workflows in state"
         );
         self.running_workflows = running;
     }

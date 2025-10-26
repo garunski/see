@@ -57,13 +57,10 @@ impl HistoryService {
             .await
             .map_err(|e| HistoryError::FetchRunningWorkflowsFailed(e.to_string()))?;
 
-        tracing::info!(
-            "📊 RUNNING WORKFLOWS FROM DATABASE: total_metadata_count={}, metadata_ids={:?}",
-            metadata.len(),
-            metadata
-                .iter()
-                .map(|m| (&m.id, &m.status))
-                .collect::<Vec<_>>()
+        tracing::debug!(
+            total_metadata_count = metadata.len(),
+            metadata_ids = ?metadata.iter().map(|m| (&m.id, &m.status)).collect::<Vec<_>>(),
+            "fetched running workflows from database"
         );
 
         let running: Vec<_> = metadata
@@ -71,10 +68,10 @@ impl HistoryService {
             .filter(|m| m.status == "running")
             .collect();
 
-        tracing::info!(
-            "📊 FILTERED RUNNING WORKFLOWS: running_count={}, running_ids={:?}",
-            running.len(),
-            running.iter().map(|m| &m.id).collect::<Vec<_>>()
+        tracing::debug!(
+            running_count = running.len(),
+            running_ids = ?running.iter().map(|m| &m.id).collect::<Vec<_>>(),
+            "filtered running workflows"
         );
 
         Ok(running)

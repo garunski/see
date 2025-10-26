@@ -9,7 +9,7 @@ use super::hooks::{use_deletion_handlers, use_history_data};
 
 #[component]
 pub fn HistoryPage() -> Element {
-    tracing::info!("🚀 HISTORY PAGE COMPONENT RENDERING");
+    tracing::debug!("rendering history page");
     let _state_provider = use_context::<AppStateProvider>();
 
     // Use custom hooks for data management
@@ -34,12 +34,12 @@ pub fn HistoryPage() -> Element {
     use_effect(move || {
         let running = running_workflows();
         let history = workflow_history();
-        tracing::info!(
-            "🖥️  HISTORY PAGE RENDERING: running_count={}, running_ids={:?}, completed_count={}, completed_ids={:?}",
-            running.len(),
-            running.iter().map(|w| &w.id).collect::<Vec<_>>(),
-            history.len(),
-            history.iter().map(|h| &h.id).collect::<Vec<_>>()
+        tracing::debug!(
+            running_count = running.len(),
+            running_ids = ?running.iter().map(|w| &w.id).collect::<Vec<_>>(),
+            completed_count = history.len(),
+            completed_ids = ?history.iter().map(|h| &h.id).collect::<Vec<_>>(),
+            "history page rendering"
         );
     });
 

@@ -64,6 +64,10 @@ tasks:
       - npm run build
 
   clear-db:
-    desc: Deletes the database completely
+    desc: Deletes the database completely and resets data directory
     cmds:
+      - rm -f ~/.s_e_e/data.db
+      - rm -f ~/.s_e_e/data.db-wal
+      - rm -f ~/.s_e_e/data.db-shm
       - rm -f ~/.s_e_e/audit.redb
+      - echo "✅ Database cleared successfully"
