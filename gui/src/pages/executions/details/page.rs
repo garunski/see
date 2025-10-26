@@ -31,11 +31,15 @@ fn ResumeButton(execution_id: String, task: TaskInfo) -> Element {
                     let task_id_clone = task_id.clone();
 
                     spawn(async move {
-                        tracing::info!("Resume button clicked for execution {} task {}", execution_id_clone, task_id_clone);
+                        tracing::debug!(
+                            execution_id = %execution_id_clone,
+                            task_id = %task_id_clone,
+                            "Resume button clicked"
+                        );
 
                         match s_e_e_core::resume_task(&execution_id_clone, &task_id_clone).await {
                             Ok(_) => {
-                                tracing::info!("Task resumed successfully");
+                                tracing::info!(execution_id = %execution_id_clone, task_id = %task_id_clone, "Task resumed successfully");
                                 // TODO: Refresh the page or update state in Phase 6
                             }
                             Err(e) => {

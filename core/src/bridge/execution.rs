@@ -30,7 +30,9 @@ pub fn workflow_result_to_execution(
     WorkflowExecution {
         id: execution_id,
         workflow_name: result.workflow_name,
-        workflow_snapshot: serde_json::json!({}), // Empty for engine conversions
+        workflow_snapshot: serde_json::json!({
+            "tasks": []
+        }), // Empty structure - will be set by caller with actual snapshot
         status: if result.success {
             WorkflowStatus::Complete
         } else {

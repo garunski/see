@@ -12,12 +12,12 @@ pub fn RunningWorkflowItem(
 ) -> Element {
     let workflow_id_for_delete = workflow.id.clone();
 
-    // Log each time this component renders
-    tracing::info!(
-        "🏃 RENDERING RunningWorkflowItem: execution_id={}, workflow_name={}, status={:?}",
-        workflow.id,
-        workflow.workflow_name,
-        workflow.status
+    // Log component render at trace level
+    tracing::trace!(
+        execution_id = %workflow.id,
+        workflow_name = %workflow.workflow_name,
+        status = %workflow.status,
+        "Rendering running workflow item"
     );
 
     rsx! {

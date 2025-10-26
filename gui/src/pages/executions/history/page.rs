@@ -89,12 +89,12 @@ pub fn HistoryPage() -> Element {
                         div { class: "grid gap-6",
                             for (index, workflow) in running_workflows().iter().enumerate() {
                                 {
-                                    tracing::info!(
-                                        "🔄 RENDERING RUNNING WORKFLOW #{}: id={}, name={}, status={:?}",
-                                        index + 1,
-                                        workflow.id,
-                                        workflow.workflow_name,
-                                        workflow.status
+                                    tracing::debug!(
+                                        running_index = index + 1,
+                                        execution_id = %workflow.id,
+                                        workflow_name = %workflow.workflow_name,
+                                        status = ?workflow.status,
+                                        "Rendering running workflow"
                                     );
                                 }
                                 RunningWorkflowItem {
@@ -127,12 +127,12 @@ pub fn HistoryPage() -> Element {
                         div { class: "grid gap-6",
                             for (index, execution) in workflow_history().iter().enumerate() {
                                 {
-                                    tracing::info!(
-                                        "📋 RENDERING HISTORY ITEM #{}: id={}, name={}, success={}",
-                                        index + 1,
-                                        execution.id,
-                                        execution.workflow_name,
-                                        execution.success.unwrap_or(false)
+                                    tracing::trace!(
+                                        completed_index = index + 1,
+                                        execution_id = %execution.id,
+                                        workflow_name = %execution.workflow_name,
+                                        success = execution.success.unwrap_or(false),
+                                        "Rendering completed workflow"
                                     );
                                 }
                                 HistoryItem {

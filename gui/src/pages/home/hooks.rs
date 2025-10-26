@@ -2,17 +2,17 @@ use crate::services::workflow::run_workflow_by_id;
 
 pub fn use_workflow_execution() -> impl Fn(String, String) + 'static {
     move |workflow_name: String, workflow_id: String| {
-        tracing::info!(
+        tracing::debug!(
             workflow_name = %workflow_name,
             workflow_id = %workflow_id,
-            "User initiated workflow execution from home page"
+            "User initiated workflow execution"
         );
 
         tokio::spawn(async move {
-            tracing::info!(
+            tracing::debug!(
                 workflow_name = %workflow_name,
                 workflow_id = %workflow_id,
-                "Starting truly detached workflow execution - completely independent of UI lifecycle"
+                "Starting detached workflow execution"
             );
 
             match run_workflow_by_id(workflow_id.clone(), None).await {
@@ -21,7 +21,7 @@ pub fn use_workflow_execution() -> impl Fn(String, String) + 'static {
                         success = result.success,
                         execution_id = %result.execution_id,
                         workflow_name = %result.workflow_name,
-                        "Truly detached workflow execution completed successfully - result saved to database, UI will poll for updates"
+                        "Workflow execution completed"
                     );
                 }
                 Err(e) => {

@@ -65,7 +65,8 @@ pub fn UploadPage() -> Element {
                         Ok(store) => {
                             // Save individual workflow to workflows table
                             if let Err(e) = store.save_workflow(&workflow).await {
-                                error_signal.set(format!("Failed to save workflow to database: {}", e));
+                                error_signal
+                                    .set(format!("Failed to save workflow to database: {}", e));
                                 saving_signal.set(false);
                                 return;
                             }

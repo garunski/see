@@ -112,19 +112,29 @@ pub fn use_task_order_from_snapshot(
 }
 
 /// Recursively extract task IDs from workflow JSON preserving execution order
+/// Uses breadth-first traversal to maintain level-by-level order
 fn extract_task_ids_recursive(value: &Value) -> Vec<String> {
     let mut task_ids = Vec::new();
+    let mut queue: Vec<&Value> = Vec::new();
 
+    // Initialize queue with root tasks
     if let Some(tasks) = value.get("tasks").and_then(|v| v.as_array()) {
         for task in tasks {
-            if let Some(task_id) = task.get("id").and_then(|v| v.as_str()) {
-                task_ids.push(task_id.to_string());
+            queue.push(task);
+        }
+    }
 
-                // Recursively get next_tasks
-                if let Some(next_tasks) = task.get("next_tasks").and_then(|v| v.as_array()) {
-                    for next_task in next_tasks {
-                        task_ids.extend(extract_task_ids_recursive(next_task));
-                    }
+    // Process tasks breadth-first
+    while !queue.is_empty() {
+        let current = queue.remove(0);
+
+        if let Some(task_id) = current.get("id").and_then(|v| v.as_str()) {
+            task_ids.push(task_id.to_string());
+
+            // Add next_tasks to queue for processing later
+            if let Some(next_tasks) = current.get("next_tasks").and_then(|v| v.as_array()) {
+                for next_task in next_tasks {
+                    queue.push(next_task);
                 }
             }
         }

@@ -6,7 +6,7 @@ use persistence::{TaskStatus, WorkflowStatus};
 
 /// Resume a paused task that's waiting for input
 pub async fn resume_task(execution_id: &str, task_id: &str) -> Result<(), CoreError> {
-    tracing::info!("Resuming task {} in execution {}", task_id, execution_id);
+    tracing::debug!("Resuming task {} in execution {}", task_id, execution_id);
 
     // Step 1: Load WorkflowExecution from Persistence
     let store = get_global_store()?;

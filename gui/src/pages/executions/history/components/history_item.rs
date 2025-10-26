@@ -12,12 +12,12 @@ pub fn HistoryItem(
 ) -> Element {
     let execution_id_for_delete = execution.id.clone();
 
-    // Log each time this component renders
-    tracing::info!(
-        "📋 RENDERING HistoryItem: execution_id={}, workflow_name={}, success={}",
-        execution.id,
-        execution.workflow_name,
-        execution.success.unwrap_or(false)
+    // Log component render at debug level
+    tracing::trace!(
+        execution_id = %execution.id,
+        workflow_name = %execution.workflow_name,
+        success = execution.success.unwrap_or(false),
+        "Rendering history item"
     );
 
     rsx! {

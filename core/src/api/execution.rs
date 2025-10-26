@@ -14,7 +14,7 @@ pub async fn execute_workflow_by_id(
     workflow_id: &str,
     callback: Option<OutputCallback>,
 ) -> Result<WorkflowResult, CoreError> {
-    tracing::info!("Executing workflow: {}", workflow_id);
+    tracing::debug!("Executing workflow: {}", workflow_id);
 
     // Step 1: Load WorkflowDefinition from Persistence
     let store = get_global_store()?;
@@ -77,7 +77,7 @@ pub async fn execute_workflow_by_id(
         .any(|t| matches!(t.status, engine::TaskStatus::WaitingForInput));
 
     if has_input_waiting {
-        tracing::info!("Workflow paused - waiting for user input");
+        tracing::debug!("Workflow paused - waiting for user input: {}", workflow_id);
 
         // Update execution status to indicate waiting
         let mut updated_execution = initial_execution.clone();
@@ -112,11 +112,14 @@ pub async fn execute_workflow_by_id(
 
     // Step 10: Convert Engine Result to Persistence Types
     let _completed_at = chrono::Utc::now();
-    let final_execution = workflow_result_to_execution(
+    let mut final_execution = workflow_result_to_execution(
         engine_result.clone(),
         execution_id.clone(),
         initial_execution.created_at,
     );
+
+    // Preserve the workflow snapshot for task ordering
+    final_execution.workflow_snapshot = initial_execution.workflow_snapshot;
 
     // Step 11: Save Task Executions to Persistence
     for task in &final_execution.tasks {
@@ -152,6 +155,6 @@ pub async fn execute_workflow_by_id(
         errors: engine_result.errors,
     };
 
-    tracing::info!("Workflow execution completed: {}", result.success);
+    tracing::info!("Workflow execution completed: {} (execution_id: {})", result.success, result.execution_id);
     Ok(result)
 }
