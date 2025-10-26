@@ -447,17 +447,27 @@ impl WorkflowEngine {
             "Merging context updates from parallel execution"
         );
 
-        for (task, _) in &results {
-            if let Some(task_logs) = context.per_task_logs.get(&task.id) {
-                trace!(
-                    execution_id = %context.execution_id,
-                    task_id = %task.id,
-                    log_count = task_logs.len(),
-                    "Merging task logs back to context"
-                );
-                context
-                    .per_task_logs
-                    .insert(task.id.clone(), task_logs.clone());
+        for (task, task_result) in &results {
+            // Extract output and error from TaskResult
+            let mut logs = Vec::new();
+
+            // Add output to logs
+            if let Some(output_str) = task_result.output.as_str() {
+                if !output_str.is_empty() {
+                    logs.push(format!("Output: {}", output_str));
+                }
+            } else if !task_result.output.is_null() {
+                logs.push(format!("Output: {}", task_result.output));
+            }
+
+            // Add error to logs if present
+            if let Some(error) = &task_result.error {
+                logs.push(format!("Error: {}", error));
+            }
+
+            // Store in original context
+            if !logs.is_empty() {
+                context.per_task_logs.insert(task.id.clone(), logs);
             }
         }
 

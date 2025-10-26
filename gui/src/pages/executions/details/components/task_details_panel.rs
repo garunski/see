@@ -111,6 +111,52 @@ pub fn TaskDetailsPanel(
                     div {
                         class: "space-y-6",
 
+                        // Basic task information
+                        div {
+                            class: "bg-zinc-50 dark:bg-zinc-800 rounded-xl p-6",
+                            h4 {
+                                class: "text-base font-semibold text-zinc-950 dark:text-white mb-4",
+                                "Task Information"
+                            }
+                            div {
+                                class: "space-y-3",
+                                div {
+                                    class: "flex justify-between",
+                                    span { class: "text-sm font-medium text-zinc-600 dark:text-zinc-400", "Name:" }
+                                    span { class: "text-sm text-zinc-900 dark:text-zinc-100", "{task.name}" }
+                                }
+                                div {
+                                    class: "flex justify-between",
+                                    span { class: "text-sm font-medium text-zinc-600 dark:text-zinc-400", "Status:" }
+                                    span {
+                                        class: format!("text-sm px-2 py-1 rounded font-medium {}",
+                                            match format!("{:?}", task.status).as_str() {
+                                                "Complete" => "bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-200",
+                                                "Failed" => "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200",
+                                                "InProgress" => "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200",
+                                                "Pending" => "bg-zinc-100 text-zinc-800 dark:bg-zinc-900 dark:text-zinc-200",
+                                                "WaitingForInput" => "bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200",
+                                                _ => "bg-zinc-100 text-zinc-800 dark:bg-zinc-900 dark:text-zinc-200",
+                                            }
+                                        ),
+                                        match format!("{:?}", task.status).as_str() {
+                                            "Complete" => "Complete",
+                                            "Failed" => "Failed",
+                                            "InProgress" => "In Progress",
+                                            "Pending" => "Pending",
+                                            "WaitingForInput" => "Waiting for Input",
+                                            _ => "Unknown",
+                                        }
+                                    }
+                                }
+                                div {
+                                    class: "flex justify-between",
+                                    span { class: "text-sm font-medium text-zinc-600 dark:text-zinc-400", "ID:" }
+                                    span { class: "text-sm text-zinc-900 dark:text-zinc-100 font-mono", "{task.id}" }
+                                }
+                            }
+                        }
+
                         // Task logs
                         if let Some(exec) = execution.as_ref() {
                             if let Some(logs) = exec.per_task_logs.get(&task.id) {
@@ -212,21 +258,21 @@ pub fn TaskDetailsPanel(
                 if let Some(task) = current_task.as_ref() {
                     div {
                         class: format!("px-3 py-1 text-sm rounded-full font-medium {}",
-                            match task.status.as_str() {
-                                "complete" => "bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-200",
-                                "failed" => "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200",
-                                "in-progress" => "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200",
-                                "pending" => "bg-zinc-100 text-zinc-800 dark:bg-zinc-900 dark:text-zinc-200",
-                                "waiting-for-input" => "bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200",
+                            match format!("{:?}", task.status).as_str() {
+                                "Complete" => "bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-200",
+                                "Failed" => "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200",
+                                "InProgress" => "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200",
+                                "Pending" => "bg-zinc-100 text-zinc-800 dark:bg-zinc-900 dark:text-zinc-200",
+                                "WaitingForInput" => "bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200",
                                 _ => "bg-zinc-100 text-zinc-800 dark:bg-zinc-900 dark:text-zinc-200",
                             }
                         ),
-                        match task.status.as_str() {
-                            "complete" => "Complete",
-                            "failed" => "Failed",
-                            "in-progress" => "In Progress",
-                            "pending" => "Pending",
-                            "waiting-for-input" => "Waiting for Input",
+                        match format!("{:?}", task.status).as_str() {
+                            "Complete" => "Complete",
+                            "Failed" => "Failed",
+                            "InProgress" => "In Progress",
+                            "Pending" => "Pending",
+                            "WaitingForInput" => "Waiting for Input",
                             _ => "Unknown",
                         }
                     }

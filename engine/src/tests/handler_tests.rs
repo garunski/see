@@ -33,6 +33,42 @@ async fn test_cli_command_handler() {
     assert!(result.success);
     assert!(result.output.as_str().unwrap().contains("hello"));
     assert!(context.per_task_logs.contains_key("test_task"));
+
+    // Verify logs contain expected content
+    let logs = &context.per_task_logs["test_task"];
+    assert!(!logs.is_empty());
+    assert!(logs.iter().any(|log| log.contains("Executing CLI command")));
+    assert!(logs.iter().any(|log| log.contains("Output:")));
+    assert!(logs.iter().any(|log| log.contains("hello")));
+}
+
+#[tokio::test]
+async fn test_cli_command_handler_error() {
+    let handler = CliCommandHandler;
+    let mut context = ExecutionContext::new("test".to_string(), "test_workflow".to_string());
+
+    let task = create_test_task(TaskFunction::CliCommand {
+        command: "nonexistent_command_xyz".to_string(),
+        args: vec![],
+    });
+
+    let result = handler.execute(&mut context, &task).await;
+
+    assert!(result.is_err());
+    match result.unwrap_err() {
+        HandlerError::ExecutionFailed(msg) => {
+            assert!(msg.contains("No such file or directory"));
+        }
+        _ => panic!("Expected ExecutionFailed error"),
+    }
+
+    // Verify error logs were still created
+    assert!(context.per_task_logs.contains_key("test_task"));
+
+    // Verify error logs
+    let logs = &context.per_task_logs["test_task"];
+    assert!(!logs.is_empty());
+    assert!(logs.iter().any(|log| log.contains("Executing CLI command")));
 }
 
 #[tokio::test]

@@ -43,3 +43,6 @@ pub use crate::bridge::task::task_execution_to_info;
 
 // Re-export function types
 pub use crate::bridge::OutputCallback;
+
+#[cfg(test)]
+mod execution_integration_tests;

@@ -236,9 +236,13 @@ impl Store {
             .await?
             .ok_or_else(|| format!("Workflow execution not found: {}", id))?;
 
-        // Load associated tasks
-        let tasks = self.get_tasks_for_workflow(id).await?;
-        execution.tasks = tasks;
+        // Only load additional tasks from task_executions table if the execution has no tasks
+        // This handles cases where tasks might be stored separately, but preserves tasks
+        // that are already embedded in the WorkflowExecution JSON
+        if execution.tasks.is_empty() {
+            let additional_tasks = self.get_tasks_for_workflow(id).await?;
+            execution.tasks = additional_tasks;
+        }
 
         log_db_operation_success("get_workflow_with_tasks", "workflow_executions", 0);
         Ok(execution)

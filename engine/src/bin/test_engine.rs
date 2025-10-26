@@ -57,6 +57,14 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     entry.timestamp, entry.message, entry.status
                 );
             }
+
+            println!("\n📋 Per-Task Logs:");
+            for (task_id, logs) in &result.per_task_logs {
+                println!("  - {}:", task_id);
+                for log in logs {
+                    println!("    {}", log);
+                }
+            }
         }
         Err(e) => {
             eprintln!("❌ Workflow execution failed: {}", e);
