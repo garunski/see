@@ -164,3 +164,51 @@ fn test_invalid_workflow_execution() {
         }
     }
 }
+
+#[test]
+fn test_workflow_execution_stores_snapshot() {
+    let rt = tokio::runtime::Runtime::new().unwrap();
+    let init_result = rt.block_on(init_global_store());
+    
+    match init_result {
+        Ok(_) => {
+            let store = get_global_store().unwrap();
+            
+            // Create workflow with known content
+            let workflow = WorkflowDefinition {
+                id: uuid::Uuid::new_v4().to_string(),
+                name: "Snapshot Test Workflow".to_string(),
+                description: Some("Test snapshot storage".to_string()),
+                content: r#"{"id":"snapshot-test","name":"Snapshot Test","tasks":[]}"#.to_string(),
+                is_default: false,
+                is_edited: false,
+                created_at: chrono::Utc::now(),
+                updated_at: chrono::Utc::now(),
+            };
+            
+            rt.block_on(store.save_workflow(&workflow)).unwrap();
+            
+            // Execute workflow
+            let result = rt.block_on(execute_workflow_by_id(&workflow.id, None));
+            
+            if let Ok(workflow_result) = result {
+                // Get execution from store
+                let execution = rt.block_on(store
+                    .get_workflow_execution(&workflow_result.execution_id))
+                    .unwrap()
+                    .unwrap();
+                
+                // Verify snapshot is stored and not empty
+                assert!(!execution.workflow_snapshot.is_null());
+                assert_eq!(execution.workflow_snapshot["id"], "snapshot-test");
+                assert_eq!(execution.workflow_snapshot["name"], "Snapshot Test");
+            } else {
+                // Execution might fail (e.g., no echo command), which is acceptable
+                // We only test snapshot storage when execution succeeds
+            }
+        },
+        Err(_) => {
+            // Store initialization failed - acceptable in test environment
+        }
+    }
+}

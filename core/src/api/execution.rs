@@ -31,20 +31,21 @@ pub async fn execute_workflow_by_id(
         ));
     }
 
-    // Validate JSON is parseable
-    serde_json::from_str::<serde_json::Value>(&workflow.content)
+    // Step 3: Parse workflow content to JSON for snapshot
+    let workflow_json: serde_json::Value = serde_json::from_str(&workflow.content)
         .map_err(|e| CoreError::Execution(format!("Invalid workflow JSON: {}", e)))?;
 
-    // Step 3: Parse JSON Content to EngineWorkflow
+    // Step 4: Parse JSON Content to EngineWorkflow
     let engine_workflow = workflow_definition_to_engine(&workflow)?;
 
-    // Step 4: Create Initial WorkflowExecution Record
+    // Step 5: Create Initial WorkflowExecution Record
     let execution_id = uuid::Uuid::new_v4().to_string();
     let now = chrono::Utc::now();
 
     let initial_execution = WorkflowExecution {
         id: execution_id.clone(),
         workflow_name: workflow.name.clone(),
+        workflow_snapshot: workflow_json,
         status: WorkflowStatus::Running,
         created_at: now,
         completed_at: None,
@@ -56,20 +57,20 @@ pub async fn execute_workflow_by_id(
         errors: Vec::new(),
     };
 
-    // Step 5: Save Initial Execution to Persistence
+    // Step 6: Save Initial Execution to Persistence
     store
         .save_workflow_execution(initial_execution.clone())
         .await
         .map_err(CoreError::Persistence)?;
 
-    // Step 6: Execute Workflow Through Engine
+    // Step 7: Execute Workflow Through Engine
     let engine = WorkflowEngine::new();
     let engine_result = engine
         .execute_workflow(engine_workflow)
         .await
         .map_err(CoreError::Engine)?;
 
-    // Step 7: Check if workflow is waiting for input
+    // Step 8: Check if workflow is waiting for input
     let has_input_waiting = engine_result
         .tasks
         .iter()
@@ -104,12 +105,12 @@ pub async fn execute_workflow_by_id(
         });
     }
 
-    // Step 7: Stream Progress via OutputCallback
+    // Step 9: Stream Progress via OutputCallback
     if let Some(ref callback) = callback {
         callback("Workflow execution completed".to_string());
     }
 
-    // Step 8: Convert Engine Result to Persistence Types
+    // Step 10: Convert Engine Result to Persistence Types
     let _completed_at = chrono::Utc::now();
     let final_execution = workflow_result_to_execution(
         engine_result.clone(),
@@ -117,7 +118,7 @@ pub async fn execute_workflow_by_id(
         initial_execution.created_at,
     );
 
-    // Step 9: Save Task Executions to Persistence
+    // Step 11: Save Task Executions to Persistence
     for task in &final_execution.tasks {
         store
             .save_task_execution(task.clone())
@@ -125,7 +126,7 @@ pub async fn execute_workflow_by_id(
             .map_err(CoreError::Persistence)?;
     }
 
-    // Step 10: Save Audit Events to Persistence
+    // Step 12: Save Audit Events to Persistence
     for audit_entry in &engine_result.audit_trail {
         let audit_event = audit_entry_to_event(audit_entry)?;
         store
@@ -134,13 +135,13 @@ pub async fn execute_workflow_by_id(
             .map_err(CoreError::Persistence)?;
     }
 
-    // Step 11: Update Final Execution Record
+    // Step 13: Update Final Execution Record
     store
         .save_workflow_execution(final_execution.clone())
         .await
         .map_err(CoreError::Persistence)?;
 
-    // Step 12: Return WorkflowResult
+    // Step 14: Return WorkflowResult
     let result = WorkflowResult {
         success: engine_result.success,
         workflow_name: engine_result.workflow_name,
