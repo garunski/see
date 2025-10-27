@@ -4,7 +4,7 @@
 
 use crate::errors::CoreError;
 use crate::store_singleton::get_global_store;
-use persistence::{TaskExecution, TaskStatus, UserInputRequest};
+use persistence::{TaskExecution, TaskExecutionStatus, UserInputRequest};
 use tracing::{debug, info};
 
 /// Provide user input for a waiting task
@@ -52,7 +52,7 @@ pub async fn provide_user_input(
     );
 
     // Step 3: Validate task status
-    if task.status != TaskStatus::WaitingForInput {
+    if task.status != TaskExecutionStatus::WaitingForInput {
         return Err(CoreError::Execution(format!(
             "Task {} is not waiting for input (status: {:?})",
             task_id, task.status
@@ -79,7 +79,7 @@ pub async fn provide_user_input(
     // Step 6: Update task with input
     let mut updated_task = task.clone();
     updated_task.user_input = Some(input_value.clone());
-    updated_task.status = TaskStatus::InProgress;
+    updated_task.status = TaskExecutionStatus::InProgress;
 
     store
         .save_task_execution(updated_task.clone())

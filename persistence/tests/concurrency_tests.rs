@@ -3,7 +3,8 @@
 //! Tests multiple concurrent readers, write during read following Single Responsibility Principle.
 
 use persistence::{
-    Store, TaskExecution, TaskStatus, WorkflowDefinition, WorkflowExecution, WorkflowStatus,
+    Store, TaskExecution, TaskExecutionStatus, WorkflowDefinition, WorkflowExecution,
+    WorkflowExecutionStatus,
 };
 use std::sync::Arc;
 use tokio::task;
@@ -174,7 +175,7 @@ async fn test_concurrent_execution_operations() {
             let execution = WorkflowExecution {
                 id: format!("exec_{}", i),
                 workflow_name: format!("Workflow {}", i),
-                status: WorkflowStatus::Running,
+                status: WorkflowExecutionStatus::Running,
                 tasks: vec![],
                 ..Default::default()
             };
@@ -190,7 +191,7 @@ async fn test_concurrent_execution_operations() {
                     id: format!("task_{}_{}", i, j),
                     workflow_id: format!("exec_{}", i),
                     name: format!("Task {}-{}", i, j),
-                    status: TaskStatus::Complete,
+                    status: TaskExecutionStatus::Complete,
                     ..Default::default()
                 };
 

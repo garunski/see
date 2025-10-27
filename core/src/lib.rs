@@ -17,15 +17,15 @@ pub use persistence::{
     SystemPrompt,
     SystemWorkflow,
     TaskExecution,
-    TaskStatus, // Re-export from persistence (has as_str method)
+    TaskExecutionStatus, // Re-export from persistence (has as_str method)
     Theme,
     UserInputRequest,
     UserPrompt,
     WorkflowDefinition,
     WorkflowExecution,
+    WorkflowExecutionStatus,
     WorkflowExecutionSummary,
     WorkflowMetadata,
-    WorkflowStatus,
 };
 
 // Re-export engine types

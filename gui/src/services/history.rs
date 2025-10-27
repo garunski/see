@@ -31,30 +31,14 @@ impl HistoryService {
         // Convert WorkflowExecution to WorkflowExecutionSummary
         let summaries = executions
             .into_iter()
-            .map(|exec| {
-                // Check if any tasks are waiting for input
-                let has_pending_inputs = exec.tasks.iter().any(|t| {
-                    t.status.as_str() == "waiting_for_input"
-                        || t.status.as_str() == "WaitingForInput"
-                });
-
-                // Adjust success field: if we have pending inputs, success should be None (not Failed)
-                let adjusted_success = if has_pending_inputs {
-                    None // Don't mark as failed when waiting for input
-                } else {
-                    exec.success
-                };
-
-                WorkflowExecutionSummary {
-                    id: exec.id,
-                    workflow_name: exec.workflow_name,
-                    status: exec.status,
-                    created_at: exec.created_at,
-                    completed_at: exec.completed_at,
-                    success: adjusted_success,
-                    task_count: exec.tasks.len(),
-                    timestamp: exec.timestamp,
-                }
+            .map(|exec| WorkflowExecutionSummary {
+                id: exec.id,
+                workflow_name: exec.workflow_name,
+                status: exec.status,
+                created_at: exec.created_at,
+                completed_at: exec.completed_at,
+                task_count: exec.tasks.len(),
+                timestamp: exec.timestamp,
             })
             .collect();
 

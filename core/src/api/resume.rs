@@ -2,7 +2,7 @@
 
 use crate::errors::CoreError;
 use crate::store_singleton::get_global_store;
-use persistence::{TaskStatus, WorkflowStatus};
+use persistence::{TaskExecutionStatus, WorkflowExecutionStatus};
 
 /// Resume a paused task that's waiting for input
 pub async fn resume_task(execution_id: &str, task_id: &str) -> Result<(), CoreError> {
@@ -24,7 +24,7 @@ pub async fn resume_task(execution_id: &str, task_id: &str) -> Result<(), CoreEr
         .ok_or_else(|| CoreError::TaskNotFound(task_id.to_string()))?;
 
     // Step 3: Check if task has input value
-    if task.status == TaskStatus::WaitingForInput {
+    if task.status == TaskExecutionStatus::WaitingForInput {
         // If waiting for input but no input provided, error
         if task.user_input.is_none() {
             tracing::error!(
@@ -39,7 +39,7 @@ pub async fn resume_task(execution_id: &str, task_id: &str) -> Result<(), CoreEr
     }
 
     // Step 4: Validate Task Status
-    if task.status != TaskStatus::WaitingForInput {
+    if task.status != TaskExecutionStatus::WaitingForInput {
         return Err(CoreError::Execution(format!(
             "Task {} is not waiting for input (status: {:?})",
             task_id, task.status
@@ -56,7 +56,7 @@ pub async fn resume_task(execution_id: &str, task_id: &str) -> Result<(), CoreEr
 
     // Step 6: Update Task Status in Persistence
     let mut updated_task = task.clone();
-    updated_task.status = TaskStatus::Complete;
+    updated_task.status = TaskExecutionStatus::Complete;
     updated_task.completed_at = Some(chrono::Utc::now());
 
     store
@@ -65,14 +65,16 @@ pub async fn resume_task(execution_id: &str, task_id: &str) -> Result<(), CoreEr
         .map_err(CoreError::Persistence)?;
 
     // Step 7: Update Execution if All Tasks Complete
-    let all_tasks_complete = execution
-        .tasks
-        .iter()
-        .all(|t| matches!(t.status, TaskStatus::Complete | TaskStatus::Failed));
+    let all_tasks_complete = execution.tasks.iter().all(|t| {
+        matches!(
+            t.status,
+            TaskExecutionStatus::Complete | TaskExecutionStatus::Failed
+        )
+    });
 
     if all_tasks_complete {
         let mut updated_execution = execution.clone();
-        updated_execution.status = WorkflowStatus::Complete;
+        updated_execution.status = WorkflowExecutionStatus::Complete;
         updated_execution.completed_at = Some(chrono::Utc::now());
 
         store

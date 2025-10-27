@@ -4,8 +4,8 @@
 
 use chrono::Utc;
 use persistence::{
-    AppSettings, AuditEvent, Store, TaskExecution, TaskStatus, Theme, UserPrompt,
-    WorkflowDefinition, WorkflowExecution, WorkflowStatus,
+    AppSettings, AuditEvent, Store, TaskExecution, TaskExecutionStatus, Theme, UserPrompt,
+    WorkflowDefinition, WorkflowExecution, WorkflowExecutionStatus,
 };
 use std::collections::HashMap;
 
@@ -43,10 +43,9 @@ async fn test_complete_workflow_execution_flow() {
                 {"id": "task2", "name": "Task 2"}
             ]
         }),
-        status: WorkflowStatus::Running,
+        status: WorkflowExecutionStatus::Running,
         created_at: Utc::now(),
         completed_at: None,
-        success: Some(false),
         tasks: vec![],
         timestamp: Utc::now(),
         audit_trail: Vec::new(),
@@ -64,7 +63,7 @@ async fn test_complete_workflow_execution_flow() {
         id: "integration-task-1".to_string(),
         workflow_id: "integration-exec-1".to_string(),
         name: "Task 1".to_string(),
-        status: TaskStatus::Complete,
+        status: TaskExecutionStatus::Complete,
         output: Some("Task 1 completed successfully".to_string()),
         error: None,
         created_at: Utc::now(),
@@ -78,7 +77,7 @@ async fn test_complete_workflow_execution_flow() {
         id: "integration-task-2".to_string(),
         workflow_id: "integration-exec-1".to_string(),
         name: "Task 2".to_string(),
-        status: TaskStatus::Failed,
+        status: TaskExecutionStatus::Failed,
         output: None,
         error: Some("Task 2 failed with error".to_string()),
         created_at: Utc::now(),
@@ -109,9 +108,8 @@ async fn test_complete_workflow_execution_flow() {
 
     // 5. Update execution status to complete
     let mut updated_execution = execution;
-    updated_execution.status = WorkflowStatus::Complete;
+    updated_execution.status = WorkflowExecutionStatus::Complete;
     updated_execution.completed_at = Some(Utc::now());
-    updated_execution.success = Some(false); // One task failed
 
     store
         .save_workflow_execution(updated_execution)
@@ -124,7 +122,10 @@ async fn test_complete_workflow_execution_flow() {
         .await
         .unwrap();
     assert_eq!(retrieved_execution.id, "integration-exec-1");
-    assert_eq!(retrieved_execution.status, WorkflowStatus::Complete);
+    assert_eq!(
+        retrieved_execution.status,
+        WorkflowExecutionStatus::Complete
+    );
     assert_eq!(retrieved_execution.tasks.len(), 2);
 
     // Verify task details
@@ -133,7 +134,7 @@ async fn test_complete_workflow_execution_flow() {
         .iter()
         .find(|t| t.id == "integration-task-1")
         .unwrap();
-    assert_eq!(task1_retrieved.status, TaskStatus::Complete);
+    assert_eq!(task1_retrieved.status, TaskExecutionStatus::Complete);
     assert_eq!(
         task1_retrieved.output,
         Some("Task 1 completed successfully".to_string())
@@ -144,7 +145,7 @@ async fn test_complete_workflow_execution_flow() {
         .iter()
         .find(|t| t.id == "integration-task-2")
         .unwrap();
-    assert_eq!(task2_retrieved.status, TaskStatus::Failed);
+    assert_eq!(task2_retrieved.status, TaskExecutionStatus::Failed);
     assert_eq!(
         task2_retrieved.error,
         Some("Task 2 failed with error".to_string())
@@ -173,7 +174,7 @@ async fn test_multi_table_operations() {
     let execution = WorkflowExecution {
         id: "multi-exec-1".to_string(),
         workflow_name: "Multi Table Workflow".to_string(),
-        status: WorkflowStatus::Running,
+        status: WorkflowExecutionStatus::Running,
         ..Default::default()
     };
 
@@ -181,7 +182,7 @@ async fn test_multi_table_operations() {
         id: "multi-task-1".to_string(),
         workflow_id: "multi-exec-1".to_string(),
         name: "Multi Task".to_string(),
-        status: TaskStatus::Complete,
+        status: TaskExecutionStatus::Complete,
         ..Default::default()
     };
 
@@ -280,8 +281,7 @@ async fn test_workflow_execution_with_prompts_and_settings() {
     let execution = WorkflowExecution {
         id: "exec-exec-1".to_string(),
         workflow_name: "Execution Workflow".to_string(),
-        status: WorkflowStatus::Complete,
-        success: Some(true),
+        status: WorkflowExecutionStatus::Complete,
         ..Default::default()
     };
 
@@ -293,7 +293,6 @@ async fn test_workflow_execution_with_prompts_and_settings() {
 
     let executions = store.list_workflow_executions().await.unwrap();
     assert_eq!(executions.len(), 1);
-    assert_eq!(executions[0].success, Some(true));
 
     let prompts = store.list_prompts().await.unwrap();
     assert_eq!(prompts.len(), 2);
@@ -319,7 +318,7 @@ async fn test_data_cleanup_and_recreation() {
     let execution = WorkflowExecution {
         id: "cleanup-exec-1".to_string(),
         workflow_name: "Cleanup Workflow".to_string(),
-        status: WorkflowStatus::Complete,
+        status: WorkflowExecutionStatus::Complete,
         ..Default::default()
     };
 
@@ -354,7 +353,7 @@ async fn test_data_cleanup_and_recreation() {
     let new_execution = WorkflowExecution {
         id: "recreated-exec-1".to_string(),
         workflow_name: "Recreated Workflow".to_string(),
-        status: WorkflowStatus::Running,
+        status: WorkflowExecutionStatus::Running,
         ..Default::default()
     };
 

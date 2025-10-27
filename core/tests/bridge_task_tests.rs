@@ -1,7 +1,7 @@
 // Task conversion tests ONLY
 
 use engine::{TaskInfo, TaskStatus as EngineTaskStatus};
-use persistence::TaskStatus as PersistenceTaskStatus;
+use persistence::TaskExecutionStatus;
 use s_e_e_core::bridge::*;
 use std::collections::HashMap;
 
@@ -9,16 +9,16 @@ use std::collections::HashMap;
 fn test_task_status_conversion() {
     // Test all engine to persistence status conversions
     let test_cases = vec![
-        (EngineTaskStatus::Pending, PersistenceTaskStatus::Pending),
+        (EngineTaskStatus::Pending, TaskExecutionStatus::Pending),
         (
             EngineTaskStatus::InProgress,
-            PersistenceTaskStatus::InProgress,
+            TaskExecutionStatus::InProgress,
         ),
-        (EngineTaskStatus::Complete, PersistenceTaskStatus::Complete),
-        (EngineTaskStatus::Failed, PersistenceTaskStatus::Failed),
+        (EngineTaskStatus::Complete, TaskExecutionStatus::Complete),
+        (EngineTaskStatus::Failed, TaskExecutionStatus::Failed),
         (
             EngineTaskStatus::WaitingForInput,
-            PersistenceTaskStatus::WaitingForInput,
+            TaskExecutionStatus::WaitingForInput,
         ),
     ];
 

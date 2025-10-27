@@ -1,5 +1,5 @@
 use dioxus::prelude::*;
-use s_e_e_core::WorkflowExecution;
+use s_e_e_core::{WorkflowExecution, WorkflowExecutionStatus};
 use serde_json::Value;
 use std::time::Duration;
 
@@ -31,7 +31,11 @@ pub fn use_workflow_execution(
                             execution.set(Some(exec.clone()));
                             loading.set(false);
 
-                            if exec.success.unwrap_or(false) || !exec.errors.is_empty() {
+                            if matches!(
+                                exec.status,
+                                WorkflowExecutionStatus::Complete | WorkflowExecutionStatus::Failed
+                            ) || !exec.errors.is_empty()
+                            {
                                 break;
                             }
                         }

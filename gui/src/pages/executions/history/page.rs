@@ -32,10 +32,14 @@ pub fn HistoryPage() -> Element {
 
     // Separate workflows into categories
     let workflow_categories = use_memo(move || {
+        use s_e_e_core::WorkflowExecutionStatus;
         let history = workflow_history();
-        let (waiting, completed) = history
-            .into_iter()
-            .partition::<Vec<_>, _>(|exec| exec.success.is_none());
+        let (waiting, completed) = history.into_iter().partition::<Vec<_>, _>(|exec| {
+            matches!(
+                exec.status,
+                WorkflowExecutionStatus::WaitingForInput | WorkflowExecutionStatus::Running
+            )
+        });
         (waiting, completed)
     });
     let waiting_workflows = use_memo(move || workflow_categories().0);
@@ -179,7 +183,7 @@ pub fn HistoryPage() -> Element {
                                         completed_index = index + 1,
                                         execution_id = %execution.id,
                                         workflow_name = %execution.workflow_name,
-                                        success = execution.success.unwrap_or(false),
+                                        status = %execution.status,
                                         "Rendering completed workflow"
                                     );
                                 }

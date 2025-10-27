@@ -15,7 +15,7 @@ pub use notification::{Notification, NotificationData, NotificationType};
 pub use slideout::Slideout;
 
 #[derive(Debug, Clone, PartialEq)]
-pub enum ExecutionStatus {
+pub enum WorkflowExecutionStatus {
     Idle,
     Running,
 }

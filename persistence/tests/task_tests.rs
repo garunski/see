@@ -3,7 +3,7 @@
 //! Tests save_task_execution, get_tasks_for_workflow following Single Responsibility Principle.
 
 use chrono::Utc;
-use persistence::{Store, TaskExecution, TaskStatus};
+use persistence::{Store, TaskExecution, TaskExecutionStatus};
 
 async fn create_test_store() -> Store {
     Store::new(":memory:").await.unwrap()
@@ -14,7 +14,7 @@ fn create_test_task() -> TaskExecution {
         id: "task-1".to_string(),
         workflow_id: "workflow-1".to_string(),
         name: "Test Task".to_string(),
-        status: TaskStatus::Complete,
+        status: TaskExecutionStatus::Complete,
         output: Some("Task completed successfully".to_string()),
         error: None,
         created_at: Utc::now(),
@@ -58,7 +58,7 @@ async fn test_get_tasks_for_workflow_single() {
     assert_eq!(retrieved_task.id, "task-1");
     assert_eq!(retrieved_task.workflow_id, "workflow-1");
     assert_eq!(retrieved_task.name, "Test Task");
-    assert_eq!(retrieved_task.status, TaskStatus::Complete);
+    assert_eq!(retrieved_task.status, TaskExecutionStatus::Complete);
     assert_eq!(
         retrieved_task.output,
         Some("Task completed successfully".to_string())
@@ -74,7 +74,7 @@ async fn test_get_tasks_for_workflow_multiple() {
         id: "task-1".to_string(),
         workflow_id: "workflow-1".to_string(),
         name: "Task 1".to_string(),
-        status: TaskStatus::Complete,
+        status: TaskExecutionStatus::Complete,
         ..Default::default()
     };
 
@@ -82,7 +82,7 @@ async fn test_get_tasks_for_workflow_multiple() {
         id: "task-2".to_string(),
         workflow_id: "workflow-1".to_string(),
         name: "Task 2".to_string(),
-        status: TaskStatus::Failed,
+        status: TaskExecutionStatus::Failed,
         ..Default::default()
     };
 
@@ -90,7 +90,7 @@ async fn test_get_tasks_for_workflow_multiple() {
         id: "task-3".to_string(),
         workflow_id: "workflow-2".to_string(), // Different workflow
         name: "Task 3".to_string(),
-        status: TaskStatus::Pending,
+        status: TaskExecutionStatus::Pending,
         ..Default::default()
     };
 
@@ -124,7 +124,7 @@ async fn test_save_task_execution_update() {
     store.save_task_execution(task.clone()).await.unwrap();
 
     // Update task
-    task.status = TaskStatus::Failed;
+    task.status = TaskExecutionStatus::Failed;
     task.error = Some("Task failed with error".to_string());
     task.output = None;
 
@@ -136,7 +136,7 @@ async fn test_save_task_execution_update() {
     assert_eq!(tasks.len(), 1);
 
     let retrieved_task = &tasks[0];
-    assert_eq!(retrieved_task.status, TaskStatus::Failed);
+    assert_eq!(retrieved_task.status, TaskExecutionStatus::Failed);
     assert_eq!(
         retrieved_task.error,
         Some("Task failed with error".to_string())
@@ -151,7 +151,7 @@ async fn test_task_execution_serialization() {
         id: "task-1".to_string(),
         workflow_id: "workflow-1".to_string(),
         name: "Test Task".to_string(),
-        status: TaskStatus::WaitingForInput,
+        status: TaskExecutionStatus::WaitingForInput,
         output: Some("Waiting for user input".to_string()),
         error: None,
         created_at: Utc::now(),

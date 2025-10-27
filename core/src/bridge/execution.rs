@@ -1,7 +1,7 @@
 // Execution conversions ONLY
 
 use engine::WorkflowResult as EngineWorkflowResult;
-use persistence::{WorkflowExecution, WorkflowStatus};
+use persistence::{WorkflowExecution, WorkflowExecutionStatus};
 
 /// Convert WorkflowResult to WorkflowExecution
 pub fn workflow_result_to_execution(
@@ -36,13 +36,12 @@ pub fn workflow_result_to_execution(
             "tasks": []
         }), // Empty structure - will be set by caller with actual snapshot
         status: if result.success {
-            WorkflowStatus::Complete
+            WorkflowExecutionStatus::Complete
         } else {
-            WorkflowStatus::Failed
+            WorkflowExecutionStatus::Failed
         },
         created_at,
         completed_at: Some(now),
-        success: Some(result.success),
         tasks: task_executions,
         timestamp: now,
         audit_trail: Vec::new(), // Will be populated separately

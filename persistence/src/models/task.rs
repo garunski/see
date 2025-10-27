@@ -2,7 +2,7 @@
 //!
 //! This file contains ONLY TaskExecution struct following Single Responsibility Principle.
 
-use crate::models::TaskStatus;
+use crate::models::TaskExecutionStatus;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 
@@ -12,7 +12,7 @@ pub struct TaskExecution {
     pub id: String,
     pub workflow_id: String,
     pub name: String,
-    pub status: TaskStatus,
+    pub status: TaskExecutionStatus,
     pub output: Option<String>,
     pub error: Option<String>,
     pub created_at: DateTime<Utc>,
@@ -29,7 +29,7 @@ impl Default for TaskExecution {
             id: uuid::Uuid::new_v4().to_string(),
             workflow_id: String::new(),
             name: String::new(),
-            status: TaskStatus::Pending,
+            status: TaskExecutionStatus::Pending,
             output: None,
             error: None,
             created_at: now,
@@ -56,12 +56,12 @@ impl TaskExecution {
 
         // Validate status consistency
         match self.status {
-            TaskStatus::Complete | TaskStatus::Failed => {
+            TaskExecutionStatus::Complete | TaskExecutionStatus::Failed => {
                 if self.completed_at.is_none() {
                     return Err("Completed tasks must have completion timestamp".to_string());
                 }
             }
-            TaskStatus::WaitingForInput => {
+            TaskExecutionStatus::WaitingForInput => {
                 if self.completed_at.is_some() {
                     return Err("Waiting tasks should not have completion timestamp".to_string());
                 }
@@ -74,12 +74,15 @@ impl TaskExecution {
 
     /// Check if task is finished (complete or failed)
     pub fn is_finished(&self) -> bool {
-        matches!(self.status, TaskStatus::Complete | TaskStatus::Failed)
+        matches!(
+            self.status,
+            TaskExecutionStatus::Complete | TaskExecutionStatus::Failed
+        )
     }
 
     /// Check if task is waiting for input
     pub fn is_waiting_for_input(&self) -> bool {
-        matches!(self.status, TaskStatus::WaitingForInput)
+        matches!(self.status, TaskExecutionStatus::WaitingForInput)
     }
 
     /// Check if task has user input

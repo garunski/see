@@ -1,6 +1,6 @@
 use crate::icons::Icon;
 use dioxus::prelude::*;
-use s_e_e_core::{TaskStatus as PersistenceTaskStatus, WorkflowExecution};
+use s_e_e_core::{WorkflowExecution, WorkflowExecutionStatus};
 
 #[component]
 pub fn ExecutionOverview(execution: WorkflowExecution) -> Element {
@@ -37,20 +37,20 @@ pub fn ExecutionOverview(execution: WorkflowExecution) -> Element {
                     }
                     div {
                         class: format!("px-3 py-1 text-sm rounded-full font-medium {}",
-                            if pending_input_count > 0 {
-                                "bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200"
-                            } else if execution.success.unwrap_or(false) {
-                                "bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-200"
-                            } else {
-                                "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200"
+                            match execution.status {
+                                WorkflowExecutionStatus::WaitingForInput => "bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200",
+                                WorkflowExecutionStatus::Complete => "bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-200",
+                                WorkflowExecutionStatus::Failed => "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200",
+                                WorkflowExecutionStatus::Running => "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200",
+                                WorkflowExecutionStatus::Pending => "bg-zinc-100 text-zinc-800 dark:bg-zinc-900 dark:text-zinc-200",
                             }
                         ),
-                        if pending_input_count > 0 {
-                            "Waiting for Input"
-                        } else if execution.success.unwrap_or(false) {
-                            "Success"
-                        } else {
-                            "Failed"
+                        match execution.status {
+                            WorkflowExecutionStatus::WaitingForInput => "Waiting for Input",
+                            WorkflowExecutionStatus::Complete => "Success",
+                            WorkflowExecutionStatus::Failed => "Failed",
+                            WorkflowExecutionStatus::Running => "Running",
+                            WorkflowExecutionStatus::Pending => "Pending",
                         }
                     }
                 }

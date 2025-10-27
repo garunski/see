@@ -4,7 +4,7 @@ use std::collections::HashMap;
 #[derive(Debug, Clone)]
 pub struct WorkflowState {
     pub workflow_file: String,
-    pub execution_status: crate::components::ExecutionStatus,
+    pub execution_status: crate::components::WorkflowExecutionStatus,
     pub workflow_result: Option<WorkflowResult>,
     pub output_logs: Vec<String>,
     pub current_step: usize,
@@ -17,7 +17,7 @@ impl Default for WorkflowState {
     fn default() -> Self {
         Self {
             workflow_file: "workflow.json".to_string(),
-            execution_status: crate::components::ExecutionStatus::Idle,
+            execution_status: crate::components::WorkflowExecutionStatus::Idle,
             workflow_result: None,
             output_logs: Vec::new(),
             current_step: 0,
@@ -31,7 +31,7 @@ impl Default for WorkflowState {
 impl WorkflowState {
     pub fn reset_before_run(&mut self) {
         tracing::debug!("Resetting workflow state before execution");
-        self.execution_status = crate::components::ExecutionStatus::Running;
+        self.execution_status = crate::components::WorkflowExecutionStatus::Running;
         self.output_logs.clear();
         self.workflow_result = None;
         self.current_step = 0;

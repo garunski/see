@@ -3,7 +3,7 @@ use crate::icons::Icon;
 use crate::layout::router::Route;
 use dioxus::prelude::*;
 use dioxus_router::prelude::Link;
-use s_e_e_core::WorkflowExecutionSummary;
+use s_e_e_core::{WorkflowExecutionStatus, WorkflowExecutionSummary};
 
 #[component]
 pub fn HistoryItem(
@@ -16,7 +16,7 @@ pub fn HistoryItem(
     tracing::trace!(
         execution_id = %execution.id,
         workflow_name = %execution.workflow_name,
-        success = execution.success.unwrap_or(false),
+        status = %execution.status,
         "Rendering history item"
     );
 
@@ -30,20 +30,20 @@ pub fn HistoryItem(
                         h4 { class: "text-base font-semibold text-zinc-900 dark:text-white truncate", "{execution.workflow_name}" }
                         div {
                             class: format!("px-3 py-1 text-sm rounded-full font-medium {}",
-                                if execution.success.is_none() {
-                                    "bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200"
-                                } else if execution.success.unwrap_or(false) {
-                                    "bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-200"
-                                } else {
-                                    "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200"
+                                match execution.status {
+                                    WorkflowExecutionStatus::WaitingForInput => "bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200",
+                                    WorkflowExecutionStatus::Complete => "bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-200",
+                                    WorkflowExecutionStatus::Failed => "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200",
+                                    WorkflowExecutionStatus::Running => "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200",
+                                    WorkflowExecutionStatus::Pending => "bg-zinc-100 text-zinc-800 dark:bg-zinc-900 dark:text-zinc-200",
                                 }
                             ),
-                            if execution.success.is_none() {
-                                "Waiting for Input"
-                            } else if execution.success.unwrap_or(false) {
-                                "Success"
-                            } else {
-                                "Failed"
+                            match execution.status {
+                                WorkflowExecutionStatus::WaitingForInput => "Waiting for Input",
+                                WorkflowExecutionStatus::Complete => "Success",
+                                WorkflowExecutionStatus::Failed => "Failed",
+                                WorkflowExecutionStatus::Running => "Running",
+                                WorkflowExecutionStatus::Pending => "Pending",
                             }
                         }
                     }

@@ -1,7 +1,7 @@
 // Task conversions ONLY
 
 use engine::{TaskInfo, TaskStatus as EngineTaskStatus};
-use persistence::{TaskExecution, TaskStatus as PersistenceTaskStatus};
+use persistence::{TaskExecution, TaskExecutionStatus as PersistenceTaskExecutionStatus};
 use std::collections::HashMap;
 
 /// Convert TaskInfo to TaskExecution
@@ -21,11 +21,11 @@ pub fn task_info_to_execution(
 
     // Convert engine TaskStatus to persistence TaskStatus
     let persistence_status = match task.status {
-        EngineTaskStatus::Pending => PersistenceTaskStatus::Pending,
-        EngineTaskStatus::InProgress => PersistenceTaskStatus::InProgress,
-        EngineTaskStatus::Complete => PersistenceTaskStatus::Complete,
-        EngineTaskStatus::Failed => PersistenceTaskStatus::Failed,
-        EngineTaskStatus::WaitingForInput => PersistenceTaskStatus::WaitingForInput,
+        EngineTaskStatus::Pending => PersistenceTaskExecutionStatus::Pending,
+        EngineTaskStatus::InProgress => PersistenceTaskExecutionStatus::InProgress,
+        EngineTaskStatus::Complete => PersistenceTaskExecutionStatus::Complete,
+        EngineTaskStatus::Failed => PersistenceTaskExecutionStatus::Failed,
+        EngineTaskStatus::WaitingForInput => PersistenceTaskExecutionStatus::WaitingForInput,
     };
 
     // Extract error if task failed
@@ -66,11 +66,11 @@ pub fn task_info_to_execution(
 pub fn task_execution_to_info(task: &TaskExecution) -> TaskInfo {
     // Convert persistence TaskStatus to engine TaskStatus
     let engine_status = match task.status {
-        PersistenceTaskStatus::Pending => EngineTaskStatus::Pending,
-        PersistenceTaskStatus::InProgress => EngineTaskStatus::InProgress,
-        PersistenceTaskStatus::Complete => EngineTaskStatus::Complete,
-        PersistenceTaskStatus::Failed => EngineTaskStatus::Failed,
-        PersistenceTaskStatus::WaitingForInput => EngineTaskStatus::WaitingForInput,
+        PersistenceTaskExecutionStatus::Pending => EngineTaskStatus::Pending,
+        PersistenceTaskExecutionStatus::InProgress => EngineTaskStatus::InProgress,
+        PersistenceTaskExecutionStatus::Complete => EngineTaskStatus::Complete,
+        PersistenceTaskExecutionStatus::Failed => EngineTaskStatus::Failed,
+        PersistenceTaskExecutionStatus::WaitingForInput => EngineTaskStatus::WaitingForInput,
     };
 
     TaskInfo {

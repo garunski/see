@@ -33,13 +33,13 @@ async fn test_clear_all_data_with_data() {
     let execution = WorkflowExecution {
         id: "exec-1".to_string(),
         workflow_name: "Test Workflow".to_string(),
-        status: WorkflowStatus::Complete,
+        status: WorkflowExecutionStatus::Complete,
         tasks: vec![
             TaskExecution {
                 id: "task-1".to_string(),
                 workflow_id: "exec-1".to_string(),
                 name: "Test Task".to_string(),
-                status: TaskStatus::Complete,
+                status: TaskExecutionStatus::Complete,
                 ..Default::default()
             },
         ],
@@ -73,7 +73,7 @@ async fn test_clear_all_data_with_data() {
         id: "task-1".to_string(),
         workflow_id: "exec-1".to_string(),
         name: "Test Task".to_string(),
-        status: TaskStatus::Complete,
+        status: TaskExecutionStatus::Complete,
         ..Default::default()
     }).await.unwrap();
     store.save_prompt(&prompt).await.unwrap();

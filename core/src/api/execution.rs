@@ -8,7 +8,7 @@ use crate::errors::CoreError;
 use crate::store_singleton::get_global_store;
 use engine::WorkflowEngine;
 use persistence::{
-    InputRequestStatus, InputType, UserInputRequest, WorkflowExecution, WorkflowStatus,
+    InputRequestStatus, InputType, UserInputRequest, WorkflowExecution, WorkflowExecutionStatus,
 };
 use serde_json::Value;
 
@@ -49,10 +49,9 @@ pub async fn execute_workflow_by_id(
         id: execution_id.clone(),
         workflow_name: workflow.name.clone(),
         workflow_snapshot: workflow_json,
-        status: WorkflowStatus::Running,
+        status: WorkflowExecutionStatus::Running,
         created_at: now,
         completed_at: None,
-        success: None,
         tasks: Vec::new(), // Will be populated after execution
         timestamp: now,
         audit_trail: Vec::new(),
@@ -117,10 +116,9 @@ pub async fn execute_workflow_by_id(
         let mut updated_execution = waiting_execution.clone();
         updated_execution.workflow_snapshot = initial_execution.workflow_snapshot;
 
-        // Update status to Running (waiting for input)
-        updated_execution.status = WorkflowStatus::Running;
+        // Update status to WaitingForInput
+        updated_execution.status = WorkflowExecutionStatus::WaitingForInput;
         updated_execution.completed_at = None; // Not completed yet
-        updated_execution.success = None; // Unknown until input provided
 
         // Save Task Executions to Persistence
         for task in &updated_execution.tasks {
@@ -141,10 +139,9 @@ pub async fn execute_workflow_by_id(
             callback("Workflow paused - waiting for user input".to_string());
         }
 
-        // Return special status indicating waiting for input
-        // We use success=true to indicate the workflow paused successfully (not failed)
+        // Return result indicating workflow is paused for input
         return Ok(WorkflowResult {
-            success: true,
+            success: false, // Workflow not complete, waiting for input
             workflow_name: engine_result.workflow_name,
             execution_id,
             tasks: engine_result.tasks,

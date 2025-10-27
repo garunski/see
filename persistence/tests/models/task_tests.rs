@@ -12,7 +12,7 @@ fn test_task_execution_default() {
     assert!(!task.id.is_empty());
     assert!(task.workflow_id.is_empty());
     assert!(task.name.is_empty());
-    assert_eq!(task.status, TaskStatus::Pending);
+    assert_eq!(task.status, TaskExecutionStatus::Pending);
     assert!(task.output.is_none());
     assert!(task.error.is_none());
     assert!(task.created_at <= Utc::now());
@@ -25,7 +25,7 @@ fn test_task_execution_validation_success() {
         id: "task-1".to_string(),
         workflow_id: "workflow-1".to_string(),
         name: "Test Task".to_string(),
-        status: TaskStatus::Complete,
+        status: TaskExecutionStatus::Complete,
         output: Some("Task completed successfully".to_string()),
         error: None,
         created_at: Utc::now(),
@@ -84,7 +84,7 @@ fn test_task_execution_validation_complete_without_completion_time() {
         id: "task-1".to_string(),
         workflow_id: "workflow-1".to_string(),
         name: "Test Task".to_string(),
-        status: TaskStatus::Complete,
+        status: TaskExecutionStatus::Complete,
         completed_at: None, // Missing completion time
         ..Default::default()
     };
@@ -100,7 +100,7 @@ fn test_task_execution_validation_waiting_with_completion_time() {
         id: "task-1".to_string(),
         workflow_id: "workflow-1".to_string(),
         name: "Test Task".to_string(),
-        status: TaskStatus::WaitingForInput,
+        status: TaskExecutionStatus::WaitingForInput,
         completed_at: Some(Utc::now()), // Should not have completion time
         ..Default::default()
     };
@@ -113,25 +113,25 @@ fn test_task_execution_validation_waiting_with_completion_time() {
 #[test]
 fn test_task_execution_is_finished() {
     let complete_task = TaskExecution {
-        status: TaskStatus::Complete,
+        status: TaskExecutionStatus::Complete,
         ..Default::default()
     };
     assert!(complete_task.is_finished());
     
     let failed_task = TaskExecution {
-        status: TaskStatus::Failed,
+        status: TaskExecutionStatus::Failed,
         ..Default::default()
     };
     assert!(failed_task.is_finished());
     
     let pending_task = TaskExecution {
-        status: TaskStatus::Pending,
+        status: TaskExecutionStatus::Pending,
         ..Default::default()
     };
     assert!(!pending_task.is_finished());
     
     let waiting_task = TaskExecution {
-        status: TaskStatus::WaitingForInput,
+        status: TaskExecutionStatus::WaitingForInput,
         ..Default::default()
     };
     assert!(!waiting_task.is_finished());
@@ -140,13 +140,13 @@ fn test_task_execution_is_finished() {
 #[test]
 fn test_task_execution_is_waiting_for_input() {
     let waiting_task = TaskExecution {
-        status: TaskStatus::WaitingForInput,
+        status: TaskExecutionStatus::WaitingForInput,
         ..Default::default()
     };
     assert!(waiting_task.is_waiting_for_input());
     
     let pending_task = TaskExecution {
-        status: TaskStatus::Pending,
+        status: TaskExecutionStatus::Pending,
         ..Default::default()
     };
     assert!(!pending_task.is_waiting_for_input());
@@ -158,7 +158,7 @@ fn test_task_execution_serialization() {
         id: "task-1".to_string(),
         workflow_id: "workflow-1".to_string(),
         name: "Test Task".to_string(),
-        status: TaskStatus::Complete,
+        status: TaskExecutionStatus::Complete,
         output: Some("Task output".to_string()),
         error: None,
         created_at: Utc::now(),

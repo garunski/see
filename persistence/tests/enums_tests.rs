@@ -2,41 +2,63 @@
 //!
 //! Tests serialization, variants following Single Responsibility Principle.
 
-use persistence::{AuditStatus, TaskStatus, Theme, WorkflowStatus};
+use persistence::{AuditStatus, TaskExecutionStatus, Theme, WorkflowExecutionStatus};
 
 #[test]
-fn test_workflow_status_variants() {
-    assert_eq!(WorkflowStatus::Pending.to_string(), "pending");
-    assert_eq!(WorkflowStatus::Running.to_string(), "running");
-    assert_eq!(WorkflowStatus::Complete.to_string(), "complete");
-    assert_eq!(WorkflowStatus::Failed.to_string(), "failed");
+fn test_execution_status_variants() {
+    assert_eq!(WorkflowExecutionStatus::Pending.to_string(), "pending");
+    assert_eq!(WorkflowExecutionStatus::Running.to_string(), "running");
+    assert_eq!(WorkflowExecutionStatus::Complete.to_string(), "complete");
+    assert_eq!(WorkflowExecutionStatus::Failed.to_string(), "failed");
+    assert_eq!(
+        WorkflowExecutionStatus::WaitingForInput.to_string(),
+        "waiting_for_input"
+    );
 }
 
 #[test]
-fn test_workflow_status_serialization() {
-    let status = WorkflowStatus::Running;
+fn test_execution_status_waiting_for_input() {
+    // Test WaitingForInput variant specifically
+    let status = WorkflowExecutionStatus::WaitingForInput;
+
+    assert_eq!(status.as_str(), "waiting_for_input");
+    assert_eq!(status.to_string(), "waiting_for_input");
+
+    // Test serialization
+    let json = serde_json::to_string(&status).unwrap();
+    assert_eq!(json, "\"waiting_for_input\"");
+
+    // Test deserialization
+    let deserialized: WorkflowExecutionStatus = serde_json::from_str(&json).unwrap();
+    assert_eq!(deserialized, WorkflowExecutionStatus::WaitingForInput);
+}
+
+#[test]
+fn test_execution_status_serialization() {
+    let status = WorkflowExecutionStatus::Running;
 
     // Test serialization
     let json = serde_json::to_string(&status).unwrap();
     assert_eq!(json, "\"running\"");
 
     // Test deserialization
-    let deserialized: WorkflowStatus = serde_json::from_str(&json).unwrap();
-    assert_eq!(deserialized, WorkflowStatus::Running);
+    let deserialized: WorkflowExecutionStatus = serde_json::from_str(&json).unwrap();
+    assert_eq!(deserialized, WorkflowExecutionStatus::Running);
 }
 
 #[test]
-fn test_workflow_status_all_variants_serialization() {
+fn test_execution_status_all_variants_serialization() {
     let variants = vec![
-        WorkflowStatus::Pending,
-        WorkflowStatus::Running,
-        WorkflowStatus::Complete,
-        WorkflowStatus::Failed,
+        WorkflowExecutionStatus::Pending,
+        WorkflowExecutionStatus::Running,
+        WorkflowExecutionStatus::Complete,
+        WorkflowExecutionStatus::Failed,
+        WorkflowExecutionStatus::WaitingForInput,
     ];
 
     for variant in variants {
         let json = serde_json::to_string(&variant).unwrap();
-        let deserialized: WorkflowStatus = serde_json::from_str(&json).unwrap();
+        let deserialized: WorkflowExecutionStatus = serde_json::from_str(&json).unwrap();
         assert_eq!(deserialized, variant);
     }
 }
@@ -81,48 +103,48 @@ fn test_theme_all_variants_serialization() {
 #[test]
 fn test_task_status_variants() {
     // Test that task statuses serialize to expected strings
-    let pending_json = serde_json::to_string(&TaskStatus::Pending).unwrap();
+    let pending_json = serde_json::to_string(&TaskExecutionStatus::Pending).unwrap();
     assert_eq!(pending_json, "\"pending\"");
 
-    let in_progress_json = serde_json::to_string(&TaskStatus::InProgress).unwrap();
+    let in_progress_json = serde_json::to_string(&TaskExecutionStatus::InProgress).unwrap();
     assert_eq!(in_progress_json, "\"in_progress\"");
 
-    let complete_json = serde_json::to_string(&TaskStatus::Complete).unwrap();
+    let complete_json = serde_json::to_string(&TaskExecutionStatus::Complete).unwrap();
     assert_eq!(complete_json, "\"complete\"");
 
-    let failed_json = serde_json::to_string(&TaskStatus::Failed).unwrap();
+    let failed_json = serde_json::to_string(&TaskExecutionStatus::Failed).unwrap();
     assert_eq!(failed_json, "\"failed\"");
 
-    let waiting_json = serde_json::to_string(&TaskStatus::WaitingForInput).unwrap();
+    let waiting_json = serde_json::to_string(&TaskExecutionStatus::WaitingForInput).unwrap();
     assert_eq!(waiting_json, "\"waiting_for_input\"");
 }
 
 #[test]
 fn test_task_status_serialization() {
-    let status = TaskStatus::InProgress;
+    let status = TaskExecutionStatus::InProgress;
 
     // Test serialization
     let json = serde_json::to_string(&status).unwrap();
     assert_eq!(json, "\"in_progress\"");
 
     // Test deserialization
-    let deserialized: TaskStatus = serde_json::from_str(&json).unwrap();
-    assert_eq!(deserialized, TaskStatus::InProgress);
+    let deserialized: TaskExecutionStatus = serde_json::from_str(&json).unwrap();
+    assert_eq!(deserialized, TaskExecutionStatus::InProgress);
 }
 
 #[test]
 fn test_task_status_all_variants_serialization() {
     let variants = vec![
-        TaskStatus::Pending,
-        TaskStatus::InProgress,
-        TaskStatus::Complete,
-        TaskStatus::Failed,
-        TaskStatus::WaitingForInput,
+        TaskExecutionStatus::Pending,
+        TaskExecutionStatus::InProgress,
+        TaskExecutionStatus::Complete,
+        TaskExecutionStatus::Failed,
+        TaskExecutionStatus::WaitingForInput,
     ];
 
     for variant in variants {
         let json = serde_json::to_string(&variant).unwrap();
-        let deserialized: TaskStatus = serde_json::from_str(&json).unwrap();
+        let deserialized: TaskExecutionStatus = serde_json::from_str(&json).unwrap();
         assert_eq!(deserialized, variant);
     }
 }

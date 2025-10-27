@@ -3,7 +3,9 @@
 //! Tests save/get/list/delete workflow executions, list_workflow_metadata, delete_workflow_metadata_and_tasks, get_workflow_with_tasks following Single Responsibility Principle.
 
 use chrono::Utc;
-use persistence::{Store, TaskExecution, TaskStatus, WorkflowExecution, WorkflowStatus};
+use persistence::{
+    Store, TaskExecution, TaskExecutionStatus, WorkflowExecution, WorkflowExecutionStatus,
+};
 use std::collections::HashMap;
 
 async fn create_test_store() -> Store {
@@ -19,10 +21,9 @@ fn create_test_execution() -> WorkflowExecution {
             "name": "Test Workflow",
             "tasks": []
         }),
-        status: WorkflowStatus::Complete,
+        status: WorkflowExecutionStatus::Complete,
         created_at: Utc::now(),
         completed_at: Some(Utc::now()),
-        success: Some(true),
         tasks: vec![],
         timestamp: Utc::now(),
         audit_trail: Vec::new(),
@@ -58,8 +59,10 @@ async fn test_get_workflow_execution_success() {
     let retrieved_execution = retrieved.unwrap();
     assert_eq!(retrieved_execution.id, "exec-1");
     assert_eq!(retrieved_execution.workflow_name, "Test Workflow");
-    assert_eq!(retrieved_execution.status, WorkflowStatus::Complete);
-    assert_eq!(retrieved_execution.success, Some(true));
+    assert_eq!(
+        retrieved_execution.status,
+        WorkflowExecutionStatus::Complete
+    );
 }
 
 #[tokio::test]
@@ -93,7 +96,7 @@ async fn test_list_workflow_executions_multiple() {
             "name": "Workflow 1",
             "tasks": []
         }),
-        status: WorkflowStatus::Complete,
+        status: WorkflowExecutionStatus::Complete,
         created_at: Utc::now() - chrono::Duration::seconds(10),
         timestamp: Utc::now() - chrono::Duration::seconds(10),
         ..Default::default()
@@ -107,7 +110,7 @@ async fn test_list_workflow_executions_multiple() {
             "name": "Workflow 2",
             "tasks": []
         }),
-        status: WorkflowStatus::Failed,
+        status: WorkflowExecutionStatus::Failed,
         created_at: Utc::now(),
         timestamp: Utc::now(),
         ..Default::default()
@@ -155,7 +158,7 @@ async fn test_list_workflow_metadata() {
     let execution = WorkflowExecution {
         id: "exec-1".to_string(),
         workflow_name: "Test Workflow".to_string(),
-        status: WorkflowStatus::Running,
+        status: WorkflowExecutionStatus::Running,
         ..Default::default()
     };
 
@@ -179,20 +182,20 @@ async fn test_delete_workflow_metadata_and_tasks() {
     let execution = WorkflowExecution {
         id: "exec-1".to_string(),
         workflow_name: "Test Workflow".to_string(),
-        status: WorkflowStatus::Complete,
+        status: WorkflowExecutionStatus::Complete,
         tasks: vec![
             TaskExecution {
                 id: "task-1".to_string(),
                 workflow_id: "exec-1".to_string(),
                 name: "Task 1".to_string(),
-                status: TaskStatus::Complete,
+                status: TaskExecutionStatus::Complete,
                 ..Default::default()
             },
             TaskExecution {
                 id: "task-2".to_string(),
                 workflow_id: "exec-1".to_string(),
                 name: "Task 2".to_string(),
-                status: TaskStatus::Complete,
+                status: TaskExecutionStatus::Complete,
                 ..Default::default()
             },
         ],
@@ -206,7 +209,7 @@ async fn test_delete_workflow_metadata_and_tasks() {
         id: "task-1".to_string(),
         workflow_id: "exec-1".to_string(),
         name: "Task 1".to_string(),
-        status: TaskStatus::Complete,
+        status: TaskExecutionStatus::Complete,
         ..Default::default()
     };
 
@@ -214,7 +217,7 @@ async fn test_delete_workflow_metadata_and_tasks() {
         id: "task-2".to_string(),
         workflow_id: "exec-1".to_string(),
         name: "Task 2".to_string(),
-        status: TaskStatus::Complete,
+        status: TaskExecutionStatus::Complete,
         ..Default::default()
     };
 
@@ -252,7 +255,7 @@ async fn test_get_workflow_with_tasks() {
     let execution = WorkflowExecution {
         id: "exec-1".to_string(),
         workflow_name: "Test Workflow".to_string(),
-        status: WorkflowStatus::Running,
+        status: WorkflowExecutionStatus::Running,
         tasks: vec![],
         ..Default::default()
     };
@@ -264,7 +267,7 @@ async fn test_get_workflow_with_tasks() {
         id: "task-1".to_string(),
         workflow_id: "exec-1".to_string(),
         name: "Task 1".to_string(),
-        status: TaskStatus::Complete,
+        status: TaskExecutionStatus::Complete,
         ..Default::default()
     };
 
@@ -272,7 +275,7 @@ async fn test_get_workflow_with_tasks() {
         id: "task-2".to_string(),
         workflow_id: "exec-1".to_string(),
         name: "Task 2".to_string(),
-        status: TaskStatus::Failed,
+        status: TaskExecutionStatus::Failed,
         ..Default::default()
     };
 

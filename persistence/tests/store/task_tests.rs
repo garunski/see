@@ -14,7 +14,7 @@ fn create_test_task() -> TaskExecution {
         id: "task-1".to_string(),
         workflow_id: "workflow-1".to_string(),
         name: "Test Task".to_string(),
-        status: TaskStatus::Complete,
+        status: TaskExecutionStatus::Complete,
         output: Some("Task completed successfully".to_string()),
         error: None,
         created_at: Utc::now(),
@@ -55,7 +55,7 @@ async fn test_get_tasks_for_workflow_single() {
     assert_eq!(retrieved_task.id, "task-1");
     assert_eq!(retrieved_task.workflow_id, "workflow-1");
     assert_eq!(retrieved_task.name, "Test Task");
-    assert_eq!(retrieved_task.status, TaskStatus::Complete);
+    assert_eq!(retrieved_task.status, TaskExecutionStatus::Complete);
     assert_eq!(retrieved_task.output, Some("Task completed successfully".to_string()));
 }
 
@@ -68,7 +68,7 @@ async fn test_get_tasks_for_workflow_multiple() {
         id: "task-1".to_string(),
         workflow_id: "workflow-1".to_string(),
         name: "Task 1".to_string(),
-        status: TaskStatus::Complete,
+        status: TaskExecutionStatus::Complete,
         ..Default::default()
     };
     
@@ -76,7 +76,7 @@ async fn test_get_tasks_for_workflow_multiple() {
         id: "task-2".to_string(),
         workflow_id: "workflow-1".to_string(),
         name: "Task 2".to_string(),
-        status: TaskStatus::Failed,
+        status: TaskExecutionStatus::Failed,
         ..Default::default()
     };
     
@@ -84,7 +84,7 @@ async fn test_get_tasks_for_workflow_multiple() {
         id: "task-3".to_string(),
         workflow_id: "workflow-2".to_string(), // Different workflow
         name: "Task 3".to_string(),
-        status: TaskStatus::Pending,
+        status: TaskExecutionStatus::Pending,
         ..Default::default()
     };
     
@@ -118,7 +118,7 @@ async fn test_save_task_execution_update() {
     store.save_task_execution(task.clone()).await.unwrap();
     
     // Update task
-    task.status = TaskStatus::Failed;
+    task.status = TaskExecutionStatus::Failed;
     task.error = Some("Task failed with error".to_string());
     task.output = None;
     
@@ -130,7 +130,7 @@ async fn test_save_task_execution_update() {
     assert_eq!(tasks.len(), 1);
     
     let retrieved_task = &tasks[0];
-    assert_eq!(retrieved_task.status, TaskStatus::Failed);
+    assert_eq!(retrieved_task.status, TaskExecutionStatus::Failed);
     assert_eq!(retrieved_task.error, Some("Task failed with error".to_string()));
     assert!(retrieved_task.output.is_none());
 }
@@ -142,7 +142,7 @@ async fn test_task_execution_serialization() {
         id: "task-1".to_string(),
         workflow_id: "workflow-1".to_string(),
         name: "Test Task".to_string(),
-        status: TaskStatus::WaitingForInput,
+        status: TaskExecutionStatus::WaitingForInput,
         output: Some("Waiting for user input".to_string()),
         error: None,
         created_at: Utc::now(),
@@ -172,7 +172,7 @@ async fn test_save_task_with_input() {
         id: "task-1".to_string(),
         workflow_id: "workflow-1".to_string(),
         name: "Test Task".to_string(),
-        status: TaskStatus::WaitingForInput,
+        status: TaskExecutionStatus::WaitingForInput,
         output: None,
         error: None,
         created_at: Utc::now(),
@@ -200,7 +200,7 @@ async fn test_get_tasks_waiting_for_input() {
         id: "task-1".to_string(),
         workflow_id: "workflow-1".to_string(),
         name: "Waiting Task".to_string(),
-        status: TaskStatus::WaitingForInput,
+        status: TaskExecutionStatus::WaitingForInput,
         ..Default::default()
     };
     
@@ -208,7 +208,7 @@ async fn test_get_tasks_waiting_for_input() {
         id: "task-2".to_string(),
         workflow_id: "workflow-1".to_string(),
         name: "Complete Task".to_string(),
-        status: TaskStatus::Complete,
+        status: TaskExecutionStatus::Complete,
         completed_at: Some(Utc::now()),
         ..Default::default()
     };
@@ -217,7 +217,7 @@ async fn test_get_tasks_waiting_for_input() {
         id: "task-3".to_string(),
         workflow_id: "workflow-1".to_string(),
         name: "Another Waiting Task".to_string(),
-        status: TaskStatus::WaitingForInput,
+        status: TaskExecutionStatus::WaitingForInput,
         ..Default::default()
     };
     
@@ -246,7 +246,7 @@ async fn test_get_tasks_waiting_for_input_in_workflow() {
         id: "task-1".to_string(),
         workflow_id: "workflow-1".to_string(),
         name: "Waiting Task 1".to_string(),
-        status: TaskStatus::WaitingForInput,
+        status: TaskExecutionStatus::WaitingForInput,
         ..Default::default()
     };
     
@@ -254,7 +254,7 @@ async fn test_get_tasks_waiting_for_input_in_workflow() {
         id: "task-2".to_string(),
         workflow_id: "workflow-1".to_string(),
         name: "Waiting Task 2".to_string(),
-        status: TaskStatus::WaitingForInput,
+        status: TaskExecutionStatus::WaitingForInput,
         ..Default::default()
     };
     
@@ -262,7 +262,7 @@ async fn test_get_tasks_waiting_for_input_in_workflow() {
         id: "task-3".to_string(),
         workflow_id: "workflow-2".to_string(),
         name: "Waiting Task 3".to_string(),
-        status: TaskStatus::WaitingForInput,
+        status: TaskExecutionStatus::WaitingForInput,
         ..Default::default()
     };
     
@@ -288,7 +288,7 @@ async fn test_get_task_with_input_request() {
         id: "task-1".to_string(),
         workflow_id: "workflow-1".to_string(),
         name: "Test Task".to_string(),
-        status: TaskStatus::WaitingForInput,
+        status: TaskExecutionStatus::WaitingForInput,
         input_request_id: Some("request-123".to_string()),
         ..Default::default()
     };

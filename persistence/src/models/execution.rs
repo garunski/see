@@ -2,7 +2,7 @@
 //!
 //! This file contains ONLY execution-related models following Single Responsibility Principle.
 
-use crate::models::{AuditEvent, TaskExecution, WorkflowStatus};
+use crate::models::{AuditEvent, TaskExecution, WorkflowExecutionStatus};
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -13,10 +13,9 @@ pub struct WorkflowExecution {
     pub id: String,
     pub workflow_name: String,
     pub workflow_snapshot: serde_json::Value,
-    pub status: WorkflowStatus,
+    pub status: WorkflowExecutionStatus,
     pub created_at: DateTime<Utc>,
     pub completed_at: Option<DateTime<Utc>>,
-    pub success: Option<bool>,
     pub tasks: Vec<TaskExecution>,
     pub timestamp: DateTime<Utc>,
     pub audit_trail: Vec<AuditEvent>,
@@ -29,10 +28,9 @@ pub struct WorkflowExecution {
 pub struct WorkflowExecutionSummary {
     pub id: String,
     pub workflow_name: String,
-    pub status: WorkflowStatus,
+    pub status: WorkflowExecutionStatus,
     pub created_at: DateTime<Utc>,
     pub completed_at: Option<DateTime<Utc>>,
-    pub success: Option<bool>,
     pub task_count: usize,
     pub timestamp: DateTime<Utc>,
 }
@@ -55,10 +53,9 @@ impl Default for WorkflowExecution {
             id: uuid::Uuid::new_v4().to_string(),
             workflow_name: String::new(),
             workflow_snapshot: serde_json::json!({}),
-            status: WorkflowStatus::Pending,
+            status: WorkflowExecutionStatus::Pending,
             created_at: now,
             completed_at: None,
-            success: None,
             tasks: Vec::new(),
             timestamp: now,
             audit_trail: Vec::new(),
@@ -74,10 +71,9 @@ impl Default for WorkflowExecutionSummary {
         Self {
             id: uuid::Uuid::new_v4().to_string(),
             workflow_name: String::new(),
-            status: WorkflowStatus::Pending,
+            status: WorkflowExecutionStatus::Pending,
             created_at: now,
             completed_at: None,
-            success: None,
             task_count: 0,
             timestamp: now,
         }
@@ -107,7 +103,6 @@ impl WorkflowExecution {
             status: self.status.clone(),
             created_at: self.created_at,
             completed_at: self.completed_at,
-            success: self.success,
             task_count: self.tasks.len(),
             timestamp: self.timestamp,
         }

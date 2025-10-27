@@ -15,7 +15,9 @@ pub mod workflow;
 
 // Re-export all models
 pub use audit::AuditEvent;
-pub use enums::{AuditStatus, InputRequestStatus, InputType, TaskStatus, Theme, WorkflowStatus};
+pub use enums::{
+    AuditStatus, InputRequestStatus, InputType, TaskExecutionStatus, Theme, WorkflowExecutionStatus,
+};
 pub use execution::{WorkflowExecution, WorkflowExecutionSummary, WorkflowMetadata};
 pub use prompt::UserPrompt;
 pub use settings::AppSettings;
