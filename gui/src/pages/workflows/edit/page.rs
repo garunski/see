@@ -1,3 +1,4 @@
+use crate::components::{Alert, AlertType};
 use crate::state::AppStateProvider;
 use dioxus::prelude::*;
 
@@ -60,7 +61,7 @@ pub fn WorkflowEditPage(id: String) -> Element {
 
     // Check if this is a system workflow (read-only)
     let is_system = state.is_system_workflow;
-    
+
     rsx! {
         div { class: "space-y-8",
             if is_system() {
@@ -90,6 +91,18 @@ pub fn WorkflowEditPage(id: String) -> Element {
                     on_reset: move |_| reset_to_default(),
                     show_clone: false,
                     workflow_id: id.clone(),
+                }
+            }
+
+            // System template banner
+            if is_system() {
+                Alert {
+                    alert_type: AlertType::Info,
+                    title: Some("System Workflow".to_string()),
+                    message: "This is a system workflow and cannot be edited. Click the Clone button above to create an editable copy.".to_string(),
+                    dismissible: None,
+                    on_dismiss: None,
+                    actions: None,
                 }
             }
 

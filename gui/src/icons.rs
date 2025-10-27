@@ -79,6 +79,8 @@ fn get_icon_svg(name: &str, variant: &str) -> String {
         }
         ("pause", "solid") => include_str!("../assets/icons/pause-solid.svg").to_string(),
         ("pause", "outline") => include_str!("../assets/icons/pause-outline.svg").to_string(),
+        ("copy", "solid") => include_str!("../assets/icons/copy-solid.svg").to_string(),
+        ("copy", "outline") => include_str!("../assets/icons/copy-outline.svg").to_string(),
         _ => {
             // Fallback to a default icon or empty string
             r#"<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path d="M10 2a8 8 0 100 16 8 8 0 000-16zM8.5 10a1.5 1.5 0 113 0 1.5 1.5 0 01-3 0zM10 6a4 4 0 100 8 4 4 0 000-8z" /></svg>"#.to_string()

@@ -102,22 +102,30 @@ pub fn EditorHeader(props: EditorHeaderProps) -> Element {
                         onclick: move |_| {
                             // Clone the system workflow
                             let workflow_id = workflow_id.clone();
+                            let navigator = navigator;
                             spawn(async move {
-                                if let Err(e) = s_e_e_core::clone_system_workflow(&workflow_id, None).await {
-                                    eprintln!("Failed to clone workflow: {}", e);
-                                } else {
-                                    // Navigate to the newly created workflow
-                                    navigator.push(crate::layout::router::Route::WorkflowEditPage { id: "new".to_string() });
+                                match s_e_e_core::clone_system_workflow(&workflow_id, None).await {
+                                    Ok(cloned_workflow) => {
+                                        // Navigate to the newly created workflow
+                                        navigator.push(crate::layout::router::Route::WorkflowEditPage {
+                                            id: cloned_workflow.id
+                                        });
+                                    }
+                                    Err(e) => {
+                                        eprintln!("Failed to clone workflow: {}", e);
+                                    }
                                 }
                             });
                         },
-                        Icon {
-                            name: "copy".to_string(),
-                            class: None,
-                            size: Some("h-4 w-4".to_string()),
-                            variant: None,
+                        span { class: "inline-flex items-center gap-2",
+                            Icon {
+                                name: "copy".to_string(),
+                                class: None,
+                                size: Some("h-4 w-4".to_string()),
+                                variant: None,
+                            }
+                            span { "Clone to Edit" }
                         }
-                        "Clone to Edit"
                     }
                 } else {
                     Button {

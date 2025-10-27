@@ -40,7 +40,7 @@ pub fn use_workflow_edit(id: String) -> WorkflowEditState {
     // Load existing workflow data if editing
     let workflow_id_for_effect = id.clone();
     let mut is_system_workflow = use_signal(|| false);
-    
+
     use_effect(move || {
         if !is_new && !workflow_id_for_effect.is_empty() {
             // Check if it's a system workflow
@@ -130,9 +130,4 @@ pub fn use_workflow_edit(id: String) -> WorkflowEditState {
         workflow_json_str,
         is_system_workflow,
     }
-}
-
-// Check if a workflow ID is a system workflow
-pub fn is_system_workflow_id(id: &str) -> bool {
-    id.starts_with("system:")
 }

@@ -1,3 +1,4 @@
+pub mod alert;
 pub mod button;
 pub mod dialog;
 pub mod forms;
@@ -5,6 +6,7 @@ pub mod layout;
 pub mod notification;
 pub mod slideout;
 
+pub use alert::{Alert, AlertType};
 pub use button::{Button, ButtonSize, ButtonVariant};
 pub use dialog::ConfirmDialog;
 pub use forms::{TextInput, TextareaInput, UserInputForm, ValidationMessage};

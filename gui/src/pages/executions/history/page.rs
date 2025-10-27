@@ -1,10 +1,10 @@
-use crate::components::{Button, ButtonSize, ButtonVariant, PageHeader};
+use crate::components::{Alert, AlertType, Button, ButtonSize, ButtonVariant, PageHeader};
 use crate::hooks::{use_running_workflows, use_workflow_history};
 use crate::icons::Icon;
 use crate::state::AppStateProvider;
 use dioxus::prelude::*;
 
-use super::components::{ErrorBanner, HistoryItem, LoadingSkeleton, RunningWorkflowItem};
+use super::components::{HistoryItem, LoadingSkeleton, RunningWorkflowItem};
 use super::hooks::{use_deletion_handlers, use_history_data};
 
 #[component]
@@ -68,9 +68,21 @@ pub fn HistoryPage() -> Element {
             }
 
             if let Some(err) = error() {
-                ErrorBanner {
-                    error: err,
-                    on_retry: move |_| refresh_data_error()
+                Alert {
+                    alert_type: AlertType::Error,
+                    title: Some("Failed to load history".to_string()),
+                    message: err,
+                    dismissible: None,
+                    on_dismiss: None,
+                    actions: Some(rsx! {
+                        Button {
+                            variant: ButtonVariant::Secondary,
+                            size: ButtonSize::Small,
+                            onclick: move |_| refresh_data_error(),
+                            class: "px-3 py-1 text-sm font-medium text-red-800 dark:text-red-200 bg-red-100 dark:bg-red-900/30 hover:bg-red-200 dark:hover:bg-red-900/50".to_string(),
+                            "Retry"
+                        }
+                    }),
                 }
             }
 

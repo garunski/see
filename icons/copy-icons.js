@@ -25,7 +25,8 @@ const iconMap = {
   exclamation_circle: 'exclamation-circle',
   play: 'play',
   stop: 'stop',
-  bars_3: 'bars-3'
+  bars_3: 'bars-3',
+  copy: 'document-duplicate'
 };
 
 // Ensure output directory exists

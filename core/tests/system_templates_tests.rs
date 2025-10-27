@@ -45,7 +45,7 @@ async fn test_system_workflows_file_count() {
     let json_count = std::fs::read_dir(&workflows_dir)
         .unwrap()
         .filter_map(|e| e.ok())
-        .filter(|e| e.path().extension().map_or(false, |ext| ext == "json"))
+        .filter(|e| e.path().extension().is_some_and(|ext| ext == "json"))
         .count();
 
     assert!(
@@ -65,7 +65,7 @@ async fn test_system_prompts_file_count() {
     let json_count = std::fs::read_dir(&prompts_dir)
         .unwrap()
         .filter_map(|e| e.ok())
-        .filter(|e| e.path().extension().map_or(false, |ext| ext == "json"))
+        .filter(|e| e.path().extension().is_some_and(|ext| ext == "json"))
         .count();
 
     assert!(
@@ -86,7 +86,7 @@ async fn test_system_workflows_valid_json() {
         let entry = entry.unwrap();
         let path = entry.path();
 
-        if path.extension().map_or(false, |ext| ext == "json") {
+        if path.extension().is_some_and(|ext| ext == "json") {
             let content = std::fs::read_to_string(&path).unwrap_or_else(|_| {
                 panic!("Failed to read file: {:?}", path);
             });
@@ -135,7 +135,7 @@ async fn test_system_prompts_valid_json() {
         let entry = entry.unwrap();
         let path = entry.path();
 
-        if path.extension().map_or(false, |ext| ext == "json") {
+        if path.extension().is_some_and(|ext| ext == "json") {
             let content = std::fs::read_to_string(&path).unwrap_or_else(|_| {
                 panic!("Failed to read file: {:?}", path);
             });
@@ -189,7 +189,7 @@ async fn test_system_workflows_have_system_prefix() {
         let entry = entry.unwrap();
         let path = entry.path();
 
-        if path.extension().map_or(false, |ext| ext == "json") {
+        if path.extension().is_some_and(|ext| ext == "json") {
             let content = std::fs::read_to_string(&path).unwrap();
             let json: serde_json::Value = serde_json::from_str(&content).unwrap();
 
@@ -216,7 +216,7 @@ async fn test_system_prompts_have_system_prefix() {
         let entry = entry.unwrap();
         let path = entry.path();
 
-        if path.extension().map_or(false, |ext| ext == "json") {
+        if path.extension().is_some_and(|ext| ext == "json") {
             let content = std::fs::read_to_string(&path).unwrap();
             let json: serde_json::Value = serde_json::from_str(&content).unwrap();
 

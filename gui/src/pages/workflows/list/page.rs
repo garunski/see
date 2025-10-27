@@ -4,7 +4,7 @@ use crate::icons::Icon;
 use crate::layout::router::Route;
 use dioxus::prelude::*;
 use dioxus_router::prelude::Link;
-use s_e_e_core::{clone_system_workflow, SystemWorkflow};
+use s_e_e_core::SystemWorkflow;
 
 #[component]
 pub fn WorkflowsListPage() -> Element {
@@ -111,39 +111,27 @@ pub fn WorkflowsListPage() -> Element {
 
 #[component]
 fn SystemWorkflowItem(workflow: SystemWorkflow) -> Element {
+    let workflow_id = workflow.id.clone();
+    let workflow_name_display = workflow.name.clone();
+    let workflow_name_link = workflow.name.clone();
+
     rsx! {
         ListItemWithLink {
             icon_name: "workflows".to_string(),
             icon_variant: Some("outline".to_string()),
-            title: workflow.name.clone(),
+            title: workflow_name_display,
             subtitle: Some(rsx! {
                 span { class: "inline-flex items-center rounded-md bg-purple-50 dark:bg-purple-900/20 px-2 py-1 text-xs font-medium text-purple-700 dark:text-purple-300 ring-1 ring-inset ring-purple-700/10",
                     "System"
                 }
             }),
-            right_content: Some(rsx! {
-                button {
-                    class: "inline-flex items-center gap-1 rounded-md bg-gray-100 dark:bg-gray-800 px-2 py-1 text-xs font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700",
-                    onclick: move |_| {
-                        let id = workflow.id.clone();
-                        // Clone system workflow
-                        spawn(async move {
-                            if let Err(e) = clone_system_workflow(&id, None).await {
-                                eprintln!("Failed to clone workflow: {}", e);
-                            }
-                        });
-                    },
-                    Icon {
-                        name: "copy".to_string(),
-                        class: None,
-                        size: Some("w-3 h-3".to_string()),
-                        variant: None,
-                    }
-                    "Clone"
-                }
-            }),
+            right_content: None,
             link_to: rsx! {
-                div { "System templates cannot be edited" }
+                Link {
+                    to: Route::WorkflowEditPage { id: workflow_id },
+                    span { class: "absolute inset-x-0 -top-px bottom-0" }
+                    {workflow_name_link}
+                }
             },
         }
     }

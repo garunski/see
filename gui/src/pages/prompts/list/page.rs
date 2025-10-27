@@ -121,11 +121,15 @@ pub fn UserPromptsListPage() -> Element {
 
 #[component]
 fn SystemPromptItem(prompt: SystemPrompt) -> Element {
+    let prompt_id = prompt.id.clone();
+    let prompt_name_display = prompt.name.clone();
+    let prompt_name_link = prompt.name.clone();
+
     rsx! {
         ListItemWithLink {
             icon_name: "prompts".to_string(),
             icon_variant: Some("outline".to_string()),
-            title: prompt.name.clone(),
+            title: prompt_name_display,
             subtitle: Some(rsx! {
                 span { class: "inline-flex items-center rounded-md bg-purple-50 dark:bg-purple-900/20 px-2 py-1 text-xs font-medium text-purple-700 dark:text-purple-300 ring-1 ring-inset ring-purple-700/10",
                     "System"
@@ -133,7 +137,11 @@ fn SystemPromptItem(prompt: SystemPrompt) -> Element {
             }),
             right_content: None,
             link_to: rsx! {
-                div { "System templates cannot be edited" }
+                Link {
+                    to: Route::UserPromptEditPage { id: prompt_id },
+                    span { class: "absolute inset-x-0 -top-px bottom-0" }
+                    {prompt_name_link}
+                }
             },
         }
     }
