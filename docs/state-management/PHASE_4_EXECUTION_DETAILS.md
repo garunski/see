@@ -43,7 +43,7 @@ Add this query to the existing file:
 
 ```rust
 #[derive(Clone, PartialEq, Hash, Eq)]
-pub struct GetWorkflowExecution(Captured<()>);
+pub struct GetWorkflowExecution;
 
 impl QueryCapability for GetWorkflowExecution {
     type Ok = WorkflowExecution;
@@ -66,7 +66,7 @@ use dioxus_query::prelude::*;
 use std::time::Duration;
 
 let execution = use_query(
-    Query::new(id.clone(), GetWorkflowExecution(Captured(())))
+    Query::new(id.clone(), GetWorkflowExecution)
         .interval(Duration::from_secs(2))
 );
 ```

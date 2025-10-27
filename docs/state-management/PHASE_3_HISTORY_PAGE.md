@@ -27,7 +27,7 @@ use dioxus_query::prelude::*;
 use s_e_e_core::{WorkflowExecutionSummary, WorkflowMetadata, get_global_store};
 
 #[derive(Clone, PartialEq, Hash, Eq)]
-pub struct GetWorkflowHistory(Captured<()>);
+pub struct GetWorkflowHistory;
 
 impl QueryCapability for GetWorkflowHistory {
     type Ok = Vec<WorkflowExecutionSummary>;
@@ -57,7 +57,7 @@ impl QueryCapability for GetWorkflowHistory {
 }
 
 #[derive(Clone, PartialEq, Hash, Eq)]
-pub struct GetRunningWorkflows(Captured<()>);
+pub struct GetRunningWorkflows;
 
 impl QueryCapability for GetRunningWorkflows {
     type Ok = Vec<WorkflowMetadata>;
@@ -84,10 +84,10 @@ impl QueryCapability for GetRunningWorkflows {
 use dioxus_query::prelude::*;
 use std::time::Duration;
 
-let history = use_query(Query::new((), GetWorkflowHistory(Captured(()))));
+let history = use_query(Query::new((), GetWorkflowHistory));
 
 let running = use_query(
-    Query::new((), GetRunningWorkflows(Captured(())))
+    Query::new((), GetRunningWorkflows)
         .interval(Duration::from_secs(5))  // Poll every 5s
 );
 ```

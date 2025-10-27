@@ -25,11 +25,11 @@ pub use prompt_queries::*;
 
 ```rust
 use dioxus_query::prelude::*;
-use s_e_e_core::{Prompt, get_global_store};
+use s_e_e_core::Prompt;
 use crate::services::prompt::UserPromptService;
 
 #[derive(Clone, PartialEq, Hash, Eq)]
-pub struct GetPrompts(Captured<()>);  // dioxus-query 0.8.1 requires Captured context
+pub struct GetPrompts;
 
 impl QueryCapability for GetPrompts {
     type Ok = Vec<Prompt>;
@@ -49,7 +49,7 @@ impl QueryCapability for GetPrompts {
 use dioxus::prelude::*;
 use dioxus_query::prelude::*;
 
-let prompts = use_query(Query::new((), GetPrompts(Captured(()))));
+let prompts = use_query(Query::new((), GetPrompts));
 ```
 
 **Validation**: `task quality`
