@@ -37,18 +37,8 @@ if (!fs.existsSync(outputDir)) {
 
 console.log('Copying Heroicons...');
 
-// Copy both solid and outline variants
+// Copy outline variant only
 Object.entries(iconMap).forEach(([ourName, heroiconName]) => {
-  // Copy solid variant
-  const solidSrc = path.join(heroiconsDir, '24', 'solid', `${heroiconName}.svg`);
-  const solidDest = path.join(outputDir, `${ourName}-solid.svg`);
-  if (fs.existsSync(solidSrc)) {
-    fs.copyFileSync(solidSrc, solidDest);
-    console.log(`✓ Copied ${ourName}-solid.svg`);
-  } else {
-    console.log(`✗ Missing: ${solidSrc}`);
-  }
-  
   // Copy outline variant
   const outlineSrc = path.join(heroiconsDir, '24', 'outline', `${heroiconName}.svg`);
   const outlineDest = path.join(outputDir, `${ourName}-outline.svg`);

@@ -40,7 +40,7 @@ pub fn ConfirmDialog(
                         size: IconButtonSize::Medium,
                         onclick: move |_| on_confirm.call(()),
                         icon: Some("check_circle".to_string()),
-                        icon_variant: "solid".to_string(),
+                        icon_variant: "outline".to_string(),
                         "{confirm_text}"
                     }
                 }

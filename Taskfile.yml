@@ -7,12 +7,14 @@ tasks:
   quality:
     desc: Run all quality checks (formatting, linting, tests, file size)
     cmds:
-      - cargo fmt -- --check
-      - cargo clippy --all-targets --all-features -- -D warnings
-      - cargo test
+      # Build assets first before quality checks
       - task: visualizer
       - task: tailwind
       - task: icons
+      # Now run quality checks
+      - cargo fmt -- --check
+      - cargo clippy --all-targets --all-features -- -D warnings
+      - cargo test
       - |
         echo "Running npm audit for react-flow-app..."
         cd react-flow-app && npm audit --production
