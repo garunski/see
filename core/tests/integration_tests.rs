@@ -21,7 +21,7 @@ fn test_output_callback() {
 #[test]
 fn test_workflow_execution_persistence() {
     let rt = tokio::runtime::Runtime::new().unwrap();
-    let init_result = rt.block_on(init_global_store());
+    let init_result = rt.block_on(init_test_store());
 
     match init_result {
         Ok(_) => {
@@ -91,7 +91,7 @@ fn test_workflow_execution_persistence() {
 #[test]
 fn test_empty_workflow_execution() {
     let rt = tokio::runtime::Runtime::new().unwrap();
-    let init_result = rt.block_on(init_global_store());
+    let init_result = rt.block_on(init_test_store());
 
     match init_result {
         Ok(_) => {

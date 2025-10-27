@@ -6,7 +6,7 @@ use core::*;
 fn test_global_store_initialization() {
     // Test that we can initialize the global store
     let rt = tokio::runtime::Runtime::new().unwrap();
-    let result = rt.block_on(init_global_store());
+    let result = rt.block_on(init_test_store());
     
     // The initialization might fail in test environment due to database permissions
     // This is acceptable - we just test that the function exists and can be called
@@ -35,6 +35,6 @@ fn test_tracing_initialization() {
 #[test]
 fn test_initialization_functions_exist() {
     // Test that all initialization functions exist and have correct signatures
-    let _init_store_fn: fn() -> std::pin::Pin<Box<dyn std::future::Future<Output = Result<(), String>> + Send>> = init_global_store;
+    let _init_store_fn: fn() -> std::pin::Pin<Box<dyn std::future::Future<Output = Result<(), String>> + Send>> = init_test_store;
     let _get_store_fn: fn() -> Result<std::sync::Arc<persistence::Store>, String> = get_global_store;
 }

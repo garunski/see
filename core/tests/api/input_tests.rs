@@ -5,11 +5,11 @@
 #[cfg(test)]
 mod tests {
     use s_e_e_core::{get_pending_inputs, get_tasks_waiting_for_input, provide_user_input, CoreError};
-    use s_e_e_core::{init_global_store, TaskExecution, TaskStatus, UserInputRequest};
+    use s_e_e_core::{init_test_store, TaskExecution, TaskStatus, UserInputRequest};
     use serde_json::Value;
 
     async fn setup_test_environment() -> Result<(), CoreError> {
-        init_global_store().await?;
+        init_test_store().await?;
         Ok(())
     }
 

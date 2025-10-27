@@ -6,7 +6,7 @@ use s_e_e_core::*;
 fn test_global_store_initialization() {
     // Test that we can initialize the global store
     let rt = tokio::runtime::Runtime::new().unwrap();
-    let result = rt.block_on(init_global_store());
+    let result = rt.block_on(init_test_store());
 
     // The initialization might fail in test environment due to database permissions
     // This is acceptable - we just test that the function exists and can be called
@@ -39,8 +39,8 @@ fn test_initialization_functions_exist() {
     // Test that all initialization functions exist and can be called
     let rt = tokio::runtime::Runtime::new().unwrap();
 
-    // Test init_global_store function exists
-    let _result = rt.block_on(init_global_store());
+    // Test init_test_store function exists
+    let _result = rt.block_on(init_test_store());
 
     // Test get_global_store function exists
     let _store_result = get_global_store();

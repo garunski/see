@@ -13,11 +13,7 @@ pub fn validate_prompt_fields(prompt_id: &str, name: &str, content: &str) -> Res
     Ok(())
 }
 
-pub fn create_prompt_from_fields(
-    prompt_id: String,
-    name: String,
-    content: String,
-) -> Prompt {
+pub fn create_prompt_from_fields(prompt_id: String, name: String, content: String) -> Prompt {
     let now = chrono::Utc::now();
     let content_str = content.trim().to_string();
     Prompt {

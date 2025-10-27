@@ -38,7 +38,7 @@ fn create_test_workflow() -> WorkflowDefinition {
 fn test_workflow_execution_flow() {
     // Initialize global store
     let rt = tokio::runtime::Runtime::new().unwrap();
-    let init_result = rt.block_on(init_global_store());
+    let init_result = rt.block_on(init_test_store());
     
     match init_result {
         Ok(_) => {
@@ -76,7 +76,7 @@ fn test_workflow_execution_flow() {
 #[test]
 fn test_workflow_not_found() {
     let rt = tokio::runtime::Runtime::new().unwrap();
-    let init_result = rt.block_on(init_global_store());
+    let init_result = rt.block_on(init_test_store());
     
     match init_result {
         Ok(_) => {
@@ -98,7 +98,7 @@ fn test_workflow_not_found() {
 #[test]
 fn test_workflow_execution_with_callback() {
     let rt = tokio::runtime::Runtime::new().unwrap();
-    let init_result = rt.block_on(init_global_store());
+    let init_result = rt.block_on(init_test_store());
     
     match init_result {
         Ok(_) => {
@@ -131,7 +131,7 @@ fn test_workflow_execution_with_callback() {
 #[test]
 fn test_invalid_workflow_execution() {
     let rt = tokio::runtime::Runtime::new().unwrap();
-    let init_result = rt.block_on(init_global_store());
+    let init_result = rt.block_on(init_test_store());
     
     match init_result {
         Ok(_) => {
@@ -168,7 +168,7 @@ fn test_invalid_workflow_execution() {
 #[test]
 fn test_workflow_execution_stores_snapshot() {
     let rt = tokio::runtime::Runtime::new().unwrap();
-    let init_result = rt.block_on(init_global_store());
+    let init_result = rt.block_on(init_test_store());
     
     match init_result {
         Ok(_) => {

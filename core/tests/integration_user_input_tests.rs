@@ -6,7 +6,7 @@ use s_e_e_core::*;
 
 /// Helper to create a test store
 async fn create_test_store() -> Result<(), String> {
-    init_global_store().await
+    init_test_store().await
 }
 
 /// Helper to create a simple workflow with user input

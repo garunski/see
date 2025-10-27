@@ -1,6 +1,9 @@
 // Workflow execution API tests ONLY
 
-use s_e_e_core::*;
+use s_e_e_core::{
+    cleanup_test_db, execute_workflow_by_id, get_global_store, init_test_store, CoreError,
+    OutputCallback, WorkflowDefinition,
+};
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
 
@@ -38,9 +41,10 @@ fn create_test_workflow() -> WorkflowDefinition {
 
 #[test]
 fn test_workflow_execution_flow() {
-    // Initialize global store
+    // Initialize test store
     let rt = tokio::runtime::Runtime::new().unwrap();
-    let init_result = rt.block_on(init_global_store());
+    let _ = cleanup_test_db();
+    let init_result = rt.block_on(init_test_store());
 
     match init_result {
         Ok(_) => {
@@ -78,7 +82,7 @@ fn test_workflow_execution_flow() {
 #[test]
 fn test_workflow_not_found() {
     let rt = tokio::runtime::Runtime::new().unwrap();
-    let init_result = rt.block_on(init_global_store());
+    let init_result = rt.block_on(init_test_store());
 
     match init_result {
         Ok(_) => {
@@ -100,7 +104,7 @@ fn test_workflow_not_found() {
 #[test]
 fn test_workflow_execution_with_callback() {
     let rt = tokio::runtime::Runtime::new().unwrap();
-    let init_result = rt.block_on(init_global_store());
+    let init_result = rt.block_on(init_test_store());
 
     match init_result {
         Ok(_) => {
@@ -133,7 +137,7 @@ fn test_workflow_execution_with_callback() {
 #[test]
 fn test_invalid_workflow_execution() {
     let rt = tokio::runtime::Runtime::new().unwrap();
-    let init_result = rt.block_on(init_global_store());
+    let init_result = rt.block_on(init_test_store());
 
     match init_result {
         Ok(_) => {

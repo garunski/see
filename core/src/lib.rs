@@ -40,7 +40,9 @@ pub use crate::api::{
 pub use crate::bridge::WorkflowResult;
 pub use crate::errors::CoreError;
 pub use crate::logging::{init_tracing, TracingGuard};
-pub use crate::store_singleton::{get_global_store, init_global_store};
+pub use crate::store_singleton::{
+    cleanup_test_db, get_global_store, init_global_store, init_test_store,
+};
 
 // Re-export conversion functions for GUI compatibility
 pub use crate::bridge::audit::audit_event_to_entry;
@@ -51,6 +53,3 @@ pub use crate::bridge::OutputCallback;
 
 // Re-export validation functions
 pub use crate::validation::{validate_workflow_json, validate_workflow_json_simple};
-
-#[cfg(test)]
-mod execution_integration_tests;
