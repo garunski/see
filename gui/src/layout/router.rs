@@ -1,5 +1,4 @@
-use crate::components::{Button, ButtonSize, ButtonVariant};
-use crate::icons::Icon;
+use crate::components::{IconButton, IconButtonSize, IconButtonVariant};
 use crate::pages::{
     HistoryPage, HomePage, SettingsPage, UploadPage, UserPromptEditPage, UserPromptEditPageNew,
     UserPromptsListPage, WorkflowDetailsPage, WorkflowEditPage, WorkflowEditPageNew,
@@ -55,17 +54,14 @@ pub fn AppLayout() -> Element {
 
             header { class: "flex items-center px-4 sm:hidden",
                 div { class: "py-2.5",
-                    Button {
-                        variant: ButtonVariant::Ghost,
-                        size: ButtonSize::Medium,
+                    IconButton {
+                        variant: IconButtonVariant::Ghost,
+                        size: IconButtonSize::Medium,
                         onclick: move |_| show_sidebar.set(true),
-                        class: "p-2".to_string(),
-                        Icon {
-                            name: "bars_3".to_string(),
-                            class: Some("h-6 w-6".to_string()),
-                            size: None,
-                            variant: Some("outline".to_string()),
-                        }
+                        class: Some("p-2".to_string()),
+                        icon: Some("bars_3".to_string()),
+                        icon_variant: "outline".to_string(),
+                        ""
                     }
                 }
                 div { class: "min-w-0 flex-1" }
@@ -80,17 +76,14 @@ pub fn AppLayout() -> Element {
                     div { class: "fixed inset-y-0 w-full max-w-80 p-2 transition duration-300 ease-in-out",
                         div { class: "flex h-full flex-col rounded-lg bg-white shadow-xs ring-1 ring-zinc-950/5 dark:bg-zinc-900 dark:ring-white/10",
                             div { class: "-mb-3 px-4 pt-3",
-                                Button {
-                                    variant: ButtonVariant::Ghost,
-                                    size: ButtonSize::Medium,
+                                IconButton {
+                                    variant: IconButtonVariant::Ghost,
+                                    size: IconButtonSize::Medium,
                                     onclick: move |_| show_sidebar.set(false),
-                                    class: "p-2".to_string(),
-                                    Icon {
-                                        name: "x".to_string(),
-                                        class: Some("h-6 w-6".to_string()),
-                                        size: None,
-                                        variant: Some("outline".to_string()),
-                                    }
+                                    class: Some("p-2".to_string()),
+                                    icon: Some("x".to_string()),
+                                    icon_variant: "outline".to_string(),
+                                    ""
                                 }
                             }
                             Sidebar {}

@@ -25,7 +25,7 @@ pub fn PromptList(prompts: Vec<Prompt>, on_prompt_click: EventHandler<String>) -
                             {let prompt_id = prompt.id.clone();
                             rsx! {
                                 ListItem {
-                                    icon_name: "document".to_string(),
+                                    icon_name: "prompts".to_string(),
                                     icon_variant: Some("outline".to_string()),
                                     title: rsx! {
                                         {prompt.name.clone()}

@@ -1,4 +1,6 @@
-use crate::components::{Alert, AlertType, Button, ButtonSize, ButtonVariant, List, PageHeader};
+use crate::components::{
+    Alert, AlertType, IconButton, IconButtonSize, IconButtonVariant, List, PageHeader,
+};
 use crate::hooks::{use_running_workflows, use_workflow_history};
 use crate::icons::Icon;
 use crate::state::AppStateProvider;
@@ -60,20 +62,15 @@ pub fn HistoryPage() -> Element {
                 title: "Executions".to_string(),
                 description: "View and manage your workflow executions".to_string(),
                 actions: Some(rsx! {
-                    Button {
-                        variant: ButtonVariant::Ghost,
-                        size: ButtonSize::Medium,
+                    IconButton {
+                        variant: IconButtonVariant::Ghost,
+                        size: IconButtonSize::Medium,
                         disabled: Some(is_loading()),
                         loading: Some(is_loading()),
                         onclick: move |_| refresh_data_button(),
-                        class: "flex items-center gap-2".to_string(),
-                        Icon {
-                            name: "history".to_string(),
-                            class: Some("w-4 h-4".to_string()),
-                            size: None,
-                            variant: Some("outline".to_string()),
-                        }
-                        span { "Refresh" }
+                        icon: Some("history".to_string()),
+                        icon_variant: "outline".to_string(),
+                        "Refresh"
                     }
                 }),
             }
@@ -86,11 +83,13 @@ pub fn HistoryPage() -> Element {
                     dismissible: None,
                     on_dismiss: None,
                     actions: Some(rsx! {
-                        Button {
-                            variant: ButtonVariant::Secondary,
-                            size: ButtonSize::Small,
+                        IconButton {
+                            variant: IconButtonVariant::Secondary,
+                            size: IconButtonSize::Small,
                             onclick: move |_| refresh_data_error(),
-                            class: "px-3 py-1 text-sm font-medium text-red-800 dark:text-red-200 bg-red-100 dark:bg-red-900/30 hover:bg-red-200 dark:hover:bg-red-900/50".to_string(),
+                            class: Some("px-3 py-1 text-sm font-medium text-red-800 dark:text-red-200 bg-red-100 dark:bg-red-900/30 hover:bg-red-200 dark:hover:bg-red-900/50".to_string()),
+                            icon: Some("history".to_string()),
+                            icon_variant: "outline".to_string(),
                             "Retry"
                         }
                     }),

@@ -1,4 +1,4 @@
-use crate::components::{Button, ButtonSize, ButtonVariant, PageHeader, SectionCard};
+use crate::components::{IconButton, IconButtonSize, IconButtonVariant, PageHeader, SectionCard};
 use crate::layout::router::Route;
 use crate::services::workflow::read_and_parse_workflow_file;
 use crate::state::AppStateProvider;
@@ -117,12 +117,14 @@ pub fn UploadPage() -> Element {
                                 oninput: move |evt| on_workflow_file_change(evt.value()),
                                 class: "block w-full px-3 py-2 text-sm text-zinc-950 dark:text-white bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                             }
-                            Button {
-                                variant: ButtonVariant::Secondary,
-                                size: ButtonSize::Medium,
+                            IconButton {
+                                variant: IconButtonVariant::Secondary,
+                                size: IconButtonSize::Medium,
                                 disabled: Some(is_picking_file()),
                                 loading: Some(is_picking_file()),
                                 onclick: move |_| pick_file(),
+                                icon: if is_picking_file() { None } else { Some("upload".to_string()) },
+                                icon_variant: "outline".to_string(),
                                 if is_picking_file() { "" } else { "Browse" }
                             }
                         }
@@ -139,13 +141,15 @@ pub fn UploadPage() -> Element {
                             }
                         }
 
-                        Button {
-                            variant: ButtonVariant::Primary,
-                            size: ButtonSize::Large,
+                        IconButton {
+                            variant: IconButtonVariant::Primary,
+                            size: IconButtonSize::Large,
                             disabled: Some(is_saving()),
                             loading: Some(is_saving()),
                             onclick: move |_| on_save(),
-                            class: "w-full font-semibold".to_string(),
+                            class: Some("w-full font-semibold".to_string()),
+                            icon: if is_saving() { None } else { Some("save".to_string()) },
+                            icon_variant: "outline".to_string(),
                             if is_saving() { "Saving..." } else { "Save Workflow" }
                         }
                     }

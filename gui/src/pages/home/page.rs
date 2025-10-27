@@ -1,9 +1,9 @@
 use crate::components::layout::ListItem as LayoutListItem;
-use crate::components::{BadgeButton, BadgeColor, List, PageHeader};
+use crate::components::{BadgeButton, BadgeColor, EmptyState, List, PageHeader, SectionCard};
 use crate::hooks::{use_workflow_history, use_workflows};
 use crate::layout::router::Route;
 use dioxus::prelude::*;
-use dioxus_router::prelude::{use_navigator, Link};
+use dioxus_router::prelude::use_navigator;
 use s_e_e_core::{WorkflowDefinition, WorkflowExecutionStatus};
 
 use super::components::ExecutionListItem;
@@ -95,64 +95,65 @@ pub fn HomePage() -> Element {
             }
 
             // Executions Section
-            div { class: "space-y-4",
-                div { class: "flex items-center justify-between",
-                    h2 { class: "text-lg font-semibold text-zinc-900 dark:text-white", "Recent Executions" }
-                    Link {
-                        to: Route::HistoryPage {},
-                        class: "text-sm text-blue-600 hover:text-blue-500 dark:text-blue-400 dark:hover:text-blue-300",
-                        "View All"
-                    }
-                }
-
-                // Filter Badges
-                div { class: "flex items-center gap-2 flex-wrap",
-                    BadgeButton {
-                        color: BadgeColor::Amber,
-                        active: active_filter() == WorkflowExecutionStatus::WaitingForInput,
-                        onclick: move |_| active_filter.set(WorkflowExecutionStatus::WaitingForInput),
-                        "Waiting for Input"
-                    }
-                    BadgeButton {
-                        color: BadgeColor::Emerald,
-                        active: active_filter() == WorkflowExecutionStatus::Complete,
-                        onclick: move |_| active_filter.set(WorkflowExecutionStatus::Complete),
-                        "Complete"
-                    }
-                    BadgeButton {
-                        color: BadgeColor::Blue,
-                        active: active_filter() == WorkflowExecutionStatus::Running,
-                        onclick: move |_| active_filter.set(WorkflowExecutionStatus::Running),
-                        "Running"
-                    }
-                    BadgeButton {
-                        color: BadgeColor::Red,
-                        active: active_filter() == WorkflowExecutionStatus::Failed,
-                        onclick: move |_| active_filter.set(WorkflowExecutionStatus::Failed),
-                        "Failed"
-                    }
-                    BadgeButton {
-                        color: BadgeColor::Zinc,
-                        active: active_filter() == WorkflowExecutionStatus::Pending,
-                        onclick: move |_| active_filter.set(WorkflowExecutionStatus::Pending),
-                        "Pending"
-                    }
-                }
-
-                if filtered_executions().is_empty() {
-                    div { class: "rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 p-8 text-center",
-                        div { class: "text-zinc-500 dark:text-zinc-400",
-                            "No executions with this status."
+            if filtered_executions().is_empty() {
+                SectionCard {
+                    title: Some("Recent Executions".to_string()),
+                    children: rsx! {
+                        EmptyState {
+                            message: "No executions with this status.".to_string(),
                         }
-                    }
-                } else {
-                    List {
-                        for execution in filtered_executions().iter() {
-                            ExecutionListItem {
-                                execution: execution.clone(),
+                    },
+                    padding: None,
+                }
+            } else {
+                SectionCard {
+                    title: Some("Recent Executions".to_string()),
+                    children: rsx! {
+                        div { class: "space-y-4",
+                            // Filter Badges
+                            div { class: "flex items-center gap-2 flex-wrap",
+                                BadgeButton {
+                                    color: BadgeColor::Amber,
+                                    active: active_filter() == WorkflowExecutionStatus::WaitingForInput,
+                                    onclick: move |_| active_filter.set(WorkflowExecutionStatus::WaitingForInput),
+                                    "Waiting for Input"
+                                }
+                                BadgeButton {
+                                    color: BadgeColor::Emerald,
+                                    active: active_filter() == WorkflowExecutionStatus::Complete,
+                                    onclick: move |_| active_filter.set(WorkflowExecutionStatus::Complete),
+                                    "Complete"
+                                }
+                                BadgeButton {
+                                    color: BadgeColor::Blue,
+                                    active: active_filter() == WorkflowExecutionStatus::Running,
+                                    onclick: move |_| active_filter.set(WorkflowExecutionStatus::Running),
+                                    "Running"
+                                }
+                                BadgeButton {
+                                    color: BadgeColor::Red,
+                                    active: active_filter() == WorkflowExecutionStatus::Failed,
+                                    onclick: move |_| active_filter.set(WorkflowExecutionStatus::Failed),
+                                    "Failed"
+                                }
+                                BadgeButton {
+                                    color: BadgeColor::Zinc,
+                                    active: active_filter() == WorkflowExecutionStatus::Pending,
+                                    onclick: move |_| active_filter.set(WorkflowExecutionStatus::Pending),
+                                    "Pending"
+                                }
+                            }
+
+                            List {
+                                for execution in filtered_executions().iter() {
+                                    ExecutionListItem {
+                                        execution: execution.clone(),
+                                    }
+                                }
                             }
                         }
-                    }
+                    },
+                    padding: None,
                 }
             }
 

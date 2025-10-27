@@ -1,5 +1,4 @@
-use crate::components::{Button, ButtonSize, ButtonVariant};
-use crate::icons::Icon;
+use crate::components::{IconButton, IconButtonSize, IconButtonVariant};
 use dioxus::prelude::*;
 
 #[component]
@@ -51,17 +50,14 @@ pub fn Slideout(
 
                         // Optional close button
                         if show_close_button.unwrap_or(true) {
-                            Button {
-                                variant: ButtonVariant::Ghost,
-                                size: ButtonSize::Small,
+                            IconButton {
+                                variant: IconButtonVariant::Ghost,
+                                size: IconButtonSize::Small,
                                 onclick: Some(on_close),
                                 class: Some("text-gray-400 hover:text-gray-500 dark:hover:text-white".to_string()),
-                                Icon {
-                                    name: "x".to_string(),
-                                    class: Some("w-6 h-6".to_string()),
-                                    size: None,
-                                    variant: Some("outline".to_string()),
-                                }
+                                icon: Some("x".to_string()),
+                                icon_variant: "outline".to_string(),
+                                ""
                             }
                         }
                     }

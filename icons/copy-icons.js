@@ -26,7 +26,8 @@ const iconMap = {
   play: 'play',
   stop: 'stop',
   bars_3: 'bars-3',
-  copy: 'document-duplicate'
+  copy: 'document-duplicate',
+  save: 'arrow-down-on-square'
 };
 
 // Ensure output directory exists

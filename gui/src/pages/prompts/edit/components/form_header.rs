@@ -1,4 +1,4 @@
-use crate::components::{Button, ButtonSize, ButtonVariant, PageHeader};
+use crate::components::{IconButton, IconButtonSize, IconButtonVariant, PageHeader};
 use crate::icons::Icon;
 use crate::layout::router::Route;
 use dioxus::prelude::*;
@@ -30,21 +30,25 @@ pub fn PromptFormHeader(
                         "Back"
                     }
                     if !is_new {
-                        Button {
-                            variant: ButtonVariant::Danger,
-                            size: ButtonSize::Medium,
+                        IconButton {
+                            variant: IconButtonVariant::Danger,
+                            size: IconButtonSize::Medium,
                             disabled: Some(is_deleting),
                             loading: Some(is_deleting),
                             onclick: move |_| on_delete_click.call(()),
+                            icon: Some("trash".to_string()),
+                            icon_variant: "outline".to_string(),
                             "Delete"
                         }
                     }
-                    Button {
-                        variant: ButtonVariant::Primary,
-                        size: ButtonSize::Medium,
+                    IconButton {
+                        variant: IconButtonVariant::Primary,
+                        size: IconButtonSize::Medium,
                         disabled: Some(is_saving),
                         loading: Some(is_saving),
                         onclick: move |_| on_save_click.call(()),
+                        icon: if is_saving { None } else { Some("save".to_string()) },
+                        icon_variant: "outline".to_string(),
                         if is_saving { "Saving..." } else { "Save" }
                     }
                 }

@@ -1,4 +1,4 @@
-use crate::components::{Button, ButtonSize, ButtonVariant, Slideout, UserInputForm};
+use crate::components::{IconButton, IconButtonSize, IconButtonVariant, Slideout, UserInputForm};
 use crate::icons::Icon;
 use crate::pages::executions::details::hooks::use_input_request;
 use dioxus::prelude::*;
@@ -228,18 +228,15 @@ pub fn TaskDetailsPanel(
 
             footer: Some(rsx! {
                 // Left side - Previous button
-                Button {
-                    variant: ButtonVariant::Ghost,
-                    size: ButtonSize::Small,
+                IconButton {
+                    variant: IconButtonVariant::Ghost,
+                    size: IconButtonSize::Small,
                     disabled: Some(!can_go_previous),
                     onclick: Some(on_previous),
                     class: Some("text-gray-400 hover:text-gray-500 dark:hover:text-white".to_string()),
-                    Icon {
-                        name: "chevron_left".to_string(),
-                        class: Some("w-5 h-5".to_string()),
-                        size: None,
-                        variant: Some("outline".to_string()),
-                    }
+                    icon: Some("chevron_left".to_string()),
+                    icon_variant: "outline".to_string(),
+                    ""
                 }
 
                 // Center - Task status
@@ -265,18 +262,15 @@ pub fn TaskDetailsPanel(
                 }
 
                 // Right side - Next button
-                Button {
-                    variant: ButtonVariant::Ghost,
-                    size: ButtonSize::Small,
+                IconButton {
+                    variant: IconButtonVariant::Ghost,
+                    size: IconButtonSize::Small,
                     disabled: Some(!can_go_next),
                     onclick: Some(on_next),
                     class: Some("text-gray-400 hover:text-gray-500 dark:hover:text-white".to_string()),
-                    Icon {
-                        name: "chevron_right".to_string(),
-                        class: Some("w-5 h-5".to_string()),
-                        size: None,
-                        variant: Some("outline".to_string()),
-                    }
+                    icon: Some("chevron_right".to_string()),
+                    icon_variant: "outline".to_string(),
+                    ""
                 }
             })
         }

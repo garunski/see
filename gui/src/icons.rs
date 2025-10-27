@@ -77,6 +77,8 @@ fn get_icon_svg(name: &str, variant: &str) -> String {
         ("check_circle", "outline") => {
             include_str!("../assets/icons/check_circle-outline.svg").to_string()
         }
+        ("save", "solid") => include_str!("../assets/icons/save-solid.svg").to_string(),
+        ("save", "outline") => include_str!("../assets/icons/save-outline.svg").to_string(),
         ("pause", "solid") => include_str!("../assets/icons/pause-solid.svg").to_string(),
         ("pause", "outline") => include_str!("../assets/icons/pause-outline.svg").to_string(),
         ("copy", "solid") => include_str!("../assets/icons/copy-solid.svg").to_string(),

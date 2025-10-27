@@ -1,5 +1,4 @@
-use crate::components::{Button, ButtonSize, ButtonVariant};
-use crate::icons::Icon;
+use crate::components::{IconButton, IconButtonSize, IconButtonVariant};
 use dioxus::prelude::*;
 use dioxus_router::prelude::use_navigator;
 
@@ -9,18 +8,14 @@ pub fn ExecutionHeader() -> Element {
 
     rsx! {
         div { class: "flex items-center gap-4",
-            Button {
-                variant: ButtonVariant::Ghost,
-                size: ButtonSize::Medium,
+            IconButton {
+                variant: IconButtonVariant::Ghost,
+                size: IconButtonSize::Medium,
                 onclick: move |_| navigator.go_back(),
-                class: "flex items-center gap-2".to_string(),
-                Icon {
-                    name: "arrow_left".to_string(),
-                    class: Some("w-5 h-5".to_string()),
-                    size: None,
-                    variant: Some("outline".to_string()),
-                }
-                span { "Back to History" }
+                class: Some("flex items-center gap-2".to_string()),
+                icon: Some("arrow_left".to_string()),
+                icon_variant: "outline".to_string(),
+                "Back"
             }
             h1 { class: "text-lg font-semibold text-zinc-950 dark:text-white", "Workflow Execution Details" }
         }

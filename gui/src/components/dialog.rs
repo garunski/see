@@ -1,4 +1,4 @@
-use super::{Button, ButtonSize, ButtonVariant};
+use super::{IconButton, IconButtonSize, IconButtonVariant};
 use dioxus::prelude::*;
 
 #[component]
@@ -27,16 +27,20 @@ pub fn ConfirmDialog(
                 h3 { class: "text-lg font-semibold text-zinc-900 dark:text-white mb-2", "{title}" }
                 p { class: "text-zinc-600 dark:text-zinc-400 mb-6", "{message}" }
                 div { class: "flex gap-3 justify-end",
-                    Button {
-                        variant: ButtonVariant::Secondary,
-                        size: ButtonSize::Medium,
+                    IconButton {
+                        variant: IconButtonVariant::Secondary,
+                        size: IconButtonSize::Medium,
                         onclick: move |_| on_cancel.call(()),
+                        icon: Some("x".to_string()),
+                        icon_variant: "outline".to_string(),
                         "{cancel_text}"
                     }
-                    Button {
-                        variant: ButtonVariant::Danger,
-                        size: ButtonSize::Medium,
+                    IconButton {
+                        variant: IconButtonVariant::Danger,
+                        size: IconButtonSize::Medium,
                         onclick: move |_| on_confirm.call(()),
+                        icon: Some("check_circle".to_string()),
+                        icon_variant: "solid".to_string(),
                         "{confirm_text}"
                     }
                 }

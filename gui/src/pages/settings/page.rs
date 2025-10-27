@@ -1,5 +1,4 @@
-use crate::components::{Button, ButtonSize, ButtonVariant, ConfirmDialog, PageHeader};
-use crate::icons::Icon;
+use crate::components::{ConfirmDialog, IconButton, IconButtonSize, IconButtonVariant, PageHeader};
 use crate::services::clear_database;
 use crate::state::AppStateProvider;
 use dioxus::prelude::*;
@@ -74,17 +73,13 @@ pub fn SettingsPage() -> Element {
                     p { class: "text-zinc-600 dark:text-zinc-400",
                         "Clear all application data including workflow history, settings, and prompts. This action cannot be undone."
                     }
-                    Button {
-                        variant: ButtonVariant::Danger,
-                        size: ButtonSize::Large,
+                    IconButton {
+                        variant: IconButtonVariant::Danger,
+                        size: IconButtonSize::Large,
                         onclick: move |_| show_confirm_dialog.set(true),
-                        class: "w-full",
-                        Icon {
-                            name: "trash".to_string(),
-                            class: Some("w-5 h-5 mr-2".to_string()),
-                            size: None,
-                            variant: Some("outline".to_string()),
-                        }
+                        class: Some("w-full".to_string()),
+                        icon: Some("trash".to_string()),
+                        icon_variant: "outline".to_string(),
                         "Clear All Data"
                     }
                 }

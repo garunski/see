@@ -63,7 +63,7 @@ pub fn ListItem(props: ListItemProps) -> Element {
                         variant: icon_variant,
                     }
                 }
-                div { class: "min-w-0 flex-auto",
+                div { class: "min-w-0 flex-auto flex flex-col justify-center",
                     div { class: "text-sm/6 font-semibold text-gray-900 dark:text-white",
                         {title}
                     }

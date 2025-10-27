@@ -1,5 +1,4 @@
-use crate::components::{Button, ButtonSize, ButtonVariant};
-use crate::icons::Icon;
+use crate::components::{IconButton, IconButtonSize, IconButtonVariant};
 use dioxus::prelude::*;
 use dioxus_router::prelude::use_navigator;
 
@@ -37,9 +36,9 @@ pub fn EditorHeader(props: EditorHeaderProps) -> Element {
     rsx! {
         div { class: "flex items-center justify-between",
             div { class: "flex items-center gap-4",
-                Button {
-                    variant: ButtonVariant::Ghost,
-                    size: ButtonSize::Medium,
+                IconButton {
+                    variant: IconButtonVariant::Ghost,
+                    size: IconButtonSize::Medium,
                     onclick: move |_| {
                         if has_unsaved_changes() {
                             // For now, just navigate back - in a real app you'd want a proper confirmation dialog
@@ -48,13 +47,9 @@ pub fn EditorHeader(props: EditorHeaderProps) -> Element {
                         // Navigate back using Dioxus router
                         navigator.go_back();
                     },
-                    class: "inline-flex items-center gap-x-1.5 rounded-md bg-zinc-100 dark:bg-zinc-800 px-3 py-2 text-sm font-semibold text-zinc-900 dark:text-zinc-100 shadow-sm hover:bg-zinc-200 dark:hover:bg-zinc-700",
-                    Icon {
-                        name: "arrow_left".to_string(),
-                        class: Some("-ml-0.5 h-4 w-4".to_string()),
-                        size: None,
-                        variant: Some("outline".to_string()),
-                    }
+                    class: Some("inline-flex items-center gap-x-1.5 rounded-md bg-zinc-100 dark:bg-zinc-800 px-3 py-2 text-sm font-semibold text-zinc-900 dark:text-zinc-100 shadow-sm hover:bg-zinc-200 dark:hover:bg-zinc-700".to_string()),
+                    icon: Some("arrow_left".to_string()),
+                    icon_variant: "outline".to_string(),
                     "Back"
                 }
                 div {
@@ -69,34 +64,38 @@ pub fn EditorHeader(props: EditorHeaderProps) -> Element {
             div { class: "flex items-center gap-3",
                 // Mode toggle buttons
                 div { class: "flex rounded-lg bg-zinc-100 dark:bg-zinc-800 p-1",
-                    Button {
-                        variant: if edit_mode() == EditMode::Visual { ButtonVariant::Primary } else { ButtonVariant::Ghost },
-                        size: ButtonSize::Small,
+                    IconButton {
+                        variant: if edit_mode() == EditMode::Visual { IconButtonVariant::Primary } else { IconButtonVariant::Ghost },
+                        size: IconButtonSize::Small,
                         onclick: move |_| on_mode_switch_to_visual.call(()),
                         "Visual Editor"
                     }
-                    Button {
-                        variant: if edit_mode() == EditMode::Json { ButtonVariant::Primary } else { ButtonVariant::Ghost },
-                        size: ButtonSize::Small,
+                    IconButton {
+                        variant: if edit_mode() == EditMode::Json { IconButtonVariant::Primary } else { IconButtonVariant::Ghost },
+                        size: IconButtonSize::Small,
                         onclick: move |_| on_mode_switch_to_json.call(()),
                         "JSON Editor"
                     }
                 }
 
                 if can_reset() {
-                    Button {
-                        variant: ButtonVariant::Danger,
-                        size: ButtonSize::Medium,
+                    IconButton {
+                        variant: IconButtonVariant::Danger,
+                        size: IconButtonSize::Medium,
                         onclick: move |_| on_reset.call(()),
+                        icon: Some("arrow_left".to_string()),
+                        icon_variant: "outline".to_string(),
                         "Reset to Default"
                     }
                 }
-                Button {
-                    variant: ButtonVariant::Primary,
-                    size: ButtonSize::Medium,
+                IconButton {
+                    variant: IconButtonVariant::Primary,
+                    size: IconButtonSize::Medium,
                     disabled: Some(is_saving()),
                     loading: Some(is_saving()),
                     onclick: move |_| on_save.call(()),
+                    icon: if is_saving() { None } else { Some("save".to_string()) },
+                    icon_variant: "outline".to_string(),
                     if is_saving() { "Saving..." } else { "Save" }
                 }
             }

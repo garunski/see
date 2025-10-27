@@ -1,4 +1,4 @@
-use crate::components::{Button, ButtonSize, ButtonVariant, PageHeader};
+use crate::components::{IconButton, IconButtonSize, IconButtonVariant, PageHeader};
 use crate::state::AppStateProvider;
 use dioxus::prelude::*;
 use dioxus_router::prelude::use_navigator;
@@ -51,13 +51,15 @@ pub fn WorkflowVisualizerPage(id: String) -> Element {
                     title: "Workflow Visualizer".to_string(),
                     description: "Interactive workflow diagram".to_string(),
                     actions: Some(rsx! {
-                        Button {
-                            variant: ButtonVariant::Ghost,
-                            size: ButtonSize::Medium,
+                        IconButton {
+                            variant: IconButtonVariant::Ghost,
+                            size: IconButtonSize::Medium,
                             onclick: move |_| {
                                 navigator.go_back();
                             },
-                            "← Back"
+                            icon: Some("arrow_left".to_string()),
+                            icon_variant: "outline".to_string(),
+                            "Back"
                         }
                     }),
                 }
@@ -83,13 +85,15 @@ pub fn WorkflowVisualizerPage(id: String) -> Element {
                                 p { class: "text-zinc-600 dark:text-zinc-400 mb-4",
                                     "The requested workflow could not be found."
                                 }
-                                Button {
-                                    variant: ButtonVariant::Primary,
-                                    size: ButtonSize::Medium,
+                                IconButton {
+                                    variant: IconButtonVariant::Primary,
+                                    size: IconButtonSize::Medium,
                                     onclick: move |_| {
                                         navigator.go_back();
                                     },
-                                    "Go Back"
+                                    icon: Some("workflows".to_string()),
+                                    icon_variant: "outline".to_string(),
+                                    "Go to Workflows"
                                 }
                             }
                         }

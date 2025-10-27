@@ -27,7 +27,7 @@ pub fn HistoryItem(execution: WorkflowExecutionSummary) -> Element {
 
     rsx! {
         ListItem {
-            icon_name: "clock".to_string(),
+            icon_name: "workflows".to_string(),
             icon_variant: Some("outline".to_string()),
             title: rsx! {
                 {execution.workflow_name.clone()}
