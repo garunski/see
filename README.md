@@ -8,6 +8,7 @@ A lightweight workflow execution engine built on [dataflow-rs](https://crates.io
 - **Multi-step workflow execution** - All tasks execute in sequence with full context passing
 - **CLI command execution** - Execute shell commands as workflow tasks
 - **User input support** - Interactively request and process user input during workflow execution
+- **System templates** - Pre-built workflow and prompt templates that can be cloned
 - **Task ordering** - Preserves exact workflow structure for correct task display order
 - **Audit trail** - Full tracking of task execution with timestamps and changes
 - **Context management** - Task outputs are automatically stored and available for inspection
@@ -281,6 +282,34 @@ cargo run -p s_e_e_cli -- --file engine/examples/user_input_parallel.json
 ```bash
 cargo run -p s_e_e_cli -- --file engine/examples/user_input_nested.json
 ```
+
+## System Templates
+
+System templates are pre-built workflows and prompts that ship with the application. Users can clone these templates to create editable copies.
+
+### Using System Templates
+
+**Viewing Templates:**
+```bash
+# List system workflows
+cargo run -p s_e_e_cli -- list-system-workflows
+
+# List system prompts
+cargo run -p s_e_e_cli -- list-system-prompts
+```
+
+**Cloning Templates:**
+```bash
+# Clone a system workflow
+cargo run -p s_e_e_cli -- clone-workflow --system-id system:setup-project --name "My Setup"
+
+# Clone a system prompt
+cargo run -p s_e_e_cli -- clone-prompt --system-id system:code-review --name "Custom Review"
+```
+
+**GUI**: System templates appear in the GUI with distinct badges and can be cloned using the clone button.
+
+See [System Templates Documentation](./docs/system-templates/README.md) for complete details.
 
 ## Task Ordering
 

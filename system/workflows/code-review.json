@@ -1,0 +1,50 @@
+{
+  "id": "system:code-review",
+  "name": "Code Review Workflow",
+  "description": "Automated code review workflow",
+  "version": "1.0.0",
+  "content": {
+    "id": "code-review",
+    "name": "Code Review Workflow",
+    "tasks": [
+      {
+        "id": "task1",
+        "name": "Run linter",
+        "function": {
+          "name": "cli_command",
+          "input": {
+            "command": "cargo",
+            "args": ["clippy", "--", "-W", "clippy::all"]
+          }
+        },
+        "next_tasks": [
+          {
+            "id": "task2",
+            "name": "Format code",
+            "function": {
+              "name": "cli_command",
+              "input": {
+                "command": "cargo",
+                "args": ["fmt"]
+              }
+            },
+            "next_tasks": [
+              {
+                "id": "task3",
+                "name": "Review with Cursor",
+                "function": {
+                  "name": "cursor_agent",
+                  "input": {
+                    "prompt": "Review the code changes in {{file_path}} and provide feedback",
+                    "config": {}
+                  }
+                },
+                "next_tasks": []
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

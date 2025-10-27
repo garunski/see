@@ -14,6 +14,8 @@ pub use persistence::{
     AuditEvent,
     AuditStatus, // Re-export from persistence (has Display trait)
     Store,
+    SystemPrompt,
+    SystemWorkflow,
     TaskExecution,
     TaskStatus, // Re-export from persistence (has as_str method)
     Theme,
@@ -34,8 +36,9 @@ pub type WorkflowJson = EngineWorkflow;
 
 // Re-export core types
 pub use crate::api::{
-    execute_workflow_by_id, get_pending_inputs, get_tasks_waiting_for_input, provide_user_input,
-    resume_task,
+    clone_system_prompt, clone_system_workflow, execute_workflow_by_id, get_pending_inputs,
+    get_tasks_waiting_for_input, load_all_system_templates, load_system_prompts,
+    load_system_workflows, provide_user_input, resume_task,
 };
 pub use crate::bridge::WorkflowResult;
 pub use crate::errors::CoreError;

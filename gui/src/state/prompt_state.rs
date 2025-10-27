@@ -1,8 +1,9 @@
-use s_e_e_core::UserPrompt;
+use s_e_e_core::{SystemPrompt, UserPrompt};
 
 #[derive(Debug, Clone)]
 pub struct UserPromptState {
     pub prompts: Vec<UserPrompt>,
+    pub system_prompts: Vec<SystemPrompt>,
     pub needs_reload: bool,
 }
 
@@ -10,6 +11,7 @@ impl Default for UserPromptState {
     fn default() -> Self {
         Self {
             prompts: Vec::new(),
+            system_prompts: Vec::new(),
             needs_reload: true,
         }
     }
@@ -41,5 +43,13 @@ impl UserPromptState {
 
     pub fn get_prompts(&self) -> &Vec<UserPrompt> {
         &self.prompts
+    }
+
+    pub fn get_system_prompts(&self) -> &Vec<SystemPrompt> {
+        &self.system_prompts
+    }
+
+    pub fn set_system_prompts(&mut self, prompts: Vec<SystemPrompt>) {
+        self.system_prompts = prompts;
     }
 }

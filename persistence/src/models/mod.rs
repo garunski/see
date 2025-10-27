@@ -7,6 +7,8 @@ pub mod enums;
 pub mod execution;
 pub mod prompt;
 pub mod settings;
+pub mod system_prompt;
+pub mod system_workflow;
 pub mod task;
 pub mod user_input_request;
 pub mod workflow;
@@ -17,6 +19,8 @@ pub use enums::{AuditStatus, InputRequestStatus, InputType, TaskStatus, Theme, W
 pub use execution::{WorkflowExecution, WorkflowExecutionSummary, WorkflowMetadata};
 pub use prompt::UserPrompt;
 pub use settings::AppSettings;
+pub use system_prompt::SystemPrompt;
+pub use system_workflow::SystemWorkflow;
 pub use task::TaskExecution;
 pub use user_input_request::UserInputRequest;
 pub use workflow::WorkflowDefinition;

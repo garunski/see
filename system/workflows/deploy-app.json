@@ -1,0 +1,50 @@
+{
+  "id": "system:deploy-app",
+  "name": "Deploy Application",
+  "description": "Build and deploy an application",
+  "version": "1.0.0",
+  "content": {
+    "id": "deploy-app",
+    "name": "Deploy Application",
+    "tasks": [
+      {
+        "id": "task1",
+        "name": "Run tests",
+        "function": {
+          "name": "cli_command",
+          "input": {
+            "command": "cargo",
+            "args": ["test"]
+          }
+        },
+        "next_tasks": [
+          {
+            "id": "task2",
+            "name": "Build release",
+            "function": {
+              "name": "cli_command",
+              "input": {
+                "command": "cargo",
+                "args": ["build", "--release"]
+              }
+            },
+            "next_tasks": [
+              {
+                "id": "task3",
+                "name": "Deploy",
+                "function": {
+                  "name": "cli_command",
+                  "input": {
+                    "command": "echo",
+                    "args": ["Deployment would happen here"]
+                  }
+                },
+                "next_tasks": []
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -23,10 +23,53 @@ fn main() {
 
     tracing::info!("GUI starting");
 
+    // Change to workspace root directory for system templates loading
+    let workspace_root = std::env::var("CARGO_MANIFEST_DIR")
+        .ok()
+        .and_then(|manifest| {
+            // If running from CARGO_MANIFEST_DIR, go up to workspace root
+            if manifest.ends_with("/gui") {
+                std::fs::canonicalize(&manifest)
+                    .ok()
+                    .map(|p| p.parent().unwrap().to_path_buf())
+            } else {
+                std::fs::canonicalize(&manifest).ok()
+            }
+        })
+        .or_else(|| {
+            // Fallback: try to find workspace root by looking for Cargo.toml
+            let mut path = std::env::current_exe().ok()?;
+            loop {
+                if path.join("Cargo.toml").exists() {
+                    return Some(path);
+                }
+                if path.parent()?.parent().is_none() {
+                    break;
+                }
+                path = path.parent()?.to_path_buf();
+            }
+            None
+        });
+
+    if let Some(workspace) = workspace_root {
+        if let Err(e) = std::env::set_current_dir(&workspace) {
+            tracing::warn!("Failed to change to workspace root: {}", e);
+        } else {
+            tracing::info!(
+                "Changed working directory to workspace root: {:?}",
+                workspace
+            );
+        }
+    }
+
     // Initialize persistence layer with a temporary runtime
     tracing::info!("Initializing persistence layer");
     let rt = tokio::runtime::Runtime::new().unwrap();
-    if let Err(e) = rt.block_on(s_e_e_core::init_global_store()) {
+    if let Err(e) = rt.block_on(async {
+        s_e_e_core::init_global_store().await?;
+        tracing::info!("Loading system templates...");
+        s_e_e_core::load_all_system_templates().await
+    }) {
         tracing::error!("Failed to initialize persistence layer: {}", e);
         eprintln!("Failed to initialize persistence layer: {}", e);
         std::process::exit(1);

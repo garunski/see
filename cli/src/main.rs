@@ -1,12 +1,48 @@
-use clap::Parser;
-use s_e_e_core::{execute_workflow_by_id, init_global_store, OutputCallback};
+use clap::{Parser, Subcommand};
+use s_e_e_core::{
+    clone_system_prompt, clone_system_workflow, execute_workflow_by_id, init_global_store,
+    load_all_system_templates, OutputCallback,
+};
 use std::fs;
 
 #[derive(Parser, Debug)]
 #[command(name = "s_e_e_cli", version, about = "Run workflows")]
 struct Args {
-    #[arg(short, long, default_value = "workflow.json")]
-    file: String,
+    #[command(subcommand)]
+    command: Option<Commands>,
+
+    // Legacy support for workflow execution
+    #[arg(short, long)]
+    file: Option<String>,
+}
+
+#[derive(Subcommand, Debug)]
+enum Commands {
+    /// List all system workflows
+    #[command(name = "list-system-workflows")]
+    ListSystemWorkflows,
+
+    /// List all system prompts
+    #[command(name = "list-system-prompts")]
+    ListSystemPrompts,
+
+    /// Clone a system workflow to create a user workflow
+    #[command(name = "clone-workflow")]
+    CloneWorkflow {
+        #[arg(short, long)]
+        system_id: String,
+        #[arg(short, long)]
+        name: Option<String>,
+    },
+
+    /// Clone a system prompt to create a user prompt
+    #[command(name = "clone-prompt")]
+    ClonePrompt {
+        #[arg(short, long)]
+        system_id: String,
+        #[arg(short, long)]
+        name: Option<String>,
+    },
 }
 
 #[tokio::main]
@@ -16,8 +52,106 @@ async fn main() {
         .expect("Failed to initialize tracing");
 
     let args = Args::parse();
-    tracing::info!(file = %args.file, "CLI starting");
 
+    // Handle subcommands
+    if let Some(command) = args.command {
+        handle_command(command).await;
+        return;
+    }
+
+    // Legacy workflow execution
+    if let Some(file) = args.file {
+        tracing::info!(file = %file, "CLI starting");
+        execute_workflow_from_file(file).await;
+    } else {
+        eprintln!("No command or workflow file specified. Use --help for usage.");
+        std::process::exit(1);
+    }
+}
+
+async fn handle_command(command: Commands) {
+    // Initialize the global store with a local database
+    if let Err(e) = init_global_store().await {
+        tracing::error!(error = %e, "Failed to initialize global store");
+        eprintln!("Failed to initialize database: {}", e);
+        std::process::exit(1);
+    }
+
+    // Load and VALIDATE system templates (fail if not found)
+    if let Err(e) = load_all_system_templates().await {
+        tracing::error!("CRITICAL ERROR: {}", e);
+        eprintln!("CRITICAL ERROR: {}", e);
+        eprintln!("System templates are required for operation.");
+        std::process::exit(1);
+    }
+
+    match command {
+        Commands::ListSystemWorkflows => {
+            if let Ok(store) = s_e_e_core::get_global_store() {
+                match store.list_system_workflows().await {
+                    Ok(workflows) => {
+                        println!("System Workflows ({}):", workflows.len());
+                        for workflow in workflows {
+                            println!("  - {} (v{})", workflow.name, workflow.version);
+                            if let Some(desc) = &workflow.description {
+                                println!("    {}", desc);
+                            }
+                        }
+                    }
+                    Err(e) => {
+                        eprintln!("Failed to list system workflows: {}", e);
+                        std::process::exit(1);
+                    }
+                }
+            }
+        }
+        Commands::ListSystemPrompts => {
+            if let Ok(store) = s_e_e_core::get_global_store() {
+                match store.list_system_prompts().await {
+                    Ok(prompts) => {
+                        println!("System Prompts ({}):", prompts.len());
+                        for prompt in prompts {
+                            println!("  - {} (v{})", prompt.name, prompt.version);
+                            if let Some(desc) = &prompt.description {
+                                println!("    {}", desc);
+                            }
+                        }
+                    }
+                    Err(e) => {
+                        eprintln!("Failed to list system prompts: {}", e);
+                        std::process::exit(1);
+                    }
+                }
+            }
+        }
+        Commands::CloneWorkflow { system_id, name } => {
+            match clone_system_workflow(&system_id, name).await {
+                Ok(cloned) => {
+                    println!("Cloned workflow '{}' to '{}'", system_id, cloned.id);
+                    println!("New workflow name: {}", cloned.name);
+                }
+                Err(e) => {
+                    eprintln!("Failed to clone workflow: {}", e);
+                    std::process::exit(1);
+                }
+            }
+        }
+        Commands::ClonePrompt { system_id, name } => {
+            match clone_system_prompt(&system_id, name).await {
+                Ok(cloned) => {
+                    println!("Cloned prompt '{}' to '{}'", system_id, cloned.id);
+                    println!("New prompt name: {}", cloned.name);
+                }
+                Err(e) => {
+                    eprintln!("Failed to clone prompt: {}", e);
+                    std::process::exit(1);
+                }
+            }
+        }
+    }
+}
+
+async fn execute_workflow_from_file(file: String) {
     // Initialize the global store with a local database
     if let Err(e) = init_global_store().await {
         tracing::error!(error = %e, "Failed to initialize global store");
@@ -26,11 +160,11 @@ async fn main() {
     }
 
     // Read workflow file
-    let workflow_content = match fs::read_to_string(&args.file) {
+    let workflow_content = match fs::read_to_string(&file) {
         Ok(content) => content,
         Err(e) => {
-            tracing::error!(error = %e, file = %args.file, "Failed to read workflow file");
-            eprintln!("Failed to read workflow file '{}': {}", args.file, e);
+            tracing::error!(error = %e, file = %file, "Failed to read workflow file");
+            eprintln!("Failed to read workflow file '{}': {}", file, e);
             std::process::exit(1);
         }
     };
@@ -39,7 +173,7 @@ async fn main() {
     let workflow_json: serde_json::Value = match serde_json::from_str(&workflow_content) {
         Ok(json) => json,
         Err(e) => {
-            tracing::error!(error = %e, file = %args.file, "Failed to parse workflow JSON");
+            tracing::error!(error = %e, file = %file, "Failed to parse workflow JSON");
             eprintln!("Failed to parse workflow JSON: {}", e);
             std::process::exit(1);
         }

@@ -1,0 +1,11 @@
+{
+  "id": "system:code-review",
+  "name": "Code Review",
+  "description": "Template for reviewing code changes",
+  "version": "1.0.0",
+  "content": "Review the following code changes:\n\n{{code_changes}}\n\nFocus on:\n- Code quality and best practices\n- Potential bugs or issues\n- Performance considerations\n- Documentation completeness",
+  "template": "Review the following code changes:\n\n{{code_changes}}\n\nFocus on:\n- Code quality and best practices\n- Potential bugs or issues\n- Performance considerations\n- Documentation completeness",
+  "variables": ["code_changes"],
+  "tags": ["review", "code", "quality"],
+  "metadata": {}
+}

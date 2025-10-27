@@ -1,0 +1,11 @@
+{
+  "id": "system:bug-fix",
+  "name": "Bug Fix",
+  "description": "Template for fixing bugs with context",
+  "version": "1.0.0",
+  "content": "Fix the following bug:\n\nDescription: {{bug_description}}\n\nSteps to reproduce:\n{{reproduce_steps}}\n\nExpected behavior:\n{{expected_behavior}}\n\nCurrent behavior:\n{{current_behavior}}\n\nPlease:\n1. Identify the root cause\n2. Implement the fix\n3. Add tests to prevent regression",
+  "template": "Fix the following bug:\n\nDescription: {{bug_description}}\n\nSteps to reproduce:\n{{reproduce_steps}}\n\nExpected behavior:\n{{expected_behavior}}\n\nCurrent behavior:\n{{current_behavior}}\n\nPlease:\n1. Identify the root cause\n2. Implement the fix\n3. Add tests to prevent regression",
+  "variables": ["bug_description", "reproduce_steps", "expected_behavior", "current_behavior"],
+  "tags": ["bug", "fix", "debugging"],
+  "metadata": {}
+}

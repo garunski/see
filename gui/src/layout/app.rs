@@ -100,6 +100,42 @@ fn AppContent() -> Element {
                     }
                 }
             });
+
+            // Load system templates from database (ONE-TIME, no infinite loop)
+            let mut settings_state = state_provider.settings;
+            let mut prompt_state = state_provider.prompts;
+            spawn(async move {
+                match s_e_e_core::get_global_store() {
+                    Ok(store) => {
+                        // Load system workflows
+                        if let Ok(system_workflows) = store.list_system_workflows().await {
+                            tracing::info!(
+                                "📋 SYSTEM WORKFLOWS LOADED: count={}",
+                                system_workflows.len()
+                            );
+                            settings_state
+                                .write()
+                                .set_system_workflows(system_workflows);
+                        }
+
+                        // Load system prompts
+                        if let Ok(system_prompts) = store.list_system_prompts().await {
+                            tracing::info!(
+                                "📝 SYSTEM PROMPTS LOADED: count={}",
+                                system_prompts.len()
+                            );
+                            prompt_state.write().set_system_prompts(system_prompts);
+                            prompt_state.write().needs_reload = false;
+                        }
+                    }
+                    Err(e) => {
+                        eprintln!(
+                            "Failed to get global store for loading system templates: {}",
+                            e
+                        );
+                    }
+                }
+            });
         }
     });
 

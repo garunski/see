@@ -58,18 +58,39 @@ pub fn WorkflowEditPage(id: String) -> Element {
         reset_to_default_handler();
     };
 
+    // Check if this is a system workflow (read-only)
+    let is_system = state.is_system_workflow;
+    
     rsx! {
         div { class: "space-y-8",
-            EditorHeader {
-                is_new,
-                edit_mode: state.edit_mode,
-                can_reset: state.can_reset,
-                is_saving: state.is_saving,
-                has_unsaved_changes: state.has_unsaved_changes,
-                on_mode_switch_to_visual: switch_to_visual,
-                on_mode_switch_to_json: switch_to_json,
-                on_save: move |_| save_workflow(),
-                on_reset: move |_| reset_to_default(),
+            if is_system() {
+                EditorHeader {
+                    is_new,
+                    edit_mode: state.edit_mode,
+                    can_reset: state.can_reset,
+                    is_saving: state.is_saving,
+                    has_unsaved_changes: state.has_unsaved_changes,
+                    on_mode_switch_to_visual: switch_to_visual,
+                    on_mode_switch_to_json: switch_to_json,
+                    on_save: move |_| {},
+                    on_reset: move |_| {},
+                    show_clone: true,
+                    workflow_id: id.clone(),
+                }
+            } else {
+                EditorHeader {
+                    is_new,
+                    edit_mode: state.edit_mode,
+                    can_reset: state.can_reset,
+                    is_saving: state.is_saving,
+                    has_unsaved_changes: state.has_unsaved_changes,
+                    on_mode_switch_to_visual: switch_to_visual,
+                    on_mode_switch_to_json: switch_to_json,
+                    on_save: move |_| save_workflow(),
+                    on_reset: move |_| reset_to_default(),
+                    show_clone: false,
+                    workflow_id: id.clone(),
+                }
             }
 
             // Content area - conditional rendering based on edit mode

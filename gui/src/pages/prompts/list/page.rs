@@ -1,16 +1,18 @@
 use crate::components::{EmptyState, List, ListItemWithLink, PageHeader, SectionCard};
-use crate::hooks::use_prompts;
+use crate::hooks::{use_prompts, use_system_prompts};
 use crate::icons::Icon;
 use crate::layout::router::Route;
 use crate::services::prompt::UserPromptService;
 use crate::state::AppStateProvider;
 use dioxus::prelude::*;
 use dioxus_router::prelude::Link;
+use s_e_e_core::SystemPrompt;
 
 #[component]
 pub fn UserPromptsListPage() -> Element {
     let state_provider = use_context::<AppStateProvider>();
     let prompts = use_prompts();
+    let system_prompts = use_system_prompts();
 
     // Load prompts on mount
     let state_provider_clone = state_provider.clone();
@@ -50,9 +52,27 @@ pub fn UserPromptsListPage() -> Element {
                 }),
             }
 
+            // System Prompts Section
+            if !system_prompts().is_empty() {
+                SectionCard {
+                    title: Some("System Templates".to_string()),
+                    children: rsx! {
+                        List {
+                            for idx in 0..system_prompts().len() {
+                                SystemPromptItem {
+                                    prompt: system_prompts()[idx].clone()
+                                }
+                            }
+                        }
+                    },
+                    padding: None,
+                }
+            }
+
+            // User Prompts Section
             if prompts.read().is_empty() {
                 SectionCard {
-                    title: Some("All UserPrompts".to_string()),
+                    title: Some("My Prompts".to_string()),
                     children: rsx! {
                         EmptyState {
                             message: "No prompts yet. Create your first prompt to get started.".to_string(),
@@ -61,34 +81,60 @@ pub fn UserPromptsListPage() -> Element {
                     padding: None,
                 }
             } else {
-                List {
-                    for prompt in prompts.read().iter() {
-                        ListItemWithLink {
-                            icon_name: "prompts".to_string(),
-                            icon_variant: Some("outline".to_string()),
-                            title: prompt.id.clone(),
-                            subtitle: Some(rsx! {
-                                div { class: "flex flex-col gap-1",
-                                    div { class: "text-sm text-gray-900 dark:text-white max-w-xs truncate",
-                                        {prompt.description.clone()}
-                                    }
-                                    div { class: "text-xs text-gray-500 dark:text-gray-400",
-                                        "Template: {prompt.template.len()} characters"
-                                    }
+                SectionCard {
+                    title: Some("My Prompts".to_string()),
+                    children: rsx! {
+                        List {
+                            for prompt in prompts.read().iter() {
+                                ListItemWithLink {
+                                    icon_name: "prompts".to_string(),
+                                    icon_variant: Some("outline".to_string()),
+                                    title: prompt.id.clone(),
+                                    subtitle: Some(rsx! {
+                                        div { class: "flex flex-col gap-1",
+                                            div { class: "text-sm text-gray-900 dark:text-white max-w-xs truncate",
+                                                {prompt.description.clone()}
+                                            }
+                                            div { class: "text-xs text-gray-500 dark:text-gray-400",
+                                                "Template: {prompt.template.len()} characters"
+                                            }
+                                        }
+                                    }),
+                                    right_content: None,
+                                    link_to: rsx! {
+                                        Link {
+                                            to: Route::UserPromptEditPage { id: prompt.id.clone() },
+                                            span { class: "absolute inset-x-0 -top-px bottom-0" }
+                                            {prompt.id.clone()}
+                                        }
+                                    },
                                 }
-                            }),
-                            right_content: None,
-                            link_to: rsx! {
-                                Link {
-                                    to: Route::UserPromptEditPage { id: prompt.id.clone() },
-                                    span { class: "absolute inset-x-0 -top-px bottom-0" }
-                                    {prompt.id.clone()}
-                                }
-                            },
+                            }
                         }
-                    }
+                    },
+                    padding: None,
                 }
             }
+        }
+    }
+}
+
+#[component]
+fn SystemPromptItem(prompt: SystemPrompt) -> Element {
+    rsx! {
+        ListItemWithLink {
+            icon_name: "prompts".to_string(),
+            icon_variant: Some("outline".to_string()),
+            title: prompt.name.clone(),
+            subtitle: Some(rsx! {
+                span { class: "inline-flex items-center rounded-md bg-purple-50 dark:bg-purple-900/20 px-2 py-1 text-xs font-medium text-purple-700 dark:text-purple-300 ring-1 ring-inset ring-purple-700/10",
+                    "System"
+                }
+            }),
+            right_content: None,
+            link_to: rsx! {
+                div { "System templates cannot be edited" }
+            },
         }
     }
 }
