@@ -1,32 +1,36 @@
-//! System templates API
+//! Initial data population API
 //!
-//! This file contains ONLY system template operations following Single Responsibility Principle.
+//! This file contains ONLY initial data population logic following Single Responsibility Principle.
 
 use chrono::Utc;
 use tracing::{error, info};
 
 use crate::store_singleton;
 
-/// Load system workflows from the /system/workflows directory
-pub async fn load_system_workflows() -> Result<(), String> {
+/// Populate initial workflows from the /system/workflows directory
+/// Only runs if workflows table is empty (first run)
+pub async fn populate_initial_workflows() -> Result<(), String> {
     let store = store_singleton::get_global_store()?;
+
+    // Check if we already have workflows
+    let existing_workflows = store.list_workflows().await?;
+    if !existing_workflows.is_empty() {
+        info!("Workflows already exist, skipping initial population");
+        return Ok(());
+    }
 
     // Get the current working directory (workspace root)
     let current_dir =
         std::env::current_dir().map_err(|e| format!("Failed to get current directory: {}", e))?;
     let system_dir = current_dir.join("system/workflows");
 
-    let system_dir_str = system_dir.to_string_lossy().to_string();
-
     if !system_dir.exists() {
-        return Err(format!(
-            "CRITICAL: System workflows directory not found at {:?}",
+        info!(
+            "System workflows directory not found at {:?}, skipping",
             system_dir
-        ));
+        );
+        return Ok(());
     }
-
-    // Clear existing system workflows to allow updates
-    store.clear_system_workflows().await?;
 
     // Read all JSON files in the directory
     let entries = std::fs::read_dir(&system_dir).map_err(|e| {
@@ -65,10 +69,6 @@ pub async fn load_system_workflows() -> Result<(), String> {
                     .ok_or_else(|| "Missing 'name' field".to_string())?
                     .to_string();
                 let description = file_data["description"].as_str().map(|s| s.to_string());
-                let version = file_data["version"]
-                    .as_str()
-                    .ok_or_else(|| "Missing 'version' field".to_string())?
-                    .to_string();
 
                 // Get the content field and serialize it back to JSON string
                 let content = file_data["content"].clone();
@@ -77,60 +77,58 @@ pub async fn load_system_workflows() -> Result<(), String> {
                     format!("Failed to serialize content: {}", e)
                 })?;
 
-                // Create SystemWorkflow
-                let system_workflow = persistence::SystemWorkflow {
+                // Create WorkflowDefinition (no special system type)
+                let workflow = persistence::WorkflowDefinition {
                     id: id.clone(),
                     name,
                     description,
                     content: content_str,
-                    version: version.clone(),
+                    is_default: true,
+                    is_edited: false,
                     created_at: Utc::now(),
                     updated_at: Utc::now(),
                 };
 
                 // Validate
-                system_workflow.validate()?;
+                workflow.validate()?;
 
                 // Save to database
-                store.save_system_workflow(&system_workflow).await?;
+                store.save_workflow(&workflow).await?;
                 loaded_count += 1;
 
-                info!("Loaded system workflow '{}' (version {})", id, version);
+                info!("Loaded initial workflow '{}'", id);
             }
         }
     }
 
-    if loaded_count == 0 {
-        return Err(format!(
-            "CRITICAL: No system workflows loaded from {}",
-            system_dir_str
-        ));
-    }
-
-    info!("Loaded {} system workflows", loaded_count);
+    info!("Loaded {} initial workflows", loaded_count);
     Ok(())
 }
 
-/// Load system prompts from the /system/prompts directory
-pub async fn load_system_prompts() -> Result<(), String> {
+/// Populate initial prompts from the /system/prompts directory
+/// Only runs if prompts table is empty (first run)
+pub async fn populate_initial_prompts() -> Result<(), String> {
     let store = store_singleton::get_global_store()?;
+
+    // Check if we already have prompts
+    let existing_prompts = store.list_prompts().await?;
+    if !existing_prompts.is_empty() {
+        info!("Prompts already exist, skipping initial population");
+        return Ok(());
+    }
 
     // Get the current working directory (workspace root)
     let current_dir =
         std::env::current_dir().map_err(|e| format!("Failed to get current directory: {}", e))?;
     let system_dir = current_dir.join("system/prompts");
 
-    let system_dir_str = system_dir.to_string_lossy().to_string();
-
     if !system_dir.exists() {
-        return Err(format!(
-            "CRITICAL: System prompts directory not found at {:?}",
+        info!(
+            "System prompts directory not found at {:?}, skipping",
             system_dir
-        ));
+        );
+        return Ok(());
     }
-
-    // Clear existing system prompts to allow updates
-    store.clear_system_prompts().await?;
 
     // Read all JSON files in the directory
     let entries = std::fs::read_dir(&system_dir).map_err(|e| {
@@ -177,10 +175,6 @@ pub async fn load_system_prompts() -> Result<(), String> {
                     .as_str()
                     .ok_or_else(|| "Missing 'template' field".to_string())?
                     .to_string();
-                let version = file_data["version"]
-                    .as_str()
-                    .ok_or_else(|| "Missing 'version' field".to_string())?
-                    .to_string();
 
                 // Extract variables array
                 let variables = file_data["variables"]
@@ -204,8 +198,8 @@ pub async fn load_system_prompts() -> Result<(), String> {
 
                 let metadata = file_data.get("metadata").cloned().unwrap_or_default();
 
-                // Create SystemPrompt
-                let system_prompt = persistence::SystemPrompt {
+                // Create Prompt (no special system type)
+                let prompt = persistence::Prompt {
                     id: id.clone(),
                     name,
                     content: content_str,
@@ -214,148 +208,35 @@ pub async fn load_system_prompts() -> Result<(), String> {
                     variables,
                     tags,
                     metadata,
-                    version: version.clone(),
                     created_at: Utc::now(),
                     updated_at: Utc::now(),
                 };
 
                 // Validate
-                system_prompt.validate()?;
+                prompt.validate()?;
 
                 // Save to database
-                store.save_system_prompt(&system_prompt).await?;
+                store.save_prompt(&prompt).await?;
                 loaded_count += 1;
 
-                info!("Loaded system prompt '{}' (version {})", id, version);
+                info!("Loaded initial prompt '{}'", id);
             }
         }
     }
 
-    if loaded_count == 0 {
-        return Err(format!(
-            "CRITICAL: No system prompts loaded from {}",
-            system_dir_str
-        ));
-    }
-
-    info!("Loaded {} system prompts", loaded_count);
+    info!("Loaded {} initial prompts", loaded_count);
     Ok(())
 }
 
-/// Clone a system workflow to create a user workflow
-pub async fn clone_system_workflow(
-    system_workflow_id: &str,
-    new_name: Option<String>,
-) -> Result<persistence::WorkflowDefinition, String> {
-    let store = store_singleton::get_global_store()?;
+/// Populate initial data (workflows and prompts)
+/// Only runs on first startup when tables are empty
+pub async fn populate_initial_data() -> Result<(), String> {
+    info!("Populating initial data...");
 
-    // Get the system workflow
-    let system_workflow = store
-        .get_system_workflow(system_workflow_id)
-        .await?
-        .ok_or_else(|| format!("System workflow '{}' not found", system_workflow_id))?;
+    // Populate from files to database if empty
+    populate_initial_workflows().await?;
+    populate_initial_prompts().await?;
 
-    // Create a new user workflow based on it
-    let new_id = uuid::Uuid::new_v4().to_string();
-    let new_name = new_name.unwrap_or_else(|| format!("Copy of {}", system_workflow.name));
-
-    let user_workflow = persistence::WorkflowDefinition {
-        id: new_id,
-        name: new_name,
-        description: system_workflow.description.clone(),
-        content: system_workflow.content.clone(),
-        is_default: false,
-        is_edited: false,
-        created_at: Utc::now(),
-        updated_at: Utc::now(),
-    };
-
-    // Validate
-    user_workflow.validate()?;
-
-    // Save to database
-    store.save_workflow(&user_workflow).await?;
-
-    info!(
-        "Cloned system workflow '{}' to user workflow '{}'",
-        system_workflow_id, user_workflow.id
-    );
-    Ok(user_workflow)
-}
-
-/// Clone a system prompt to create a user prompt
-pub async fn clone_system_prompt(
-    system_prompt_id: &str,
-    new_name: Option<String>,
-) -> Result<persistence::UserPrompt, String> {
-    let store = store_singleton::get_global_store()?;
-
-    // Get the system prompt
-    let system_prompt = store
-        .get_system_prompt(system_prompt_id)
-        .await?
-        .ok_or_else(|| format!("System prompt '{}' not found", system_prompt_id))?;
-
-    // Create a new user prompt based on it
-    let new_id = uuid::Uuid::new_v4().to_string();
-    let new_name = new_name.unwrap_or_else(|| format!("Copy of {}", system_prompt.name));
-
-    let user_prompt = persistence::UserPrompt {
-        id: new_id,
-        name: new_name,
-        content: system_prompt.content.clone(),
-        description: system_prompt.description.clone(),
-        template: system_prompt.template.clone(),
-        variables: system_prompt.variables.clone(),
-        tags: system_prompt.tags.clone(),
-        metadata: system_prompt.metadata.clone(),
-        created_at: Utc::now(),
-        updated_at: Utc::now(),
-    };
-
-    // Validate
-    user_prompt.validate()?;
-
-    // Save to database
-    store.save_prompt(&user_prompt).await?;
-
-    info!(
-        "Cloned system prompt '{}' to user prompt '{}'",
-        system_prompt_id, user_prompt.id
-    );
-    Ok(user_prompt)
-}
-
-/// Initialize and load all system templates
-pub async fn load_all_system_templates() -> Result<(), String> {
-    info!("Loading system templates...");
-
-    // Load templates from files to database
-    load_system_workflows().await?;
-    load_system_prompts().await?;
-
-    // Verify they actually loaded into database
-    let store = store_singleton::get_global_store()?;
-    let workflows = store.list_system_workflows().await?;
-    let prompts = store.list_system_prompts().await?;
-
-    if workflows.len() < 3 {
-        return Err(format!(
-            "CRITICAL: Expected at least 3 system workflows, found {}",
-            workflows.len()
-        ));
-    }
-    if prompts.len() < 3 {
-        return Err(format!(
-            "CRITICAL: Expected at least 3 system prompts, found {}",
-            prompts.len()
-        ));
-    }
-
-    info!(
-        "✓ System templates loaded: {} workflows, {} prompts",
-        workflows.len(),
-        prompts.len()
-    );
+    info!("✓ Initial data population complete");
     Ok(())
 }

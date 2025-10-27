@@ -20,6 +20,7 @@ impl Default for HistoryState {
 impl HistoryState {
     pub fn clear_viewing(&mut self) {}
 
+    #[allow(dead_code)]
     pub fn delete_execution(&mut self, id: &str) {
         self.workflow_history.retain(|item| item.id != id);
     }
@@ -38,6 +39,7 @@ impl HistoryState {
         self.running_workflows = running;
     }
 
+    #[allow(dead_code)]
     pub fn remove_running_workflow(&mut self, id: &str) {
         self.running_workflows.retain(|w| w.id != id);
     }

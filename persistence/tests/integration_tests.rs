@@ -4,7 +4,7 @@
 
 use chrono::Utc;
 use persistence::{
-    AppSettings, AuditEvent, Store, TaskExecution, TaskExecutionStatus, Theme, UserPrompt,
+    AppSettings, AuditEvent, Prompt, Store, TaskExecution, TaskExecutionStatus, Theme,
     WorkflowDefinition, WorkflowExecution, WorkflowExecutionStatus,
 };
 use std::collections::HashMap;
@@ -186,7 +186,7 @@ async fn test_multi_table_operations() {
         ..Default::default()
     };
 
-    let prompt = UserPrompt {
+    let prompt = Prompt {
         id: "multi-prompt-1".to_string(),
         name: "Multi Prompt".to_string(),
         content: "Multi table test prompt".to_string(),
@@ -250,14 +250,14 @@ async fn test_workflow_execution_with_prompts_and_settings() {
     store.save_settings(&settings).await.unwrap();
 
     // Create prompts
-    let prompt1 = UserPrompt {
+    let prompt1 = Prompt {
         id: "exec-prompt-1".to_string(),
         name: "Execution Prompt 1".to_string(),
         content: "First prompt for execution".to_string(),
         ..Default::default()
     };
 
-    let prompt2 = UserPrompt {
+    let prompt2 = Prompt {
         id: "exec-prompt-2".to_string(),
         name: "Execution Prompt 2".to_string(),
         content: "Second prompt for execution".to_string(),

@@ -3,14 +3,14 @@
 //! Tests save_prompt, list_prompts, delete_prompt following Single Responsibility Principle.
 
 use chrono::Utc;
-use persistence::{Store, UserPrompt};
+use persistence::{Prompt, Store};
 
 async fn create_test_store() -> Store {
     Store::new(":memory:").await.unwrap()
 }
 
-fn create_test_prompt() -> UserPrompt {
-    UserPrompt {
+fn create_test_prompt() -> Prompt {
+    Prompt {
         id: "prompt-1".to_string(),
         name: "Test Prompt".to_string(),
         content: "This is a test prompt".to_string(),
@@ -46,14 +46,14 @@ async fn test_list_prompts_multiple() {
     let store = create_test_store().await;
 
     // Create multiple prompts
-    let prompt1 = UserPrompt {
+    let prompt1 = Prompt {
         id: "prompt-1".to_string(),
         name: "Prompt 1".to_string(),
         content: "Content 1".to_string(),
         ..Default::default()
     };
 
-    let prompt2 = UserPrompt {
+    let prompt2 = Prompt {
         id: "prompt-2".to_string(),
         name: "Prompt 2".to_string(),
         content: "Content 2".to_string(),
@@ -130,7 +130,7 @@ async fn test_save_prompt_update() {
 #[tokio::test]
 async fn test_prompt_serialization() {
     let store = create_test_store().await;
-    let prompt = UserPrompt {
+    let prompt = Prompt {
         id: "prompt-1".to_string(),
         name: "Test Prompt".to_string(),
         content: "This is a test prompt with special characters: !@#$%^&*()".to_string(),

@@ -16,8 +16,6 @@ pub struct EditorHeaderProps {
     pub on_mode_switch_to_json: EventHandler<()>,
     pub on_save: EventHandler<()>,
     pub on_reset: EventHandler<()>,
-    pub show_clone: bool,
-    pub workflow_id: String,
 }
 
 #[component]
@@ -32,8 +30,6 @@ pub fn EditorHeader(props: EditorHeaderProps) -> Element {
         on_mode_switch_to_json,
         on_save,
         on_reset,
-        show_clone,
-        workflow_id,
     } = props;
 
     let navigator = use_navigator();
@@ -95,47 +91,13 @@ pub fn EditorHeader(props: EditorHeaderProps) -> Element {
                         "Reset to Default"
                     }
                 }
-                if show_clone {
-                    Button {
-                        variant: ButtonVariant::Primary,
-                        size: ButtonSize::Medium,
-                        onclick: move |_| {
-                            // Clone the system workflow
-                            let workflow_id = workflow_id.clone();
-                            let navigator = navigator;
-                            spawn(async move {
-                                match s_e_e_core::clone_system_workflow(&workflow_id, None).await {
-                                    Ok(cloned_workflow) => {
-                                        // Navigate to the newly created workflow
-                                        navigator.push(crate::layout::router::Route::WorkflowEditPage {
-                                            id: cloned_workflow.id
-                                        });
-                                    }
-                                    Err(e) => {
-                                        eprintln!("Failed to clone workflow: {}", e);
-                                    }
-                                }
-                            });
-                        },
-                        span { class: "inline-flex items-center gap-2",
-                            Icon {
-                                name: "copy".to_string(),
-                                class: None,
-                                size: Some("h-4 w-4".to_string()),
-                                variant: None,
-                            }
-                            span { "Clone to Edit" }
-                        }
-                    }
-                } else {
-                    Button {
-                        variant: ButtonVariant::Primary,
-                        size: ButtonSize::Medium,
-                        disabled: Some(is_saving()),
-                        loading: Some(is_saving()),
-                        onclick: move |_| on_save.call(()),
-                        if is_saving() { "Saving..." } else { "Save" }
-                    }
+                Button {
+                    variant: ButtonVariant::Primary,
+                    size: ButtonSize::Medium,
+                    disabled: Some(is_saving()),
+                    loading: Some(is_saving()),
+                    onclick: move |_| on_save.call(()),
+                    if is_saving() { "Saving..." } else { "Save" }
                 }
             }
         }

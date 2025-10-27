@@ -12,7 +12,7 @@ pub use badge::{Badge, BadgeButton, BadgeColor};
 pub use button::{Button, ButtonSize, ButtonVariant};
 pub use dialog::ConfirmDialog;
 pub use forms::{TextInput, TextareaInput, UserInputForm, ValidationMessage};
-pub use layout::{EmptyState, List, ListItemWithLink, PageHeader, SectionCard};
+pub use layout::{EmptyState, List, PageHeader, SectionCard};
 pub use notification::{Notification, NotificationData, NotificationType};
 pub use slideout::Slideout;
 

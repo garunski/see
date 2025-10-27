@@ -1,7 +1,6 @@
 use clap::{Parser, Subcommand};
 use s_e_e_core::{
-    clone_system_prompt, clone_system_workflow, execute_workflow_by_id, init_global_store,
-    load_all_system_templates, OutputCallback,
+    execute_workflow_by_id, init_global_store, populate_initial_data, OutputCallback,
 };
 use std::fs;
 
@@ -77,29 +76,27 @@ async fn handle_command(command: Commands) {
         std::process::exit(1);
     }
 
-    // Load and VALIDATE system templates (fail if not found)
-    if let Err(e) = load_all_system_templates().await {
-        tracing::error!("CRITICAL ERROR: {}", e);
-        eprintln!("CRITICAL ERROR: {}", e);
-        eprintln!("System templates are required for operation.");
-        std::process::exit(1);
+    // Populate initial data if needed
+    if let Err(e) = populate_initial_data().await {
+        tracing::error!("Failed to populate initial data: {}", e);
+        eprintln!("Failed to populate initial data: {}", e);
     }
 
     match command {
         Commands::ListSystemWorkflows => {
             if let Ok(store) = s_e_e_core::get_global_store() {
-                match store.list_system_workflows().await {
+                match store.list_workflows().await {
                     Ok(workflows) => {
-                        println!("System Workflows ({}):", workflows.len());
+                        println!("Workflows ({}):", workflows.len());
                         for workflow in workflows {
-                            println!("  - {} (v{})", workflow.name, workflow.version);
+                            println!("  - {}", workflow.name);
                             if let Some(desc) = &workflow.description {
                                 println!("    {}", desc);
                             }
                         }
                     }
                     Err(e) => {
-                        eprintln!("Failed to list system workflows: {}", e);
+                        eprintln!("Failed to list workflows: {}", e);
                         std::process::exit(1);
                     }
                 }
@@ -107,46 +104,36 @@ async fn handle_command(command: Commands) {
         }
         Commands::ListSystemPrompts => {
             if let Ok(store) = s_e_e_core::get_global_store() {
-                match store.list_system_prompts().await {
+                match store.list_prompts().await {
                     Ok(prompts) => {
-                        println!("System Prompts ({}):", prompts.len());
+                        println!("Prompts ({}):", prompts.len());
                         for prompt in prompts {
-                            println!("  - {} (v{})", prompt.name, prompt.version);
+                            println!("  - {}", prompt.name);
                             if let Some(desc) = &prompt.description {
                                 println!("    {}", desc);
                             }
                         }
                     }
                     Err(e) => {
-                        eprintln!("Failed to list system prompts: {}", e);
+                        eprintln!("Failed to list prompts: {}", e);
                         std::process::exit(1);
                     }
                 }
             }
         }
-        Commands::CloneWorkflow { system_id, name } => {
-            match clone_system_workflow(&system_id, name).await {
-                Ok(cloned) => {
-                    println!("Cloned workflow '{}' to '{}'", system_id, cloned.id);
-                    println!("New workflow name: {}", cloned.name);
-                }
-                Err(e) => {
-                    eprintln!("Failed to clone workflow: {}", e);
-                    std::process::exit(1);
-                }
-            }
+        Commands::CloneWorkflow {
+            system_id: _,
+            name: _,
+        } => {
+            eprintln!("Clone command no longer needed - all workflows are editable");
+            std::process::exit(1);
         }
-        Commands::ClonePrompt { system_id, name } => {
-            match clone_system_prompt(&system_id, name).await {
-                Ok(cloned) => {
-                    println!("Cloned prompt '{}' to '{}'", system_id, cloned.id);
-                    println!("New prompt name: {}", cloned.name);
-                }
-                Err(e) => {
-                    eprintln!("Failed to clone prompt: {}", e);
-                    std::process::exit(1);
-                }
-            }
+        Commands::ClonePrompt {
+            system_id: _,
+            name: _,
+        } => {
+            eprintln!("Clone command no longer needed - all prompts are editable");
+            std::process::exit(1);
         }
     }
 }

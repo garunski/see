@@ -1,74 +1,56 @@
-use crate::components::{Button, ButtonSize, ButtonVariant};
-use crate::icons::Icon;
+use crate::components::layout::ListItem;
+use crate::components::{Badge, BadgeColor};
 use crate::layout::router::Route;
 use dioxus::prelude::*;
-use dioxus_router::prelude::Link;
+use dioxus_router::prelude::use_navigator;
 use s_e_e_core::{WorkflowExecutionStatus, WorkflowExecutionSummary};
 
 #[component]
-pub fn HistoryItem(
-    execution: WorkflowExecutionSummary,
-    on_delete_execution: EventHandler<String>,
-) -> Element {
-    let execution_id_for_delete = execution.id.clone();
+pub fn HistoryItem(execution: WorkflowExecutionSummary) -> Element {
+    let navigator = use_navigator();
 
-    // Log component render at debug level
-    tracing::trace!(
-        execution_id = %execution.id,
-        workflow_name = %execution.workflow_name,
-        status = %execution.status,
-        "Rendering history item"
-    );
+    let badge_color = match execution.status {
+        WorkflowExecutionStatus::WaitingForInput => BadgeColor::Amber,
+        WorkflowExecutionStatus::Complete => BadgeColor::Emerald,
+        WorkflowExecutionStatus::Failed => BadgeColor::Red,
+        WorkflowExecutionStatus::Running => BadgeColor::Blue,
+        WorkflowExecutionStatus::Pending => BadgeColor::Zinc,
+    };
+
+    let status_text = match execution.status {
+        WorkflowExecutionStatus::WaitingForInput => "Waiting for Input",
+        WorkflowExecutionStatus::Complete => "Success",
+        WorkflowExecutionStatus::Failed => "Failed",
+        WorkflowExecutionStatus::Running => "Running",
+        WorkflowExecutionStatus::Pending => "Pending",
+    };
 
     rsx! {
-        div { class: "bg-white dark:bg-zinc-800 rounded-xl border border-zinc-200 dark:border-zinc-700 shadow-sm hover:bg-zinc-50 dark:hover:bg-zinc-700 transition-colors",
-            div { class: "flex items-center justify-between p-6",
-                Link {
-                    to: Route::WorkflowDetailsPage { id: execution.id.clone() },
-                    class: "flex-1 min-w-0 cursor-pointer",
-                    div { class: "flex items-center gap-4 mb-3",
-                        h4 { class: "text-base font-semibold text-zinc-900 dark:text-white truncate", "{execution.workflow_name}" }
-                        div {
-                            class: format!("px-3 py-1 text-sm rounded-full font-medium {}",
-                                match execution.status {
-                                    WorkflowExecutionStatus::WaitingForInput => "bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200",
-                                    WorkflowExecutionStatus::Complete => "bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-200",
-                                    WorkflowExecutionStatus::Failed => "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200",
-                                    WorkflowExecutionStatus::Running => "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200",
-                                    WorkflowExecutionStatus::Pending => "bg-zinc-100 text-zinc-800 dark:bg-zinc-900 dark:text-zinc-200",
-                                }
-                            ),
-                            match execution.status {
-                                WorkflowExecutionStatus::WaitingForInput => "Waiting for Input",
-                                WorkflowExecutionStatus::Complete => "Success",
-                                WorkflowExecutionStatus::Failed => "Failed",
-                                WorkflowExecutionStatus::Running => "Running",
-                                WorkflowExecutionStatus::Pending => "Pending",
-                            }
-                        }
-                    }
-                    div { class: "text-sm text-zinc-500 dark:text-zinc-400 mb-2",
+        ListItem {
+            icon_name: "clock".to_string(),
+            icon_variant: Some("outline".to_string()),
+            title: rsx! {
+                {execution.workflow_name.clone()}
+            },
+            subtitle: Some(rsx! {
+                div { class: "flex flex-col gap-1",
+                    div { class: "text-sm text-gray-500 dark:text-gray-400",
                         "Executed: {execution.timestamp}"
                     }
-                    div { class: "text-sm text-zinc-500 dark:text-zinc-400",
+                    div { class: "text-xs text-gray-500 dark:text-gray-400",
                         "{execution.task_count} tasks completed"
                     }
                 }
-                Button {
-                    variant: ButtonVariant::Ghost,
-                    size: ButtonSize::Small,
-                    onclick: move |_| {
-                        on_delete_execution.call(execution_id_for_delete.clone());
-                    },
-                    class: "ml-4 p-2 text-zinc-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20".to_string(),
-                    Icon {
-                        name: "x".to_string(),
-                        class: Some("w-5 h-5".to_string()),
-                        size: None,
-                        variant: Some("outline".to_string()),
-                    }
+            }),
+            right_content: Some(rsx! {
+                Badge {
+                    color: badge_color,
+                    {status_text}
                 }
-            }
+            }),
+            onclick: move |_| {
+                navigator.push(Route::WorkflowDetailsPage { id: execution.id.clone() });
+            },
         }
     }
 }

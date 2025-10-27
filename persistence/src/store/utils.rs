@@ -14,7 +14,7 @@ impl Store {
             "workflows",
             "workflow_executions",
             "task_executions",
-            "user_prompts",
+            "prompts",
             "audit_events",
             "settings",
         ];

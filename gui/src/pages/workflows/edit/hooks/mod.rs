@@ -19,7 +19,6 @@ pub struct WorkflowEditState {
     pub edit_mode: Signal<EditMode>,
     pub selected_node_info: Signal<String>,
     pub workflow_json_str: Memo<Option<String>>,
-    pub is_system_workflow: Signal<bool>,
 }
 
 pub fn use_workflow_edit(id: String) -> WorkflowEditState {
@@ -40,42 +39,21 @@ pub fn use_workflow_edit(id: String) -> WorkflowEditState {
 
     // Load existing workflow data if editing
     let workflow_id_for_effect = id.clone();
-    let mut is_system_workflow = use_signal(|| false);
 
     use_effect(move || {
         if !is_new && !workflow_id_for_effect.is_empty() {
-            // Check if it's a system workflow
-            if workflow_id_for_effect.starts_with("system:") {
-                is_system_workflow.set(true);
-                // Try to load from system workflows
-                if let Some(system_workflow) = state_provider
-                    .settings
-                    .read()
-                    .get_system_workflows()
-                    .iter()
-                    .find(|w| w.id == workflow_id_for_effect)
-                {
-                    content.set(system_workflow.content.clone());
-                    workflow_name.set(system_workflow.name.clone());
-                    edited_workflow_name.set(system_workflow.name.clone());
-                    original_content.set(system_workflow.content.clone());
-                    original_name.set(system_workflow.name.clone());
-                    can_reset.set(false);
-                }
-            } else {
-                // Load from user workflows
-                if let Some(workflow) = state_provider
-                    .settings
-                    .read()
-                    .get_workflow(workflow_id_for_effect.clone())
-                {
-                    content.set(workflow.content.clone());
-                    workflow_name.set(workflow.get_name().to_string());
-                    edited_workflow_name.set(workflow.get_name().to_string());
-                    original_content.set(workflow.content.clone());
-                    original_name.set(workflow.get_name().to_string());
-                    can_reset.set(workflow.is_default && workflow.is_edited);
-                }
+            // Load from workflows
+            if let Some(workflow) = state_provider
+                .settings
+                .read()
+                .get_workflow(workflow_id_for_effect.clone())
+            {
+                content.set(workflow.content.clone());
+                workflow_name.set(workflow.get_name().to_string());
+                edited_workflow_name.set(workflow.get_name().to_string());
+                original_content.set(workflow.content.clone());
+                original_name.set(workflow.get_name().to_string());
+                can_reset.set(workflow.is_default && workflow.is_edited);
             }
         }
     });
@@ -141,6 +119,5 @@ pub fn use_workflow_edit(id: String) -> WorkflowEditState {
         edit_mode,
         selected_node_info,
         workflow_json_str,
-        is_system_workflow,
     }
 }

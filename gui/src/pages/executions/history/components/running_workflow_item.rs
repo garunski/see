@@ -1,68 +1,49 @@
-use crate::components::{Button, ButtonSize, ButtonVariant};
+use crate::components::layout::ListItem;
+use crate::components::{Badge, BadgeColor};
 use crate::icons::Icon;
 use crate::layout::router::Route;
 use dioxus::prelude::*;
-use dioxus_router::prelude::Link;
+use dioxus_router::prelude::use_navigator;
 use s_e_e_core::WorkflowMetadata;
 
 #[component]
-pub fn RunningWorkflowItem(
-    workflow: WorkflowMetadata,
-    on_delete_workflow: EventHandler<String>,
-) -> Element {
-    let workflow_id_for_delete = workflow.id.clone();
-
-    // Log component render at trace level
-    tracing::trace!(
-        execution_id = %workflow.id,
-        workflow_name = %workflow.workflow_name,
-        status = %workflow.status,
-        "Rendering running workflow item"
-    );
+pub fn RunningWorkflowItem(workflow: WorkflowMetadata) -> Element {
+    let navigator = use_navigator();
 
     rsx! {
-        div { class: "bg-white dark:bg-zinc-800 rounded-xl border border-zinc-200 dark:border-zinc-700 shadow-sm hover:bg-zinc-50 dark:hover:bg-zinc-700 transition-colors",
-            div { class: "flex items-center justify-between p-6",
-                Link {
-                    to: Route::WorkflowDetailsPage { id: workflow.id.clone() },
-                    class: "flex-1 min-w-0 cursor-pointer",
-                    div { class: "flex items-center gap-4 mb-3",
-                        h4 { class: "text-base font-semibold text-zinc-900 dark:text-white truncate", "{workflow.workflow_name}" }
-                        div {
-                            class: "px-3 py-1 text-sm rounded-full font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200",
-                            "In Progress"
-                        }
-                    }
-                    div { class: "text-sm text-zinc-500 dark:text-zinc-400 mb-2",
+        ListItem {
+            icon_name: "play".to_string(),
+            icon_variant: Some("outline".to_string()),
+            title: rsx! {
+                {workflow.workflow_name.clone()}
+            },
+            subtitle: Some(rsx! {
+                div { class: "flex flex-col gap-1",
+                    div { class: "text-sm text-gray-500 dark:text-gray-400",
                         "Started: {workflow.start_timestamp}"
                     }
-                    div { class: "text-sm text-zinc-500 dark:text-zinc-400",
+                    div { class: "text-xs text-gray-500 dark:text-gray-400",
                         "{workflow.task_ids.len()} tasks"
                     }
                 }
-                div { class: "ml-4 flex items-center gap-2",
+            }),
+            right_content: Some(rsx! {
+                div { class: "flex items-center gap-2",
                     Icon {
                         name: "play".to_string(),
                         class: Some("w-5 h-5 text-blue-600 dark:text-blue-400 animate-spin".to_string()),
                         size: None,
                         variant: Some("outline".to_string()),
                     }
-                    Button {
-                        variant: ButtonVariant::Ghost,
-                        size: ButtonSize::Small,
-                        onclick: move |_| {
-                            on_delete_workflow.call(workflow_id_for_delete.clone());
-                        },
-                        class: "p-2 text-zinc-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20".to_string(),
-                        Icon {
-                            name: "x".to_string(),
-                            class: Some("w-5 h-5".to_string()),
-                            size: None,
-                            variant: Some("outline".to_string()),
-                        }
+                    Badge {
+                        color: BadgeColor::Blue,
+                        "In Progress"
                     }
                 }
-            }
+            }),
+            onclick: move |_| {
+                navigator.push(Route::WorkflowDetailsPage { id: workflow.id.clone() });
+            },
         }
     }
 }

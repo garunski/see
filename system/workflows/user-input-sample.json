@@ -1,0 +1,83 @@
+{
+  "id": "system:user-input-sample",
+  "name": "User Input Sample Workflow",
+  "description": "Demonstrates user input functionality with multiple input types",
+  "version": "1.0.0",
+  "content": {
+    "id": "user-input-sample",
+    "name": "User Input Sample Workflow",
+    "tasks": [
+      {
+        "id": "intro",
+        "name": "Welcome",
+        "function": {
+          "name": "cli_command",
+          "input": {
+            "command": "echo",
+            "args": ["Welcome to the User Input Sample Workflow!"]
+          }
+        },
+        "next_tasks": [
+          {
+            "id": "get-name",
+            "name": "Get User Name",
+            "function": {
+              "name": "user_input",
+              "input": {
+                "prompt": "Please enter your name:",
+                "input_type": "string",
+                "required": true,
+                "default": "Anonymous"
+              }
+            },
+            "next_tasks": [
+              {
+                "id": "get-age",
+                "name": "Get User Age",
+                "function": {
+                  "name": "user_input",
+                  "input": {
+                    "prompt": "How old are you?",
+                    "input_type": "number",
+                    "required": false,
+                    "default": null
+                  }
+                },
+                "next_tasks": [
+                  {
+                    "id": "confirm",
+                    "name": "Confirm Information",
+                    "function": {
+                      "name": "user_input",
+                      "input": {
+                        "prompt": "Is the information correct?",
+                        "input_type": "boolean",
+                        "required": true,
+                        "default": "true"
+                      }
+                    },
+                    "next_tasks": [
+                      {
+                        "id": "thank-you",
+                        "name": "Thank You",
+                        "function": {
+                          "name": "cli_command",
+                          "input": {
+                            "command": "echo",
+                            "args": ["Thank you for completing the workflow!"]
+                          }
+                        },
+                        "next_tasks": []
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}
+

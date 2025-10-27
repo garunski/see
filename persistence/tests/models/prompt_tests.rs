@@ -1,13 +1,13 @@
-//! Tests for UserPrompt model
+//! Tests for Prompt model
 //! 
 //! Tests serialization, validation following Single Responsibility Principle.
 
-use persistence::UserPrompt;
+use persistence::Prompt;
 use chrono::Utc;
 
 #[test]
-fn test_user_prompt_default() {
-    let prompt = UserPrompt::default();
+fn test_prompt_default() {
+    let prompt = Prompt::default();
     
     assert!(!prompt.id.is_empty());
     assert!(prompt.name.is_empty());
@@ -17,8 +17,8 @@ fn test_user_prompt_default() {
 }
 
 #[test]
-fn test_user_prompt_validation_success() {
-    let prompt = UserPrompt {
+fn test_prompt_validation_success() {
+    let prompt = Prompt {
         id: "prompt-1".to_string(),
         name: "Test Prompt".to_string(),
         content: "This is a test prompt".to_string(),
@@ -31,8 +31,8 @@ fn test_user_prompt_validation_success() {
 }
 
 #[test]
-fn test_user_prompt_validation_empty_id() {
-    let prompt = UserPrompt {
+fn test_prompt_validation_empty_id() {
+    let prompt = Prompt {
         id: "".to_string(),
         name: "Test Prompt".to_string(),
         content: "This is a test prompt".to_string(),
@@ -45,8 +45,8 @@ fn test_user_prompt_validation_empty_id() {
 }
 
 #[test]
-fn test_user_prompt_validation_empty_name() {
-    let prompt = UserPrompt {
+fn test_prompt_validation_empty_name() {
+    let prompt = Prompt {
         id: "prompt-1".to_string(),
         name: "".to_string(),
         content: "This is a test prompt".to_string(),
@@ -59,8 +59,8 @@ fn test_user_prompt_validation_empty_name() {
 }
 
 #[test]
-fn test_user_prompt_validation_empty_content() {
-    let prompt = UserPrompt {
+fn test_prompt_validation_empty_content() {
+    let prompt = Prompt {
         id: "prompt-1".to_string(),
         name: "Test Prompt".to_string(),
         content: "".to_string(),
@@ -73,8 +73,8 @@ fn test_user_prompt_validation_empty_content() {
 }
 
 #[test]
-fn test_user_prompt_update_content() {
-    let mut prompt = UserPrompt {
+fn test_prompt_update_content() {
+    let mut prompt = Prompt {
         id: "prompt-1".to_string(),
         name: "Test Prompt".to_string(),
         content: "Old content".to_string(),
@@ -94,8 +94,8 @@ fn test_user_prompt_update_content() {
 }
 
 #[test]
-fn test_user_prompt_update_name() {
-    let mut prompt = UserPrompt {
+fn test_prompt_update_name() {
+    let mut prompt = Prompt {
         id: "prompt-1".to_string(),
         name: "Old Name".to_string(),
         content: "Test content".to_string(),
@@ -115,8 +115,8 @@ fn test_user_prompt_update_name() {
 }
 
 #[test]
-fn test_user_prompt_serialization() {
-    let prompt = UserPrompt {
+fn test_prompt_serialization() {
+    let prompt = Prompt {
         id: "prompt-1".to_string(),
         name: "Test Prompt".to_string(),
         content: "This is a test prompt".to_string(),
@@ -131,7 +131,7 @@ fn test_user_prompt_serialization() {
     assert!(json.contains("This is a test prompt"));
     
     // Test deserialization
-    let deserialized: UserPrompt = serde_json::from_str(&json).unwrap();
+    let deserialized: Prompt = serde_json::from_str(&json).unwrap();
     assert_eq!(deserialized.id, prompt.id);
     assert_eq!(deserialized.name, prompt.name);
     assert_eq!(deserialized.content, prompt.content);

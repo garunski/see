@@ -1,14 +1,14 @@
-//! UserPrompt model
+//! Prompt model
 //!
-//! This file contains ONLY UserPrompt struct following Single Responsibility Principle.
+//! This file contains ONLY Prompt struct following Single Responsibility Principle.
 
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
-/// User-defined prompt template
+/// Prompt template
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub struct UserPrompt {
+pub struct Prompt {
     pub id: String,
     pub name: String,
     pub content: String,
@@ -21,7 +21,7 @@ pub struct UserPrompt {
     pub updated_at: DateTime<Utc>,
 }
 
-impl Default for UserPrompt {
+impl Default for Prompt {
     fn default() -> Self {
         let now = Utc::now();
         Self {
@@ -39,7 +39,7 @@ impl Default for UserPrompt {
     }
 }
 
-impl UserPrompt {
+impl Prompt {
     /// Validate prompt
     pub fn validate(&self) -> Result<(), String> {
         if self.id.is_empty() {

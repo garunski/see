@@ -67,8 +67,8 @@ fn main() {
     let rt = tokio::runtime::Runtime::new().unwrap();
     if let Err(e) = rt.block_on(async {
         s_e_e_core::init_global_store().await?;
-        tracing::debug!("Loading system templates");
-        s_e_e_core::load_all_system_templates().await
+        tracing::debug!("Populating initial data");
+        s_e_e_core::populate_initial_data().await
     }) {
         tracing::error!("Failed to initialize persistence layer: {}", e);
         eprintln!("Failed to initialize persistence layer: {}", e);

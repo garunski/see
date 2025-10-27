@@ -9,8 +9,10 @@ pub enum HistoryError {
     #[error("Failed to fetch running workflows: {0}")]
     FetchRunningWorkflowsFailed(String),
     #[error("Failed to delete execution: {0}")]
+    #[allow(dead_code)]
     DeleteExecutionFailed(String),
     #[error("Failed to delete running workflow: {0}")]
+    #[allow(dead_code)]
     DeleteRunningWorkflowFailed(String),
 }
 
@@ -91,6 +93,7 @@ impl HistoryService {
         Ok((executions, running))
     }
 
+    #[allow(dead_code)]
     pub async fn delete_execution(id: &str) -> Result<(), HistoryError> {
         let store = s_e_e_core::get_global_store()
             .map_err(|e| HistoryError::DatabaseUnavailable(e.to_string()))?;
@@ -101,6 +104,7 @@ impl HistoryService {
             .map_err(|e| HistoryError::DeleteExecutionFailed(e.to_string()))
     }
 
+    #[allow(dead_code)]
     pub async fn delete_running_workflow(id: &str) -> Result<(), HistoryError> {
         let store = s_e_e_core::get_global_store()
             .map_err(|e| HistoryError::DatabaseUnavailable(e.to_string()))?;

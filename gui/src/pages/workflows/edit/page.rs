@@ -1,4 +1,3 @@
-use crate::components::{Alert, AlertType};
 use crate::state::AppStateProvider;
 use dioxus::prelude::*;
 
@@ -59,51 +58,18 @@ pub fn WorkflowEditPage(id: String) -> Element {
         reset_to_default_handler();
     };
 
-    // Check if this is a system workflow (read-only)
-    let is_system = state.is_system_workflow;
-
     rsx! {
         div { class: "space-y-8",
-            if is_system() {
-                EditorHeader {
-                    is_new,
-                    edit_mode: state.edit_mode,
-                    can_reset: state.can_reset,
-                    is_saving: state.is_saving,
-                    has_unsaved_changes: state.has_unsaved_changes,
-                    on_mode_switch_to_visual: switch_to_visual,
-                    on_mode_switch_to_json: switch_to_json,
-                    on_save: move |_| {},
-                    on_reset: move |_| {},
-                    show_clone: true,
-                    workflow_id: id.clone(),
-                }
-            } else {
-                EditorHeader {
-                    is_new,
-                    edit_mode: state.edit_mode,
-                    can_reset: state.can_reset,
-                    is_saving: state.is_saving,
-                    has_unsaved_changes: state.has_unsaved_changes,
-                    on_mode_switch_to_visual: switch_to_visual,
-                    on_mode_switch_to_json: switch_to_json,
-                    on_save: move |_| save_workflow(),
-                    on_reset: move |_| reset_to_default(),
-                    show_clone: false,
-                    workflow_id: id.clone(),
-                }
-            }
-
-            // System template banner
-            if is_system() {
-                Alert {
-                    alert_type: AlertType::Info,
-                    title: Some("System Workflow".to_string()),
-                    message: "This is a system workflow and cannot be edited. Click the Clone button above to create an editable copy.".to_string(),
-                    dismissible: None,
-                    on_dismiss: None,
-                    actions: None,
-                }
+            EditorHeader {
+                is_new,
+                edit_mode: state.edit_mode,
+                can_reset: state.can_reset,
+                is_saving: state.is_saving,
+                has_unsaved_changes: state.has_unsaved_changes,
+                on_mode_switch_to_visual: switch_to_visual,
+                on_mode_switch_to_json: switch_to_json,
+                on_save: move |_| save_workflow(),
+                on_reset: move |_| reset_to_default(),
             }
 
             // Content area - conditional rendering based on edit mode
@@ -121,7 +87,7 @@ pub fn WorkflowEditPage(id: String) -> Element {
                         workflow_name: state.workflow_name,
                         validation_error: state.validation_error,
                         on_content_change: move |value| state.content.set(value),
-                        is_readonly: Some(is_system()),
+                        is_readonly: None,
                     }
                 }
             }

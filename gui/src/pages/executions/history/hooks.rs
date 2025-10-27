@@ -46,37 +46,3 @@ pub fn use_history_data() -> (Signal<bool>, Signal<Option<String>>, impl Fn() + 
 
     (is_loading, error, refresh_data)
 }
-
-pub fn use_deletion_handlers() -> (impl Fn(String) + Clone, impl Fn(String) + Clone) {
-    let state_provider = use_context::<AppStateProvider>();
-
-    let delete_execution = {
-        let state_provider = state_provider.clone();
-        move |id: String| {
-            let mut history_state = state_provider.history;
-            spawn(async move {
-                if let Err(e) = HistoryService::delete_execution(&id).await {
-                    eprintln!("Failed to delete execution: {:?}", e);
-                } else {
-                    history_state.write().delete_execution(&id);
-                }
-            });
-        }
-    };
-
-    let delete_running_workflow = {
-        let state_provider = state_provider.clone();
-        move |id: String| {
-            let mut history_state = state_provider.history;
-            spawn(async move {
-                if let Err(e) = HistoryService::delete_running_workflow(&id).await {
-                    eprintln!("Failed to delete running workflow: {:?}", e);
-                } else {
-                    history_state.write().remove_running_workflow(&id);
-                }
-            });
-        }
-    };
-
-    (delete_execution, delete_running_workflow)
-}

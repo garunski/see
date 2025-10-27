@@ -1,28 +1,24 @@
-use crate::components::{Alert, AlertType, Button, ButtonSize, ButtonVariant, PageHeader};
+use crate::components::{Alert, AlertType, Button, ButtonSize, ButtonVariant, List, PageHeader};
 use crate::hooks::{use_running_workflows, use_workflow_history};
 use crate::icons::Icon;
 use crate::state::AppStateProvider;
 use dioxus::prelude::*;
 
 use super::components::{HistoryItem, LoadingSkeleton, RunningWorkflowItem};
-use super::hooks::{use_deletion_handlers, use_history_data};
+use super::hooks::use_history_data;
 
 #[component]
 pub fn HistoryPage() -> Element {
     tracing::debug!("rendering history page");
     let _state_provider = use_context::<AppStateProvider>();
 
-    // Use custom hooks for data management
     let (is_loading, error, refresh_data) = use_history_data();
-    let (delete_execution, delete_running_workflow) = use_deletion_handlers();
 
-    // Initial data load
-    let refresh_data_clone = refresh_data.clone();
+    let refresh_data_for_effect = refresh_data.clone();
     use_effect(move || {
-        refresh_data_clone();
+        refresh_data_for_effect();
     });
 
-    // Clone for button and error banner
     let refresh_data_button = refresh_data.clone();
     let refresh_data_error = refresh_data.clone();
 
@@ -113,7 +109,7 @@ pub fn HistoryPage() -> Element {
                                 span { class: "text-sm text-zinc-500 dark:text-zinc-400", "Live updates" }
                             }
                         }
-                        div { class: "grid gap-6",
+                        List {
                             for (index, workflow) in running_workflows().iter().enumerate() {
                                 {
                                     tracing::debug!(
@@ -126,7 +122,6 @@ pub fn HistoryPage() -> Element {
                                 }
                                 RunningWorkflowItem {
                                     workflow: workflow.clone(),
-                                    on_delete_workflow: delete_running_workflow.clone(),
                                 }
                             }
                         }
@@ -147,11 +142,10 @@ pub fn HistoryPage() -> Element {
                                 span { class: "text-sm text-amber-600 dark:text-amber-400", "Action required" }
                             }
                         }
-                        div { class: "grid gap-6",
+                        List {
                             for execution in waiting_workflows().iter() {
                                 HistoryItem {
                                     execution: execution.clone(),
-                                    on_delete_execution: delete_execution.clone(),
                                 }
                             }
                         }
@@ -176,7 +170,7 @@ pub fn HistoryPage() -> Element {
                             p { class: "text-zinc-500 dark:text-zinc-400", "Execute your first workflow to see it appear here" }
                         }
                     } else {
-                        div { class: "grid gap-6",
+                        List {
                             for (index, execution) in completed_workflows().iter().enumerate() {
                                 {
                                     tracing::trace!(
@@ -189,7 +183,6 @@ pub fn HistoryPage() -> Element {
                                 }
                                 HistoryItem {
                                     execution: execution.clone(),
-                                    on_delete_execution: delete_execution.clone(),
                                 }
                             }
                         }

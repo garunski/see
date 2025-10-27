@@ -3,8 +3,8 @@
 //! Tests clear_all_data following Single Responsibility Principle.
 
 use persistence::{
-    AppSettings, AuditEvent, Store, TaskExecution, TaskExecutionStatus, UserPrompt,
-    WorkflowDefinition, WorkflowExecution, WorkflowExecutionStatus,
+    AppSettings, AuditEvent, Prompt, Store, TaskExecution, TaskExecutionStatus, WorkflowDefinition,
+    WorkflowExecution, WorkflowExecutionStatus,
 };
 
 async fn create_test_store() -> Store {
@@ -46,7 +46,7 @@ async fn test_clear_all_data_with_data() {
         ..Default::default()
     };
 
-    let prompt = UserPrompt {
+    let prompt = Prompt {
         id: "prompt-1".to_string(),
         name: "Test Prompt".to_string(),
         content: "Test content".to_string(),

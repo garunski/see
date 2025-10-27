@@ -1,11 +1,10 @@
 use dark_light;
-use s_e_e_core::{AppSettings, SystemWorkflow, Theme, WorkflowDefinition};
+use s_e_e_core::{AppSettings, Theme, WorkflowDefinition};
 
 #[derive(Debug, Clone)]
 pub struct SettingsState {
     pub settings: AppSettings,
     pub workflows: Vec<WorkflowDefinition>,
-    pub system_workflows: Vec<SystemWorkflow>,
 }
 
 impl Default for SettingsState {
@@ -21,7 +20,6 @@ impl Default for SettingsState {
                 default_workflow: None,
             },
             workflows: Vec::new(),
-            system_workflows: Vec::new(),
         }
     }
 }
@@ -35,16 +33,8 @@ impl SettingsState {
         &self.workflows
     }
 
-    pub fn get_system_workflows(&self) -> &Vec<SystemWorkflow> {
-        &self.system_workflows
-    }
-
     pub fn add_workflow(&mut self, workflow: WorkflowDefinition) {
         self.workflows.push(workflow);
-    }
-
-    pub fn set_system_workflows(&mut self, workflows: Vec<SystemWorkflow>) {
-        self.system_workflows = workflows;
     }
 
     pub fn update_workflow(&mut self, id: String, content: String) {

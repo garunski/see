@@ -37,6 +37,7 @@ pub enum BadgeColor {
 }
 
 impl BadgeColor {
+    #[allow(clippy::wrong_self_convention)]
     fn to_classes(&self) -> &'static str {
         match self {
             BadgeColor::Red => {

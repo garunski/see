@@ -1,4 +1,4 @@
-use s_e_e_core::UserPrompt;
+use s_e_e_core::Prompt;
 
 #[derive(Debug, thiserror::Error)]
 pub enum UserPromptError {
@@ -17,7 +17,7 @@ pub enum UserPromptError {
 pub struct UserPromptService;
 
 impl UserPromptService {
-    pub async fn fetch_prompts() -> Result<Vec<UserPrompt>, UserPromptError> {
+    pub async fn fetch_prompts() -> Result<Vec<Prompt>, UserPromptError> {
         let store = s_e_e_core::get_global_store()
             .map_err(|e| UserPromptError::DatabaseUnavailable(e.to_string()))?;
 
@@ -27,7 +27,7 @@ impl UserPromptService {
             .map_err(|e| UserPromptError::FetchPromptsFailed(e.to_string()))
     }
 
-    pub async fn create_prompt(prompt: UserPrompt) -> Result<(), UserPromptError> {
+    pub async fn create_prompt(prompt: Prompt) -> Result<(), UserPromptError> {
         let store = s_e_e_core::get_global_store()
             .map_err(|e| UserPromptError::DatabaseUnavailable(e.to_string()))?;
 
@@ -37,7 +37,7 @@ impl UserPromptService {
             .map_err(|e| UserPromptError::CreatePromptFailed(e.to_string()))
     }
 
-    pub async fn update_prompt(prompt: UserPrompt) -> Result<(), UserPromptError> {
+    pub async fn update_prompt(prompt: Prompt) -> Result<(), UserPromptError> {
         let store = s_e_e_core::get_global_store()
             .map_err(|e| UserPromptError::DatabaseUnavailable(e.to_string()))?;
 
