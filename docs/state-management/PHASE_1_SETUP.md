@@ -14,7 +14,7 @@ Add the dioxus-query dependency only. Do NOT create any empty files yet.
 
 ```toml
 [dependencies]
-dioxus-query = "0.0.1"  # Check for latest version
+dioxus-query = "0.8.1"  # Latest version - check https://docs.rs/dioxus-query/latest/dioxus_query/
 ```
 
 **Validation**: 

@@ -1,71 +1,50 @@
-# State Management Refactor
+# State Management Refactor with dioxus-query 0.8.1
 
 ## Overview
 
-This documentation describes the refactoring of the Dioxus GUI application's state management to use the `dioxus-query` crate. The refactor addresses issues with excessive cloning, naive polling, poor reactivity, and compilation errors.
-
-## Problem Statement
-
-The current state management has several critical issues:
-
-- **Excessive cloning**: Heavy use of `.clone()` causing compilation errors and performance issues
-- **Naive polling**: Execution details page polls every 2 seconds unconditionally with no caching
-- **Poor reactivity**: State changes don't trigger UI updates properly
-- **Manual reload flags**: `needs_reload` flags that don't work correctly
-- **Borrow checker fights**: Compilation errors from `Signal<T>` with nested reads
+Refactor the Dioxus GUI application's state management to use dioxus-query 0.8.1, addressing:
+- Excessive `.clone()` calls causing compilation errors
+- Naive polling with no caching
+- Manual `needs_reload` flags
+- Poor reactivity
 
 ## Solution
 
-Use [dioxus-query](https://docs.rs/dioxus-query/latest/dioxus_query/) - a production-ready, fully-typed async state management system inspired by [TanStack Query](https://tanstack.com/query/v5/docs/framework/react/overview).
+Use [dioxus-query 0.8.1](https://docs.rs/dioxus-query/latest/dioxus_query/) for:
+- Type-safe data fetching with automatic caching
+- Smart polling that stops when not needed
+- Cache invalidation on mutations
+- Proper ownership (no cloning)
 
-### Key Features
+## Implementation
 
-- **QueryCapability trait**: Define type-safe data fetching with automatic caching
-- **Smart polling**: Optional background re-execution that stops when not needed
-- **Cache invalidation**: Automatic or manual cache invalidation for data consistency
-- **No cloning**: Proper ownership management eliminates cloning issues
-- **Focus-based refetch**: Auto-refresh when window gains focus
-- **Loading/error states**: Built-in handling for async operations
+Follow phases in order:
 
-## Documentation Structure
+1. **[Phase 1: Setup](PHASE_1_SETUP.md)** - Add dependency (15 min)
+2. **[Phase 2: Prompts Page](PHASE_2_PROMPTS_PAGE.md)** - Replace prompts page (2-3 hours)
+3. **[Phase 3: History Page](PHASE_3_HISTORY_PAGE.md)** - Add polling for history (3-4 hours)
+4. **[Phase 4: Execution Details](PHASE_4_EXECUTION_DETAILS.md)** - Smart polling (2-3 hours)
+5. **[Phase 5: Cleanup](PHASE_5_CLEANUP.md)** - Remove old code (1-2 hours)
 
-1. **[ARCHITECTURE.md](./ARCHITECTURE.md)** - Current issues and proposed architecture
-2. **[CORE_SPEC.md](./CORE_SPEC.md)** - Query capabilities, mutations, and cache invalidation
-3. **[GUI_SPEC.md](./GUI_SPEC.md)** - Component changes and UI patterns
-4. **[IMPLEMENTATION_STEPS.md](./IMPLEMENTATION_STEPS.md)** - Phased rollout plan
-5. **[TESTING_STRATEGY.md](./TESTING_STRATEGY.md)** - Validation criteria and testing approach
-6. **[EXAMPLES.md](./EXAMPLES.md)** - Before/after code examples for each pattern
+**See [IMPLEMENTATION_STEPS.md](IMPLEMENTATION_STEPS.md) for overview.**
 
-## Current Status
+## Principles
 
-**Phase**: Documentation  
-**Last Updated**: Current date  
-**Blockers**: None
+- **NO FRONT LOADING**: Create files only when needed for current page
+- **ONE PAGE AT A TIME**: Complete and test each before moving on
+- **HUMAN TESTING**: Manual UI testing after each phase
+- **QUALITY CHECKS**: Run `task quality` after each phase
 
 ## Quick Links
 
-- [dioxus-query Documentation](https://docs.rs/dioxus-query/)
+- [dioxus-query 0.8.1 Docs](https://docs.rs/dioxus-query/latest/dioxus_query/)
 - [TanStack Query Inspiration](https://tanstack.com/query/v5/docs/framework/react/overview)
-- [Dioxus State Management Guide](https://dioxuslabs.com/learn/0.6/essentials/state/)
 
-## Implementation Phases
+## Success Criteria
 
-1. **Phase 1**: Add dioxus-query dependency, create query capabilities
-2. **Phase 2**: Create query hooks module
-3. **Phase 3**: Replace prompts page (simplest case)
-4. **Phase 4**: Replace history page (polling case)
-5. **Phase 5**: Replace execution details (smart polling)
-6. **Phase 6**: Update remaining components
-7. **Phase 7**: Clean up old code and remove anti-patterns
-8. **Phase 8**: Testing and validation
-
-## Benefits
-
-✅ **No compilation errors** - Proper ownership eliminates borrowing issues  
-✅ **Smart polling** - Auto-stops when not needed  
-✅ **Automatic caching** - No redundant API calls  
-✅ **Cache invalidation** - Mutations auto-refresh related data  
-✅ **Better reactivity** - UI updates when query state changes  
-✅ **Cleaner code** - No manual state management boilerplate  
-✅ **Production-ready** - Using battle-tested library  
-
+✅ No compilation errors  
+✅ Smart polling stops automatically  
+✅ Cache invalidation works  
+✅ UI updates reactively  
+✅ No redundant API calls  
+✅ Human tests pass  

@@ -23,11 +23,11 @@ pub use history_queries::*;  // NEW
 **File**: `gui/src/queries/history_queries.rs` (create this file)
 
 ```rust
-use dioxus_query::QueryCapability;
+use dioxus_query::prelude::*;
 use s_e_e_core::{WorkflowExecutionSummary, WorkflowMetadata, get_global_store};
 
 #[derive(Clone, PartialEq, Hash, Eq)]
-pub struct GetWorkflowHistory;
+pub struct GetWorkflowHistory(Captured<()>);
 
 impl QueryCapability for GetWorkflowHistory {
     type Ok = Vec<WorkflowExecutionSummary>;
@@ -57,7 +57,7 @@ impl QueryCapability for GetWorkflowHistory {
 }
 
 #[derive(Clone, PartialEq, Hash, Eq)]
-pub struct GetRunningWorkflows;
+pub struct GetRunningWorkflows(Captured<()>);
 
 impl QueryCapability for GetRunningWorkflows {
     type Ok = Vec<WorkflowMetadata>;
@@ -77,6 +77,19 @@ impl QueryCapability for GetRunningWorkflows {
             .collect())
     }
 }
+```
+
+**Usage with polling**:
+```rust
+use dioxus_query::prelude::*;
+use std::time::Duration;
+
+let history = use_query(Query::new((), GetWorkflowHistory(Captured(()))));
+
+let running = use_query(
+    Query::new((), GetRunningWorkflows(Captured(())))
+        .interval(Duration::from_secs(5))  // Poll every 5s
+);
 ```
 
 **Validation**: `task quality`

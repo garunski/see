@@ -43,7 +43,7 @@ Add this query to the existing file:
 
 ```rust
 #[derive(Clone, PartialEq, Hash, Eq)]
-pub struct GetWorkflowExecution;
+pub struct GetWorkflowExecution(Captured<()>);
 
 impl QueryCapability for GetWorkflowExecution {
     type Ok = WorkflowExecution;
@@ -58,6 +58,17 @@ impl QueryCapability for GetWorkflowExecution {
             .map_err(|e| e.to_string())
     }
 }
+```
+
+**Usage with smart polling**:
+```rust
+use dioxus_query::prelude::*;
+use std::time::Duration;
+
+let execution = use_query(
+    Query::new(id.clone(), GetWorkflowExecution(Captured(())))
+        .interval(Duration::from_secs(2))
+);
 ```
 
 **Validation**: `task quality`
