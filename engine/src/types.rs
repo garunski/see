@@ -10,7 +10,9 @@ pub struct EngineTask {
     pub id: String,
     pub name: String,
     pub function: TaskFunction,
+    #[serde(default)]
     pub next_tasks: Vec<EngineTask>,
+    #[serde(default)]
     pub status: TaskStatus,
     #[serde(default)]
     pub is_root: bool, // True for tasks that are root-level in the workflow

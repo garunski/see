@@ -33,11 +33,27 @@ const WorkflowEditor: React.FC = () => {
   const [editingNode, setEditingNode] = useState<WorkflowTask | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
+  // Recursively flatten tasks from next_tasks tree
+  const flattenTasks = useCallback((tasks: WorkflowTask[]): WorkflowTask[] => {
+    const flattened: WorkflowTask[] = [];
+    const flattenRecursive = (taskList: WorkflowTask[]) => {
+      for (const task of taskList) {
+        flattened.push(task);
+        if (task.next_tasks && task.next_tasks.length > 0) {
+          flattenRecursive(task.next_tasks);
+        }
+      }
+    };
+    flattenRecursive(tasks);
+    return flattened;
+  }, []);
+
   // Convert workflow tasks to React Flow nodes
   const tasksToNodes = useCallback((wf: Workflow): Node[] => {
     const savedPositions = wf.metadata?.node_positions || {};
+    const allTasks = flattenTasks(wf.tasks);
     
-    return wf.tasks.map((task, index) => {
+    return allTasks.map((task, index) => {
       const savedPos = savedPositions[task.id];
       const position = savedPos || {
         x: INITIAL_X,
@@ -69,23 +85,34 @@ const WorkflowEditor: React.FC = () => {
         },
       };
     });
-  }, []);
+  }, [flattenTasks]);
 
-  // Generate sequential edges between tasks
+  // Generate edges from next_tasks relationships
   const tasksToEdges = useCallback((wf: Workflow): Edge[] => {
     const edgeList: Edge[] = [];
     
-    for (let i = 0; i < wf.tasks.length - 1; i++) {
-      edgeList.push({
-        id: `edge-${wf.tasks[i].id}-${wf.tasks[i + 1].id}`,
-        source: wf.tasks[i].id,
-        target: wf.tasks[i + 1].id,
-        type: 'smoothstep',
-        animated: true,
-        style: { stroke: '#3b82f6', strokeWidth: 2 },
-      });
-    }
+    const generateEdgesRecursive = (tasks: WorkflowTask[]) => {
+      for (const task of tasks) {
+        if (task.next_tasks && task.next_tasks.length > 0) {
+          for (const nextTask of task.next_tasks) {
+            edgeList.push({
+              id: `edge-${task.id}-${nextTask.id}`,
+              source: task.id,
+              target: nextTask.id,
+              type: 'smoothstep',
+              animated: true,
+              style: { stroke: '#3b82f6', strokeWidth: 2 },
+            });
+            // Recursively generate edges for nested tasks
+            if (nextTask.next_tasks && nextTask.next_tasks.length > 0) {
+              generateEdgesRecursive([nextTask]);
+            }
+          }
+        }
+      }
+    };
     
+    generateEdgesRecursive(wf.tasks);
     return edgeList;
   }, []);
 
@@ -206,7 +233,7 @@ const WorkflowEditor: React.FC = () => {
             />
           </div>
           <div className="text-sm text-zinc-500 dark:text-zinc-400">
-            {workflow?.tasks.length || 0} task{(workflow?.tasks.length || 0) !== 1 ? 's' : ''}
+            {workflow ? flattenTasks(workflow.tasks).length : 0} task{(workflow ? flattenTasks(workflow.tasks).length : 0) !== 1 ? 's' : ''}
           </div>
         </Panel>
       </ReactFlow>

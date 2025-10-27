@@ -1,0 +1,114 @@
+{
+    "id": "deep-input",
+    "name": "Complex Parallel Nested User Input Workflow",
+    "tasks": [
+        {
+            "id": "start",
+            "name": "Start Task",
+            "function": {
+                "name": "cli_command",
+                "input": {
+                    "command": "echo",
+                    "args": ["Workflow started"]
+                }
+            },
+            "next_tasks": [
+                {
+                    "id": "prep-task",
+                    "name": "Preparation Task",
+                    "function": {
+                        "name": "cli_command",
+                        "input": {
+                            "command": "echo",
+                            "args": ["Preparing for first set of inputs"]
+                        }
+                    },
+                    "next_tasks": [
+                        {
+                            "id": "input-phase1-a",
+                            "name": "Phase 1 - Input A",
+                            "function": {
+                                "name": "user_input",
+                                "input": {
+                                    "prompt": "Enter your first name:",
+                                    "input_type": "string",
+                                    "required": true,
+                                    "default": null
+                                }
+                            },
+                            "next_tasks": []
+                        },
+                        {
+                            "id": "input-phase1-b",
+                            "name": "Phase 1 - Input B",
+                            "function": {
+                                "name": "user_input",
+                                "input": {
+                                    "prompt": "Enter your last name:",
+                                    "input_type": "string",
+                                    "required": true,
+                                    "default": null
+                                }
+                            },
+                            "next_tasks": []
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "second-branch",
+            "name": "Second Branch Start",
+            "function": {
+                "name": "cli_command",
+                "input": {
+                    "command": "echo",
+                    "args": ["Starting second branch"]
+                }
+            },
+            "next_tasks": [
+                {
+                    "id": "intermediate",
+                    "name": "Intermediate Processing",
+                    "function": {
+                        "name": "cli_command",
+                        "input": {
+                            "command": "echo",
+                            "args": ["Intermediate processing complete"]
+                        }
+                    },
+                    "next_tasks": [
+                        {
+                            "id": "input-phase2-a",
+                            "name": "Phase 2 - Input A",
+                            "function": {
+                                "name": "user_input",
+                                "input": {
+                                    "prompt": "Enter your email:",
+                                    "input_type": "string",
+                                    "required": true,
+                                    "default": null
+                                }
+                            },
+                            "next_tasks": []
+                        },
+                        {
+                            "id": "input-phase2-b",
+                            "name": "Phase 2 - Input B",
+                            "function": {
+                                "name": "user_input",
+                                "input": {
+                                    "prompt": "Enter your phone number:",
+                                    "input_type": "string",
+                                    "required": true,
+                                    "default": null
+                                }
+                            },
+                            "next_tasks": []
+                        }
+                    ]
+                }
+            ]
+        }
+    ]
+}

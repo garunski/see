@@ -1,0 +1,47 @@
+{
+    "id": "nested-input",
+    "name": "Nested User Input Workflow",
+    "tasks": [
+        {
+            "id": "step1",
+            "name": "Step 1",
+            "function": {
+                "name": "cli_command",
+                "input": {
+                    "command": "echo",
+                    "args": ["Step 1 complete"]
+                }
+            },
+            "next_tasks": [
+                {
+                    "id": "step2-input",
+                    "name": "Step 2 Input",
+                    "function": {
+                        "name": "user_input",
+                        "input": {
+                            "prompt": "Enter value for step 2:",
+                            "input_type": "string",
+                            "required": true,
+                            "default": null
+                        }
+                    },
+                    "next_tasks": [
+                        {
+                            "id": "step3",
+                            "name": "Step 3",
+                            "function": {
+                                "name": "cli_command",
+                                "input": {
+                                    "command": "echo",
+                                    "args": ["Step 3 complete"]
+                                }
+                            },
+                            "next_tasks": []
+                        }
+                    ]
+                }
+            ]
+        }
+    ]
+}
+

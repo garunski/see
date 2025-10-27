@@ -1,0 +1,55 @@
+{
+  "id": "parallel",
+  "name": "Parallel Execution Workflow",
+  "tasks": [
+    {
+      "id": "root",
+      "name": "Root Task",
+      "function": {
+        "name": "cli_command",
+        "input": {
+          "command": "echo",
+          "args": ["Starting parallel execution"]
+        }
+      },
+      "next_tasks": [
+        {
+          "id": "task_a",
+          "name": "Task A",
+          "function": {
+            "name": "cli_command",
+            "input": {
+              "command": "echo",
+              "args": ["Task A executing"]
+            }
+          },
+          "next_tasks": []
+        },
+        {
+          "id": "task_b",
+          "name": "Task B",
+          "function": {
+            "name": "cli_command",
+            "input": {
+              "command": "echo",
+              "args": ["Task B executing"]
+            }
+          },
+          "next_tasks": []
+        },
+        {
+          "id": "task_c",
+          "name": "Task C",
+          "function": {
+            "name": "cli_command",
+            "input": {
+              "command": "echo",
+              "args": ["Task C executing"]
+            }
+          },
+          "next_tasks": []
+        }
+      ]
+    }
+  ]
+}

@@ -5,6 +5,9 @@ export interface WorkflowTask {
     name: string;
     input: Record<string, any>;
   };
+  next_tasks?: WorkflowTask[];
+  status?: string;
+  is_root?: boolean;
 }
 
 export interface NodePosition {

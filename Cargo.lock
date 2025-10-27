@@ -4657,6 +4657,7 @@ dependencies = [
  "dark-light",
  "dioxus",
  "dioxus-desktop",
+ "engine",
  "rfd",
  "s_e_e_core",
  "serde_json",

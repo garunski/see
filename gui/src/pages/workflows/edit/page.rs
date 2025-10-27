@@ -121,6 +121,7 @@ pub fn WorkflowEditPage(id: String) -> Element {
                         workflow_name: state.workflow_name,
                         validation_error: state.validation_error,
                         on_content_change: move |value| state.content.set(value),
+                        is_readonly: Some(is_system()),
                     }
                 }
             }

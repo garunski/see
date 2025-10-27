@@ -1,0 +1,47 @@
+{
+    "id": "simple-input",
+    "name": "Simple User Input Workflow",
+    "tasks": [
+        {
+            "id": "greeting",
+            "name": "Display Greeting",
+            "function": {
+                "name": "cli_command",
+                "input": {
+                    "command": "echo",
+                    "args": ["Hello! What's your name?"]
+                }
+            },
+            "next_tasks": [
+                {
+                    "id": "get-name",
+                    "name": "Get User Name",
+                    "function": {
+                        "name": "user_input",
+                        "input": {
+                            "prompt": "Please enter your name:",
+                            "input_type": "string",
+                            "required": true,
+                            "default": null
+                        }
+                    },
+                    "next_tasks": [
+                        {
+                            "id": "thank-you",
+                            "name": "Thank You",
+                            "function": {
+                                "name": "cli_command",
+                                "input": {
+                                    "command": "echo",
+                                    "args": ["Thank you for your input!"]
+                                }
+                            },
+                            "next_tasks": []
+                        }
+                    ]
+                }
+            ]
+        }
+    ]
+}
+

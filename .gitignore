@@ -35,7 +35,6 @@ lerna-debug.log*
 .yarn/install-state.gz
 
 # Project-specific
-examples
 typescript_sample
 .task
 node_modules

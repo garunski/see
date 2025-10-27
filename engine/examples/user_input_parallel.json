@@ -1,0 +1,48 @@
+{
+    "id": "parallel-input",
+    "name": "Parallel User Input Workflow",
+    "tasks": [
+        {
+            "id": "start",
+            "name": "Start",
+            "function": {
+                "name": "cli_command",
+                "input": {
+                    "command": "echo",
+                    "args": ["Starting parallel input tasks"]
+                }
+            },
+            "next_tasks": [
+                {
+                    "id": "input-a",
+                    "name": "Input A",
+                    "function": {
+                        "name": "user_input",
+                        "input": {
+                            "prompt": "Enter value A:",
+                            "input_type": "string",
+                            "required": true,
+                            "default": null
+                        }
+                    },
+                    "next_tasks": []
+                },
+                {
+                    "id": "input-b",
+                    "name": "Input B",
+                    "function": {
+                        "name": "user_input",
+                        "input": {
+                            "prompt": "Enter value B:",
+                            "input_type": "string",
+                            "required": true,
+                            "default": null
+                        }
+                    },
+                    "next_tasks": []
+                }
+            ]
+        }
+    ]
+}
+

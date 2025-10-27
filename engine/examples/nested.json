@@ -1,0 +1,81 @@
+{
+  "id": "nested",
+  "name": "Nested Dependencies Workflow",
+  "tasks": [
+    {
+      "id": "root",
+      "name": "Root Task",
+      "function": {
+        "name": "cli_command",
+        "input": {
+          "command": "echo",
+          "args": ["Starting nested workflow"]
+        }
+      },
+      "next_tasks": [
+        {
+          "id": "level1a",
+          "name": "Level 1A",
+          "function": {
+            "name": "cli_command",
+            "input": {
+              "command": "echo",
+              "args": ["Level 1A executing"]
+            }
+          },
+          "next_tasks": [
+            {
+              "id": "level2a",
+              "name": "Level 2A",
+              "function": {
+                "name": "cli_command",
+                "input": {
+                  "command": "echo",
+                  "args": ["Level 2A executing"]
+                }
+              },
+              "next_tasks": []
+            },
+            {
+              "id": "level2b",
+              "name": "Level 2B",
+              "function": {
+                "name": "cli_command",
+                "input": {
+                  "command": "echo",
+                  "args": ["Level 2B executing"]
+                }
+              },
+              "next_tasks": []
+            }
+          ]
+        },
+        {
+          "id": "level1b",
+          "name": "Level 1B",
+          "function": {
+            "name": "cli_command",
+            "input": {
+              "command": "echo",
+              "args": ["Level 1B executing"]
+            }
+          },
+          "next_tasks": [
+            {
+              "id": "level2c",
+              "name": "Level 2C",
+              "function": {
+                "name": "cli_command",
+                "input": {
+                  "command": "echo",
+                  "args": ["Level 2C executing"]
+                }
+              },
+              "next_tasks": []
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

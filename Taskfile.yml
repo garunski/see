@@ -10,6 +10,18 @@ tasks:
       - cargo fmt -- --check
       - cargo clippy --all-targets --all-features -- -D warnings
       - cargo test
+      - task: visualizer
+      - task: tailwind
+      - task: icons
+      - |
+        echo "Running npm audit for react-flow-app..."
+        cd react-flow-app && npm audit --production
+      - |
+        echo "Running npm audit for tailwind..."
+        cd tailwind && npm audit --production
+      - |
+        echo "Running npm audit for icons..."
+        cd icons && npm audit --production
       - |
         find . -name "*.rs" -not -path "./target/*" | xargs wc -l | awk '$1 > 200 && $2 != "total" {print "⚠️  " $2 " (" $1 " lines) - create an aggressive refactoring plan that completely eliminates this bloated file by breaking it into focused, single-responsibility modules, removing all legacy patterns, deleting unused code without any #[allow(dead_code)] bullshit, and modernizing the API contracts - I want zero warnings, zero dead code, and a clean architecture that actually makes sense."}' | head -10
 

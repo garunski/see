@@ -1,6 +1,7 @@
 use crate::state::AppStateProvider;
 use dioxus::prelude::*;
-use s_e_e_core::WorkflowJson;
+use engine::parse_workflow;
+use tracing;
 
 use crate::pages::workflows::edit::EditMode;
 
@@ -107,11 +108,23 @@ pub fn use_workflow_edit(id: String) -> WorkflowEditState {
     });
 
     // Prepare workflow JSON for visual editor
+    // Use the engine parser which properly handles the workflow structure
     let workflow_json_str = use_memo(move || {
-        if let Ok(workflow_json) = serde_json::from_str::<WorkflowJson>(&content()) {
-            serde_json::to_string(&workflow_json).ok()
-        } else {
-            None
+        let content_str = content();
+        if content_str.is_empty() {
+            tracing::debug!("Content is empty, skipping visual editor parsing");
+            return None;
+        }
+        match parse_workflow(&content_str) {
+            Ok(workflow) => serde_json::to_string(&workflow).ok(),
+            Err(e) => {
+                tracing::error!(
+                    "Failed to parse workflow JSON for visual editor: {} - Content length: {}",
+                    e,
+                    content_str.len()
+                );
+                None
+            }
         }
     });
 
