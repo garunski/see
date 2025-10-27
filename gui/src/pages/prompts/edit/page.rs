@@ -133,7 +133,7 @@ pub fn UserPromptEditPage(id: String) -> Element {
     rsx! {
         div { class: "space-y-8",
             PageHeader {
-                title: if is_system() { "View System Prompt".to_string() } else if is_new { "Create UserPrompt".to_string() } else { "Edit UserPrompt".to_string() },
+                title: if is_system() { "View System Prompt".to_string() } else if is_new { "Create prompt".to_string() } else { "Edit prompt".to_string() },
                 description: if is_system() { "System prompts are read-only. Clone this prompt to create an editable copy.".to_string() } else if is_new { "Create a new prompt template".to_string() } else { "Edit prompt template".to_string() },
                 actions: Some(rsx! {
                     div { class: "flex items-center gap-3",

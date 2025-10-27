@@ -47,7 +47,7 @@ pub fn UserPromptsListPage() -> Element {
                             size: Some("h-5 w-5".to_string()),
                             variant: Some("outline".to_string()),
                         }
-                        "Create UserPrompt"
+                        "Create prompt"
                     }
                 }),
             }
