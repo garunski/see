@@ -4,15 +4,14 @@ use crate::components::{
 };
 use crate::icons::Icon;
 use crate::layout::router::Route;
-use crate::services::prompt::UserPromptService;
-use crate::state::AppStateProvider;
+use crate::queries::{CreatePromptMutation, DeletePromptMutation, GetPrompt, UpdatePromptMutation};
 use dioxus::prelude::*;
+use dioxus_query::prelude::{use_mutation, use_query, Mutation, Query};
 use dioxus_router::prelude::{use_navigator, Link};
 use s_e_e_core::Prompt;
 
 #[component]
 pub fn UserPromptEditPage(id: String) -> Element {
-    let state_provider = use_context::<AppStateProvider>();
     let navigator = use_navigator();
 
     let is_new = id.is_empty();
@@ -21,9 +20,7 @@ pub fn UserPromptEditPage(id: String) -> Element {
     let mut description = use_signal(String::new);
     let mut content = use_signal(String::new);
     let mut validation_error = use_signal(String::new);
-    let mut is_saving = use_signal(|| false);
     let mut show_delete_dialog = use_signal(|| false);
-    let is_deleting = use_signal(|| false);
     let notification = use_signal(|| NotificationData {
         r#type: NotificationType::Success,
         title: String::new(),
@@ -31,19 +28,37 @@ pub fn UserPromptEditPage(id: String) -> Element {
         show: false,
     });
 
+    let create_mutation = use_mutation(Mutation::new(CreatePromptMutation));
+    let update_mutation = use_mutation(Mutation::new(UpdatePromptMutation));
+    let delete_mutation = use_mutation(Mutation::new(DeletePromptMutation));
+
+    // Get loading states from mutations
+    let is_saving = use_memo(move || {
+        create_mutation.read().state().is_loading() || update_mutation.read().state().is_loading()
+    });
+    let is_deleting = use_memo(move || delete_mutation.read().state().is_loading());
+
     // Load existing prompt data if editing
-    let prompt_id_for_effect = id.clone();
+    let loaded_prompt = if !is_new {
+        let query_result = use_query(Query::new(id.clone(), GetPrompt)).suspend()?;
+        match query_result {
+            Ok(Some(p)) => Some(p),
+            Ok(None) => None,
+            Err(_) => None,
+        }
+    } else {
+        None
+    };
+
+    // Load prompt data into form fields only once
+    let mut is_loaded = use_signal(|| false);
     use_effect(move || {
-        if !is_new && !prompt_id_for_effect.is_empty() {
-            // Load from prompts
-            if let Some(prompt) = state_provider
-                .prompts
-                .read()
-                .get_prompt(prompt_id_for_effect.clone())
-            {
+        if !is_loaded() && !is_new {
+            if let Some(prompt) = &loaded_prompt {
                 prompt_id.set(prompt.id.clone());
                 description.set(prompt.description.clone().unwrap_or_default());
                 content.set(prompt.template.clone());
+                is_loaded.set(true);
             }
         }
     });
@@ -73,30 +88,33 @@ pub fn UserPromptEditPage(id: String) -> Element {
     };
 
     let confirm_delete = {
-        let state_provider = state_provider.clone();
         let mut show_dialog = show_delete_dialog;
-        let mut deleting = is_deleting;
+        let show_notification = show_notification;
+        let validation_error = validation_error;
         let prompt_id = id.clone();
+        let delete_mutation = delete_mutation.clone();
         move |_| {
             show_dialog.set(false);
-            deleting.set(true);
 
-            let mut state_provider = state_provider.clone();
+            let mut show_notification = show_notification.clone();
+            let mut validation_error = validation_error.clone();
             let prompt_id = prompt_id.clone();
-            let mut show_notification = show_notification;
+            let delete_mutation = delete_mutation.clone();
+
             spawn(async move {
-                match UserPromptService::delete_prompt(&prompt_id).await {
+                let reader = delete_mutation.mutate_async(prompt_id.clone()).await;
+                let state = reader.state();
+                match state.unwrap() {
                     Ok(_) => {
-                        state_provider.prompts.write().remove_prompt(prompt_id);
                         show_notification(
                             NotificationType::Success,
                             "Prompt deleted".to_string(),
                             "The prompt has been successfully deleted.".to_string(),
                         );
-                        // Navigate back to list page after successful deletion
                         navigator.push(Route::UserPromptsListPage {});
                     }
                     Err(e) => {
+                        let e = e.clone();
                         validation_error.set(format!("Failed to delete prompt: {}", e));
                         show_notification(
                             NotificationType::Error,
@@ -105,7 +123,6 @@ pub fn UserPromptEditPage(id: String) -> Element {
                         );
                     }
                 }
-                deleting.set(false);
             });
         }
     };
@@ -154,18 +171,7 @@ pub fn UserPromptEditPage(id: String) -> Element {
                                         return;
                                     }
 
-                                    // Check for duplicate ID if creating new
-                                    if is_new {
-                                        let prompts_guard = state_provider.prompts.read();
-                                        let existing_prompt = prompts_guard.get_prompt(prompt_id().trim().to_string());
-                                        if existing_prompt.is_some() {
-                                            validation_error.set("A prompt with this ID already exists".to_string());
-                                            return;
-                                        }
-                                    }
-
                                     validation_error.set(String::new());
-                                    is_saving.set(true);
 
                                     let now = chrono::Utc::now();
                                     let content_str = content().trim().to_string();
@@ -182,47 +188,56 @@ pub fn UserPromptEditPage(id: String) -> Element {
                                         updated_at: now,
                                     };
 
-                                    let mut state_provider = state_provider.clone();
-                                    let id_for_save = id.clone();
-                                    let mut show_notification = show_notification;
+                                    let create_mutation = create_mutation.clone();
+                                    let update_mutation = update_mutation.clone();
+                                    let mut show_notification = show_notification.clone();
+                                    let mut validation_error = validation_error.clone();
+                                    let is_new = is_new;
+                                    let prompt_clone = prompt.clone();
                                     spawn(async move {
-                                        let result = if is_new {
-                                            UserPromptService::create_prompt(prompt.clone()).await
-                                        } else {
-                                            UserPromptService::update_prompt(prompt.clone()).await
-                                        };
-
-                                        match result {
-                                            Ok(_) => {
-                                                if is_new {
-                                                    state_provider.prompts.write().add_prompt(prompt);
+                                        if is_new {
+                                            let reader = create_mutation.mutate_async(prompt_clone.clone()).await;
+                                            let state = reader.state();
+                                            match state.unwrap() {
+                                                Ok(_) => {
                                                     show_notification(
                                                         NotificationType::Success,
                                                         "Prompt created".to_string(),
                                                         "Your new prompt has been successfully created.".to_string(),
                                                     );
-                                                } else {
-                                                    state_provider.prompts.write().update_prompt(
-                                                        id_for_save.clone(),
-                                                        prompt,
+                                                }
+                                                Err(e) => {
+                                                    let e = e.clone();
+                                                    validation_error.set(format!("Failed to save prompt: {}", e));
+                                                    show_notification(
+                                                        NotificationType::Error,
+                                                        "Save failed".to_string(),
+                                                        format!("Failed to save prompt: {}", e),
                                                     );
+                                                }
+                                            }
+                                        } else {
+                                            let reader = update_mutation.mutate_async(prompt_clone.clone()).await;
+                                            let state = reader.state();
+                                            match state.unwrap() {
+                                                Ok(_) => {
                                                     show_notification(
                                                         NotificationType::Success,
                                                         "Prompt saved".to_string(),
                                                         "Your changes have been successfully saved.".to_string(),
                                                     );
                                                 }
-                                            }
-                                            Err(e) => {
-                                                validation_error.set(format!("Failed to save prompt: {}", e));
-                                                show_notification(
-                                                    NotificationType::Error,
-                                                    "Save failed".to_string(),
-                                                    format!("Failed to save prompt: {}", e),
-                                                );
+                                                Err(e) => {
+                                                    let e = e.clone();
+                                                    validation_error.set(format!("Failed to save prompt: {}", e));
+                                                    show_notification(
+                                                        NotificationType::Error,
+                                                        "Save failed".to_string(),
+                                                        format!("Failed to save prompt: {}", e),
+                                                    );
+                                                }
                                             }
                                         }
-                                        is_saving.set(false);
                                     });
                                 },
                                 if is_saving() { "Saving..." } else { "Save" }

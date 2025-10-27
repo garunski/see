@@ -6,6 +6,7 @@ mod hooks;
 mod icons;
 mod layout;
 mod pages;
+mod queries;
 mod state;
 mod services {
     pub mod database;
