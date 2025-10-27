@@ -76,9 +76,9 @@ fn AppContent() -> Element {
                         // Load workflows from database
                         match store.list_workflows().await {
                             Ok(workflows) => {
-                                tracing::info!("📋 WORKFLOWS LOADED FROM DATABASE: count={}, workflow_ids={:?}",
-                                    workflows.len(),
-                                    workflows.iter().map(|w| &w.id).collect::<Vec<_>>()
+                                tracing::debug!(
+                                    "Loaded {} workflows from database",
+                                    workflows.len()
                                 );
 
                                 // Add workflows to settings state
@@ -109,10 +109,7 @@ fn AppContent() -> Element {
                     Ok(store) => {
                         // Load system workflows
                         if let Ok(system_workflows) = store.list_system_workflows().await {
-                            tracing::info!(
-                                "📋 SYSTEM WORKFLOWS LOADED: count={}",
-                                system_workflows.len()
-                            );
+                            tracing::debug!("Loaded {} system workflows", system_workflows.len());
                             settings_state
                                 .write()
                                 .set_system_workflows(system_workflows);
@@ -120,10 +117,7 @@ fn AppContent() -> Element {
 
                         // Load system prompts
                         if let Ok(system_prompts) = store.list_system_prompts().await {
-                            tracing::info!(
-                                "📝 SYSTEM PROMPTS LOADED: count={}",
-                                system_prompts.len()
-                            );
+                            tracing::debug!("Loaded {} system prompts", system_prompts.len());
                             prompt_state.write().set_system_prompts(system_prompts);
                             prompt_state.write().needs_reload = false;
                         }
@@ -147,23 +141,37 @@ fn AppContent() -> Element {
                 match s_e_e_core::get_global_store() {
                     Ok(store) => match store.list_workflow_executions().await {
                         Ok(history) => {
-                            tracing::info!(
-                                "📊 HISTORY LOADED FROM DATABASE: count={}, execution_ids={:?}",
-                                history.len(),
-                                history.iter().map(|h| &h.id).collect::<Vec<_>>()
+                            tracing::debug!(
+                                "Loaded {} execution records from database",
+                                history.len()
                             );
                             // Convert WorkflowExecution to WorkflowExecutionSummary
                             let summaries = history
                                 .into_iter()
-                                .map(|exec| s_e_e_core::WorkflowExecutionSummary {
-                                    id: exec.id,
-                                    workflow_name: exec.workflow_name,
-                                    status: exec.status,
-                                    created_at: exec.created_at,
-                                    completed_at: exec.completed_at,
-                                    success: exec.success,
-                                    task_count: exec.tasks.len(),
-                                    timestamp: exec.timestamp,
+                                .map(|exec| {
+                                    // Check if any tasks are waiting for input
+                                    let has_pending_inputs = exec.tasks.iter().any(|t| {
+                                        t.status.as_str() == "waiting_for_input"
+                                            || t.status.as_str() == "WaitingForInput"
+                                    });
+
+                                    // Adjust success field: if we have pending inputs, success should be None (not Failed)
+                                    let adjusted_success = if has_pending_inputs {
+                                        None // Don't mark as failed when waiting for input
+                                    } else {
+                                        exec.success
+                                    };
+
+                                    s_e_e_core::WorkflowExecutionSummary {
+                                        id: exec.id,
+                                        workflow_name: exec.workflow_name,
+                                        status: exec.status,
+                                        created_at: exec.created_at,
+                                        completed_at: exec.completed_at,
+                                        success: adjusted_success,
+                                        task_count: exec.tasks.len(),
+                                        timestamp: exec.timestamp,
+                                    }
                                 })
                                 .collect();
                             history_state.write().set_history(summaries);

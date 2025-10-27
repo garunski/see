@@ -31,15 +31,30 @@ impl HistoryService {
         // Convert WorkflowExecution to WorkflowExecutionSummary
         let summaries = executions
             .into_iter()
-            .map(|exec| WorkflowExecutionSummary {
-                id: exec.id,
-                workflow_name: exec.workflow_name,
-                status: exec.status,
-                created_at: exec.created_at,
-                completed_at: exec.completed_at,
-                success: exec.success,
-                task_count: exec.tasks.len(),
-                timestamp: exec.timestamp,
+            .map(|exec| {
+                // Check if any tasks are waiting for input
+                let has_pending_inputs = exec.tasks.iter().any(|t| {
+                    t.status.as_str() == "waiting_for_input"
+                        || t.status.as_str() == "WaitingForInput"
+                });
+
+                // Adjust success field: if we have pending inputs, success should be None (not Failed)
+                let adjusted_success = if has_pending_inputs {
+                    None // Don't mark as failed when waiting for input
+                } else {
+                    exec.success
+                };
+
+                WorkflowExecutionSummary {
+                    id: exec.id,
+                    workflow_name: exec.workflow_name,
+                    status: exec.status,
+                    created_at: exec.created_at,
+                    completed_at: exec.completed_at,
+                    success: adjusted_success,
+                    task_count: exec.tasks.len(),
+                    timestamp: exec.timestamp,
+                }
             })
             .collect();
 
@@ -57,21 +72,25 @@ impl HistoryService {
             .await
             .map_err(|e| HistoryError::FetchRunningWorkflowsFailed(e.to_string()))?;
 
-        tracing::debug!(
-            total_metadata_count = metadata.len(),
-            metadata_ids = ?metadata.iter().map(|m| (&m.id, &m.status)).collect::<Vec<_>>(),
-            "fetched running workflows from database"
-        );
+        // Filter for truly active running workflows
+        // Exclude workflows that are in workflow_executions (which means they're waiting or completed)
+        let all_execution_ids = store
+            .list_workflow_executions()
+            .await
+            .map_err(|e| HistoryError::DatabaseUnavailable(e.to_string()))?
+            .into_iter()
+            .map(|exec| exec.id)
+            .collect::<std::collections::HashSet<_>>();
 
         let running: Vec<_> = metadata
             .into_iter()
-            .filter(|m| m.status == "running")
+            .filter(|m| m.status == "running" && !all_execution_ids.contains(&m.id))
             .collect();
 
-        tracing::debug!(
+        tracing::trace!(
             running_count = running.len(),
-            running_ids = ?running.iter().map(|m| &m.id).collect::<Vec<_>>(),
-            "filtered running workflows"
+            "Filtered {} running workflows",
+            running.len()
         );
 
         Ok(running)

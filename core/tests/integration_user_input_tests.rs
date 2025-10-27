@@ -23,9 +23,10 @@ fn create_simple_input_workflow() -> WorkflowDefinition {
                     "id": "greeting",
                     "name": "Display Greeting",
                     "function": {
-                        "cli_command": {
+                        "name": "cli_command",
+                        "input": {
                             "command": "echo",
-                            "args": ["Hello! What's your name?"]
+                            "args": ["Hello! What is your name?"]
                         }
                     },
                     "next_tasks": [
@@ -33,7 +34,8 @@ fn create_simple_input_workflow() -> WorkflowDefinition {
                             "id": "get-name",
                             "name": "Get User Name",
                             "function": {
-                                "user_input": {
+                                "name": "user_input",
+                                "input": {
                                     "prompt": "Please enter your name:",
                                     "input_type": "string",
                                     "required": true,
@@ -45,7 +47,8 @@ fn create_simple_input_workflow() -> WorkflowDefinition {
                                     "id": "thank-you",
                                     "name": "Thank You",
                                     "function": {
-                                        "cli_command": {
+                                        "name": "cli_command",
+                                        "input": {
                                             "command": "echo",
                                             "args": ["Thank you for your input!"]
                                         }
@@ -80,7 +83,8 @@ fn create_parallel_input_workflow() -> WorkflowDefinition {
                     "id": "start",
                     "name": "Start",
                     "function": {
-                        "cli_command": {
+                        "name": "cli_command",
+                        "input": {
                             "command": "echo",
                             "args": ["Starting parallel input tasks"]
                         }
@@ -90,7 +94,8 @@ fn create_parallel_input_workflow() -> WorkflowDefinition {
                             "id": "input-a",
                             "name": "Input A",
                             "function": {
-                                "user_input": {
+                                "name": "user_input",
+                                "input": {
                                     "prompt": "Enter value A:",
                                     "input_type": "string",
                                     "required": true,
@@ -103,7 +108,8 @@ fn create_parallel_input_workflow() -> WorkflowDefinition {
                             "id": "input-b",
                             "name": "Input B",
                             "function": {
-                                "user_input": {
+                                "name": "user_input",
+                                "input": {
                                     "prompt": "Enter value B:",
                                     "input_type": "string",
                                     "required": true,
@@ -138,7 +144,8 @@ fn create_nested_input_workflow() -> WorkflowDefinition {
                     "id": "step1",
                     "name": "Step 1",
                     "function": {
-                        "cli_command": {
+                        "name": "cli_command",
+                        "input": {
                             "command": "echo",
                             "args": ["Step 1 complete"]
                         }
@@ -148,7 +155,8 @@ fn create_nested_input_workflow() -> WorkflowDefinition {
                             "id": "step2-input",
                             "name": "Step 2 Input",
                             "function": {
-                                "user_input": {
+                                "name": "user_input",
+                                "input": {
                                     "prompt": "Enter value for step 2:",
                                     "input_type": "string",
                                     "required": true,
@@ -160,7 +168,8 @@ fn create_nested_input_workflow() -> WorkflowDefinition {
                                     "id": "step3",
                                     "name": "Step 3",
                                     "function": {
-                                        "cli_command": {
+                                        "name": "cli_command",
+                                        "input": {
                                             "command": "echo",
                                             "args": ["Step 3 complete"]
                                         }

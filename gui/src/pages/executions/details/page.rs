@@ -39,7 +39,7 @@ fn ResumeButton(execution_id: String, task: TaskInfo) -> Element {
 
                         match s_e_e_core::resume_task(&execution_id_clone, &task_id_clone).await {
                             Ok(_) => {
-                                tracing::info!(execution_id = %execution_id_clone, task_id = %task_id_clone, "Task resumed successfully");
+                                tracing::debug!(execution_id = %execution_id_clone, task_id = %task_id_clone, "Task resumed successfully");
                                 // TODO: Refresh the page or update state in Phase 6
                             }
                             Err(e) => {

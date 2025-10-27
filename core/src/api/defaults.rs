@@ -20,7 +20,8 @@ pub fn get_default_workflows() -> Vec<WorkflowDefinition> {
                         "id": "task-1",
                         "name": "Echo Hello",
                         "function": {
-                            "cli_command": {
+                            "name": "cli_command",
+                            "input": {
                                 "command": "echo",
                                 "args": ["Hello, World!"]
                             }
@@ -47,7 +48,8 @@ pub fn get_default_workflows() -> Vec<WorkflowDefinition> {
                         "id": "task-1",
                         "name": "Task 1",
                         "function": {
-                            "cli_command": {
+                            "name": "cli_command",
+                            "input": {
                                 "command": "echo",
                                 "args": ["Task 1 complete"]
                             }
@@ -58,7 +60,8 @@ pub fn get_default_workflows() -> Vec<WorkflowDefinition> {
                         "id": "task-2",
                         "name": "Task 2",
                         "function": {
-                            "cli_command": {
+                            "name": "cli_command",
+                            "input": {
                                 "command": "echo",
                                 "args": ["Task 2 complete"]
                             }
@@ -85,7 +88,8 @@ pub fn get_default_workflows() -> Vec<WorkflowDefinition> {
                         "id": "task-1",
                         "name": "First Task",
                         "function": {
-                            "cli_command": {
+                            "name": "cli_command",
+                            "input": {
                                 "command": "echo",
                                 "args": ["First task complete"]
                             }
@@ -95,7 +99,8 @@ pub fn get_default_workflows() -> Vec<WorkflowDefinition> {
                                 "id": "task-2",
                                 "name": "Second Task",
                                 "function": {
-                                    "cli_command": {
+                                    "name": "cli_command",
+                                    "input": {
                                         "command": "echo",
                                         "args": ["Second task complete"]
                                     }

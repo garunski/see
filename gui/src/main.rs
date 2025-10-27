@@ -21,7 +21,7 @@ fn main() {
         .map_err(|e| format!("Failed to initialize tracing: {}", e))
         .expect("Failed to initialize tracing");
 
-    tracing::info!("GUI starting");
+    tracing::trace!("GUI application starting");
 
     // Change to workspace root directory for system templates loading
     let workspace_root = std::env::var("CARGO_MANIFEST_DIR")
@@ -55,7 +55,7 @@ fn main() {
         if let Err(e) = std::env::set_current_dir(&workspace) {
             tracing::warn!("Failed to change to workspace root: {}", e);
         } else {
-            tracing::info!(
+            tracing::trace!(
                 "Changed working directory to workspace root: {:?}",
                 workspace
             );
@@ -63,11 +63,11 @@ fn main() {
     }
 
     // Initialize persistence layer with a temporary runtime
-    tracing::info!("Initializing persistence layer");
+    tracing::debug!("Initializing persistence layer");
     let rt = tokio::runtime::Runtime::new().unwrap();
     if let Err(e) = rt.block_on(async {
         s_e_e_core::init_global_store().await?;
-        tracing::info!("Loading system templates...");
+        tracing::debug!("Loading system templates");
         s_e_e_core::load_all_system_templates().await
     }) {
         tracing::error!("Failed to initialize persistence layer: {}", e);
@@ -75,7 +75,7 @@ fn main() {
         std::process::exit(1);
     }
     drop(rt); // Explicitly drop the runtime before launching Dioxus
-    tracing::info!("Persistence layer initialized");
+    tracing::debug!("Persistence layer initialized successfully");
 
     LaunchBuilder::desktop()
         .with_cfg(

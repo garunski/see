@@ -7,7 +7,10 @@ use crate::bridge::{OutputCallback, WorkflowResult};
 use crate::errors::CoreError;
 use crate::store_singleton::get_global_store;
 use engine::WorkflowEngine;
-use persistence::{WorkflowExecution, WorkflowStatus};
+use persistence::{
+    InputRequestStatus, InputType, UserInputRequest, WorkflowExecution, WorkflowStatus,
+};
+use serde_json::Value;
 
 /// Execute a workflow by loading it from persistence and running it through the engine
 pub async fn execute_workflow_by_id(
@@ -79,6 +82,30 @@ pub async fn execute_workflow_by_id(
     if has_input_waiting {
         tracing::debug!("Workflow paused - waiting for user input: {}", workflow_id);
 
+        // Create UserInputRequest records for tasks waiting for input BEFORE moving the snapshot
+        for task_info in &engine_result.tasks {
+            if matches!(task_info.status, engine::TaskStatus::WaitingForInput) {
+                // Extract user input parameters from workflow snapshot
+                if let Some(task_node) =
+                    find_task_in_snapshot(&initial_execution.workflow_snapshot, &task_info.id)
+                {
+                    if let Some(input_request) =
+                        create_input_request_from_task(task_node, &task_info.id, &execution_id)
+                    {
+                        tracing::debug!(
+                            task_id = %task_info.id,
+                            request_id = %input_request.id,
+                            "Creating input request for task"
+                        );
+                        store
+                            .save_input_request(&input_request)
+                            .await
+                            .map_err(CoreError::Persistence)?;
+                    }
+                }
+            }
+        }
+
         // Convert Engine Result to Persistence Types BEFORE saving
         let waiting_execution = workflow_result_to_execution(
             engine_result.clone(),
@@ -115,8 +142,9 @@ pub async fn execute_workflow_by_id(
         }
 
         // Return special status indicating waiting for input
+        // We use success=true to indicate the workflow paused successfully (not failed)
         return Ok(WorkflowResult {
-            success: false,
+            success: true,
             workflow_name: engine_result.workflow_name,
             execution_id,
             tasks: engine_result.tasks,
@@ -182,4 +210,80 @@ pub async fn execute_workflow_by_id(
         result.execution_id
     );
     Ok(result)
+}
+
+/// Find a task in the workflow snapshot by task ID
+fn find_task_in_snapshot<'a>(snapshot: &'a Value, task_id: &str) -> Option<&'a Value> {
+    if let Some(tasks) = snapshot.get("tasks").and_then(|t| t.as_array()) {
+        // Helper function to recursively search tasks
+        fn search_task<'a>(tasks: &'a [Value], task_id: &str) -> Option<&'a Value> {
+            for task in tasks {
+                if let Some(id) = task.get("id").and_then(|v| v.as_str()) {
+                    if id == task_id {
+                        return Some(task);
+                    }
+                }
+                // Search in next_tasks
+                if let Some(next_tasks) = task.get("next_tasks").and_then(|t| t.as_array()) {
+                    if let Some(found) = search_task(next_tasks, task_id) {
+                        return Some(found);
+                    }
+                }
+            }
+            None
+        }
+        return search_task(tasks, task_id);
+    }
+    None
+}
+
+/// Create a UserInputRequest from a task node in the snapshot
+fn create_input_request_from_task(
+    task_node: &Value,
+    task_id: &str,
+    execution_id: &str,
+) -> Option<UserInputRequest> {
+    // Check if this is a user_input task
+    let function = task_node.get("function")?;
+    let function_type = function.get("name").and_then(|v| v.as_str())?;
+
+    if function_type != "user_input" {
+        return None;
+    }
+
+    let input = function.get("input")?;
+    let prompt = input.get("prompt")?.as_str()?.to_string();
+    let input_type_str = input
+        .get("input_type")
+        .and_then(|v| v.as_str())
+        .unwrap_or("string");
+    let required = input
+        .get("required")
+        .and_then(|v| v.as_bool())
+        .unwrap_or(true);
+    let default = input.get("default").cloned();
+
+    // Convert input type string to InputType enum
+    let input_type = match input_type_str {
+        "number" => InputType::Number,
+        "boolean" => InputType::Boolean,
+        _ => InputType::String,
+    };
+
+    let request = UserInputRequest {
+        id: uuid::Uuid::new_v4().to_string(),
+        task_execution_id: task_id.to_string(),
+        workflow_execution_id: execution_id.to_string(),
+        prompt_text: prompt,
+        input_type,
+        required,
+        default_value: default,
+        validation_rules: Value::Object(serde_json::Map::new()),
+        status: InputRequestStatus::Pending,
+        created_at: chrono::Utc::now(),
+        fulfilled_at: None,
+        fulfilled_value: None,
+    };
+
+    Some(request)
 }

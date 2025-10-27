@@ -1,6 +1,8 @@
 use crate::components::{Button, ButtonSize, ButtonVariant, Slideout, UserInputForm};
 use crate::icons::Icon;
+use crate::pages::executions::details::hooks::use_input_request;
 use dioxus::prelude::*;
+use engine::TaskStatus;
 use s_e_e_core::{TaskInfo, WorkflowExecution};
 
 #[component]
@@ -16,6 +18,20 @@ pub fn TaskDetailsPanel(
 ) -> Element {
     let can_go_previous = current_task_index > 0;
     let can_go_next = current_task_index < total_tasks.saturating_sub(1);
+
+    // Fetch UserInputRequest if task is waiting for input
+    let input_request = if let (Some(exec), Some(task)) =
+        (execution.as_ref(), current_task.as_ref())
+    {
+        if task.status.as_str() == "waiting_for_input" || task.status.as_str() == "WaitingForInput"
+        {
+            use_input_request(task.id.clone(), exec.id.clone())
+        } else {
+            use_signal(|| None::<s_e_e_core::UserInputRequest>)
+        }
+    } else {
+        use_signal(|| None::<s_e_e_core::UserInputRequest>)
+    };
 
     // Pre-calculate task audit to avoid issues in rsx!
     let task_audit = if let (Some(exec), Some(task)) = (execution.as_ref(), current_task.as_ref()) {
@@ -195,7 +211,8 @@ pub fn TaskDetailsPanel(
                                 if let Some(exec) = execution.as_ref() {
                                     UserInputForm {
                                         task: task.clone(),
-                                        execution_id: Some(exec.id.clone())
+                                        execution_id: Some(exec.id.clone()),
+                                        input_request: input_request()
                                     }
                                 }
                             }
@@ -229,22 +246,20 @@ pub fn TaskDetailsPanel(
                 if let Some(task) = current_task.as_ref() {
                     div {
                         class: format!("px-3 py-1 text-sm rounded-full font-medium {}",
-                            match format!("{:?}", task.status).as_str() {
-                                "Complete" => "bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-200",
-                                "Failed" => "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200",
-                                "InProgress" => "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200",
-                                "Pending" => "bg-zinc-100 text-zinc-800 dark:bg-zinc-900 dark:text-zinc-200",
-                                "WaitingForInput" => "bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200",
-                                _ => "bg-zinc-100 text-zinc-800 dark:bg-zinc-900 dark:text-zinc-200",
+                            match &task.status {
+                                TaskStatus::Complete => "bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-200",
+                                TaskStatus::Failed => "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200",
+                                TaskStatus::InProgress => "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200",
+                                TaskStatus::Pending => "bg-zinc-100 text-zinc-800 dark:bg-zinc-900 dark:text-zinc-200",
+                                TaskStatus::WaitingForInput => "bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200",
                             }
                         ),
-                        match format!("{:?}", task.status).as_str() {
-                            "Complete" => "Complete",
-                            "Failed" => "Failed",
-                            "InProgress" => "In Progress",
-                            "Pending" => "Pending",
-                            "WaitingForInput" => "Waiting for Input",
-                            _ => "Unknown",
+                        match &task.status {
+                            TaskStatus::Complete => "Complete",
+                            TaskStatus::Failed => "Failed",
+                            TaskStatus::InProgress => "In Progress",
+                            TaskStatus::Pending => "Pending",
+                            TaskStatus::WaitingForInput => "Waiting for Input",
                         }
                     }
                 }

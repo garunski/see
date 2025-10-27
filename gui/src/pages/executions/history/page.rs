@@ -30,6 +30,17 @@ pub fn HistoryPage() -> Element {
     let workflow_history = use_workflow_history();
     let running_workflows = use_running_workflows();
 
+    // Separate workflows into categories
+    let workflow_categories = use_memo(move || {
+        let history = workflow_history();
+        let (waiting, completed) = history
+            .into_iter()
+            .partition::<Vec<_>, _>(|exec| exec.success.is_none());
+        (waiting, completed)
+    });
+    let waiting_workflows = use_memo(move || workflow_categories().0);
+    let completed_workflows = use_memo(move || workflow_categories().1);
+
     // Log what we're displaying
     use_effect(move || {
         let running = running_workflows();
@@ -118,11 +129,36 @@ pub fn HistoryPage() -> Element {
                     }
                 }
 
+                if !waiting_workflows().is_empty() {
+                    div { class: "space-y-4",
+                        div { class: "flex items-center justify-between",
+                            h2 { class: "text-lg font-semibold text-zinc-900 dark:text-white", "Waiting for Input" }
+                            div { class: "flex items-center gap-2",
+                                Icon {
+                                    name: "pause".to_string(),
+                                    class: Some("w-4 h-4 text-amber-600 dark:text-amber-400".to_string()),
+                                    size: None,
+                                    variant: Some("outline".to_string()),
+                                }
+                                span { class: "text-sm text-amber-600 dark:text-amber-400", "Action required" }
+                            }
+                        }
+                        div { class: "grid gap-6",
+                            for execution in waiting_workflows().iter() {
+                                HistoryItem {
+                                    execution: execution.clone(),
+                                    on_delete_execution: delete_execution.clone(),
+                                }
+                            }
+                        }
+                    }
+                }
+
                 div { class: "space-y-4",
                     div { class: "flex items-center justify-between",
                         h2 { class: "text-lg font-semibold text-zinc-900 dark:text-white", "Completed Workflows" }
                     }
-                    if workflow_history().is_empty() {
+                    if completed_workflows().is_empty() {
                         div { class: "bg-white dark:bg-zinc-800 rounded-xl border border-zinc-200 dark:border-zinc-700 p-16 text-center shadow-sm",
                             div { class: "flex justify-center mb-6",
                                 Icon {
@@ -137,7 +173,7 @@ pub fn HistoryPage() -> Element {
                         }
                     } else {
                         div { class: "grid gap-6",
-                            for (index, execution) in workflow_history().iter().enumerate() {
+                            for (index, execution) in completed_workflows().iter().enumerate() {
                                 {
                                     tracing::trace!(
                                         completed_index = index + 1,

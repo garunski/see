@@ -9,7 +9,7 @@
                 "name": "cli_command",
                 "input": {
                     "command": "echo",
-                    "args": ["Hello! What's your name?"]
+                    "args": ["Hello! What is your name?"]
                 }
             },
             "next_tasks": [

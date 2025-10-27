@@ -1,6 +1,6 @@
 use crate::icons::Icon;
 use dioxus::prelude::*;
-use s_e_e_core::WorkflowExecution;
+use s_e_e_core::{TaskStatus as PersistenceTaskStatus, WorkflowExecution};
 
 #[component]
 pub fn ExecutionOverview(execution: WorkflowExecution) -> Element {
@@ -8,9 +8,7 @@ pub fn ExecutionOverview(execution: WorkflowExecution) -> Element {
     let pending_input_count = execution
         .tasks
         .iter()
-        .filter(|t| {
-            t.status.as_str() == "waiting_for_input" || t.status.as_str() == "WaitingForInput"
-        })
+        .filter(|t| t.status.as_str() == "waiting_for_input")
         .count();
 
     rsx! {
@@ -39,13 +37,21 @@ pub fn ExecutionOverview(execution: WorkflowExecution) -> Element {
                     }
                     div {
                         class: format!("px-3 py-1 text-sm rounded-full font-medium {}",
-                            if execution.success.unwrap_or(false) {
+                            if pending_input_count > 0 {
+                                "bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200"
+                            } else if execution.success.unwrap_or(false) {
                                 "bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-200"
                             } else {
                                 "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200"
                             }
                         ),
-                        if execution.success.unwrap_or(false) { "Success" } else { "Failed" }
+                        if pending_input_count > 0 {
+                            "Waiting for Input"
+                        } else if execution.success.unwrap_or(false) {
+                            "Success"
+                        } else {
+                            "Failed"
+                        }
                     }
                 }
             }

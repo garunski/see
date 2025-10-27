@@ -142,3 +142,36 @@ fn extract_task_ids_recursive(value: &Value) -> Vec<String> {
 
     task_ids
 }
+
+/// Hook for fetching UserInputRequest for a specific task
+pub fn use_input_request(
+    task_id: String,
+    execution_id: String,
+) -> Signal<Option<s_e_e_core::UserInputRequest>> {
+    let input_request = use_signal(|| None::<s_e_e_core::UserInputRequest>);
+
+    use_effect(move || {
+        let task_id = task_id.clone();
+        let execution_id = execution_id.clone();
+        let mut input_request = input_request;
+
+        spawn(async move {
+            match s_e_e_core::get_pending_inputs(&execution_id).await {
+                Ok(requests) => {
+                    // Find the request matching this task_id
+                    let matching_request = requests
+                        .iter()
+                        .find(|req| req.task_execution_id == task_id)
+                        .cloned();
+                    input_request.set(matching_request);
+                }
+                Err(_) => {
+                    // No input request found or error loading
+                    input_request.set(None);
+                }
+            }
+        });
+    });
+
+    input_request
+}

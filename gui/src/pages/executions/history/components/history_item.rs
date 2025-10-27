@@ -30,13 +30,21 @@ pub fn HistoryItem(
                         h4 { class: "text-base font-semibold text-zinc-900 dark:text-white truncate", "{execution.workflow_name}" }
                         div {
                             class: format!("px-3 py-1 text-sm rounded-full font-medium {}",
-                                if execution.success.unwrap_or(false) {
+                                if execution.success.is_none() {
+                                    "bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200"
+                                } else if execution.success.unwrap_or(false) {
                                     "bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-200"
                                 } else {
                                     "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200"
                                 }
                             ),
-                            if execution.success.unwrap_or(false) { "Success" } else { "Failed" }
+                            if execution.success.is_none() {
+                                "Waiting for Input"
+                            } else if execution.success.unwrap_or(false) {
+                                "Success"
+                            } else {
+                                "Failed"
+                            }
                         }
                     }
                     div { class: "text-sm text-zinc-500 dark:text-zinc-400 mb-2",

@@ -30,7 +30,7 @@ impl Default for WorkflowState {
 
 impl WorkflowState {
     pub fn reset_before_run(&mut self) {
-        tracing::info!("Resetting workflow state before execution");
+        tracing::debug!("Resetting workflow state before execution");
         self.execution_status = crate::components::ExecutionStatus::Running;
         self.output_logs.clear();
         self.workflow_result = None;

@@ -317,8 +317,13 @@ impl WorkflowEngine {
             .map(|t| TaskInfo {
                 id: t.id.clone(),
                 name: t.name.clone(),
+                // Get the actual status from the task (preserves WaitingForInput)
                 status: if completed_tasks.contains(&t.id) {
                     TaskStatus::Complete
+                } else if waiting_for_input.contains(&t.id) {
+                    TaskStatus::WaitingForInput
+                } else if let Some(context_task) = context.tasks.get(&t.id) {
+                    context_task.status.clone()
                 } else {
                     TaskStatus::Failed
                 },

@@ -17,10 +17,9 @@ pub fn use_workflow_execution() -> impl Fn(String, String) + 'static {
 
             match run_workflow_by_id(workflow_id.clone(), None).await {
                 Ok(result) => {
-                    tracing::info!(
+                    tracing::debug!(
                         success = result.success,
                         execution_id = %result.execution_id,
-                        workflow_name = %result.workflow_name,
                         "Workflow execution completed"
                     );
                 }
@@ -29,7 +28,7 @@ pub fn use_workflow_execution() -> impl Fn(String, String) + 'static {
                         error = %e,
                         workflow_name = %workflow_name,
                         workflow_id = %workflow_id,
-                        "Truly detached workflow execution failed - error saved to database, UI will poll for updates"
+                        "Workflow execution failed"
                     );
                 }
             }
