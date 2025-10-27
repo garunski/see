@@ -3,7 +3,7 @@ use crate::layout::router::Route;
 use dioxus::prelude::*;
 use dioxus_router::prelude::Link;
 
-use super::ActionIcon;
+use super::action_icon::ActionIcon;
 
 #[derive(Props, PartialEq, Clone)]
 pub struct ActionCardProps {
