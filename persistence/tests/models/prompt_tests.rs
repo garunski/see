@@ -13,7 +13,6 @@ fn test_prompt_default() {
     assert!(prompt.name.is_empty());
     assert!(prompt.content.is_empty());
     assert!(prompt.created_at <= Utc::now());
-    assert!(prompt.updated_at <= Utc::now());
 }
 
 #[test]
@@ -79,18 +78,11 @@ fn test_prompt_update_content() {
         name: "Test Prompt".to_string(),
         content: "Old content".to_string(),
         created_at: Utc::now(),
-        updated_at: Utc::now(),
     };
-    
-    let old_updated_at = prompt.updated_at;
-    
-    // Wait a small amount to ensure timestamp difference
-    std::thread::sleep(std::time::Duration::from_millis(1));
     
     prompt.update_content("New content".to_string());
     
     assert_eq!(prompt.content, "New content");
-    assert!(prompt.updated_at > old_updated_at);
 }
 
 #[test]
@@ -100,18 +92,11 @@ fn test_prompt_update_name() {
         name: "Old Name".to_string(),
         content: "Test content".to_string(),
         created_at: Utc::now(),
-        updated_at: Utc::now(),
     };
-    
-    let old_updated_at = prompt.updated_at;
-    
-    // Wait a small amount to ensure timestamp difference
-    std::thread::sleep(std::time::Duration::from_millis(1));
     
     prompt.update_name("New Name".to_string());
     
     assert_eq!(prompt.name, "New Name");
-    assert!(prompt.updated_at > old_updated_at);
 }
 
 #[test]

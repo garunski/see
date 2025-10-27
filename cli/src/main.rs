@@ -109,9 +109,6 @@ async fn handle_command(command: Commands) {
                         println!("Prompts ({}):", prompts.len());
                         for prompt in prompts {
                             println!("  - {}", prompt.name);
-                            if let Some(desc) = &prompt.description {
-                                println!("    {}", desc);
-                            }
                         }
                     }
                     Err(e) => {

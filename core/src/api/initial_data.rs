@@ -166,50 +166,17 @@ pub async fn populate_initial_prompts() -> Result<(), String> {
                     .as_str()
                     .ok_or_else(|| "Missing 'name' field".to_string())?
                     .to_string();
-                let description = file_data["description"].as_str().map(|s| s.to_string());
                 let content_str = file_data["content"]
                     .as_str()
                     .ok_or_else(|| "Missing 'content' field".to_string())?
                     .to_string();
-                let template = file_data["template"]
-                    .as_str()
-                    .ok_or_else(|| "Missing 'template' field".to_string())?
-                    .to_string();
-
-                // Extract variables array
-                let variables = file_data["variables"]
-                    .as_array()
-                    .map(|arr| {
-                        arr.iter()
-                            .filter_map(|v| v.as_str().map(|s| s.to_string()))
-                            .collect()
-                    })
-                    .unwrap_or_default();
-
-                // Extract tags array
-                let tags = file_data["tags"]
-                    .as_array()
-                    .map(|arr| {
-                        arr.iter()
-                            .filter_map(|v| v.as_str().map(|s| s.to_string()))
-                            .collect()
-                    })
-                    .unwrap_or_default();
-
-                let metadata = file_data.get("metadata").cloned().unwrap_or_default();
 
                 // Create Prompt (no special system type)
                 let prompt = persistence::Prompt {
                     id: id.clone(),
                     name,
                     content: content_str,
-                    description,
-                    template,
-                    variables,
-                    tags,
-                    metadata,
                     created_at: Utc::now(),
-                    updated_at: Utc::now(),
                 };
 
                 // Validate

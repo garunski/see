@@ -14,13 +14,7 @@ fn create_test_prompt() -> Prompt {
         id: "prompt-1".to_string(),
         name: "Test Prompt".to_string(),
         content: "This is a test prompt".to_string(),
-        description: None,
-        template: "This is a test prompt".to_string(),
-        variables: Vec::new(),
-        tags: Vec::new(),
-        metadata: serde_json::Value::Object(serde_json::Map::new()),
         created_at: Utc::now(),
-        updated_at: Utc::now(),
     }
 }
 
@@ -134,13 +128,7 @@ async fn test_prompt_serialization() {
         id: "prompt-1".to_string(),
         name: "Test Prompt".to_string(),
         content: "This is a test prompt with special characters: !@#$%^&*()".to_string(),
-        description: None,
-        template: "This is a test prompt with special characters: !@#$%^&*()".to_string(),
-        variables: Vec::new(),
-        tags: Vec::new(),
-        metadata: serde_json::Value::Object(serde_json::Map::new()),
         created_at: Utc::now(),
-        updated_at: Utc::now(),
     };
 
     // Save prompt
