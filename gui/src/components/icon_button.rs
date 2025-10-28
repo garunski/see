@@ -10,6 +10,7 @@ pub enum IconButtonVariant {
 }
 
 #[derive(Debug, Clone, PartialEq)]
+#[allow(dead_code)]
 pub enum IconButtonSize {
     Small,
     Medium,

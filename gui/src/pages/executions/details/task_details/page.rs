@@ -42,13 +42,12 @@ pub fn TaskDetailsPage(execution_id: String, task_id: String) -> Element {
     use_effect({
         let task_id = task_id.clone();
         let execution_id = execution_id.clone();
-        let input_request = input_request;
 
         move || {
             if !task_id.is_empty() && !execution_id.is_empty() {
                 let task_id_for_spawn = task_id.clone();
                 let execution_id_for_spawn = execution_id.clone();
-                let mut input_request_for_spawn = input_request.clone();
+                let mut input_request_for_spawn = input_request;
 
                 spawn(async move {
                     if let Ok(requests) =
