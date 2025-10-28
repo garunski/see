@@ -50,9 +50,8 @@ impl MutationCapability for CreateWorkflowMutation {
     }
 
     async fn on_settled(&self, json: &Self::Keys, _: &Result<Self::Ok, Self::Err>) {
-        if let Ok(workflow) = serde_json::from_str::<WorkflowDefinition>(json) {
+        if let Ok(_workflow) = serde_json::from_str::<WorkflowDefinition>(json) {
             QueriesStorage::<GetWorkflows>::invalidate_matching(()).await;
-            QueriesStorage::<GetWorkflow>::invalidate_matching(workflow.id.clone()).await;
         }
     }
 }
@@ -75,9 +74,8 @@ impl MutationCapability for UpdateWorkflowMutation {
     }
 
     async fn on_settled(&self, json: &Self::Keys, _: &Result<Self::Ok, Self::Err>) {
-        if let Ok(workflow) = serde_json::from_str::<WorkflowDefinition>(json) {
+        if let Ok(_workflow) = serde_json::from_str::<WorkflowDefinition>(json) {
             QueriesStorage::<GetWorkflows>::invalidate_matching(()).await;
-            QueriesStorage::<GetWorkflow>::invalidate_matching(workflow.id.clone()).await;
         }
     }
 }
@@ -96,9 +94,8 @@ impl MutationCapability for DeleteWorkflowMutation {
             .map_err(|e| e.to_string())
     }
 
-    async fn on_settled(&self, id: &Self::Keys, _: &Result<Self::Ok, Self::Err>) {
+    async fn on_settled(&self, _id: &Self::Keys, _: &Result<Self::Ok, Self::Err>) {
         QueriesStorage::<GetWorkflows>::invalidate_matching(()).await;
-        QueriesStorage::<GetWorkflow>::invalidate_matching(id.clone()).await;
     }
 }
 

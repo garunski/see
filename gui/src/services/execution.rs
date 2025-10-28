@@ -73,11 +73,14 @@ impl ExecutionService {
             .filter(|m| m.status == "running" && !all_execution_ids.contains(&m.id))
             .collect();
 
-        tracing::trace!(
-            running_count = running.len(),
-            "Filtered {} running workflows",
-            running.len()
-        );
+        // Only log when there are actual running workflows to avoid spam
+        if !running.is_empty() {
+            tracing::trace!(
+                running_count = running.len(),
+                "Filtered {} running workflows",
+                running.len()
+            );
+        }
 
         Ok(running)
     }

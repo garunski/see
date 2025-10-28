@@ -1,22 +1,15 @@
 use crate::components::{
-    Alert, AlertType, Badge, BadgeButton, BadgeColor, EmptyState, List, PageHeader, SectionCard,
+    Alert, AlertType, BadgeButton, BadgeColor, EmptyState, List, PageHeader, SectionCard,
 };
 use dioxus::prelude::*;
-use s_e_e_core::{WorkflowExecutionStatus, WorkflowExecutionSummary, WorkflowMetadata};
+use s_e_e_core::WorkflowExecutionStatus;
 
-use super::components::{ExecutionItem, LoadingSkeleton, RunningWorkflowItem};
+use super::components::{ExecutionItem, RunningWorkflowItem};
 use super::hooks::use_execution_list;
-
-#[derive(PartialEq, Clone, Copy)]
-pub enum ExecutionFilter {
-    Running,
-    WaitingForInput,
-    Completed,
-}
 
 #[component]
 pub fn ExecutionListPage() -> Element {
-    tracing::debug!("rendering execution list page");
+    tracing::trace!("rendering execution list page");
 
     let (executions_result, running_result) = use_execution_list();
 
@@ -51,34 +44,8 @@ pub fn ExecutionListPage() -> Element {
     let workflow_executions = executions_result.unwrap();
     let running_workflows = running_result.unwrap();
 
-    // Separate workflows into categories
-    let waiting_list: Vec<_> = workflow_executions
-        .iter()
-        .filter(|exec| exec.status == WorkflowExecutionStatus::WaitingForInput)
-        .cloned()
-        .collect();
-
-    let completed_list: Vec<_> = workflow_executions
-        .iter()
-        .filter(|exec| exec.status == WorkflowExecutionStatus::Complete)
-        .cloned()
-        .collect();
-
-    // Determine active filter based on available data
-    let mut active_filter = use_signal(|| {
-        if !running_workflows.is_empty() {
-            ExecutionFilter::Running
-        } else if !waiting_list.is_empty() {
-            ExecutionFilter::WaitingForInput
-        } else {
-            ExecutionFilter::Completed
-        }
-    });
-
-    // Get counts for badges
-    let running_count = running_workflows.len();
-    let waiting_count = waiting_list.len();
-    let completed_count = completed_list.len();
+    // Determine active filter based on available data; default to All
+    let mut active_filter = use_signal(|| None::<WorkflowExecutionStatus>);
 
     rsx! {
         div { class: "space-y-8",
@@ -94,73 +61,82 @@ pub fn ExecutionListPage() -> Element {
                     div { class: "space-y-4",
                         // Filter Badges
                         div { class: "flex items-center gap-2 flex-wrap",
+                            // Match Home page filters: All, Waiting for Input, Complete, Running, Failed, Pending
                             BadgeButton {
-                                color: BadgeColor::Blue,
-                                active: active_filter() == ExecutionFilter::Running,
-                                onclick: move |_| active_filter.set(ExecutionFilter::Running),
-                                "Running"
+                                color: BadgeColor::Zinc,
+                                active: active_filter().is_none(),
+                                onclick: move |_| active_filter.set(None),
+                                "All"
                             }
                             BadgeButton {
                                 color: BadgeColor::Amber,
-                                active: active_filter() == ExecutionFilter::WaitingForInput,
-                                onclick: move |_| active_filter.set(ExecutionFilter::WaitingForInput),
+                                active: active_filter() == Some(WorkflowExecutionStatus::WaitingForInput),
+                                onclick: move |_| active_filter.set(Some(WorkflowExecutionStatus::WaitingForInput)),
                                 "Waiting for Input"
                             }
                             BadgeButton {
                                 color: BadgeColor::Emerald,
-                                active: active_filter() == ExecutionFilter::Completed,
-                                onclick: move |_| active_filter.set(ExecutionFilter::Completed),
-                                "Completed"
+                                active: active_filter() == Some(WorkflowExecutionStatus::Complete),
+                                onclick: move |_| active_filter.set(Some(WorkflowExecutionStatus::Complete)),
+                                "Complete"
+                            }
+                            BadgeButton {
+                                color: BadgeColor::Blue,
+                                active: active_filter() == Some(WorkflowExecutionStatus::Running),
+                                onclick: move |_| active_filter.set(Some(WorkflowExecutionStatus::Running)),
+                                "Running"
+                            }
+                            BadgeButton {
+                                color: BadgeColor::Red,
+                                active: active_filter() == Some(WorkflowExecutionStatus::Failed),
+                                onclick: move |_| active_filter.set(Some(WorkflowExecutionStatus::Failed)),
+                                "Failed"
+                            }
+                            BadgeButton {
+                                color: BadgeColor::Zinc,
+                                active: active_filter() == Some(WorkflowExecutionStatus::Pending),
+                                onclick: move |_| active_filter.set(Some(WorkflowExecutionStatus::Pending)),
+                                "Pending"
                             }
                         }
 
                         // Display based on active filter
-                        {match active_filter() {
-                            ExecutionFilter::Running => rsx! {
-                                if running_workflows.is_empty() {
-                                    EmptyState {
-                                        message: "No running workflows.".to_string(),
-                                    }
-                                } else {
-                                    List {
-                                        for workflow in running_workflows.iter() {
-                                            RunningWorkflowItem {
-                                                workflow: workflow.clone(),
+                        {{
+                            // Build filtered list based on active_filter
+                            if active_filter() == Some(WorkflowExecutionStatus::Running) {
+                                rsx! {
+                                    if running_workflows.is_empty() {
+                                        EmptyState { message: "No running workflows.".to_string() }
+                                    } else {
+                                        List {
+                                            for workflow in running_workflows.iter() {
+                                                RunningWorkflowItem { workflow: workflow.clone() }
                                             }
                                         }
                                     }
                                 }
-                            },
-                            ExecutionFilter::WaitingForInput => rsx! {
-                                if waiting_list.is_empty() {
-                                    EmptyState {
-                                        message: "No workflows waiting for input.".to_string(),
-                                    }
-                                } else {
-                                    List {
-                                        for execution in waiting_list.iter() {
-                                            ExecutionItem {
-                                                execution: execution.clone(),
+                            } else {
+                                let mut items: Vec<_> = match active_filter() {
+                                    Some(status) => workflow_executions
+                                        .iter()
+                                        .filter(|exec| exec.status == status)
+                                        .cloned()
+                                        .collect(),
+                                    None => workflow_executions.iter().cloned().collect(),
+                                };
+                                items.sort_by(|a, b| b.created_at.cmp(&a.created_at));
+                                rsx! {
+                                    if items.is_empty() {
+                                        EmptyState { message: "No executions with this status.".to_string() }
+                                    } else {
+                                        List {
+                                            for execution in items.iter() {
+                                                ExecutionItem { execution: execution.clone() }
                                             }
                                         }
                                     }
                                 }
-                            },
-                            ExecutionFilter::Completed => rsx! {
-                                if completed_list.is_empty() {
-                                    EmptyState {
-                                        message: "No completed workflows yet.".to_string(),
-                                    }
-                                } else {
-                                    List {
-                                        for execution in completed_list.iter() {
-                                            ExecutionItem {
-                                                execution: execution.clone(),
-                                            }
-                                        }
-                                    }
-                                }
-                            },
+                            }
                         }}
                     }
                 },
