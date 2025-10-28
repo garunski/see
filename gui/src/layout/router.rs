@@ -1,8 +1,8 @@
 use crate::components::{IconButton, IconButtonSize, IconButtonVariant};
 use crate::pages::{
-    HistoryPage, HomePage, SettingsPage, UploadPage, UserPromptEditPage, UserPromptEditPageNew,
-    UserPromptsListPage, WorkflowDetailsPage, WorkflowEditPage, WorkflowEditPageNew,
-    WorkflowVisualizerPage, WorkflowsListPage,
+    ExecutionListPage, HomePage, SettingsPage, UploadPage, UserPromptEditPage,
+    UserPromptEditPageNew, UserPromptsListPage, WorkflowDetailsPage, WorkflowEditPage,
+    WorkflowEditPageNew, WorkflowVisualizerPage, WorkflowsListPage,
 };
 use dioxus::prelude::*;
 use dioxus_router::prelude::{Link, Outlet, Routable};
@@ -25,8 +25,8 @@ pub enum Route {
         WorkflowEditPageNew {},
         #[route("/workflows/edit/:id")]
         WorkflowEditPage { id: String },
-        #[route("/executions/history")]
-        HistoryPage {},
+        #[route("/executions/list")]
+        ExecutionListPage {},
         #[route("/executions/details/:id")]
         WorkflowDetailsPage { id: String },
         #[route("/prompts")]

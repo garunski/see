@@ -1,6 +1,5 @@
 use super::hooks::use_theme;
 use super::router::Route;
-use crate::state::AppStateProvider;
 use dioxus::prelude::*;
 use dioxus_desktop::use_window;
 
@@ -44,55 +43,6 @@ pub fn App() -> Element {
 
 #[component]
 fn AppContent() -> Element {
-    let state_provider = use_hook(AppStateProvider::new);
-    use_context_provider(|| state_provider.clone());
-
-    // Run initial data population if needed (ONE-TIME)
-    spawn(async move {
-        if let Err(e) = s_e_e_core::populate_initial_data().await {
-            eprintln!("Failed to populate initial data: {}", e);
-        }
-    });
-
-    use_effect(move || {
-        let needs_reload = state_provider.history.read().needs_history_reload;
-        if needs_reload {
-            let mut history_state = state_provider.history;
-            spawn(async move {
-                match s_e_e_core::get_global_store() {
-                    Ok(store) => match store.list_workflow_executions().await {
-                        Ok(history) => {
-                            tracing::debug!(
-                                "Loaded {} execution records from database",
-                                history.len()
-                            );
-                            // Convert WorkflowExecution to WorkflowExecutionSummary
-                            let summaries = history
-                                .into_iter()
-                                .map(|exec| s_e_e_core::WorkflowExecutionSummary {
-                                    id: exec.id,
-                                    workflow_name: exec.workflow_name,
-                                    status: exec.status,
-                                    created_at: exec.created_at,
-                                    completed_at: exec.completed_at,
-                                    task_count: exec.tasks.len(),
-                                    timestamp: exec.timestamp,
-                                })
-                                .collect();
-                            history_state.write().set_history(summaries);
-                        }
-                        Err(e) => {
-                            eprintln!("Failed to load history: {}", e);
-                        }
-                    },
-                    Err(e) => {
-                        eprintln!("Failed to get global store for loading history: {}", e);
-                    }
-                }
-            });
-        }
-    });
-
     let theme = use_theme();
 
     let theme_class = use_memo(move || {

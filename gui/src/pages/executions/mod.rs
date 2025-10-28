@@ -1,5 +1,5 @@
 pub mod details;
-pub mod history;
+pub mod list;
 
 pub use details::WorkflowDetailsPage;
-pub use history::HistoryPage;
+pub use list::ExecutionListPage;

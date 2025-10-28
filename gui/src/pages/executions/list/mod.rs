@@ -2,4 +2,4 @@ pub mod components;
 pub mod hooks;
 pub mod page;
 
-pub use page::HistoryPage;
+pub use page::ExecutionListPage;

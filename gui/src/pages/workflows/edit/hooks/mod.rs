@@ -40,8 +40,7 @@ pub fn use_workflow_edit(id: String) -> WorkflowEditState {
     // Load existing workflow data if editing
     use_effect(move || {
         if !is_new && !id.is_empty() {
-            if let Ok(Ok(Some(workflow))) = use_query(Query::new(id.clone(), GetWorkflow))
-                .suspend()
+            if let Ok(Ok(Some(workflow))) = use_query(Query::new(id.clone(), GetWorkflow)).suspend()
             {
                 content.set(workflow.content.clone());
                 workflow_name.set(workflow.get_name().to_string());

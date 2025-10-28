@@ -100,7 +100,8 @@ pub fn SettingsPage() -> Element {
                         notification.set(NotificationData {
                             r#type: NotificationType::Success,
                             title: "Database cleared".to_string(),
-                            message: "Database cleared successfully. Please reload the app.".to_string(),
+                            message: "Database cleared successfully. Please reload the app."
+                                .to_string(),
                             show: true,
                         });
                     }

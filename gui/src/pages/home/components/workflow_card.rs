@@ -1,7 +1,9 @@
 use dioxus::prelude::*;
+use dioxus_router::prelude::use_navigator;
 use s_e_e_core::WorkflowDefinition;
 
-use crate::pages::home::hooks::use_workflow_execution;
+use crate::layout::router::Route;
+use crate::pages::home::hooks::{use_workflow_mutations, WorkflowMutations};
 
 #[derive(Props, PartialEq, Clone)]
 pub struct WorkflowCardProps {
@@ -11,15 +13,18 @@ pub struct WorkflowCardProps {
 #[component]
 pub fn WorkflowCard(props: WorkflowCardProps) -> Element {
     let WorkflowCardProps { workflow } = props;
-    let execute_workflow = use_workflow_execution();
+    let WorkflowMutations { execute_mutation, .. } = use_workflow_mutations();
+    let navigator = use_navigator();
 
     rsx! {
         div {
             class: "rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 p-4 hover:bg-zinc-50 dark:hover:bg-zinc-700 hover:shadow-md transition-colors cursor-pointer",
             onclick: move |_| {
                 let workflow_id = workflow.id.clone();
-                let workflow_name = workflow.get_name().to_string();
-                execute_workflow(workflow_name, workflow_id);
+                tracing::debug!("[WorkflowCard] Clicked workflow: {}", workflow_id);
+                execute_mutation.mutate(workflow_id);
+                tracing::debug!("[WorkflowCard] Navigated to execution list");
+                navigator.push(Route::ExecutionListPage {});
             },
             div { class: "flex items-start justify-between",
                 div { class: "flex-1 min-w-0",

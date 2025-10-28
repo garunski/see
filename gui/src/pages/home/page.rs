@@ -2,20 +2,18 @@ use crate::components::layout::ListItem as LayoutListItem;
 use crate::components::{BadgeButton, BadgeColor, EmptyState, List, PageHeader, SectionCard};
 use crate::layout::router::Route;
 use dioxus::prelude::*;
+use dioxus_query::prelude::QueriesStorage;
 use dioxus_router::prelude::use_navigator;
 use s_e_e_core::{WorkflowDefinition, WorkflowExecutionStatus};
 
 use super::components::ExecutionListItem;
-use super::hooks::{
-    use_workflow_history, use_workflow_mutations, use_workflows_list, WorkflowMutations,
-};
+use super::hooks::{use_workflow_history, use_workflow_mutations, use_workflows_list};
+use crate::queries::{GetRunningWorkflows, GetWorkflowHistory};
 
 #[component]
 pub fn WorkflowExecutionItem(workflow: WorkflowDefinition) -> Element {
-    let WorkflowMutations {
-        execute_mutation, ..
-    } = use_workflow_mutations();
     let navigator = use_navigator();
+    let mutations = use_workflow_mutations();
 
     rsx! {
         LayoutListItem {
@@ -49,8 +47,16 @@ pub fn WorkflowExecutionItem(workflow: WorkflowDefinition) -> Element {
             }),
             onclick: move |_| {
                 let workflow_id = workflow.id.clone();
-                execute_mutation.mutate(workflow_id);
-                navigator.push(Route::HistoryPage {});
+                tracing::debug!("[WorkflowExecutionItem] Clicked workflow: {}", workflow_id);
+                mutations.execute_mutation.mutate(workflow_id);
+                tracing::debug!("[WorkflowExecutionItem] Navigated to execution list");
+                navigator.push(Route::ExecutionListPage {});
+
+                // Proactively refresh execution data immediately after queuing
+                spawn(async move {
+                    QueriesStorage::<GetWorkflowHistory>::invalidate_matching(()).await;
+                    QueriesStorage::<GetRunningWorkflows>::invalidate_matching(()).await;
+                });
             },
         }
     }

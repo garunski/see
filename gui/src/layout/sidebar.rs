@@ -46,7 +46,7 @@ pub fn Sidebar() -> Element {
                             span { class: "truncate", "Upload" }
                         }
                         Link {
-                            to: Route::HistoryPage {},
+                            to: Route::ExecutionListPage {},
                             class: "flex w-full items-center gap-2 rounded-lg px-2 py-2 text-left text-sm font-medium text-zinc-900 data-hover:bg-zinc-950/5 data-active:bg-zinc-950/5 dark:text-white dark:data-hover:bg-white/5 dark:data-active:bg-white/5",
                             Icon {
                                 name: "history".to_string(),

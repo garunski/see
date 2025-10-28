@@ -1,192 +1,170 @@
 use crate::components::{
-    Alert, AlertType, IconButton, IconButtonSize, IconButtonVariant, List, PageHeader,
+    Alert, AlertType, Badge, BadgeButton, BadgeColor, EmptyState, List, PageHeader, SectionCard,
 };
-use crate::hooks::{use_running_workflows, use_workflow_history};
-use crate::icons::Icon;
-use crate::state::AppStateProvider;
 use dioxus::prelude::*;
+use s_e_e_core::{WorkflowExecutionStatus, WorkflowExecutionSummary, WorkflowMetadata};
 
 use super::components::{HistoryItem, LoadingSkeleton, RunningWorkflowItem};
-use super::hooks::use_history_data;
+use super::hooks::use_execution_list;
+
+#[derive(PartialEq, Clone, Copy)]
+pub enum ExecutionFilter {
+    Running,
+    WaitingForInput,
+    Completed,
+}
 
 #[component]
-pub fn HistoryPage() -> Element {
-    tracing::debug!("rendering history page");
-    let _state_provider = use_context::<AppStateProvider>();
+pub fn ExecutionListPage() -> Element {
+    tracing::debug!("rendering execution list page");
 
-    let (is_loading, error, refresh_data) = use_history_data();
+    let (history_result, running_result) = use_execution_list();
 
-    let refresh_data_for_effect = refresh_data.clone();
-    use_effect(move || {
-        refresh_data_for_effect();
-    });
+    // Check for errors
+    if history_result.is_err() || running_result.is_err() {
+        let error_msg = history_result.err().unwrap_or_else(|| {
+            running_result
+                .err()
+                .unwrap_or_else(|| "Unknown error".to_string())
+        });
 
-    let refresh_data_button = refresh_data.clone();
-    let refresh_data_error = refresh_data.clone();
+        return rsx! {
+            div { class: "space-y-8",
+                PageHeader {
+                    title: "Executions".to_string(),
+                    description: "View and manage your workflow executions".to_string(),
+                    actions: None,
+                }
+                Alert {
+                    alert_type: AlertType::Error,
+                    title: Some("Failed to load executions".to_string()),
+                    message: error_msg,
+                    dismissible: None,
+                    on_dismiss: None,
+                    actions: None,
+                }
+            }
+        };
+    }
 
-    // Get data from state using hooks
-    let workflow_history = use_workflow_history();
-    let running_workflows = use_running_workflows();
+    // Get the data
+    let workflow_history = history_result.unwrap();
+    let running_workflows = running_result.unwrap();
 
     // Separate workflows into categories
-    let workflow_categories = use_memo(move || {
-        use s_e_e_core::WorkflowExecutionStatus;
-        let history = workflow_history();
-        let (waiting, completed) = history.into_iter().partition::<Vec<_>, _>(|exec| {
-            matches!(
-                exec.status,
-                WorkflowExecutionStatus::WaitingForInput | WorkflowExecutionStatus::Running
-            )
-        });
-        (waiting, completed)
-    });
-    let waiting_workflows = use_memo(move || workflow_categories().0);
-    let completed_workflows = use_memo(move || workflow_categories().1);
+    let waiting_list: Vec<_> = workflow_history
+        .iter()
+        .filter(|exec| exec.status == WorkflowExecutionStatus::WaitingForInput)
+        .cloned()
+        .collect();
 
-    // Log what we're displaying
-    use_effect(move || {
-        let running = running_workflows();
-        let history = workflow_history();
-        tracing::debug!(
-            running_count = running.len(),
-            running_ids = ?running.iter().map(|w| &w.id).collect::<Vec<_>>(),
-            completed_count = history.len(),
-            completed_ids = ?history.iter().map(|h| &h.id).collect::<Vec<_>>(),
-            "history page rendering"
-        );
+    let completed_list: Vec<_> = workflow_history
+        .iter()
+        .filter(|exec| exec.status == WorkflowExecutionStatus::Complete)
+        .cloned()
+        .collect();
+
+    // Determine active filter based on available data
+    let mut active_filter = use_signal(|| {
+        if !running_workflows.is_empty() {
+            ExecutionFilter::Running
+        } else if !waiting_list.is_empty() {
+            ExecutionFilter::WaitingForInput
+        } else {
+            ExecutionFilter::Completed
+        }
     });
+
+    // Get counts for badges
+    let running_count = running_workflows.len();
+    let waiting_count = waiting_list.len();
+    let completed_count = completed_list.len();
 
     rsx! {
         div { class: "space-y-8",
             PageHeader {
                 title: "Executions".to_string(),
                 description: "View and manage your workflow executions".to_string(),
-                actions: Some(rsx! {
-                    IconButton {
-                        variant: IconButtonVariant::Ghost,
-                        size: IconButtonSize::Medium,
-                        disabled: Some(is_loading()),
-                        loading: Some(is_loading()),
-                        onclick: move |_| refresh_data_button(),
-                        icon: Some("history".to_string()),
-                        icon_variant: "outline".to_string(),
-                        "Refresh"
-                    }
-                }),
+                actions: None,
             }
 
-            if let Some(err) = error() {
-                Alert {
-                    alert_type: AlertType::Error,
-                    title: Some("Failed to load history".to_string()),
-                    message: err,
-                    dismissible: None,
-                    on_dismiss: None,
-                    actions: Some(rsx! {
-                        IconButton {
-                            variant: IconButtonVariant::Secondary,
-                            size: IconButtonSize::Small,
-                            onclick: move |_| refresh_data_error(),
-                            class: Some("px-3 py-1 text-sm font-medium text-red-800 dark:text-red-200 bg-red-100 dark:bg-red-900/30 hover:bg-red-200 dark:hover:bg-red-900/50".to_string()),
-                            icon: Some("history".to_string()),
-                            icon_variant: "outline".to_string(),
-                            "Retry"
-                        }
-                    }),
-                }
-            }
-
-            if is_loading() && workflow_history().is_empty() && running_workflows().is_empty() {
-                LoadingSkeleton {}
-            } else {
-                if !running_workflows().is_empty() {
+            SectionCard {
+                title: Some("Executions".to_string()),
+                children: rsx! {
                     div { class: "space-y-4",
-                        div { class: "flex items-center justify-between",
-                            h2 { class: "text-lg font-semibold text-zinc-900 dark:text-white", "Running Workflows" }
-                            div { class: "flex items-center gap-2",
-                                div { class: "w-2 h-2 bg-blue-500 rounded-full animate-pulse" }
-                                span { class: "text-sm text-zinc-500 dark:text-zinc-400", "Live updates" }
+                        // Filter Badges
+                        div { class: "flex items-center gap-2 flex-wrap",
+                            BadgeButton {
+                                color: BadgeColor::Blue,
+                                active: active_filter() == ExecutionFilter::Running,
+                                onclick: move |_| active_filter.set(ExecutionFilter::Running),
+                                "Running"
+                            }
+                            BadgeButton {
+                                color: BadgeColor::Amber,
+                                active: active_filter() == ExecutionFilter::WaitingForInput,
+                                onclick: move |_| active_filter.set(ExecutionFilter::WaitingForInput),
+                                "Waiting for Input"
+                            }
+                            BadgeButton {
+                                color: BadgeColor::Emerald,
+                                active: active_filter() == ExecutionFilter::Completed,
+                                onclick: move |_| active_filter.set(ExecutionFilter::Completed),
+                                "Completed"
                             }
                         }
-                        List {
-                            for (index, workflow) in running_workflows().iter().enumerate() {
-                                {
-                                    tracing::debug!(
-                                        running_index = index + 1,
-                                        execution_id = %workflow.id,
-                                        workflow_name = %workflow.workflow_name,
-                                        status = ?workflow.status,
-                                        "Rendering running workflow"
-                                    );
-                                }
-                                RunningWorkflowItem {
-                                    workflow: workflow.clone(),
-                                }
-                            }
-                        }
-                    }
-                }
 
-                if !waiting_workflows().is_empty() {
-                    div { class: "space-y-4",
-                        div { class: "flex items-center justify-between",
-                            h2 { class: "text-lg font-semibold text-zinc-900 dark:text-white", "Waiting for Input" }
-                            div { class: "flex items-center gap-2",
-                                Icon {
-                                    name: "pause".to_string(),
-                                    class: Some("w-4 h-4 text-amber-600 dark:text-amber-400".to_string()),
-                                    size: None,
-                                    variant: Some("outline".to_string()),
+                        // Display based on active filter
+                        {match active_filter() {
+                            ExecutionFilter::Running => rsx! {
+                                if running_workflows.is_empty() {
+                                    EmptyState {
+                                        message: "No running workflows.".to_string(),
+                                    }
+                                } else {
+                                    List {
+                                        for workflow in running_workflows.iter() {
+                                            RunningWorkflowItem {
+                                                workflow: workflow.clone(),
+                                            }
+                                        }
+                                    }
                                 }
-                                span { class: "text-sm text-amber-600 dark:text-amber-400", "Action required" }
-                            }
-                        }
-                        List {
-                            for execution in waiting_workflows().iter() {
-                                HistoryItem {
-                                    execution: execution.clone(),
+                            },
+                            ExecutionFilter::WaitingForInput => rsx! {
+                                if waiting_list.is_empty() {
+                                    EmptyState {
+                                        message: "No workflows waiting for input.".to_string(),
+                                    }
+                                } else {
+                                    List {
+                                        for execution in waiting_list.iter() {
+                                            HistoryItem {
+                                                execution: execution.clone(),
+                                            }
+                                        }
+                                    }
                                 }
-                            }
-                        }
+                            },
+                            ExecutionFilter::Completed => rsx! {
+                                if completed_list.is_empty() {
+                                    EmptyState {
+                                        message: "No completed workflows yet.".to_string(),
+                                    }
+                                } else {
+                                    List {
+                                        for execution in completed_list.iter() {
+                                            HistoryItem {
+                                                execution: execution.clone(),
+                                            }
+                                        }
+                                    }
+                                }
+                            },
+                        }}
                     }
-                }
-
-                div { class: "space-y-4",
-                    div { class: "flex items-center justify-between",
-                        h2 { class: "text-lg font-semibold text-zinc-900 dark:text-white", "Completed Workflows" }
-                    }
-                    if completed_workflows().is_empty() {
-                        div { class: "bg-white dark:bg-zinc-800 rounded-xl border border-zinc-200 dark:border-zinc-700 p-16 text-center shadow-sm",
-                            div { class: "flex justify-center mb-6",
-                                Icon {
-                                    name: "history".to_string(),
-                                    class: Some("w-16 h-16 text-zinc-400 dark:text-zinc-500".to_string()),
-                                    size: None,
-                                    variant: Some("outline".to_string()),
-                                }
-                            }
-                            h3 { class: "text-base font-semibold text-zinc-900 dark:text-white mb-3", "No completed workflows yet" }
-                            p { class: "text-zinc-500 dark:text-zinc-400", "Execute your first workflow to see it appear here" }
-                        }
-                    } else {
-                        List {
-                            for (index, execution) in completed_workflows().iter().enumerate() {
-                                {
-                                    tracing::trace!(
-                                        completed_index = index + 1,
-                                        execution_id = %execution.id,
-                                        workflow_name = %execution.workflow_name,
-                                        status = %execution.status,
-                                        "Rendering completed workflow"
-                                    );
-                                }
-                                HistoryItem {
-                                    execution: execution.clone(),
-                                }
-                            }
-                        }
-                    }
-                }
+                },
+                padding: None,
             }
         }
     }

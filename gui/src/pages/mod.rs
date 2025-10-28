@@ -4,7 +4,7 @@ pub mod prompts;
 pub mod settings;
 pub mod workflows;
 
-pub use executions::{HistoryPage, WorkflowDetailsPage};
+pub use executions::{ExecutionListPage, WorkflowDetailsPage};
 pub use home::HomePage;
 pub use prompts::{UserPromptEditPage, UserPromptEditPageNew, UserPromptsListPage};
 pub use settings::SettingsPage;

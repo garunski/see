@@ -111,11 +111,41 @@ impl MutationCapability for ExecuteWorkflowMutation {
     type Keys = String; // workflow_id
 
     async fn run(&self, workflow_id: &Self::Keys) -> Result<Self::Ok, Self::Err> {
-        use crate::services::workflow::run_workflow_by_id;
+        eprintln!(
+            "[ExecuteWorkflowMutation] run() called for workflow: {}",
+            workflow_id
+        );
+        tracing::debug!(
+            "[ExecuteWorkflowMutation] Starting workflow execution for ID: {}",
+            workflow_id
+        );
 
-        run_workflow_by_id(workflow_id.clone(), None)
-            .await
-            .map_err(|e| e.to_string())
+        use s_e_e_core::execute_workflow_by_id;
+
+        eprintln!("[ExecuteWorkflowMutation] About to call execute_workflow_by_id");
+
+        // Call the core function directly to ensure proper error handling
+        match execute_workflow_by_id(workflow_id, None).await {
+            Ok(result) => {
+                eprintln!(
+                    "[ExecuteWorkflowMutation] SUCCESS: {}",
+                    result.workflow_name
+                );
+                tracing::info!(
+                    "[ExecuteWorkflowMutation] Workflow executed successfully: {}",
+                    result.workflow_name
+                );
+                Ok(result)
+            }
+            Err(e) => {
+                eprintln!("[ExecuteWorkflowMutation] ERROR: {:?}", e);
+                tracing::error!(
+                    "[ExecuteWorkflowMutation] Workflow execution failed: {:?}",
+                    e
+                );
+                Err(format!("Workflow execution failed: {:?}", e))
+            }
+        }
     }
 
     async fn on_settled(&self, _: &Self::Keys, result: &Result<Self::Ok, Self::Err>) {

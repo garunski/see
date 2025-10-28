@@ -1,10 +1,6 @@
 use dioxus::prelude::*;
 
-use super::{
-    create_switch_to_json_handler,
-    create_switch_to_visual_handler, use_workflow_edit, EditorHeader, JsonEditor,
-    VisualEditor,
-};
+use super::{use_workflow_edit, EditorHeader, JsonEditor, VisualEditor};
 
 #[derive(PartialEq, Clone, Copy)]
 pub enum EditMode {
@@ -19,24 +15,21 @@ pub fn WorkflowEditPage(id: String) -> Element {
     let mut state = use_workflow_edit(id.clone());
 
     // Mode switching handlers
-    let mut switch_to_visual_handler =
-        create_switch_to_visual_handler(state.content, state.validation_error, state.edit_mode);
     let switch_to_visual = move |_| {
-        switch_to_visual_handler();
-    };
-    let mut switch_to_json_handler =
-        create_switch_to_json_handler(state.content, state.edited_workflow_name, state.edit_mode);
-    let switch_to_json = move |_| {
-        switch_to_json_handler();
+        state.edit_mode.set(EditMode::Visual);
     };
 
-    // TODO: Save and reset handlers need to be migrated to use mutations
+    let switch_to_json = move |_| {
+        state.edit_mode.set(EditMode::Json);
+    };
+
+    // Save and reset handlers - placeholder for now
     let save_workflow = move || {
-        tracing::warn!("Save workflow not yet migrated to mutations");
+        tracing::warn!("Save workflow not yet migrated - workflow edit functionality will be restored in future update");
     };
 
     let reset_to_default = move || {
-        tracing::warn!("Reset to default not yet migrated to mutations");
+        tracing::warn!("Reset to default not yet migrated - workflow edit functionality will be restored in future update");
     };
 
     rsx! {
