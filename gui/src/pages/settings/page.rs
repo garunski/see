@@ -5,14 +5,11 @@ use crate::components::{
 use crate::pages::settings::components::SettingsForm;
 use crate::pages::settings::hooks::{use_settings_mutation, use_settings_query};
 use crate::services::clear_database;
-use crate::state::AppStateProvider;
 use dioxus::prelude::*;
 use s_e_e_core::AppSettings;
 
 #[component]
 pub fn SettingsPage() -> Element {
-    let state_provider = use_context::<AppStateProvider>();
-
     let mut show_confirm_dialog = use_signal(|| false);
     let mut notification = use_signal(|| NotificationData {
         r#type: NotificationType::Success,
@@ -90,34 +87,31 @@ pub fn SettingsPage() -> Element {
     };
 
     let clear_database_handler = {
-        let state_provider = state_provider.clone();
         let mut show_dialog = show_confirm_dialog;
+        let mut notification = notification;
         move |_| {
             show_dialog.set(false);
-            let mut state = state_provider.clone();
             spawn(async move {
                 match clear_database().await {
                     Ok(_) => {
-                        // Reset all state to defaults
-                        state.history.write().workflow_history.clear();
-                        state.history.write().running_workflows.clear();
-                        state.history.write().needs_history_reload = true;
-                        state.workflow.write().reset_before_run();
-
-                        // Reload settings (will load defaults and trigger app reload)
-                        match s_e_e_core::get_global_store() {
-                            Ok(store) => {
-                                if let Ok(Some(settings)) = store.load_settings().await {
-                                    state.settings.write().apply_loaded_settings(settings);
-                                }
-                            }
-                            Err(e) => {
-                                tracing::error!("Failed to reload settings: {}", e);
-                            }
-                        }
+                        tracing::info!("Database cleared successfully");
+                        // Show success notification
+                        // The app will need to be reloaded manually
+                        notification.set(NotificationData {
+                            r#type: NotificationType::Success,
+                            title: "Database cleared".to_string(),
+                            message: "Database cleared successfully. Please reload the app.".to_string(),
+                            show: true,
+                        });
                     }
                     Err(e) => {
                         tracing::error!("Failed to clear database: {}", e);
+                        notification.set(NotificationData {
+                            r#type: NotificationType::Error,
+                            title: "Clear failed".to_string(),
+                            message: format!("Failed to clear database: {}", e),
+                            show: true,
+                        });
                     }
                 }
             });

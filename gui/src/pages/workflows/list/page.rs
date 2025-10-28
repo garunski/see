@@ -1,14 +1,38 @@
 use crate::components::layout::{List, ListItem};
 use crate::components::{EmptyState, PageHeader, SectionCard};
-use crate::hooks::use_workflows;
 use crate::icons::Icon;
 use crate::layout::router::Route;
 use dioxus::prelude::*;
 use dioxus_router::prelude::{use_navigator, Link};
 
+use super::hooks::use_workflows_list;
+
 #[component]
 pub fn WorkflowsListPage() -> Element {
-    let workflows = use_workflows();
+    let workflows = match use_workflows_list() {
+        Ok(w) => w,
+        Err(e) => {
+            return rsx! {
+                div { class: "space-y-8",
+                    PageHeader {
+                        title: "Workflows".to_string(),
+                        description: "Manage your workflow definitions".to_string(),
+                        actions: None,
+                    }
+                    SectionCard {
+                        title: Some("Error".to_string()),
+                        children: rsx! {
+                            div { class: "text-red-600 dark:text-red-400",
+                                "Failed to load workflows: {e}"
+                            }
+                        },
+                        padding: None,
+                    }
+                }
+            };
+        }
+    };
+
     let navigator = use_navigator();
 
     rsx! {
@@ -32,7 +56,7 @@ pub fn WorkflowsListPage() -> Element {
             }
 
             // Workflows Section
-            if workflows().is_empty() {
+            if workflows.is_empty() {
                 SectionCard {
                     title: Some("Workflows".to_string()),
                     children: rsx! {
@@ -47,7 +71,7 @@ pub fn WorkflowsListPage() -> Element {
                     title: Some("Workflows".to_string()),
                     children: rsx! {
                         List {
-                            for workflow in workflows().iter() {
+                            for workflow in workflows.iter() {
                                 {let workflow_id = workflow.id.clone();
                                 rsx! {
                                     ListItem {

@@ -1,5 +1,6 @@
-use crate::state::AppStateProvider;
+use crate::queries::GetWorkflow;
 use dioxus::prelude::*;
+use dioxus_query::prelude::*;
 use engine::parse_workflow;
 use tracing;
 
@@ -22,7 +23,6 @@ pub struct WorkflowEditState {
 }
 
 pub fn use_workflow_edit(id: String) -> WorkflowEditState {
-    let state_provider = use_context::<AppStateProvider>();
     let is_new = id.is_empty();
 
     let mut content = use_signal(String::new);
@@ -38,15 +38,10 @@ pub fn use_workflow_edit(id: String) -> WorkflowEditState {
     let selected_node_info = use_signal(|| String::from("No node selected"));
 
     // Load existing workflow data if editing
-    let workflow_id_for_effect = id.clone();
-
     use_effect(move || {
-        if !is_new && !workflow_id_for_effect.is_empty() {
-            // Load from workflows
-            if let Some(workflow) = state_provider
-                .settings
-                .read()
-                .get_workflow(workflow_id_for_effect.clone())
+        if !is_new && !id.is_empty() {
+            if let Ok(Ok(Some(workflow))) = use_query(Query::new(id.clone(), GetWorkflow))
+                .suspend()
             {
                 content.set(workflow.content.clone());
                 workflow_name.set(workflow.get_name().to_string());

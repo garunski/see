@@ -1,30 +1,38 @@
 use crate::components::{IconButton, IconButtonSize, IconButtonVariant, PageHeader};
-use crate::state::AppStateProvider;
 use dioxus::prelude::*;
 use dioxus_router::prelude::use_navigator;
 use s_e_e_core::WorkflowJson;
 
+use super::hooks::use_workflow_visualizer;
+
 #[component]
 pub fn WorkflowVisualizerPage(id: String) -> Element {
-    let state_provider = use_context::<AppStateProvider>();
     let navigator = use_navigator();
-
     let mut error_message = use_signal(String::new);
 
-    // Load workflow from settings
-    let workflow_id_clone = id.clone();
-    let workflow_resource = use_resource(move || {
-        let workflow_id = workflow_id_clone.clone();
-        let settings = state_provider.settings;
-        async move {
-            let workflows = settings.read().get_workflows().clone();
-            workflows.into_iter().find(|w| w.id == workflow_id)
+    // Load workflow from query
+    let workflow = match use_workflow_visualizer(id.clone()) {
+        Ok(w) => w,
+        Err(e) => {
+            return rsx! {
+                div { class: "flex items-center justify-center h-full",
+                    div { class: "text-center",
+                        h2 { class: "text-xl font-semibold text-zinc-900 dark:text-white mb-2",
+                            "Failed to load workflow"
+                        }
+                        p { class: "text-red-600 dark:text-red-400",
+                            "{e}"
+                        }
+                    }
+                }
+            };
         }
-    });
+    };
 
     // Parse and prepare workflow JSON
+    let workflow_content_clone = workflow.clone();
     let workflow_json_str = use_memo(move || {
-        if let Some(Some(workflow_def)) = workflow_resource.read().as_ref() {
+        if let Some(workflow_def) = &workflow_content_clone {
             match serde_json::from_str::<WorkflowJson>(&workflow_def.content) {
                 Ok(workflow_json) => match serde_json::to_string(&workflow_json) {
                     Ok(json_str) => Some(json_str),
@@ -67,16 +75,8 @@ pub fn WorkflowVisualizerPage(id: String) -> Element {
 
             // Content
             div { class: "flex-1 relative",
-                match workflow_resource.read().as_ref() {
+                match &workflow {
                     None => rsx! {
-                        div { class: "flex items-center justify-center h-full",
-                            div { class: "text-center",
-                                div { class: "animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4" }
-                                p { class: "text-zinc-600 dark:text-zinc-400", "Loading workflow..." }
-                            }
-                        }
-                    },
-                    Some(None) => rsx! {
                         div { class: "flex items-center justify-center h-full",
                             div { class: "text-center",
                                 h2 { class: "text-xl font-semibold text-zinc-900 dark:text-white mb-2",
@@ -98,7 +98,7 @@ pub fn WorkflowVisualizerPage(id: String) -> Element {
                             }
                         }
                     },
-                    Some(Some(_workflow_def)) => rsx! {
+                    Some(_workflow_def) => rsx! {
                         if !error_message().is_empty() {
                             div { class: "absolute top-4 left-1/2 transform -translate-x-1/2 z-50",
                                 div { class: "bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700 rounded-lg p-4",

@@ -1,10 +1,9 @@
-use crate::state::AppStateProvider;
 use dioxus::prelude::*;
 
 use super::{
-    create_reset_to_default_handler, create_save_workflow_handler, create_switch_to_json_handler,
+    create_switch_to_json_handler,
     create_switch_to_visual_handler, use_workflow_edit, EditorHeader, JsonEditor,
-    SaveWorkflowParams, VisualEditor,
+    VisualEditor,
 };
 
 #[derive(PartialEq, Clone, Copy)]
@@ -15,7 +14,6 @@ pub enum EditMode {
 
 #[component]
 pub fn WorkflowEditPage(id: String) -> Element {
-    let state_provider = use_context::<AppStateProvider>();
     let is_new = id.is_empty();
 
     let mut state = use_workflow_edit(id.clone());
@@ -32,30 +30,13 @@ pub fn WorkflowEditPage(id: String) -> Element {
         switch_to_json_handler();
     };
 
-    let mut save_workflow_handler = create_save_workflow_handler(SaveWorkflowParams {
-        state_provider: state_provider.clone(),
-        id: id.clone(),
-        content: state.content,
-        validation_error: state.validation_error,
-        is_saving: state.is_saving,
-        edited_workflow_name: state.edited_workflow_name,
-        original_content: state.original_content,
-        original_name: state.original_name,
-        has_unsaved_changes: state.has_unsaved_changes,
-    });
-    let mut save_workflow = move || {
-        save_workflow_handler();
+    // TODO: Save and reset handlers need to be migrated to use mutations
+    let save_workflow = move || {
+        tracing::warn!("Save workflow not yet migrated to mutations");
     };
 
-    let mut reset_to_default_handler = create_reset_to_default_handler(
-        state_provider.clone(),
-        id.clone(),
-        state.content,
-        state.workflow_name,
-        state.can_reset,
-    );
-    let mut reset_to_default = move || {
-        reset_to_default_handler();
+    let reset_to_default = move || {
+        tracing::warn!("Reset to default not yet migrated to mutations");
     };
 
     rsx! {
