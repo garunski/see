@@ -1,4 +1,3 @@
-use dark_light;
 use s_e_e_core::{AppSettings, Theme, WorkflowDefinition};
 
 #[derive(Debug, Clone)]
@@ -11,10 +10,7 @@ impl Default for SettingsState {
     fn default() -> Self {
         Self {
             settings: AppSettings {
-                theme: match dark_light::detect() {
-                    dark_light::Mode::Dark => Theme::Dark,
-                    dark_light::Mode::Light => Theme::Light,
-                },
+                theme: Theme::Dark,
                 auto_save: true,
                 notifications: true,
                 default_workflow: None,

@@ -1,8 +1,8 @@
+use super::hooks::use_theme;
 use super::router::Route;
 use crate::state::AppStateProvider;
 use dioxus::prelude::*;
 use dioxus_desktop::use_window;
-use s_e_e_core::AppSettings;
 
 #[component]
 pub fn App() -> Element {
@@ -44,69 +44,13 @@ pub fn App() -> Element {
 
 #[component]
 fn AppContent() -> Element {
-    let mut state_provider = use_hook(AppStateProvider::new);
+    let state_provider = use_hook(AppStateProvider::new);
     use_context_provider(|| state_provider.clone());
 
-    let settings_loader = use_resource(|| async move {
-        match s_e_e_core::get_global_store() {
-            Ok(store) => match store.load_settings().await {
-                Ok(Some(loaded)) => Ok(loaded),
-                Ok(None) => Ok(AppSettings::default()),
-                Err(e) => Err(format!("Failed to load settings: {}", e)),
-            },
-            Err(e) => {
-                eprintln!("Failed to get global store for settings: {}", e);
-                Ok(AppSettings::default())
-            }
-        }
-    });
-
-    use_effect(move || {
-        if let Some(Ok(settings)) = settings_loader.read().as_ref() {
-            state_provider
-                .settings
-                .write()
-                .apply_loaded_settings(settings.clone());
-
-            // Load workflows from database
-            let mut settings_state = state_provider.settings;
-            spawn(async move {
-                match s_e_e_core::get_global_store() {
-                    Ok(store) => {
-                        // Load workflows from database
-                        match store.list_workflows().await {
-                            Ok(workflows) => {
-                                tracing::debug!(
-                                    "Loaded {} workflows from database",
-                                    workflows.len()
-                                );
-
-                                // Add workflows to settings state
-                                settings_state.write().workflows = workflows;
-                            }
-                            Err(e) => {
-                                eprintln!("Failed to load workflows from database: {}", e);
-                            }
-                        }
-
-                        // Save settings to ensure consistency
-                        let settings_to_save = settings_state.read().settings.clone();
-                        if let Err(e) = store.save_settings(&settings_to_save).await {
-                            eprintln!("Failed to save settings: {}", e);
-                        }
-                    }
-                    Err(e) => {
-                        eprintln!("Failed to get global store for loading workflows: {}", e);
-                    }
-                }
-            });
-
-            // Run initial data population if needed (ONE-TIME)
-            spawn(async move {
-                if let Err(e) = s_e_e_core::populate_initial_data().await {
-                    eprintln!("Failed to populate initial data: {}", e);
-                }
-            });
+    // Run initial data population if needed (ONE-TIME)
+    spawn(async move {
+        if let Err(e) = s_e_e_core::populate_initial_data().await {
+            eprintln!("Failed to populate initial data: {}", e);
         }
     });
 
@@ -149,39 +93,38 @@ fn AppContent() -> Element {
         }
     });
 
-    let theme_signal = use_memo(move || state_provider.settings.read().settings.theme.clone());
+    let theme = use_theme();
 
-    use_effect(move || {
-        let settings_to_save = state_provider.settings.read().settings.clone();
-        spawn(async move {
-            match s_e_e_core::get_global_store() {
-                Ok(store) => {
-                    if let Err(e) = store.save_settings(&settings_to_save).await {
-                        eprintln!("Failed to save theme settings: {}", e);
-                    }
-                }
-                Err(e) => {
-                    eprintln!("Failed to get global store for saving theme: {}", e);
-                }
+    let theme_class = use_memo(move || {
+        let theme_value = theme();
+        tracing::debug!("[AppContent] use_theme returned: {:?}", theme_value);
+        let class = match theme_value {
+            s_e_e_core::Theme::Light => {
+                tracing::debug!("[AppContent] Theme is Light, applying light class");
+                "light"
             }
-        });
+            s_e_e_core::Theme::Dark => {
+                tracing::debug!("[AppContent] Theme is Dark, applying dark class");
+                "dark"
+            }
+            s_e_e_core::Theme::System => {
+                let detected = if matches!(dark_light::detect(), dark_light::Mode::Dark) {
+                    tracing::debug!("[AppContent] Theme is System, detected dark mode");
+                    "dark"
+                } else {
+                    tracing::debug!("[AppContent] Theme is System, detected light mode");
+                    "light"
+                };
+                detected
+            }
+        };
+        tracing::trace!("[AppContent] Theme class: {}", class);
+        class
     });
 
     rsx! {
         div {
-            class: format!("min-h-screen bg-white dark:bg-zinc-900 text-zinc-950 dark:text-white {}",
-                match theme_signal() {
-                    s_e_e_core::Theme::Light => "light",
-                    s_e_e_core::Theme::Dark => "dark",
-                    s_e_e_core::Theme::System => {
-                        if matches!(dark_light::detect(), dark_light::Mode::Dark) {
-                            "dark"
-                        } else {
-                            "light"
-                        }
-                    }
-                }
-            ),
+            class: format!("min-h-screen bg-white dark:bg-zinc-900 text-zinc-950 dark:text-white {}", theme_class()),
 
 
             Router::<Route> {}

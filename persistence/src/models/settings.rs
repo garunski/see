@@ -6,7 +6,7 @@ use crate::models::Theme;
 use serde::{Deserialize, Serialize};
 
 /// Application configuration settings
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Hash, Eq, Serialize, Deserialize)]
 pub struct AppSettings {
     pub theme: Theme,
     pub auto_save: bool,
@@ -17,7 +17,7 @@ pub struct AppSettings {
 impl Default for AppSettings {
     fn default() -> Self {
         Self {
-            theme: Theme::System,
+            theme: Theme::Dark,
             auto_save: true,
             notifications: true,
             default_workflow: None,

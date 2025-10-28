@@ -67,7 +67,7 @@ impl TaskExecutionStatus {
 }
 
 /// UI theme options
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Hash, Eq, Serialize, Deserialize)]
 pub enum Theme {
     #[serde(rename = "light")]
     Light,
