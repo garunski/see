@@ -15,12 +15,57 @@ import 'reactflow/dist/style.css';
 import { Workflow, MessageFromParent, WorkflowTask } from './types';
 import { NodeEditorModal } from './components/NodeEditorModal';
 import { Input } from './components/input';
+import dagre from '@dagrejs/dagre';
 
 const NODE_WIDTH = 250;
 const NODE_HEIGHT = 80;
 const VERTICAL_SPACING = 150;
 const INITIAL_X = 100;
 const INITIAL_Y = 100;
+const START_NODE_ID = '__start__';
+const START_NODE_SIZE = 30;
+
+// Dagre layout function
+const getLayoutedElements = (nodes: Node[], edges: Edge[], direction = 'TB') => {
+  const dagreGraph = new dagre.graphlib.Graph();
+  dagreGraph.setDefaultEdgeLabel(() => ({}));
+  
+  dagreGraph.setGraph({ 
+    rankdir: direction,
+    nodesep: 50,
+    ranksep: 150
+  });
+  
+  // Add nodes to dagre
+  nodes.forEach((node) => {
+    // Use per-node styled dimensions when available (for visual-only start node)
+    const width = (node.style as any)?.width ?? (node.id === START_NODE_ID ? START_NODE_SIZE : NODE_WIDTH);
+    const height = (node.style as any)?.minHeight ?? (node.id === START_NODE_ID ? START_NODE_SIZE : NODE_HEIGHT);
+    dagreGraph.setNode(node.id, { width, height });
+  });
+  
+  // Add edges to dagre
+  edges.forEach((edge) => {
+    dagreGraph.setEdge(edge.source, edge.target);
+  });
+  
+  // Calculate layout
+  dagre.layout(dagreGraph);
+  
+  // Apply calculated positions
+  const layoutedNodes = nodes.map((node) => {
+    const nodeWithPosition = dagreGraph.node(node.id);
+    return {
+      ...node,
+      position: {
+        x: nodeWithPosition.x - NODE_WIDTH / 2,
+        y: nodeWithPosition.y - NODE_HEIGHT / 2,
+      },
+    };
+  });
+  
+  return { nodes: layoutedNodes, edges };
+};
 
 const WorkflowEditor: React.FC = () => {
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
@@ -55,6 +100,7 @@ const WorkflowEditor: React.FC = () => {
     
     return allTasks.map((task, index) => {
       const savedPos = savedPositions[task.id];
+      // Use saved position if available, otherwise use placeholder (will be replaced by Dagre)
       const position = savedPos || {
         x: INITIAL_X,
         y: INITIAL_Y + index * (NODE_HEIGHT + VERTICAL_SPACING),
@@ -173,8 +219,78 @@ const WorkflowEditor: React.FC = () => {
           setWorkflowName(wf.name);
         }
         
-        const newNodes = tasksToNodes(wf);
-        const newEdges = tasksToEdges(wf);
+        const savedPositions = wf.metadata?.node_positions || {};
+        const hasSavedPositions = Object.keys(savedPositions).length > 0;
+
+        // Build base nodes and edges from workflow
+        const taskNodes = tasksToNodes(wf);
+        const taskEdges = tasksToEdges(wf);
+
+        // Create visual-only START node that connects to first-level (root) tasks only
+        // Determine roots by collecting all child ids from next_tasks and filtering
+        const collectChildIds = (tasks: WorkflowTask[], set: Set<string>) => {
+          tasks.forEach((t) => {
+            t.next_tasks?.forEach((nt) => {
+              set.add(nt.id);
+              if (nt.next_tasks && nt.next_tasks.length > 0) {
+                collectChildIds([nt], set);
+              }
+            });
+          });
+        };
+        const childIds = new Set<string>();
+        collectChildIds(wf.tasks, childIds);
+        const allTasksFlat = flattenTasks(wf.tasks);
+        const rootTasks = allTasksFlat.filter((t) => !childIds.has(t.id));
+        const startNode: Node = {
+          id: START_NODE_ID,
+          type: 'default',
+          position: { x: INITIAL_X, y: INITIAL_Y },
+          data: {
+            label: (
+              <div
+                style={{
+                  width: START_NODE_SIZE,
+                  height: START_NODE_SIZE,
+                  borderRadius: START_NODE_SIZE / 2,
+                  background: '#10b981',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: 'white',
+                  fontSize: 10,
+                }}
+                title="Start"
+              >
+                ●
+              </div>
+            ),
+          },
+          style: {
+            width: START_NODE_SIZE,
+            minHeight: START_NODE_SIZE,
+            border: '2px solid #10b981',
+            borderRadius: START_NODE_SIZE / 2,
+            background: 'white',
+          },
+        };
+
+        const startEdges: Edge[] = rootTasks.map((task) => ({
+          id: `edge-${START_NODE_ID}-${task.id}`,
+          source: START_NODE_ID,
+          target: task.id,
+          type: 'smoothstep',
+          animated: true,
+          style: { stroke: '#10b981', strokeWidth: 2 },
+        }));
+
+        const initialNodes = [startNode, ...taskNodes];
+        const initialEdges = [...startEdges, ...taskEdges];
+        
+        // Apply Dagre layout only if no saved positions exist
+        const { nodes: newNodes, edges: newEdges } = hasSavedPositions 
+          ? { nodes: initialNodes, edges: initialEdges }
+          : getLayoutedElements(initialNodes, initialEdges);
         
         setNodes(newNodes);
         setEdges(newEdges);

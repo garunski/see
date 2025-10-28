@@ -61,7 +61,7 @@ pub fn EditorHeader(props: EditorHeaderProps) -> Element {
                         onclick: move |_| {
                             navigator.push(Route::WorkflowJsonEditPage { id: workflow_id.clone() });
                         },
-                        icon: Some("document_text".to_string()),
+                        icon: Some("code_bracket".to_string()),
                         icon_variant: "outline".to_string(),
                         "Edit in JSON"
                     }
