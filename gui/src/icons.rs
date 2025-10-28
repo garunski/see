@@ -26,7 +26,7 @@ fn get_icon_svg(name: &str) -> String {
         "home" => include_str!("../assets/icons/home-outline.svg").to_string(),
         "upload" => include_str!("../assets/icons/upload-outline.svg").to_string(),
         "workflows" => include_str!("../assets/icons/workflows-outline.svg").to_string(),
-        "history" => include_str!("../assets/icons/history-outline.svg").to_string(),
+        "executions" => include_str!("../assets/icons/executions-outline.svg").to_string(),
         "prompts" => include_str!("../assets/icons/prompts-outline.svg").to_string(),
         "settings" => include_str!("../assets/icons/settings-outline.svg").to_string(),
         "plus" => include_str!("../assets/icons/plus-outline.svg").to_string(),

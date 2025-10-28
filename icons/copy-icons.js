@@ -13,7 +13,7 @@ const iconMap = {
   home: 'home',
   upload: 'arrow-up-tray',
   workflows: 'squares-2x2',
-  history: 'clock',
+  executions: 'clock',
   prompts: 'chat-bubble-left-right',
   settings: 'cog-6-tooth',
   plus: 'plus',

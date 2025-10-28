@@ -4,7 +4,7 @@ use crate::components::{
 use dioxus::prelude::*;
 use s_e_e_core::{WorkflowExecutionStatus, WorkflowExecutionSummary, WorkflowMetadata};
 
-use super::components::{HistoryItem, LoadingSkeleton, RunningWorkflowItem};
+use super::components::{ExecutionItem, LoadingSkeleton, RunningWorkflowItem};
 use super::hooks::use_execution_list;
 
 #[derive(PartialEq, Clone, Copy)]
@@ -18,11 +18,11 @@ pub enum ExecutionFilter {
 pub fn ExecutionListPage() -> Element {
     tracing::debug!("rendering execution list page");
 
-    let (history_result, running_result) = use_execution_list();
+    let (executions_result, running_result) = use_execution_list();
 
     // Check for errors
-    if history_result.is_err() || running_result.is_err() {
-        let error_msg = history_result.err().unwrap_or_else(|| {
+    if executions_result.is_err() || running_result.is_err() {
+        let error_msg = executions_result.err().unwrap_or_else(|| {
             running_result
                 .err()
                 .unwrap_or_else(|| "Unknown error".to_string())
@@ -48,17 +48,17 @@ pub fn ExecutionListPage() -> Element {
     }
 
     // Get the data
-    let workflow_history = history_result.unwrap();
+    let workflow_executions = executions_result.unwrap();
     let running_workflows = running_result.unwrap();
 
     // Separate workflows into categories
-    let waiting_list: Vec<_> = workflow_history
+    let waiting_list: Vec<_> = workflow_executions
         .iter()
         .filter(|exec| exec.status == WorkflowExecutionStatus::WaitingForInput)
         .cloned()
         .collect();
 
-    let completed_list: Vec<_> = workflow_history
+    let completed_list: Vec<_> = workflow_executions
         .iter()
         .filter(|exec| exec.status == WorkflowExecutionStatus::Complete)
         .cloned()
@@ -139,7 +139,7 @@ pub fn ExecutionListPage() -> Element {
                                 } else {
                                     List {
                                         for execution in waiting_list.iter() {
-                                            HistoryItem {
+                                            ExecutionItem {
                                                 execution: execution.clone(),
                                             }
                                         }
@@ -154,7 +154,7 @@ pub fn ExecutionListPage() -> Element {
                                 } else {
                                     List {
                                         for execution in completed_list.iter() {
-                                            HistoryItem {
+                                            ExecutionItem {
                                                 execution: execution.clone(),
                                             }
                                         }

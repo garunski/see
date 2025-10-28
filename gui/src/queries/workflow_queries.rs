@@ -148,11 +148,7 @@ impl MutationCapability for ExecuteWorkflowMutation {
         }
     }
 
-    async fn on_settled(&self, _: &Self::Keys, result: &Result<Self::Ok, Self::Err>) {
-        // Invalidate workflow history when execution completes
-        if let Ok(_) = result {
-            QueriesStorage::<crate::queries::GetWorkflowHistory>::invalidate_matching(()).await;
-            QueriesStorage::<crate::queries::GetRunningWorkflows>::invalidate_matching(()).await;
-        }
+    async fn on_settled(&self, _: &Self::Keys, _result: &Result<Self::Ok, Self::Err>) {
+        // No manual invalidation; UI handles refreshing via polling
     }
 }

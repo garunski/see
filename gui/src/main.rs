@@ -8,7 +8,7 @@ mod pages;
 mod queries;
 mod services {
     pub mod database;
-    pub mod history;
+    pub mod execution;
     pub mod prompt;
     pub mod settings;
     pub mod workflow;

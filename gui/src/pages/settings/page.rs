@@ -161,7 +161,7 @@ pub fn SettingsPage() -> Element {
             ConfirmDialog {
                 show: show_confirm_dialog(),
                 title: "Clear All Data?".to_string(),
-                message: "This will permanently delete all workflow history, settings, and prompts. This action cannot be undone.".to_string(),
+                message: "This will permanently delete all workflow executions, settings, and prompts. This action cannot be undone.".to_string(),
                 confirm_text: "Clear All Data".to_string(),
                 cancel_text: "Cancel".to_string(),
                 on_confirm: clear_database_handler,
@@ -172,7 +172,7 @@ pub fn SettingsPage() -> Element {
                 h3 { class: "text-base font-semibold text-zinc-900 dark:text-white mb-4", "Data Management" }
                 div { class: "space-y-4",
                     p { class: "text-zinc-600 dark:text-zinc-400",
-                        "Clear all application data including workflow history, settings, and prompts. This action cannot be undone."
+                        "Clear all application data including workflow executions, settings, and prompts. This action cannot be undone."
                     }
                     IconButton {
                         variant: IconButtonVariant::Danger,

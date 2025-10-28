@@ -119,7 +119,7 @@ cargo run -p s_e_e_gui
 - Visual workflow diagram with interactive nodes
 - Drag-and-drop node positioning
 - Zoom and pan controls
-- Execution history viewer
+- Execution list viewer
 - Interactive user input forms for workflows requiring input
 - Visual indicators for tasks waiting for input (amber/yellow highlighting)
 - Pending input count display and filtering

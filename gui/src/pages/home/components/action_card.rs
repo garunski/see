@@ -24,13 +24,13 @@ pub fn ActionCard(props: ActionCardProps) -> Element {
 
     let (icon_name, icon_class) = match icon {
         ActionIcon::Upload => ("upload", "h-5 w-5 text-green-600 dark:text-green-400"),
-        ActionIcon::History => ("history", "h-5 w-5 text-purple-600 dark:text-purple-400"),
+        ActionIcon::Executions => ("executions", "h-5 w-5 text-purple-600 dark:text-purple-400"),
         ActionIcon::Workflows => ("workflows", "h-5 w-5 text-orange-600 dark:text-orange-400"),
     };
 
     let bg_class = match icon {
         ActionIcon::Upload => "bg-green-100 dark:bg-green-900/20",
-        ActionIcon::History => "bg-purple-100 dark:bg-purple-900/20",
+        ActionIcon::Executions => "bg-purple-100 dark:bg-purple-900/20",
         ActionIcon::Workflows => "bg-orange-100 dark:bg-orange-900/20",
     };
 

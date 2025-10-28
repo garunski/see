@@ -1,7 +1,7 @@
 use s_e_e_core::{WorkflowExecutionSummary, WorkflowMetadata};
 
 #[derive(Debug, thiserror::Error)]
-pub enum HistoryError {
+pub enum ExecutionError {
     #[error("Database not available: {0}")]
     DatabaseUnavailable(String),
     #[error("Failed to fetch workflow executions: {0}")]
@@ -16,19 +16,19 @@ pub enum HistoryError {
     DeleteRunningWorkflowFailed(String),
 }
 
-pub struct HistoryService;
+pub struct ExecutionService;
 
-impl HistoryService {
+impl ExecutionService {
     pub async fn fetch_workflow_executions(
         _limit: usize,
-    ) -> Result<Vec<WorkflowExecutionSummary>, HistoryError> {
+    ) -> Result<Vec<WorkflowExecutionSummary>, ExecutionError> {
         let store = s_e_e_core::get_global_store()
-            .map_err(|e| HistoryError::DatabaseUnavailable(e.to_string()))?;
+            .map_err(|e| ExecutionError::DatabaseUnavailable(e.to_string()))?;
 
         let executions = store
             .list_workflow_executions()
             .await
-            .map_err(|e| HistoryError::FetchExecutionsFailed(e.to_string()))?;
+            .map_err(|e| ExecutionError::FetchExecutionsFailed(e.to_string()))?;
 
         // Convert WorkflowExecution to WorkflowExecutionSummary
         let summaries = executions
@@ -49,21 +49,21 @@ impl HistoryService {
 
     pub async fn fetch_running_workflows(
         _limit: usize,
-    ) -> Result<Vec<WorkflowMetadata>, HistoryError> {
+    ) -> Result<Vec<WorkflowMetadata>, ExecutionError> {
         let store = s_e_e_core::get_global_store()
-            .map_err(|e| HistoryError::DatabaseUnavailable(e.to_string()))?;
+            .map_err(|e| ExecutionError::DatabaseUnavailable(e.to_string()))?;
 
         let metadata = store
             .list_workflow_metadata()
             .await
-            .map_err(|e| HistoryError::FetchRunningWorkflowsFailed(e.to_string()))?;
+            .map_err(|e| ExecutionError::FetchRunningWorkflowsFailed(e.to_string()))?;
 
         // Filter for truly active running workflows
         // Exclude workflows that are in workflow_executions (which means they're waiting or completed)
         let all_execution_ids = store
             .list_workflow_executions()
             .await
-            .map_err(|e| HistoryError::DatabaseUnavailable(e.to_string()))?
+            .map_err(|e| ExecutionError::DatabaseUnavailable(e.to_string()))?
             .into_iter()
             .map(|exec| exec.id)
             .collect::<std::collections::HashSet<_>>();
@@ -84,7 +84,7 @@ impl HistoryService {
 
     pub async fn refresh_all(
         limit: usize,
-    ) -> Result<(Vec<WorkflowExecutionSummary>, Vec<WorkflowMetadata>), HistoryError> {
+    ) -> Result<(Vec<WorkflowExecutionSummary>, Vec<WorkflowMetadata>), ExecutionError> {
         let (executions, running) = tokio::try_join!(
             Self::fetch_workflow_executions(limit),
             Self::fetch_running_workflows(limit)
@@ -94,24 +94,24 @@ impl HistoryService {
     }
 
     #[allow(dead_code)]
-    pub async fn delete_execution(id: &str) -> Result<(), HistoryError> {
+    pub async fn delete_execution(id: &str) -> Result<(), ExecutionError> {
         let store = s_e_e_core::get_global_store()
-            .map_err(|e| HistoryError::DatabaseUnavailable(e.to_string()))?;
+            .map_err(|e| ExecutionError::DatabaseUnavailable(e.to_string()))?;
 
         store
             .delete_workflow_execution(id)
             .await
-            .map_err(|e| HistoryError::DeleteExecutionFailed(e.to_string()))
+            .map_err(|e| ExecutionError::DeleteExecutionFailed(e.to_string()))
     }
 
     #[allow(dead_code)]
-    pub async fn delete_running_workflow(id: &str) -> Result<(), HistoryError> {
+    pub async fn delete_running_workflow(id: &str) -> Result<(), ExecutionError> {
         let store = s_e_e_core::get_global_store()
-            .map_err(|e| HistoryError::DatabaseUnavailable(e.to_string()))?;
+            .map_err(|e| ExecutionError::DatabaseUnavailable(e.to_string()))?;
 
         store
             .delete_workflow_metadata_and_tasks(id)
             .await
-            .map_err(|e| HistoryError::DeleteRunningWorkflowFailed(e.to_string()))
+            .map_err(|e| ExecutionError::DeleteRunningWorkflowFailed(e.to_string()))
     }
 }

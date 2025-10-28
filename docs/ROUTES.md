@@ -40,10 +40,10 @@ This document lists all the routes and pages in the GUI application.
 
 ### Executions
 
-#### Execution History
-- **Route:** `/executions/history`
-- **Component:** `HistoryPage`
-- **Description:** List of execution history
+#### Execution List
+- **Route:** `/executions`
+- **Component:** `ExecutionListPage`
+- **Description:** List of workflow executions
 
 #### Execution Details
 - **Route:** `/executions/details/:id`
@@ -97,7 +97,7 @@ This document lists all the routes and pages in the GUI application.
 - `WorkflowVisualizerPage` - Visualize workflow
 
 ### Executions (`pages/executions/`)
-- `HistoryPage` - Execution history list
+- `ExecutionListPage` - Execution list
 - `WorkflowDetailsPage` - Execution details
 
 ### Prompts (`pages/prompts/`)

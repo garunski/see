@@ -6,7 +6,7 @@ use dioxus_router::prelude::use_navigator;
 use s_e_e_core::{WorkflowExecutionStatus, WorkflowExecutionSummary};
 
 #[component]
-pub fn HistoryItem(execution: WorkflowExecutionSummary) -> Element {
+pub fn ExecutionItem(execution: WorkflowExecutionSummary) -> Element {
     let navigator = use_navigator();
 
     let badge_color = match execution.status {

@@ -1,4 +1,4 @@
-use crate::queries::{GetWorkflowHistory, GetWorkflows};
+use crate::queries::{GetWorkflowExecutions, GetWorkflows};
 use dioxus_query::prelude::*;
 use s_e_e_core::{WorkflowDefinition, WorkflowExecutionSummary};
 
@@ -17,17 +17,17 @@ pub fn use_workflows_list() -> Result<Vec<WorkflowDefinition>, String> {
     }
 }
 
-/// Hook to fetch workflow execution history
-pub fn use_workflow_history() -> Result<Vec<WorkflowExecutionSummary>, String> {
-    let query_result = use_query(Query::new((), GetWorkflowHistory))
+/// Hook to fetch workflow executions
+pub fn use_workflow_executions() -> Result<Vec<WorkflowExecutionSummary>, String> {
+    let query_result = use_query(Query::new((), GetWorkflowExecutions))
         .suspend()
         .map_err(|_| String::from("Failed to initialize query"))?;
 
     match query_result {
         Ok(value) => Ok(value),
         Err(e) => {
-            tracing::error!("Failed to load workflow history: {}", e);
-            Err(format!("Failed to load workflow history: {}", e))
+            tracing::error!("Failed to load workflow executions: {}", e);
+            Err(format!("Failed to load workflow executions: {}", e))
         }
     }
 }
