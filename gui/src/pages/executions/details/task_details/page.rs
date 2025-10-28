@@ -1,15 +1,14 @@
-use crate::components::{
-    Badge, BadgeColor, EmptyState, IconButton, IconButtonSize, IconButtonVariant, SectionCard,
+use crate::components::EmptyState;
+use crate::pages::executions::details::task_details::components::{
+    TaskDetailsHeader, TaskDetailsInfoTab, TaskDetailsOutputTab, TaskDetailsTabs,
+    TaskDetailsUserInputTab,
 };
 use crate::queries::GetTaskDetails;
 use dioxus::prelude::*;
 use dioxus_query::prelude::{use_query, Query};
-use dioxus_router::prelude::use_navigator;
 
 #[component]
 pub fn TaskDetailsPage(execution_id: String, task_id: String) -> Element {
-    let navigator = use_navigator();
-
     // Query task details
     let query_keys = (execution_id.clone(), task_id.clone());
     let query_result = use_query(
@@ -69,181 +68,34 @@ pub fn TaskDetailsPage(execution_id: String, task_id: String) -> Element {
         }
     });
 
-    let is_active = |tab: &str| -> String {
-        format!(
-            "py-2 px-1 border-b-2 font-medium text-sm {}",
-            if selected_tab() == tab {
-                "border-blue-500 text-blue-600 dark:text-blue-400"
-            } else {
-                "border-transparent text-zinc-500 hover:text-zinc-700 hover:border-zinc-300 dark:text-zinc-400 dark:hover:text-zinc-300"
-            }
-        )
-    };
+    let task_name = task
+        .as_ref()
+        .map(|t| t.name.clone())
+        .unwrap_or_else(|| "Task Details".to_string());
 
     rsx! {
         div { class: "space-y-6",
-            // Header with back button
-            div { class: "flex items-center gap-4",
-                IconButton {
-                    variant: IconButtonVariant::Ghost,
-                    size: IconButtonSize::Medium,
-                    icon: Some("arrow_left".to_string()),
-                    onclick: EventHandler::new(move |_| {
-                        navigator.go_back();
-                    }),
-                    class: None,
-                    "Back"
-                }
-            }
-
-            // Title
-            div {
-                h1 { class: "text-2xl font-bold text-zinc-950 dark:text-white",
-                    {format!("{}", task.as_ref().map(|t| t.name.clone()).unwrap_or_else(|| "Task Details".to_string()))}
-                }
-                p { class: "text-sm text-zinc-500 dark:text-zinc-400 mt-1", "ID: {task_id}" }
+            TaskDetailsHeader {
+                task_name: task_name.clone(),
+                task_id: task_id.clone()
             }
 
             if let Some(task) = task.as_ref() {
                 div { class: "space-y-6",
-                    // Tab buttons
-                    div { class: "border-b border-zinc-200 dark:border-zinc-700",
-                        div { class: "flex space-x-8",
-                            button {
-                                class: is_active("Details"),
-                                onclick: move |_| selected_tab.set("Details".to_string()),
-                                "Details"
-                            }
-                            button {
-                                class: is_active("Output"),
-                                onclick: move |_| selected_tab.set("Output".to_string()),
-                                "Output"
-                            }
-                            button {
-                                class: is_active("User Input"),
-                                onclick: move |_| selected_tab.set("User Input".to_string()),
-                                "User Input"
-                            }
-                        }
+                    TaskDetailsTabs {
+                        selected_tab,
+                        on_tab_change: EventHandler::new(move |tab_name| {
+                            selected_tab.set(tab_name);
+                        })
                     }
 
-                    // Tab content
                     div { class: "mt-6",
                         if selected_tab() == "Details" {
-                            SectionCard {
-                                title: Some("Task Information".to_string()),
-                                children: rsx! {
-                                    div { class: "space-y-3",
-                                        div { class: "flex justify-between",
-                                            span { class: "text-sm font-medium text-zinc-600 dark:text-zinc-400", "Name:" }
-                                            span { class: "text-sm text-zinc-900 dark:text-zinc-100", "{task.name}" }
-                                        }
-                                        div { class: "flex justify-between",
-                                            span { class: "text-sm font-medium text-zinc-600 dark:text-zinc-400", "Status:" }
-                                            span { class: "text-sm text-zinc-900 dark:text-zinc-100", "{task.status:?}" }
-                                        }
-                                        div { class: "flex justify-between",
-                                            span { class: "text-sm font-medium text-zinc-600 dark:text-zinc-400", "ID:" }
-                                            span { class: "text-sm text-zinc-900 dark:text-zinc-100 font-mono", "{task.id}" }
-                                        }
-                                        if let Some(error) = task.error.as_ref() {
-                                            div { class: "flex justify-between",
-                                                span { class: "text-sm font-medium text-zinc-600 dark:text-zinc-400", "Error:" }
-                                                span { class: "text-sm text-red-600 dark:text-red-400", "{error}" }
-                                            }
-                                        }
-                                        div { class: "flex justify-between",
-                                            span { class: "text-sm font-medium text-zinc-600 dark:text-zinc-400", "Created At:" }
-                                            span { class: "text-sm text-zinc-900 dark:text-zinc-100", "{task.created_at}" }
-                                        }
-                                        if let Some(completed_at) = task.completed_at.as_ref() {
-                                            div { class: "flex justify-between",
-                                                span { class: "text-sm font-medium text-zinc-600 dark:text-zinc-400", "Completed At:" }
-                                                span { class: "text-sm text-zinc-900 dark:text-zinc-100", "{completed_at}" }
-                                            }
-                                        }
-                                    }
-                                },
-                                padding: None,
-                            }
+                            TaskDetailsInfoTab { task: task.clone() }
                         } else if selected_tab() == "Output" {
-                            SectionCard {
-                                title: Some("Output".to_string()),
-                                children: rsx! {
-                                    if let Some(output) = task.output.as_ref() {
-                                        div { class: "bg-white dark:bg-zinc-900 rounded-lg p-4 border border-zinc-200 dark:border-zinc-700",
-                                            pre { class: "text-sm text-zinc-900 dark:text-zinc-100 whitespace-pre-wrap font-mono overflow-x-auto",
-                                                "{output}"
-                                            }
-                                        }
-                                    } else {
-                                        EmptyState {
-                                            message: "No output available".to_string(),
-                                        }
-                                    }
-                                },
-                                padding: None,
-                            }
+                            TaskDetailsOutputTab { task: task.clone() }
                         } else if selected_tab() == "User Input" {
-                            if let Some(req) = input_request() {
-                                SectionCard {
-                                    title: Some("User Input Prompt".to_string()),
-                                    children: rsx! {
-                                        div { class: "space-y-4",
-                                            if !req.prompt_text.is_empty() {
-                                                div { class: "space-y-2",
-                                                    span { class: "text-sm font-medium text-zinc-600 dark:text-zinc-400", "Prompt:" }
-                                                    div { class: "text-sm text-zinc-900 dark:text-zinc-100 bg-white dark:bg-zinc-900 rounded-lg p-3 border border-zinc-200 dark:border-zinc-700",
-                                                        "{req.prompt_text}"
-                                                    }
-                                                }
-                                            }
-                                            div { class: "space-y-2",
-                                                span { class: "text-sm font-medium text-zinc-600 dark:text-zinc-400", "Input Type:" }
-                                                div { class: "text-sm text-zinc-900 dark:text-zinc-100",
-                                                    "{req.input_type}"
-                                                    if !req.required {
-                                                        span { class: "text-zinc-500 dark:text-zinc-400 ml-2", "(optional)" }
-                                                    } else {
-                                                        span { class: "text-red-600 dark:text-red-400 ml-2", "(required)" }
-                                                    }
-                                                }
-                                            }
-                                            if let Some(default) = &req.default_value {
-                                                div { class: "space-y-2",
-                                                    span { class: "text-sm font-medium text-zinc-600 dark:text-zinc-400", "Default Value:" }
-                                                    div { class: "text-sm text-zinc-900 dark:text-zinc-100 bg-white dark:bg-zinc-900 rounded-lg p-3 border border-zinc-200 dark:border-zinc-700 font-mono",
-                                                        "{default}"
-                                                    }
-                                                }
-                                            }
-                                            div { class: "space-y-2",
-                                                span { class: "text-sm font-medium text-zinc-600 dark:text-zinc-400", "Status:" }
-                                                Badge {
-                                                    color: if req.status.to_string() == "pending" {
-                                                        BadgeColor::Amber
-                                                    } else {
-                                                        BadgeColor::Emerald
-                                                    },
-                                                    class: None,
-                                                    {format!("{}", req.status)}
-                                                }
-                                            }
-                                        }
-                                    },
-                                    padding: None,
-                                }
-                            } else {
-                                SectionCard {
-                                    title: Some("User Input Prompt".to_string()),
-                                    children: rsx! {
-                                        EmptyState {
-                                            message: "No user input requested for this task".to_string(),
-                                        }
-                                    },
-                                    padding: None,
-                                }
-                            }
+                            TaskDetailsUserInputTab { input_request: input_request() }
                         }
                     }
                 }
