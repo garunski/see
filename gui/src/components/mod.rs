@@ -15,9 +15,3 @@ pub use icon_button::{IconButton, IconButtonSize, IconButtonVariant};
 pub use layout::{EmptyState, List, PageHeader, SectionCard};
 pub use notification::{Notification, NotificationData, NotificationType};
 pub use slideout::Slideout;
-
-#[derive(Debug, Clone, PartialEq)]
-pub enum WorkflowExecutionStatus {
-    Idle,
-    Running,
-}

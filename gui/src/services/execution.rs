@@ -8,12 +8,6 @@ pub enum ExecutionError {
     FetchExecutionsFailed(String),
     #[error("Failed to fetch running workflows: {0}")]
     FetchRunningWorkflowsFailed(String),
-    #[error("Failed to delete execution: {0}")]
-    #[allow(dead_code)]
-    DeleteExecutionFailed(String),
-    #[error("Failed to delete running workflow: {0}")]
-    #[allow(dead_code)]
-    DeleteRunningWorkflowFailed(String),
 }
 
 pub struct ExecutionService;
@@ -83,38 +77,5 @@ impl ExecutionService {
         }
 
         Ok(running)
-    }
-
-    pub async fn refresh_all(
-        limit: usize,
-    ) -> Result<(Vec<WorkflowExecutionSummary>, Vec<WorkflowMetadata>), ExecutionError> {
-        let (executions, running) = tokio::try_join!(
-            Self::fetch_workflow_executions(limit),
-            Self::fetch_running_workflows(limit)
-        )?;
-
-        Ok((executions, running))
-    }
-
-    #[allow(dead_code)]
-    pub async fn delete_execution(id: &str) -> Result<(), ExecutionError> {
-        let store = s_e_e_core::get_global_store()
-            .map_err(|e| ExecutionError::DatabaseUnavailable(e.to_string()))?;
-
-        store
-            .delete_workflow_execution(id)
-            .await
-            .map_err(|e| ExecutionError::DeleteExecutionFailed(e.to_string()))
-    }
-
-    #[allow(dead_code)]
-    pub async fn delete_running_workflow(id: &str) -> Result<(), ExecutionError> {
-        let store = s_e_e_core::get_global_store()
-            .map_err(|e| ExecutionError::DatabaseUnavailable(e.to_string()))?;
-
-        store
-            .delete_workflow_metadata_and_tasks(id)
-            .await
-            .map_err(|e| ExecutionError::DeleteRunningWorkflowFailed(e.to_string()))
     }
 }

@@ -3,7 +3,7 @@ use dioxus_router::prelude::use_navigator;
 use s_e_e_core::WorkflowDefinition;
 
 use crate::layout::router::Route;
-use crate::pages::home::hooks::{use_workflow_mutations, WorkflowMutations};
+use crate::pages::home::hooks::use_workflow_mutations::use_workflow_mutations;
 
 #[derive(Props, PartialEq, Clone)]
 pub struct WorkflowCardProps {
@@ -13,7 +13,7 @@ pub struct WorkflowCardProps {
 #[component]
 pub fn WorkflowCard(props: WorkflowCardProps) -> Element {
     let WorkflowCardProps { workflow } = props;
-    let WorkflowMutations { execute_mutation, .. } = use_workflow_mutations();
+    let execute_mutation = use_workflow_mutations().execute_mutation;
     let navigator = use_navigator();
 
     rsx! {

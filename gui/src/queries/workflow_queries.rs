@@ -57,49 +57,6 @@ impl MutationCapability for CreateWorkflowMutation {
 }
 
 #[derive(Clone, PartialEq, Hash, Eq)]
-pub struct UpdateWorkflowMutation;
-
-impl MutationCapability for UpdateWorkflowMutation {
-    type Ok = ();
-    type Err = String;
-    type Keys = String; // We'll pass JSON string instead
-
-    async fn run(&self, json: &Self::Keys) -> Result<Self::Ok, Self::Err> {
-        let workflow: WorkflowDefinition =
-            serde_json::from_str(json).map_err(|e| format!("Invalid workflow JSON: {}", e))?;
-
-        WorkflowService::update_workflow(workflow)
-            .await
-            .map_err(|e| e.to_string())
-    }
-
-    async fn on_settled(&self, json: &Self::Keys, _: &Result<Self::Ok, Self::Err>) {
-        if let Ok(_workflow) = serde_json::from_str::<WorkflowDefinition>(json) {
-            QueriesStorage::<GetWorkflows>::invalidate_matching(()).await;
-        }
-    }
-}
-
-#[derive(Clone, PartialEq, Hash, Eq)]
-pub struct DeleteWorkflowMutation;
-
-impl MutationCapability for DeleteWorkflowMutation {
-    type Ok = ();
-    type Err = String;
-    type Keys = String;
-
-    async fn run(&self, id: &Self::Keys) -> Result<Self::Ok, Self::Err> {
-        WorkflowService::delete_workflow(id)
-            .await
-            .map_err(|e| e.to_string())
-    }
-
-    async fn on_settled(&self, _id: &Self::Keys, _: &Result<Self::Ok, Self::Err>) {
-        QueriesStorage::<GetWorkflows>::invalidate_matching(()).await;
-    }
-}
-
-#[derive(Clone, PartialEq, Hash, Eq)]
 pub struct ExecuteWorkflowMutation;
 
 impl MutationCapability for ExecuteWorkflowMutation {

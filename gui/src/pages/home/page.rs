@@ -133,7 +133,7 @@ pub fn HomePage() -> Element {
                                 .filter(|exec| exec.status == status)
                                 .cloned()
                                 .collect(),
-                            None => workflow_executions.iter().cloned().collect(),
+                            None => workflow_executions.to_vec(),
                         };
 
                         items.sort_by(|a, b| b.created_at.cmp(&a.created_at));

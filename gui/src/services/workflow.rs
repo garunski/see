@@ -1,6 +1,4 @@
-use s_e_e_core::{
-    errors::CoreError, execute_workflow_by_id, OutputCallback, WorkflowDefinition, WorkflowResult,
-};
+use s_e_e_core::WorkflowDefinition;
 use std::fs;
 
 #[derive(Debug, thiserror::Error)]
@@ -13,10 +11,6 @@ pub enum WorkflowError {
     FetchWorkflowFailed(String),
     #[error("Failed to create workflow: {0}")]
     CreateWorkflowFailed(String),
-    #[error("Failed to update workflow: {0}")]
-    UpdateWorkflowFailed(String),
-    #[error("Failed to delete workflow: {0}")]
-    DeleteWorkflowFailed(String),
 }
 
 pub struct WorkflowService;
@@ -51,33 +45,6 @@ impl WorkflowService {
             .await
             .map_err(|e| WorkflowError::CreateWorkflowFailed(e.to_string()))
     }
-
-    pub async fn update_workflow(workflow: WorkflowDefinition) -> Result<(), WorkflowError> {
-        let store = s_e_e_core::get_global_store()
-            .map_err(|e| WorkflowError::DatabaseUnavailable(e.to_string()))?;
-
-        store
-            .save_workflow(&workflow)
-            .await
-            .map_err(|e| WorkflowError::UpdateWorkflowFailed(e.to_string()))
-    }
-
-    pub async fn delete_workflow(id: &str) -> Result<(), WorkflowError> {
-        let store = s_e_e_core::get_global_store()
-            .map_err(|e| WorkflowError::DatabaseUnavailable(e.to_string()))?;
-
-        store
-            .delete_workflow(id)
-            .await
-            .map_err(|e| WorkflowError::DeleteWorkflowFailed(e.to_string()))
-    }
-}
-
-pub async fn run_workflow_by_id(
-    workflow_id: String,
-    output: Option<OutputCallback>,
-) -> Result<WorkflowResult, CoreError> {
-    execute_workflow_by_id(&workflow_id, output).await
 }
 
 pub fn read_and_parse_workflow_file(file_path: String) -> Result<WorkflowDefinition, String> {

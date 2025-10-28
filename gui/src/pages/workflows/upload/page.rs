@@ -6,7 +6,6 @@ use dioxus_router::prelude::use_navigator;
 use rfd::FileDialog;
 
 use super::hooks::use_upload_workflow;
-use super::hooks::UploadWorkflowState;
 
 #[component]
 pub fn UploadPage() -> Element {

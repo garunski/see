@@ -65,7 +65,9 @@ pub async fn init_test_store() -> Result<(), String> {
     let db_path = get_test_database_path()?;
 
     // Delete existing test database if it exists
-    let _ = std::fs::remove_file(&db_path);
+    if let Err(e) = std::fs::remove_file(&db_path) {
+        tracing::debug!("Test database cleanup: {}", e);
+    }
 
     let store = Store::new(&db_path)
         .await
@@ -84,9 +86,15 @@ pub fn cleanup_test_db() -> Result<(), String> {
     let db_path = get_test_database_path()?;
 
     // Remove test database and associated files
-    let _ = std::fs::remove_file(&db_path);
-    let _ = std::fs::remove_file(format!("{}-wal", db_path));
-    let _ = std::fs::remove_file(format!("{}-shm", db_path));
+    if let Err(e) = std::fs::remove_file(&db_path) {
+        tracing::debug!("Test database cleanup: {}", e);
+    }
+    if let Err(e) = std::fs::remove_file(format!("{}-wal", db_path)) {
+        tracing::debug!("WAL cleanup: {}", e);
+    }
+    if let Err(e) = std::fs::remove_file(format!("{}-shm", db_path)) {
+        tracing::debug!("SHM cleanup: {}", e);
+    }
 
     tracing::debug!("Test database cleanup attempted: {}", db_path);
     Ok(())

@@ -2,12 +2,8 @@ use crate::icons::Icon;
 use dioxus::prelude::*;
 
 #[derive(Debug, Clone, PartialEq)]
-#[allow(dead_code)]
 pub enum AlertType {
-    Info,
-    Warning,
     Error,
-    Success,
 }
 
 #[derive(Props, PartialEq, Clone)]
@@ -35,33 +31,12 @@ pub fn Alert(props: AlertProps) -> Element {
     } = props;
 
     let (bg_color, border_color, text_color, icon_color, icon_name) = match alert_type {
-        AlertType::Info => (
-            "bg-purple-50 dark:bg-purple-900/20",
-            "border-purple-200 dark:border-purple-800",
-            "text-purple-700 dark:text-purple-300",
-            "text-purple-600 dark:text-purple-400",
-            "exclamation_circle",
-        ),
-        AlertType::Warning => (
-            "bg-amber-50 dark:bg-amber-900/20",
-            "border-amber-200 dark:border-amber-800",
-            "text-amber-800 dark:text-amber-200",
-            "text-amber-600 dark:text-amber-400",
-            "exclamation_circle",
-        ),
         AlertType::Error => (
             "bg-red-50 dark:bg-red-900/20",
             "border-red-200 dark:border-red-800",
             "text-red-800 dark:text-red-200",
             "text-red-600 dark:text-red-400",
             "exclamation_circle",
-        ),
-        AlertType::Success => (
-            "bg-green-50 dark:bg-green-900/20",
-            "border-green-200 dark:border-green-800",
-            "text-green-800 dark:text-green-200",
-            "text-green-600 dark:text-green-400",
-            "check_circle",
         ),
     };
 
