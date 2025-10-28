@@ -3,6 +3,76 @@ use s_e_e_core::{
 };
 use std::fs;
 
+#[derive(Debug, thiserror::Error)]
+pub enum WorkflowError {
+    #[error("Database not available: {0}")]
+    DatabaseUnavailable(String),
+    #[error("Failed to fetch workflows: {0}")]
+    FetchWorkflowsFailed(String),
+    #[error("Failed to fetch workflow: {0}")]
+    FetchWorkflowFailed(String),
+    #[error("Failed to create workflow: {0}")]
+    CreateWorkflowFailed(String),
+    #[error("Failed to update workflow: {0}")]
+    UpdateWorkflowFailed(String),
+    #[error("Failed to delete workflow: {0}")]
+    DeleteWorkflowFailed(String),
+}
+
+pub struct WorkflowService;
+
+impl WorkflowService {
+    pub async fn fetch_workflows() -> Result<Vec<WorkflowDefinition>, WorkflowError> {
+        let store = s_e_e_core::get_global_store()
+            .map_err(|e| WorkflowError::DatabaseUnavailable(e.to_string()))?;
+
+        store
+            .list_workflows()
+            .await
+            .map_err(|e| WorkflowError::FetchWorkflowsFailed(e.to_string()))
+    }
+
+    pub async fn fetch_workflow(id: &str) -> Result<Option<WorkflowDefinition>, WorkflowError> {
+        let store = s_e_e_core::get_global_store()
+            .map_err(|e| WorkflowError::DatabaseUnavailable(e.to_string()))?;
+
+        store
+            .get_workflow(id)
+            .await
+            .map_err(|e| WorkflowError::FetchWorkflowFailed(e.to_string()))
+    }
+
+    pub async fn create_workflow(workflow: WorkflowDefinition) -> Result<(), WorkflowError> {
+        let store = s_e_e_core::get_global_store()
+            .map_err(|e| WorkflowError::DatabaseUnavailable(e.to_string()))?;
+
+        store
+            .save_workflow(&workflow)
+            .await
+            .map_err(|e| WorkflowError::CreateWorkflowFailed(e.to_string()))
+    }
+
+    pub async fn update_workflow(workflow: WorkflowDefinition) -> Result<(), WorkflowError> {
+        let store = s_e_e_core::get_global_store()
+            .map_err(|e| WorkflowError::DatabaseUnavailable(e.to_string()))?;
+
+        store
+            .save_workflow(&workflow)
+            .await
+            .map_err(|e| WorkflowError::UpdateWorkflowFailed(e.to_string()))
+    }
+
+    pub async fn delete_workflow(id: &str) -> Result<(), WorkflowError> {
+        let store = s_e_e_core::get_global_store()
+            .map_err(|e| WorkflowError::DatabaseUnavailable(e.to_string()))?;
+
+        store
+            .delete_workflow(id)
+            .await
+            .map_err(|e| WorkflowError::DeleteWorkflowFailed(e.to_string()))
+    }
+}
+
 pub async fn run_workflow_by_id(
     workflow_id: String,
     output: Option<OutputCallback>,

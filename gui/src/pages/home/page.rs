@@ -1,17 +1,20 @@
 use crate::components::layout::ListItem as LayoutListItem;
 use crate::components::{BadgeButton, BadgeColor, EmptyState, List, PageHeader, SectionCard};
-use crate::hooks::{use_workflow_history, use_workflows};
 use crate::layout::router::Route;
 use dioxus::prelude::*;
 use dioxus_router::prelude::use_navigator;
 use s_e_e_core::{WorkflowDefinition, WorkflowExecutionStatus};
 
 use super::components::ExecutionListItem;
-use super::hooks::use_workflow_execution;
+use super::hooks::{
+    use_workflow_history, use_workflow_mutations, use_workflows_list, WorkflowMutations,
+};
 
 #[component]
 pub fn WorkflowExecutionItem(workflow: WorkflowDefinition) -> Element {
-    let execute_workflow = use_workflow_execution();
+    let WorkflowMutations {
+        execute_mutation, ..
+    } = use_workflow_mutations();
     let navigator = use_navigator();
 
     rsx! {
@@ -45,9 +48,8 @@ pub fn WorkflowExecutionItem(workflow: WorkflowDefinition) -> Element {
                 }
             }),
             onclick: move |_| {
-                let workflow_name = workflow.get_name().to_string();
                 let workflow_id = workflow.id.clone();
-                execute_workflow(workflow_name.to_string(), workflow_id);
+                execute_mutation.mutate(workflow_id);
                 navigator.push(Route::HistoryPage {});
             },
         }
@@ -56,13 +58,57 @@ pub fn WorkflowExecutionItem(workflow: WorkflowDefinition) -> Element {
 
 #[component]
 pub fn HomePage() -> Element {
-    let workflows = use_workflows();
-    let workflow_history = use_workflow_history();
+    let workflows = match use_workflows_list() {
+        Ok(w) => w,
+        Err(e) => {
+            return rsx! {
+                div { class: "space-y-8",
+                    PageHeader {
+                        title: "Welcome to Speculative Execution Engine".to_string(),
+                        description: "Your workflow automation platform".to_string(),
+                        actions: None,
+                    }
+                    SectionCard {
+                        title: Some("Error".to_string()),
+                        children: rsx! {
+                            div { class: "text-red-600 dark:text-red-400",
+                                "Failed to load workflows: {e}"
+                            }
+                        },
+                        padding: None,
+                    }
+                }
+            };
+        }
+    };
+
+    let workflow_history = match use_workflow_history() {
+        Ok(h) => h,
+        Err(e) => {
+            return rsx! {
+                div { class: "space-y-8",
+                    PageHeader {
+                        title: "Welcome to Speculative Execution Engine".to_string(),
+                        description: "Your workflow automation platform".to_string(),
+                        actions: None,
+                    }
+                    SectionCard {
+                        title: Some("Error".to_string()),
+                        children: rsx! {
+                            div { class: "text-red-600 dark:text-red-400",
+                                "Failed to load workflow history: {e}"
+                            }
+                        },
+                        padding: None,
+                    }
+                }
+            };
+        }
+    };
 
     // Filter state
     let mut active_filter = use_signal(|| {
-        let history = workflow_history();
-        let has_waiting = history
+        let has_waiting = workflow_history
             .iter()
             .any(|exec| matches!(exec.status, WorkflowExecutionStatus::WaitingForInput));
 
@@ -75,7 +121,7 @@ pub fn HomePage() -> Element {
 
     // Filter executions based on active filter
     let filtered_executions = use_memo(move || {
-        let mut filtered: Vec<_> = workflow_history()
+        let mut filtered: Vec<_> = workflow_history
             .iter()
             .filter(|exec| exec.status == active_filter())
             .cloned()
@@ -161,7 +207,7 @@ pub fn HomePage() -> Element {
             div { class: "space-y-4",
                 h2 { class: "text-lg font-semibold text-zinc-900 dark:text-white", "Execute Workflows" }
 
-                if workflows().is_empty() {
+                if workflows.is_empty() {
                     div { class: "rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 p-8 text-center",
                         div { class: "text-zinc-500 dark:text-zinc-400",
                             "No workflows yet. Create your first workflow to get started."
@@ -169,7 +215,7 @@ pub fn HomePage() -> Element {
                     }
                 } else {
                     List {
-                        for workflow in workflows().iter().take(6) {
+                        for workflow in workflows.iter().take(6) {
                             WorkflowExecutionItem {
                                 workflow: workflow.clone(),
                             }
