@@ -65,6 +65,7 @@ fn ResumeButton(execution_id: String, task: TaskInfo) -> Element {
 fn TaskFlowVisualizer(
     execution: WorkflowExecution,
     ordered_task_ids: Vec<String>,
+    parent_child_mapping: std::collections::HashMap<String, Vec<String>>,
     on_task_click: EventHandler<usize>,
 ) -> Element {
     // Build task map for fast lookup
@@ -89,6 +90,7 @@ fn TaskFlowVisualizer(
         if !ordered_tasks.is_empty() {
             WorkflowFlow {
                 tasks: ordered_tasks.iter().map(s_e_e_core::task_execution_to_info).collect(),
+                parent_child_mapping,
                 on_task_click
             }
         }
@@ -101,6 +103,7 @@ pub fn WorkflowDetailsPage(id: String) -> Element {
     let (current_step, _total_tasks) = use_task_navigation(execution);
     let current_task_audit = use_filtered_audit(execution, current_step);
     let ordered_task_ids = use_task_order_from_snapshot(execution);
+    let parent_child_mapping = use_parent_child_mapping(execution);
 
     // Panel state
     let mut is_panel_open = use_signal(|| false);
@@ -144,6 +147,7 @@ pub fn WorkflowDetailsPage(id: String) -> Element {
                 TaskFlowVisualizer {
                     execution: exec.clone(),
                     ordered_task_ids: ordered_task_ids(),
+                    parent_child_mapping: parent_child_mapping(),
                     on_task_click: move |task_index: usize| {
                         selected_task_index.set(task_index);
                         is_panel_open.set(true);

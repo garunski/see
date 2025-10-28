@@ -116,35 +116,80 @@ pub fn use_task_order_from_snapshot(
 }
 
 /// Recursively extract task IDs from workflow JSON preserving execution order
-/// Uses breadth-first traversal to maintain level-by-level order
+/// Uses depth-first traversal to maintain parent-child sequential order
 fn extract_task_ids_recursive(value: &Value) -> Vec<String> {
     let mut task_ids = Vec::new();
-    let mut queue: Vec<&Value> = Vec::new();
 
-    // Initialize queue with root tasks
-    if let Some(tasks) = value.get("tasks").and_then(|v| v.as_array()) {
-        for task in tasks {
-            queue.push(task);
-        }
-    }
-
-    // Process tasks breadth-first
-    while !queue.is_empty() {
-        let current = queue.remove(0);
-
-        if let Some(task_id) = current.get("id").and_then(|v| v.as_str()) {
+    // Helper to recursively collect task IDs
+    fn process_task(task_value: &Value, task_ids: &mut Vec<String>) {
+        if let Some(task_id) = task_value.get("id").and_then(|v| v.as_str()) {
             task_ids.push(task_id.to_string());
 
-            // Add next_tasks to queue for processing later
-            if let Some(next_tasks) = current.get("next_tasks").and_then(|v| v.as_array()) {
+            // Process children
+            if let Some(next_tasks) = task_value.get("next_tasks").and_then(|v| v.as_array()) {
                 for next_task in next_tasks {
-                    queue.push(next_task);
+                    process_task(next_task, task_ids);
                 }
             }
         }
     }
 
+    // Process root tasks
+    if let Some(tasks) = value.get("tasks").and_then(|v| v.as_array()) {
+        for task in tasks {
+            process_task(task, &mut task_ids);
+        }
+    }
+
     task_ids
+}
+
+/// Extract parent-child mapping from workflow snapshot
+pub fn use_parent_child_mapping(
+    execution: Signal<Option<WorkflowExecution>>,
+) -> Memo<std::collections::HashMap<String, Vec<String>>> {
+    use_memo(move || {
+        execution()
+            .map(|exec| build_parent_child_map(&exec.workflow_snapshot))
+            .unwrap_or_default()
+    })
+}
+
+/// Build a map of parent task IDs to their child task IDs from workflow JSON
+fn build_parent_child_map(value: &Value) -> std::collections::HashMap<String, Vec<String>> {
+    let mut parent_map = std::collections::HashMap::new();
+
+    fn process_task(
+        task_value: &Value,
+        parent_map: &mut std::collections::HashMap<String, Vec<String>>,
+    ) {
+        if let Some(task_id) = task_value.get("id").and_then(|v| v.as_str()) {
+            let task_id = task_id.to_string();
+
+            // Process children
+            if let Some(next_tasks) = task_value.get("next_tasks").and_then(|v| v.as_array()) {
+                for child_task in next_tasks {
+                    if let Some(child_id) = child_task.get("id").and_then(|v| v.as_str()) {
+                        parent_map
+                            .entry(task_id.clone())
+                            .or_insert_with(Vec::new)
+                            .push(child_id.to_string());
+                        // Recurse to process nested children
+                        process_task(child_task, parent_map);
+                    }
+                }
+            }
+        }
+    }
+
+    // Process root tasks
+    if let Some(tasks) = value.get("tasks").and_then(|v| v.as_array()) {
+        for task in tasks {
+            process_task(task, &mut parent_map);
+        }
+    }
+
+    parent_map
 }
 
 /// Hook for fetching UserInputRequest for a specific task
