@@ -49,7 +49,7 @@ pub fn ExecutionItem(execution: WorkflowExecutionSummary) -> Element {
                 }
             }),
             onclick: move |_| {
-                navigator.push(Route::WorkflowDetailsPage2 { id: execution.id.clone() });
+                navigator.push(Route::WorkflowDetailsPage { id: execution.id.clone() });
             },
         }
     }

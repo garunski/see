@@ -1,4 +1,4 @@
-use s_e_e_core::{WorkflowExecutionSummary, WorkflowMetadata};
+use s_e_e_core::{TaskExecution, WorkflowExecution, WorkflowExecutionSummary, WorkflowMetadata};
 
 #[derive(Debug, thiserror::Error)]
 pub enum ExecutionError {
@@ -8,6 +8,10 @@ pub enum ExecutionError {
     FetchExecutionsFailed(String),
     #[error("Failed to fetch running workflows: {0}")]
     FetchRunningWorkflowsFailed(String),
+    #[error("Failed to fetch workflow execution: {0}")]
+    FetchWorkflowExecutionFailed(String),
+    #[error("Failed to fetch task details: {0}")]
+    FetchTaskDetailsFailed(String),
 }
 
 pub struct ExecutionService;
@@ -77,5 +81,34 @@ impl ExecutionService {
         }
 
         Ok(running)
+    }
+
+    pub async fn fetch_workflow_execution(
+        execution_id: &str,
+    ) -> Result<WorkflowExecution, ExecutionError> {
+        let store = s_e_e_core::get_global_store()
+            .map_err(|e| ExecutionError::DatabaseUnavailable(e.to_string()))?;
+
+        store
+            .get_workflow_with_tasks(execution_id)
+            .await
+            .map_err(|e| ExecutionError::FetchWorkflowExecutionFailed(e.to_string()))
+    }
+
+    pub async fn fetch_task_details(
+        execution_id: &str,
+        task_id: &str,
+    ) -> Result<Option<TaskExecution>, ExecutionError> {
+        let store = s_e_e_core::get_global_store()
+            .map_err(|e| ExecutionError::DatabaseUnavailable(e.to_string()))?;
+
+        let execution = store
+            .get_workflow_with_tasks(execution_id)
+            .await
+            .map_err(|e| ExecutionError::FetchTaskDetailsFailed(e.to_string()))?;
+
+        let task = execution.tasks.into_iter().find(|t| t.id == task_id);
+
+        Ok(task)
     }
 }
