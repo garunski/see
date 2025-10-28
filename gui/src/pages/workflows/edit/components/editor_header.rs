@@ -1,34 +1,25 @@
 use crate::components::{IconButton, IconButtonSize, IconButtonVariant};
+use crate::layout::router::Route;
 use dioxus::prelude::*;
 use dioxus_router::prelude::use_navigator;
-
-use super::super::EditMode;
 
 #[derive(Props, PartialEq, Clone)]
 pub struct EditorHeaderProps {
     pub is_new: bool,
-    pub edit_mode: Signal<EditMode>,
-    pub can_reset: Signal<bool>,
+    pub workflow_id: String,
     pub is_saving: Signal<bool>,
     pub has_unsaved_changes: Signal<bool>,
-    pub on_mode_switch_to_visual: EventHandler<()>,
-    pub on_mode_switch_to_json: EventHandler<()>,
     pub on_save: EventHandler<()>,
-    pub on_reset: EventHandler<()>,
 }
 
 #[component]
 pub fn EditorHeader(props: EditorHeaderProps) -> Element {
     let EditorHeaderProps {
         is_new,
-        edit_mode,
-        can_reset,
+        workflow_id,
         is_saving,
         has_unsaved_changes,
-        on_mode_switch_to_visual,
-        on_mode_switch_to_json,
         on_save,
-        on_reset,
     } = props;
 
     let navigator = use_navigator();
@@ -62,32 +53,20 @@ pub fn EditorHeader(props: EditorHeaderProps) -> Element {
                 }
             }
             div { class: "flex items-center gap-3",
-                // Mode toggle buttons
-                div { class: "flex rounded-lg bg-zinc-100 dark:bg-zinc-800 p-1",
+                // Edit in JSON button
+                if !is_new {
                     IconButton {
-                        variant: if edit_mode() == EditMode::Visual { IconButtonVariant::Primary } else { IconButtonVariant::Ghost },
-                        size: IconButtonSize::Small,
-                        onclick: move |_| on_mode_switch_to_visual.call(()),
-                        "Visual Editor"
-                    }
-                    IconButton {
-                        variant: if edit_mode() == EditMode::Json { IconButtonVariant::Primary } else { IconButtonVariant::Ghost },
-                        size: IconButtonSize::Small,
-                        onclick: move |_| on_mode_switch_to_json.call(()),
-                        "JSON Editor"
+                        variant: IconButtonVariant::Ghost,
+                        size: IconButtonSize::Medium,
+                        onclick: move |_| {
+                            navigator.push(Route::WorkflowJsonEditPage { id: workflow_id.clone() });
+                        },
+                        icon: Some("document_text".to_string()),
+                        icon_variant: "outline".to_string(),
+                        "Edit in JSON"
                     }
                 }
 
-                if can_reset() {
-                    IconButton {
-                        variant: IconButtonVariant::Danger,
-                        size: IconButtonSize::Medium,
-                        onclick: move |_| on_reset.call(()),
-                        icon: Some("arrow_left".to_string()),
-                        icon_variant: "outline".to_string(),
-                        "Reset to Default"
-                    }
-                }
                 IconButton {
                     variant: IconButtonVariant::Primary,
                     size: IconButtonSize::Medium,

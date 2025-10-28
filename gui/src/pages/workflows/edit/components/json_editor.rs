@@ -1,4 +1,4 @@
-use crate::components::forms::{TextInput, TextareaInput};
+use crate::components::forms::TextareaInput;
 use dioxus::prelude::*;
 
 #[derive(Props, PartialEq, Clone)]
@@ -14,7 +14,7 @@ pub struct JsonEditorProps {
 pub fn JsonEditor(props: JsonEditorProps) -> Element {
     let JsonEditorProps {
         content,
-        workflow_name,
+        workflow_name: _,
         validation_error,
         on_content_change,
         is_readonly,
@@ -50,14 +50,6 @@ pub fn JsonEditor(props: JsonEditorProps) -> Element {
     rsx! {
         div { class: "bg-white dark:bg-zinc-800 rounded-xl border border-zinc-200 dark:border-zinc-700 p-8 shadow-sm",
             div { class: "space-y-6",
-                TextInput {
-                    label: "Workflow Name",
-                    value: workflow_name,
-                    oninput: |_| {},  // Handled separately
-                    help_text: Some("Name is extracted from the JSON 'name' field".to_string()),
-                    disabled: Some(readonly)
-                }
-
                 TextareaInput {
                     label: "Workflow Definition (JSON)",
                     value: content,
