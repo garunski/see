@@ -2,9 +2,8 @@ use crate::components::{
     IconButton, IconButtonSize, IconButtonVariant, Notification, NotificationData, NotificationType,
 };
 use crate::pages::workflows::edit::JsonEditor;
-use crate::queries::{CreateWorkflowMutation, GetWorkflow};
+use crate::queries::{use_create_workflow_mutation, use_workflow_query};
 use dioxus::prelude::*;
-use dioxus_query::prelude::{use_mutation, use_query, Mutation, Query};
 use dioxus_router::prelude::use_navigator;
 use s_e_e_core::WorkflowDefinition;
 
@@ -15,12 +14,25 @@ pub fn WorkflowJsonEditPage(id: String) -> Element {
 
     // Load existing workflow data if editing
     let loaded_workflow = if !is_new {
-        let query_result = use_query(Query::new(id.clone(), GetWorkflow)).suspend()?;
-        match query_result {
-            Ok(Some(w)) => Some(w),
-            Ok(None) => None,
-            Err(_) => None,
+        let (query_state, _refetch) = use_workflow_query(id.clone());
+
+        if query_state.is_loading {
+            return rsx! {
+                div { class: "flex items-center justify-center h-64",
+                    "Loading workflow..."
+                }
+            };
         }
+
+        if query_state.is_error {
+            return rsx! {
+                div { class: "text-red-600 dark:text-red-400",
+                    "Error loading workflow: {query_state.error.clone().unwrap_or_default()}"
+                }
+            };
+        }
+
+        query_state.data.clone().and_then(|opt| opt)
     } else {
         None
     };
@@ -40,8 +52,8 @@ pub fn WorkflowJsonEditPage(id: String) -> Element {
     });
 
     // Mutations
-    let create_mutation = use_mutation(Mutation::new(CreateWorkflowMutation));
-    let is_saving = use_memo(move || create_mutation.read().state().is_loading());
+    let (mutation_state, create_fn) = use_create_workflow_mutation();
+    let is_saving = use_memo(move || mutation_state.read().is_loading);
 
     // Load data into form
     use_effect(move || {
@@ -124,7 +136,7 @@ pub fn WorkflowJsonEditPage(id: String) -> Element {
             }
         };
 
-        create_mutation.mutate(json_str);
+        create_fn(json_str);
 
         notification.set(NotificationData {
             r#type: NotificationType::Success,

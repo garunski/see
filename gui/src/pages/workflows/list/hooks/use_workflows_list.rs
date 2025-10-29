@@ -1,18 +1,17 @@
-use crate::queries::GetWorkflows;
-use dioxus_query::prelude::*;
+use crate::queries::use_workflows_query;
 use s_e_e_core::WorkflowDefinition;
 
-/// Hook to fetch workflows list
 pub fn use_workflows_list() -> Result<Vec<WorkflowDefinition>, String> {
-    let query_result = use_query(Query::new((), GetWorkflows))
-        .suspend()
-        .map_err(|_| String::from("Failed to initialize query"))?;
+    let (state, _refetch) = use_workflows_query();
 
-    match query_result {
-        Ok(value) => Ok(value),
-        Err(e) => {
-            tracing::error!("Failed to load workflows: {}", e);
-            Err(format!("Failed to load workflows: {}", e))
-        }
+    if state.is_loading {
+        Err("Loading workflows...".to_string())
+    } else if state.is_error {
+        Err(state
+            .error
+            .clone()
+            .unwrap_or_else(|| "Failed to load workflows".to_string()))
+    } else {
+        Ok(state.data.clone().unwrap_or_default())
     }
 }

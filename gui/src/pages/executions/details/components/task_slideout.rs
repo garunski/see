@@ -1,7 +1,6 @@
 use crate::components::Slideout;
-use crate::queries::GetTaskDetails;
+use crate::queries::use_task_details_query;
 use dioxus::prelude::*;
-use dioxus_query::prelude::{use_query, Query};
 
 #[derive(Props, PartialEq, Clone)]
 pub struct TaskSlideoutProps {
@@ -21,16 +20,13 @@ pub fn TaskSlideout(props: TaskSlideoutProps) -> Element {
     } = props;
 
     // Query task details
-    let query_keys = (execution_id.clone(), task_id.clone());
-    let query_result = use_query(
-        Query::new(query_keys.clone(), GetTaskDetails).stale_time(std::time::Duration::ZERO),
-    );
+    let (task_state, refetch) = use_task_details_query(execution_id.clone(), task_id.clone());
 
-    // Invalidate query when task_id changes
+    // Refetch when task_id changes
     let task_id_for_invalidation = task_id.clone();
     use_effect(move || {
         if !task_id_for_invalidation.is_empty() {
-            query_result.invalidate();
+            refetch();
         }
     });
 

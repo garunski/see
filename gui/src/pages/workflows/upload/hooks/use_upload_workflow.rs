@@ -1,19 +1,17 @@
-use crate::queries::CreateWorkflowMutation;
+use crate::queries::use_create_workflow_mutation;
 use dioxus::prelude::*;
-use dioxus_query::prelude::{use_mutation, Mutation, UseMutation};
+use dioxus_query_custom::prelude::MutationState;
 
-pub struct UploadWorkflowState {
-    pub create_mutation: UseMutation<CreateWorkflowMutation>,
-    pub is_saving: Memo<bool>,
+pub struct UploadWorkflowMutation {
+    pub state: Signal<MutationState<()>>,
+    pub upload_fn: std::rc::Rc<dyn Fn(String)>,
 }
 
-pub fn use_upload_workflow() -> UploadWorkflowState {
-    let create_mutation = use_mutation(Mutation::new(CreateWorkflowMutation));
+pub fn use_upload_workflow() -> UploadWorkflowMutation {
+    let (state, upload_fn) = use_create_workflow_mutation();
 
-    let is_saving = use_memo(move || create_mutation.read().state().is_loading());
-
-    UploadWorkflowState {
-        create_mutation,
-        is_saving,
+    UploadWorkflowMutation {
+        state,
+        upload_fn: std::rc::Rc::new(upload_fn),
     }
 }

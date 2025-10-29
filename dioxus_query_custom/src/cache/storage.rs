@@ -7,10 +7,12 @@ use tracing::debug;
 use crate::cache::entry::CacheEntry;
 use crate::query_key::QueryKey;
 
+/// Type alias for the query cache to reduce complexity
+pub type QueryCacheType = Rc<RefCell<HashMap<QueryKey, Box<dyn CacheEntry>>>>;
+
 /// Global cache for query results (type-erased)
 /// Stores the actual typed values as Arc<T> with no serialization
-pub static QUERY_CACHE: GlobalSignal<Rc<RefCell<HashMap<QueryKey, Box<dyn CacheEntry>>>>> =
-    Signal::global(|| {
-        debug!("Initializing global query cache");
-        Rc::new(RefCell::new(HashMap::new()))
-    });
+pub static QUERY_CACHE: GlobalSignal<QueryCacheType> = Signal::global(|| {
+    debug!("Initializing global query cache");
+    Rc::new(RefCell::new(HashMap::new()))
+});

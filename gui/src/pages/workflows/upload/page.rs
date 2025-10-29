@@ -14,7 +14,7 @@ pub fn UploadPage() -> Element {
 
     let mut workflow_file = use_signal(String::new);
     let mut is_picking_file = use_signal(|| false);
-    let mut error_message = use_signal(String::new);
+    let error_message = use_signal(String::new);
 
     let mut pick_file = move || {
         is_picking_file.set(true);
@@ -32,38 +32,50 @@ pub fn UploadPage() -> Element {
         });
     };
 
-    let mut on_save = move || {
-        if workflow_file().is_empty() {
-            error_message.set("Please select a workflow file first".to_string());
-            return;
-        }
+    let mut on_save = {
+        let workflow_file = workflow_file.clone();
+        let mut error_message = error_message.clone();
+        let upload_fn = upload_state.upload_fn.clone();
+        let navigator = navigator.clone();
 
-        error_message.set(String::new());
-
-        spawn(async move {
-            // Read and parse the workflow file
-            match read_and_parse_workflow_file(workflow_file().clone()) {
-                Ok(workflow) => {
-                    // Upload using mutation
-                    let json_str = match serde_json::to_string(&workflow) {
-                        Ok(s) => s,
-                        Err(e) => {
-                            error_message.set(format!("Failed to serialize workflow: {}", e));
-                            return;
-                        }
-                    };
-
-                    upload_state.create_mutation.mutate(json_str);
-
-                    // Navigate after a short delay to allow mutation to complete
-                    tokio::time::sleep(tokio::time::Duration::from_millis(100)).await;
-                    navigator.push(Route::HomePage {});
-                }
-                Err(e) => {
-                    error_message.set(e);
-                }
+        move || {
+            if workflow_file().is_empty() {
+                error_message.set("Please select a workflow file first".to_string());
+                return;
             }
-        });
+
+            error_message.set(String::new());
+
+            let workflow_file = workflow_file.clone();
+            let mut error_message = error_message.clone();
+            let upload_fn = upload_fn.clone();
+            let navigator = navigator.clone();
+
+            spawn(async move {
+                // Read and parse the workflow file
+                match read_and_parse_workflow_file(workflow_file().clone()) {
+                    Ok(workflow) => {
+                        // Upload using mutation
+                        let json_str = match serde_json::to_string(&workflow) {
+                            Ok(s) => s,
+                            Err(e) => {
+                                error_message.set(format!("Failed to serialize workflow: {}", e));
+                                return;
+                            }
+                        };
+
+                        upload_fn(json_str);
+
+                        // Navigate after a short delay to allow mutation to complete
+                        tokio::time::sleep(tokio::time::Duration::from_millis(100)).await;
+                        navigator.push(Route::HomePage {});
+                    }
+                    Err(e) => {
+                        error_message.set(e);
+                    }
+                }
+            });
+        }
     };
 
     rsx! {
@@ -110,17 +122,22 @@ pub fn UploadPage() -> Element {
                             }
                         }
 
-                        IconButton {
-                            variant: IconButtonVariant::Primary,
-                            size: IconButtonSize::Large,
-                            disabled: Some((upload_state.is_saving)()),
-                            loading: Some((upload_state.is_saving)()),
-                            onclick: move |_| on_save(),
-                            class: Some("w-full font-semibold".to_string()),
-                            icon: if (upload_state.is_saving)() { None } else { Some("save".to_string()) },
-                            icon_variant: "outline".to_string(),
-                            if (upload_state.is_saving)() { "Saving..." } else { "Save Workflow" }
-                        }
+                        {{
+                            let is_saving = upload_state.state.read().is_loading;
+                            rsx! {
+                                IconButton {
+                                    variant: IconButtonVariant::Primary,
+                                    size: IconButtonSize::Large,
+                                    disabled: Some(is_saving),
+                                    loading: Some(is_saving),
+                                    onclick: move |_| on_save(),
+                                    class: Some("w-full font-semibold".to_string()),
+                                    icon: if is_saving { None } else { Some("save".to_string()) },
+                                    icon_variant: "outline".to_string(),
+                                    if is_saving { "Saving..." } else { "Save Workflow" }
+                                }
+                            }
+                        }}
                     }
                 },
                 padding: None,

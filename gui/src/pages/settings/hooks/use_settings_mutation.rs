@@ -1,12 +1,18 @@
-use crate::queries::UpdateSettingsMutation;
-use dioxus_query::prelude::{use_mutation, Mutation, UseMutation};
+use crate::queries::use_update_settings_mutation;
+use dioxus::prelude::*;
+use dioxus_query_custom::prelude::MutationState;
+use s_e_e_core::AppSettings;
 
 pub struct SettingsMutation {
-    pub update_mutation: UseMutation<UpdateSettingsMutation>,
+    pub state: Signal<MutationState<()>>,
+    pub mutate_fn: std::rc::Rc<dyn Fn(AppSettings)>,
 }
 
 pub fn use_settings_mutation() -> SettingsMutation {
-    let update_mutation = use_mutation(Mutation::new(UpdateSettingsMutation));
+    let (state, mutate_fn) = use_update_settings_mutation();
 
-    SettingsMutation { update_mutation }
+    SettingsMutation {
+        state,
+        mutate_fn: std::rc::Rc::new(mutate_fn),
+    }
 }

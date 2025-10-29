@@ -17,7 +17,7 @@ fn get_shared_state_signal<T: Clone + PartialEq + 'static>(
 ) -> GlobalSignal<QueryState<T>> {
     // For now, each component has its own signal but they all read from shared cache
     // Future: implement proper shared state signals per key
-    Signal::global(|| QueryState::default())
+    Signal::global(QueryState::default)
 }
 
 /// Main query hook - fetches and caches data with type-safe storage
@@ -44,7 +44,7 @@ where
     start_cleanup_task();
 
     // Component-local state - all components read from shared cache though
-    let mut state = use_signal(|| QueryState::default());
+    let mut state = use_signal(QueryState::default);
 
     // Lazy cleanup: clean up stale entries periodically during queries
     // This runs in Dioxus context, avoiding GlobalSignal runtime errors
@@ -130,12 +130,12 @@ where
     // Fetch logic with deduplication
     let fetch_key = key.clone();
     let fetch_opts = options.clone();
-    let state_for_fetch = state.clone();
+    let state_for_fetch = state;
     let fetch = use_callback(move |_| {
         let fetcher = fetcher.clone();
         let key_clone = fetch_key.clone();
         let opts = fetch_opts.clone();
-        let mut state = state_for_fetch.clone();
+        let mut state = state_for_fetch;
 
         // Check if already fetching (deduplication)
         {
@@ -289,7 +289,7 @@ where
             "Setting up refetch interval"
         );
 
-        let fetch_for_interval = fetch.clone();
+        let fetch_for_interval = fetch;
         let interval_key_str = key.as_str().to_string();
         use_future(move || {
             let fetch = fetch_for_interval;

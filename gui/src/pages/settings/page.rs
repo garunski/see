@@ -54,34 +54,18 @@ pub fn SettingsPage() -> Element {
     // Helper to save settings
     let save_settings = {
         let notification = notification;
-        let update_mutation = mutations.update_mutation;
+        let mutate_fn = mutations.mutate_fn.clone();
         move |settings: AppSettings| {
             let mut notification = notification;
-            spawn(async move {
-                tracing::info!("[SettingsPage] Starting mutation to save settings");
-                let reader = update_mutation.mutate_async(settings.clone()).await;
-                tracing::debug!("[SettingsPage] Mutation completed, reading state");
-                let state = reader.state();
-                match state.unwrap() {
-                    Ok(_) => {
-                        tracing::info!("[SettingsPage] Settings saved successfully, showing success notification");
-                        notification.set(NotificationData {
-                            r#type: NotificationType::Success,
-                            title: "Settings saved".to_string(),
-                            message: "Your settings have been successfully saved.".to_string(),
-                            show: true,
-                        });
-                    }
-                    Err(e) => {
-                        tracing::error!("[SettingsPage] Settings save failed: {}", e);
-                        notification.set(NotificationData {
-                            r#type: NotificationType::Error,
-                            title: "Save failed".to_string(),
-                            message: format!("Failed to save settings: {}", e),
-                            show: true,
-                        });
-                    }
-                }
+            tracing::info!("[SettingsPage] Starting mutation to save settings");
+            mutate_fn(settings.clone());
+
+            // Show immediate feedback
+            notification.set(NotificationData {
+                r#type: NotificationType::Success,
+                title: "Saving...".to_string(),
+                message: "Your settings are being saved.".to_string(),
+                show: true,
             });
         }
     };

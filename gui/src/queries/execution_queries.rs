@@ -1,85 +1,124 @@
 use crate::services::execution::ExecutionService;
-use dioxus_query::prelude::*;
+use dioxus::prelude::Signal;
+use dioxus_query_custom::prelude::*;
 use s_e_e_core::{TaskExecution, WorkflowExecution, WorkflowExecutionSummary, WorkflowMetadata};
+use std::rc::Rc;
 
-#[derive(Clone, PartialEq, Hash, Eq)]
-pub struct GetWorkflowExecutions;
+// ==================== QUERIES ====================
 
-impl QueryCapability for GetWorkflowExecutions {
-    type Ok = Vec<WorkflowExecutionSummary>;
-    type Err = String;
-    type Keys = ();
+/// Hook to fetch workflow executions with auto-refresh
+pub fn use_workflow_executions_query() -> (QueryState<Vec<WorkflowExecutionSummary>>, impl Fn()) {
+    let key = QueryKey::new(&["executions", "list"]);
 
-    async fn run(&self, _: &Self::Keys) -> Result<Self::Ok, Self::Err> {
+    let fetcher = move || async move {
         ExecutionService::fetch_workflow_executions(100)
             .await
             .map_err(|e| e.to_string())
-    }
+    };
+
+    let options = QueryOptions {
+        stale_time: Some(0),          // Always fetch fresh data
+        cache_time: Some(60_000),     // 1 minute
+        refetch_interval: Some(1000), // Poll every second
+        ..Default::default()
+    };
+
+    use_query(key, fetcher, options)
 }
 
-#[derive(Clone, PartialEq, Hash, Eq)]
-pub struct GetRunningWorkflows;
+/// Hook to fetch running workflows with auto-refresh
+pub fn use_running_workflows_query() -> (QueryState<Vec<WorkflowMetadata>>, impl Fn()) {
+    let key = QueryKey::new(&["workflows", "running"]);
 
-impl QueryCapability for GetRunningWorkflows {
-    type Ok = Vec<WorkflowMetadata>;
-    type Err = String;
-    type Keys = ();
-
-    async fn run(&self, _: &Self::Keys) -> Result<Self::Ok, Self::Err> {
+    let fetcher = move || async move {
         ExecutionService::fetch_running_workflows(100)
             .await
             .map_err(|e| e.to_string())
-    }
+    };
+
+    let options = QueryOptions {
+        stale_time: Some(0),
+        cache_time: Some(60_000),
+        refetch_interval: Some(1000), // Poll every second
+        ..Default::default()
+    };
+
+    use_query(key, fetcher, options)
 }
 
-#[derive(Clone, PartialEq, Hash, Eq)]
-pub struct GetWorkflowExecution;
+/// Hook to fetch a single workflow execution
+pub fn use_workflow_execution_query(
+    execution_id: String,
+) -> (QueryState<WorkflowExecution>, impl Fn()) {
+    let key = QueryKey::new(&["executions", "detail", &execution_id]);
 
-impl QueryCapability for GetWorkflowExecution {
-    type Ok = WorkflowExecution;
-    type Err = String;
-    type Keys = String;
+    let id_clone = execution_id.clone();
+    let fetcher = move || {
+        let id = id_clone.clone();
+        async move {
+            ExecutionService::fetch_workflow_execution(&id)
+                .await
+                .map_err(|e| e.to_string())
+        }
+    };
 
-    async fn run(&self, execution_id: &Self::Keys) -> Result<Self::Ok, Self::Err> {
-        ExecutionService::fetch_workflow_execution(execution_id)
-            .await
-            .map_err(|e| e.to_string())
-    }
+    let options = QueryOptions {
+        stale_time: Some(5_000),      // 5 seconds
+        cache_time: Some(300_000),    // 5 minutes
+        refetch_interval: Some(2000), // Poll every 2 seconds
+        ..Default::default()
+    };
+
+    use_query(key, fetcher, options)
 }
 
-#[derive(Clone, PartialEq, Hash, Eq)]
-pub struct GetTaskDetails;
+/// Hook to fetch task execution details
+pub fn use_task_details_query(
+    execution_id: String,
+    task_id: String,
+) -> (QueryState<Option<TaskExecution>>, impl Fn()) {
+    let key = QueryKey::new(&["tasks", "detail", &execution_id, &task_id]);
 
-impl QueryCapability for GetTaskDetails {
-    type Ok = Option<TaskExecution>;
-    type Err = String;
-    type Keys = (String, String); // (execution_id, task_id)
+    let exec_id = execution_id.clone();
+    let t_id = task_id.clone();
+    let fetcher = move || {
+        let execution_id = exec_id.clone();
+        let task_id = t_id.clone();
+        async move {
+            ExecutionService::fetch_task_details(&execution_id, &task_id)
+                .await
+                .map_err(|e| e.to_string())
+        }
+    };
 
-    async fn run(&self, keys: &Self::Keys) -> Result<Self::Ok, Self::Err> {
-        let (execution_id, task_id) = keys;
+    let options = QueryOptions {
+        stale_time: Some(0), // Always fresh
+        cache_time: Some(60_000),
+        ..Default::default()
+    };
 
-        ExecutionService::fetch_task_details(execution_id, task_id)
-            .await
-            .map_err(|e| e.to_string())
-    }
+    use_query(key, fetcher, options)
 }
 
-#[derive(Clone, PartialEq, Hash, Eq)]
-pub struct DeleteExecutionMutation;
+// ==================== MUTATIONS ====================
 
-impl MutationCapability for DeleteExecutionMutation {
-    type Ok = ();
-    type Err = String;
-    type Keys = String; // execution_id
-
-    async fn run(&self, execution_id: &Self::Keys) -> Result<Self::Ok, Self::Err> {
-        ExecutionService::delete_workflow_execution(execution_id)
+/// Hook to delete a workflow execution
+pub fn use_delete_execution_mutation() -> (Signal<MutationState<()>>, impl Fn(String)) {
+    let mutation_fn = move |execution_id: String| async move {
+        ExecutionService::delete_workflow_execution(&execution_id)
             .await
             .map_err(|e| e.to_string())
-    }
+    };
 
-    async fn on_settled(&self, _: &Self::Keys, _: &Result<Self::Ok, Self::Err>) {
-        // Invalidate the executions list query to refresh the UI
-        QueriesStorage::<GetWorkflowExecutions>::invalidate_matching(()).await;
-    }
+    let callbacks = MutationCallbacks {
+        on_success: None,
+        on_error: None,
+        on_settled: Some(Rc::new(|| {
+            invalidate_queries_by_prefix("executions:");
+        })),
+        invalidate_keys: vec![QueryKey::new(&["executions", "list"])],
+        optimistic_update: None,
+    };
+
+    use_mutation(mutation_fn, callbacks)
 }

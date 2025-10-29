@@ -1,16 +1,16 @@
 use crate::services::SettingsService;
-use dioxus_query::prelude::*;
+use dioxus::prelude::Signal;
+use dioxus_query_custom::prelude::*;
 use s_e_e_core::AppSettings;
+use std::rc::Rc;
 
-#[derive(Clone, PartialEq, Hash, Eq)]
-pub struct GetSettings;
+// ==================== QUERIES ====================
 
-impl QueryCapability for GetSettings {
-    type Ok = AppSettings;
-    type Err = String;
-    type Keys = ();
+/// Hook to fetch application settings
+pub fn use_settings_query() -> (QueryState<AppSettings>, impl Fn()) {
+    let key = QueryKey::new(&["settings"]);
 
-    async fn run(&self, _: &Self::Keys) -> Result<Self::Ok, Self::Err> {
+    let fetcher = move || async move {
         tracing::debug!("[GetSettings] Fetching settings from service");
         let result = SettingsService::fetch_settings().await;
         match &result {
@@ -25,23 +25,27 @@ impl QueryCapability for GetSettings {
             }
         }
         result.map_err(|e| e.to_string())
-    }
+    };
+
+    let options = QueryOptions {
+        stale_time: Some(60_000),  // 1 minute
+        cache_time: Some(300_000), // 5 minutes
+        ..Default::default()
+    };
+
+    use_query(key, fetcher, options)
 }
 
-#[derive(Clone, PartialEq, Hash, Eq)]
-pub struct UpdateSettingsMutation;
+// ==================== MUTATIONS ====================
 
-impl MutationCapability for UpdateSettingsMutation {
-    type Ok = ();
-    type Err = String;
-    type Keys = AppSettings;
-
-    async fn run(&self, settings: &Self::Keys) -> Result<Self::Ok, Self::Err> {
+/// Hook to update application settings
+pub fn use_update_settings_mutation() -> (Signal<MutationState<()>>, impl Fn(AppSettings)) {
+    let mutation_fn = move |settings: AppSettings| async move {
         tracing::info!(
             "[UpdateSettingsMutation] Starting save with theme: {:?}",
             settings.theme
         );
-        let result = SettingsService::save_settings(settings.clone()).await;
+        let result = SettingsService::save_settings(settings).await;
         match &result {
             Ok(_) => {
                 tracing::info!("[UpdateSettingsMutation] Successfully saved settings to database");
@@ -51,17 +55,18 @@ impl MutationCapability for UpdateSettingsMutation {
             }
         }
         result.map_err(|e| e.to_string())
-    }
+    };
 
-    async fn on_settled(&self, _: &Self::Keys, result: &Result<Self::Ok, Self::Err>) {
-        tracing::debug!(
-            "[UpdateSettingsMutation] on_settled called, result: {:?}",
-            result
-        );
-        tracing::info!(
-            "[UpdateSettingsMutation] Invalidating GetSettings cache to trigger refetch"
-        );
-        QueriesStorage::<GetSettings>::invalidate_matching(()).await;
-        tracing::debug!("[UpdateSettingsMutation] Cache invalidated, GetSettings should refetch");
-    }
+    let callbacks = MutationCallbacks {
+        on_success: None,
+        on_error: None,
+        on_settled: Some(Rc::new(|| {
+            tracing::info!("[UpdateSettingsMutation] Invalidating settings cache");
+            invalidate_query(&QueryKey::new(&["settings"]));
+        })),
+        invalidate_keys: vec![QueryKey::new(&["settings"])],
+        optimistic_update: None,
+    };
+
+    use_mutation(mutation_fn, callbacks)
 }

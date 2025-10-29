@@ -20,7 +20,7 @@ fn test_query_key_creation() {
 #[test]
 fn test_prefix_matching_logic() {
     // Test the string prefix matching logic used by invalidate_queries_by_prefix
-    let test_keys = vec!["user:123", "user:456", "post:789", "user_profile:abc"];
+    let test_keys = ["user:123", "user:456", "post:789", "user_profile:abc"];
 
     // Simulate prefix matching
     let prefix = "user:";
@@ -57,5 +57,5 @@ fn test_invalidation_api_exists() {
     });
 
     // If we got here without compile errors, the API exists
-    assert!(true);
+    // Test passes if no panic occurred
 }

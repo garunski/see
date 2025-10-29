@@ -2,9 +2,8 @@ use crate::components::layout::ListItem;
 use crate::components::{Badge, BadgeColor, IconButton, IconButtonSize, IconButtonVariant};
 use crate::layout::router::Route;
 use crate::pages::executions::list::components::ExecutionDeleteDialog;
-use crate::queries::DeleteExecutionMutation;
+use crate::queries::use_delete_execution_mutation;
 use dioxus::prelude::*;
-use dioxus_query::prelude::{use_mutation, Mutation};
 use dioxus_router::prelude::use_navigator;
 use s_e_e_core::{WorkflowExecutionStatus, WorkflowExecutionSummary};
 
@@ -12,7 +11,7 @@ use s_e_e_core::{WorkflowExecutionStatus, WorkflowExecutionSummary};
 pub fn ExecutionItem(execution: WorkflowExecutionSummary) -> Element {
     let navigator = use_navigator();
     let mut show_delete_dialog = use_signal(|| false);
-    let delete_mutation = use_mutation(Mutation::new(DeleteExecutionMutation));
+    let (_delete_state, delete_fn) = use_delete_execution_mutation();
 
     let badge_color = match execution.status {
         WorkflowExecutionStatus::WaitingForInput => BadgeColor::Amber,
@@ -85,11 +84,7 @@ pub fn ExecutionItem(execution: WorkflowExecutionSummary) -> Element {
                 workflow_name: execution_name.clone(),
                 on_confirm: move |_| {
                     show_delete_dialog.set(false);
-                    let exec_id = execution_id_for_delete.clone();
-                    let mutation = delete_mutation.clone();
-                    spawn(async move {
-                        let _reader = mutation.mutate_async(exec_id.clone()).await;
-                    });
+                    delete_fn(execution_id_for_delete.clone());
                 },
                 on_cancel: move |_| {
                     show_delete_dialog.set(false);

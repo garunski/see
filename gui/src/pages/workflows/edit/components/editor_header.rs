@@ -7,7 +7,7 @@ use dioxus_router::prelude::use_navigator;
 pub struct EditorHeaderProps {
     pub is_new: bool,
     pub workflow_id: String,
-    pub is_saving: Signal<bool>,
+    pub is_saving: bool,
     pub has_unsaved_changes: Signal<bool>,
     pub on_save: EventHandler<()>,
 }
@@ -70,12 +70,12 @@ pub fn EditorHeader(props: EditorHeaderProps) -> Element {
                 IconButton {
                     variant: IconButtonVariant::Primary,
                     size: IconButtonSize::Medium,
-                    disabled: Some(is_saving()),
-                    loading: Some(is_saving()),
+                    disabled: Some(is_saving),
+                    loading: Some(is_saving),
                     onclick: move |_| on_save.call(()),
-                    icon: if is_saving() { None } else { Some("save".to_string()) },
+                    icon: if is_saving { None } else { Some("save".to_string()) },
                     icon_variant: "outline".to_string(),
-                    if is_saving() { "Saving..." } else { "Save" }
+                    if is_saving { "Saving..." } else { "Save" }
                 }
             }
         }

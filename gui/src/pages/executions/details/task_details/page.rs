@@ -3,35 +3,35 @@ use crate::pages::executions::details::task_details::components::{
     TaskDetailsHeader, TaskDetailsInfoTab, TaskDetailsOutputTab, TaskDetailsTabs,
     TaskDetailsUserInputTab,
 };
-use crate::queries::GetTaskDetails;
+use crate::queries::use_task_details_query;
 use dioxus::prelude::*;
-use dioxus_query::prelude::{use_query, Query};
 
 #[component]
 pub fn TaskDetailsPage(execution_id: String, task_id: String) -> Element {
     // Query task details
-    let query_keys = (execution_id.clone(), task_id.clone());
-    let query_result = use_query(
-        Query::new(query_keys.clone(), GetTaskDetails).stale_time(std::time::Duration::ZERO),
-    );
+    let (task_state, refetch) = use_task_details_query(execution_id.clone(), task_id.clone());
 
-    // Invalidate query when task_id changes
+    // Refetch when task_id changes
     let task_id_for_invalidation = task_id.clone();
     use_effect(move || {
         if !task_id_for_invalidation.is_empty() {
-            query_result.invalidate();
+            refetch();
         }
     });
 
     // Get task from query
     let task = if task_id.is_empty() {
         None
+    } else if task_state.is_loading {
+        return rsx! {
+            div { class: "flex items-center justify-center h-64",
+                "Loading task details..."
+            }
+        };
+    } else if task_state.is_error {
+        None
     } else {
-        query_result
-            .suspend()
-            .ok()
-            .and_then(|result| result.ok())
-            .flatten()
+        task_state.data.clone().and_then(|opt| opt)
     };
 
     let mut selected_tab = use_signal(|| "Details".to_string());

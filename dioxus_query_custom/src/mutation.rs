@@ -31,11 +31,11 @@ where
         is_success: false,
     });
 
-    let state_for_mutation = state.clone();
+    let state_for_mutation = state;
     let mutate = use_callback(move |variables: V| {
         let mutation_fn = mutation_fn.clone();
         let callbacks = callbacks.clone();
-        let mut state = state_for_mutation.clone();
+        let mut state = state_for_mutation;
 
         info!("Mutation triggered");
 

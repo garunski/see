@@ -1,5 +1,4 @@
 use crate::components::{Notification, NotificationData, NotificationType};
-use crate::layout::router::Route;
 use crate::queries::prompt_queries::use_prompt_query;
 use dioxus::prelude::*;
 use dioxus_router::prelude::use_navigator;
@@ -10,7 +9,7 @@ use super::validation::{create_prompt_from_fields, validate_prompt_fields};
 
 #[component]
 pub fn UserPromptEditPage(id: String) -> Element {
-    let navigator = use_navigator();
+    let _navigator = use_navigator();
     let is_new = id.is_empty();
 
     // Load existing prompt data if editing
