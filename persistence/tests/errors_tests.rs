@@ -2,7 +2,7 @@
 //!
 //! Tests error variants, error conversions following Single Responsibility Principle.
 
-use persistence::PersistenceError;
+use s_e_e_persistence::PersistenceError;
 
 #[test]
 fn test_persistence_error_database() {

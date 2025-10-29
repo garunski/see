@@ -36,16 +36,6 @@ pub fn Sidebar() -> Element {
                             span { class: "truncate", "Home" }
                         }
                         Link {
-                            to: Route::UploadPage {},
-                            class: "flex w-full items-center gap-2 rounded-lg px-2 py-2 text-left text-sm font-medium text-zinc-900 data-hover:bg-zinc-950/5 data-active:bg-zinc-950/5 dark:text-white dark:data-hover:bg-white/5 dark:data-active:bg-white/5",
-                            Icon {
-                                name: "upload".to_string(),
-                                class: Some("shrink-0 fill-zinc-500 data-hover:fill-zinc-900 data-active:fill-zinc-900 dark:fill-zinc-400 dark:data-hover:fill-white dark:data-active:fill-white".to_string()),
-                                size: Some("w-4 h-4".to_string()),
-                            }
-                            span { class: "truncate", "Upload" }
-                        }
-                        Link {
                             to: Route::ExecutionListPage {},
                             class: "flex w-full items-center gap-2 rounded-lg px-2 py-2 text-left text-sm font-medium text-zinc-900 data-hover:bg-zinc-950/5 data-active:bg-zinc-950/5 dark:text-white dark:data-hover:bg-white/5 dark:data-active:bg-white/5",
                             Icon {

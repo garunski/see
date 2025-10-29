@@ -2,7 +2,7 @@
 //! 
 //! Tests save_workflow, get_workflow, list_workflows, delete_workflow following Single Responsibility Principle.
 
-use persistence::{Store, WorkflowDefinition};
+use s_e_e_persistence::{Store, WorkflowDefinition};
 use chrono::Utc;
 
 async fn create_test_store() -> Store {

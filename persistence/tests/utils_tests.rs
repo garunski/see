@@ -2,7 +2,7 @@
 //!
 //! Tests clear_all_data following Single Responsibility Principle.
 
-use persistence::{
+use s_e_e_persistence::{
     AppSettings, AuditEvent, Prompt, Store, TaskExecution, TaskExecutionStatus, WorkflowDefinition,
     WorkflowExecution, WorkflowExecutionStatus,
 };

@@ -1,6 +1,6 @@
 use crate::components::{IconButton, IconButtonSize, IconButtonVariant};
 use crate::pages::{
-    ExecutionListPage, HomePage, SettingsPage, UploadPage, UserPromptEditPage,
+    ExecutionListPage, HomePage, SettingsPage, UserPromptEditPage,
     UserPromptEditPageNew, UserPromptsListPage, WorkflowDetailsPage,
     WorkflowDetailsTaskDetailsPage, WorkflowEditPage, WorkflowEditPageNew, WorkflowJsonEditPage,
     WorkflowsListPage,
@@ -16,8 +16,6 @@ pub enum Route {
     #[layout(AppLayout)]
         #[route("/")]
         HomePage {},
-        #[route("/workflows/upload")]
-        UploadPage {},
         #[route("/workflows")]
         WorkflowsListPage {},
         #[route("/workflows/new")]

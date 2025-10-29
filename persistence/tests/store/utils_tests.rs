@@ -2,7 +2,7 @@
 //! 
 //! Tests clear_all_data following Single Responsibility Principle.
 
-use persistence::{Store, WorkflowDefinition, WorkflowExecution, Prompt, AppSettings, AuditEvent, AuditStatus, WorkflowStatus, TaskExecution, TaskStatus};
+use s_e_e_persistence::{Store, WorkflowDefinition, WorkflowExecution, Prompt, AppSettings, AuditEvent, AuditStatus, WorkflowStatus, TaskExecution, TaskStatus};
 use chrono::Utc;
 
 async fn create_test_store() -> Store {

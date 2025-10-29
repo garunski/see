@@ -3,7 +3,7 @@
 //! Tests save_prompt, list_prompts, delete_prompt following Single Responsibility Principle.
 
 use chrono::Utc;
-use persistence::{Prompt, Store};
+use s_e_e_persistence::{Prompt, Store};
 
 async fn create_test_store() -> Store {
     Store::new(":memory:").await.unwrap()

@@ -4,7 +4,7 @@
 
 use crate::errors::CoreError;
 use crate::store_singleton::get_global_store;
-use persistence::{TaskExecution, TaskExecutionStatus, UserInputRequest};
+use s_e_e_persistence::{TaskExecution, TaskExecutionStatus, UserInputRequest};
 use tracing::{debug, info};
 
 /// Provide user input for a waiting task
@@ -214,9 +214,9 @@ pub async fn get_tasks_waiting_for_input(
 /// # Returns
 /// * `Ok(())` if value is valid
 /// * `Err(CoreError)` if value is invalid
-fn validate_input_value(value: &str, input_type: &persistence::InputType) -> Result<(), CoreError> {
+fn validate_input_value(value: &str, input_type: &s_e_e_persistence::InputType) -> Result<(), CoreError> {
     match input_type {
-        persistence::InputType::String => {
+        s_e_e_persistence::InputType::String => {
             // Any non-empty string is valid
             if value.is_empty() {
                 return Err(CoreError::Execution(
@@ -225,11 +225,11 @@ fn validate_input_value(value: &str, input_type: &persistence::InputType) -> Res
             }
             Ok(())
         }
-        persistence::InputType::Number => value
+        s_e_e_persistence::InputType::Number => value
             .parse::<f64>()
             .map_err(|e| CoreError::Execution(format!("Invalid number format: {}", e)))
             .map(|_| ()),
-        persistence::InputType::Boolean => match value.to_lowercase().as_str() {
+        s_e_e_persistence::InputType::Boolean => match value.to_lowercase().as_str() {
             "true" | "false" | "1" | "0" | "yes" | "no" => Ok(()),
             _ => Err(CoreError::Execution(format!(
                 "Invalid boolean format: expected true/false/1/0/yes/no, got {}",
@@ -245,25 +245,25 @@ mod tests {
 
     #[test]
     fn test_validate_input_value_string() {
-        assert!(validate_input_value("hello", &persistence::InputType::String).is_ok());
-        assert!(validate_input_value("", &persistence::InputType::String).is_err());
+        assert!(validate_input_value("hello", &s_e_e_persistence::InputType::String).is_ok());
+        assert!(validate_input_value("", &s_e_e_persistence::InputType::String).is_err());
     }
 
     #[test]
     fn test_validate_input_value_number() {
-        assert!(validate_input_value("123", &persistence::InputType::Number).is_ok());
-        assert!(validate_input_value("3.14", &persistence::InputType::Number).is_ok());
-        assert!(validate_input_value("abc", &persistence::InputType::Number).is_err());
+        assert!(validate_input_value("123", &s_e_e_persistence::InputType::Number).is_ok());
+        assert!(validate_input_value("3.14", &s_e_e_persistence::InputType::Number).is_ok());
+        assert!(validate_input_value("abc", &s_e_e_persistence::InputType::Number).is_err());
     }
 
     #[test]
     fn test_validate_input_value_boolean() {
-        assert!(validate_input_value("true", &persistence::InputType::Boolean).is_ok());
-        assert!(validate_input_value("false", &persistence::InputType::Boolean).is_ok());
-        assert!(validate_input_value("1", &persistence::InputType::Boolean).is_ok());
-        assert!(validate_input_value("0", &persistence::InputType::Boolean).is_ok());
-        assert!(validate_input_value("yes", &persistence::InputType::Boolean).is_ok());
-        assert!(validate_input_value("no", &persistence::InputType::Boolean).is_ok());
-        assert!(validate_input_value("maybe", &persistence::InputType::Boolean).is_err());
+        assert!(validate_input_value("true", &s_e_e_persistence::InputType::Boolean).is_ok());
+        assert!(validate_input_value("false", &s_e_e_persistence::InputType::Boolean).is_ok());
+        assert!(validate_input_value("1", &s_e_e_persistence::InputType::Boolean).is_ok());
+        assert!(validate_input_value("0", &s_e_e_persistence::InputType::Boolean).is_ok());
+        assert!(validate_input_value("yes", &s_e_e_persistence::InputType::Boolean).is_ok());
+        assert!(validate_input_value("no", &s_e_e_persistence::InputType::Boolean).is_ok());
+        assert!(validate_input_value("maybe", &s_e_e_persistence::InputType::Boolean).is_err());
     }
 }

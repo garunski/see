@@ -1,5 +1,5 @@
 use dioxus::prelude::*;
-use s_e_e_core::TaskExecution;
+use s_e_e_core::{TaskExecution, WorkflowExecutionStatus};
 use serde_json::Value;
 use std::collections::HashMap;
 
@@ -11,6 +11,7 @@ pub fn WorkflowFlowGraph(
     snapshot: Value,
     tasks: Vec<TaskExecution>,
     execution_id: String,
+    workflow_status: WorkflowExecutionStatus,
 ) -> Element {
     // Build task_id -> TaskExecution map for quick lookups during prep
     let task_map: HashMap<String, &TaskExecution> =
@@ -23,11 +24,51 @@ pub fn WorkflowFlowGraph(
         .map(|arr| arr.to_vec())
         .unwrap_or_default();
 
+    // Determine if workflow failed (to show errored tasks)
+    let workflow_is_failed = matches!(workflow_status, WorkflowExecutionStatus::Failed);
+
     // Build the full tree structure before rendering
     let renderable_tasks = root_tasks
         .iter()
-        .filter_map(|task_data| build_renderable_task(task_data, &task_map))
+        .filter_map(|task_data| build_renderable_task(task_data, &task_map, workflow_is_failed))
         .collect::<Vec<_>>();
+
+    // Show message if no tasks have been executed yet (workflow still initializing)
+    if renderable_tasks.is_empty() && tasks.is_empty() {
+        return rsx! {
+            div { class: "bg-white dark:bg-zinc-900 rounded-lg shadow-sm ring-1 ring-zinc-950/5 dark:ring-white/10 overflow-x-auto p-4",
+                div { class: "flex flex-col items-center justify-center py-12 text-center",
+                    div { class: "mb-4",
+                        svg {
+                            class: "h-12 w-12 text-zinc-400 dark:text-zinc-500 mx-auto animate-spin",
+                            xmlns: "http://www.w3.org/2000/svg",
+                            fill: "none",
+                            view_box: "0 0 24 24",
+                            circle {
+                                class: "opacity-25",
+                                cx: "12",
+                                cy: "12",
+                                r: "10",
+                                stroke: "currentColor",
+                                stroke_width: "4"
+                            }
+                            path {
+                                class: "opacity-75",
+                                fill: "currentColor",
+                                d: "M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                            }
+                        }
+                    }
+                    h3 { class: "text-base font-semibold text-zinc-950 dark:text-white mb-2",
+                        "Workflow Executing..."
+                    }
+                    p { class: "text-sm text-zinc-600 dark:text-zinc-400",
+                        "The workflow is starting up. Tasks will appear here as they execute."
+                    }
+                }
+            }
+        };
+    }
 
     rsx! {
         div { class: "bg-white dark:bg-zinc-900 rounded-lg shadow-sm ring-1 ring-zinc-950/5 dark:ring-white/10 overflow-x-auto p-4",

@@ -2,7 +2,7 @@
 //!
 //! Tests load_settings, save_settings following Single Responsibility Principle.
 
-use persistence::{AppSettings, Store, Theme};
+use s_e_e_persistence::{AppSettings, Store, Theme};
 
 async fn create_test_store() -> Store {
     Store::new(":memory:").await.unwrap()

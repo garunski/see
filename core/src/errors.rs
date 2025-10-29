@@ -6,7 +6,7 @@ use crate::validation::ValidationErrors;
 #[derive(thiserror::Error, Debug)]
 pub enum CoreError {
     #[error("Engine error: {0}")]
-    Engine(#[from] engine::EngineError),
+    Engine(#[from] s_e_e_engine::EngineError),
 
     #[error("Persistence error: {0}")]
     Persistence(String),

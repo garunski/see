@@ -19,7 +19,7 @@ pub fn Slideout(
     rsx! {
         // Backdrop
         div {
-            class: format!("fixed inset-0 z-50 {}", backdrop_class),
+            class: format!("fixed inset-0 z-50 cursor-pointer {}", backdrop_class),
             onclick: move |_| on_close.call(()),
 
             // Panel

@@ -17,7 +17,7 @@ pub fn TaskDetailsTabs(props: TaskDetailsTabsProps) -> Element {
 
     let is_active = |tab: &str| -> String {
         format!(
-            "py-2 px-1 border-b-2 font-medium text-sm {}",
+            "py-2 px-1 border-b-2 font-medium text-sm cursor-pointer {}",
             if selected_tab() == tab {
                 "border-blue-500 text-blue-600 dark:text-blue-400"
             } else {

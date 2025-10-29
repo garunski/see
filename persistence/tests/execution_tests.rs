@@ -3,7 +3,7 @@
 //! Tests save/get/list/delete workflow executions, list_workflow_metadata, delete_workflow_metadata_and_tasks, get_workflow_with_tasks following Single Responsibility Principle.
 
 use chrono::Utc;
-use persistence::{
+use s_e_e_persistence::{
     Store, TaskExecution, TaskExecutionStatus, WorkflowExecution, WorkflowExecutionStatus,
 };
 use std::collections::HashMap;

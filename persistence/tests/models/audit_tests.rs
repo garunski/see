@@ -2,7 +2,7 @@
 //! 
 //! Tests serialization, validation following Single Responsibility Principle.
 
-use persistence::{AuditEvent, AuditStatus};
+use s_e_e_persistence::{AuditEvent, AuditStatus};
 use chrono::Utc;
 
 #[test]

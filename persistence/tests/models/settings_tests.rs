@@ -2,7 +2,7 @@
 //! 
 //! Tests serialization, defaults following Single Responsibility Principle.
 
-use persistence::{AppSettings, Theme};
+use s_e_e_persistence::{AppSettings, Theme};
 
 #[test]
 fn test_app_settings_default() {

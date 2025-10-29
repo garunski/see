@@ -2,7 +2,7 @@
 // Testing invalidation logic manually with standalone cache would be ideal,
 // but GlobalSignal access requires runtime. For now, we document expected behavior.
 
-use dioxus_query_custom::prelude::{
+use s_e_e_dioxus_query::prelude::{
     invalidate_all_queries, invalidate_queries_by_prefix, invalidate_query, QueryKey,
 };
 

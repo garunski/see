@@ -3,7 +3,7 @@
 //! Tests multi-table operations, complete workflow execution following Single Responsibility Principle.
 
 use chrono::Utc;
-use persistence::{
+use s_e_e_persistence::{
     AppSettings, AuditEvent, Prompt, Store, TaskExecution, TaskExecutionStatus, Theme,
     WorkflowDefinition, WorkflowExecution, WorkflowExecutionStatus,
 };

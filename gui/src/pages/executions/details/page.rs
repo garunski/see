@@ -10,9 +10,16 @@ use dioxus_router::prelude::use_navigator;
 pub fn WorkflowDetailsPage(id: String) -> Element {
     let navigator = use_navigator();
     let mut show_delete_dialog = use_signal(|| false);
-    let (_delete_state, delete_fn) = use_delete_execution_mutation();
+    let (delete_state, delete_fn) = use_delete_execution_mutation();
 
     let (exec_state, _refetch) = use_workflow_execution_query(id.clone());
+
+    // Redirect after successful deletion
+    use_effect(move || {
+        if delete_state.read().is_success {
+            navigator.push(Route::ExecutionListPage {});
+        }
+    });
 
     let execution = if exec_state.is_loading {
         return rsx! {
@@ -55,7 +62,8 @@ pub fn WorkflowDetailsPage(id: String) -> Element {
                 WorkflowFlowGraph {
                     snapshot: exec.workflow_snapshot.clone(),
                     tasks: exec.tasks.clone(),
-                    execution_id: exec.id.clone()
+                    execution_id: exec.id.clone(),
+                    workflow_status: exec.status.clone()
                 }
 
                 if let (Some(exec_id), Some(workflow_name)) = (execution_id, workflow_name) {
@@ -67,8 +75,6 @@ pub fn WorkflowDetailsPage(id: String) -> Element {
                             show_delete_dialog.set(false);
                             let execution_id = exec_id.clone();
                             delete_fn(execution_id.clone());
-                            // Navigate back to execution list after deletion
-                            navigator.push(Route::ExecutionListPage {});
                         },
                         on_cancel: move |_| {
                             show_delete_dialog.set(false);

@@ -1,7 +1,7 @@
 // System workflow model tests ONLY
 // Tests for SystemWorkflow struct and methods
 
-use persistence::SystemWorkflow;
+use s_e_e_persistence::SystemWorkflow;
 
 #[test]
 fn test_system_workflow_creation() {

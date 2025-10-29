@@ -1,4 +1,4 @@
-use dioxus_query_custom::cache::{get_typed_value, CacheEntry, TypedCacheEntry};
+use s_e_e_dioxus_query::cache::{get_typed_value, CacheEntry, TypedCacheEntry};
 use std::sync::Arc;
 use std::time::Duration;
 

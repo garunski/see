@@ -2,7 +2,7 @@
 //!
 //! Tests serialization, validation, and status management following Single Responsibility Principle.
 
-use persistence::{enums::*, UserInputRequest};
+use s_e_e_persistence::{enums::*, UserInputRequest};
 use chrono::Utc;
 use serde_json::json;
 

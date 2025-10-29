@@ -2,7 +2,7 @@
 //! 
 //! Tests save/get/list/delete workflow executions, list_workflow_metadata, delete_workflow_metadata_and_tasks, get_workflow_with_tasks following Single Responsibility Principle.
 
-use persistence::{WorkflowExecutionStatus, Store, TaskExecution, TaskStatus, WorkflowExecution, WorkflowMetadata};
+use s_e_e_persistence::{WorkflowExecutionStatus, Store, TaskExecution, TaskStatus, WorkflowExecution, WorkflowMetadata};
 use chrono::Utc;
 
 async fn create_test_store() -> Store {

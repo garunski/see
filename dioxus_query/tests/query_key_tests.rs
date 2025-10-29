@@ -1,4 +1,4 @@
-use dioxus_query_custom::prelude::QueryKey;
+use s_e_e_dioxus_query::prelude::QueryKey;
 
 #[test]
 fn test_query_key_new() {

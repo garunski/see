@@ -2,7 +2,7 @@
 //! 
 //! Tests WorkflowExecution, WorkflowExecutionSummary, WorkflowMetadata following Single Responsibility Principle.
 
-use persistence::{WorkflowExecutionStatus, TaskExecution, TaskStatus, WorkflowExecution, WorkflowExecutionSummary, WorkflowMetadata};
+use s_e_e_persistence::{WorkflowExecutionStatus, TaskExecution, TaskStatus, WorkflowExecution, WorkflowExecutionSummary, WorkflowMetadata};
 use chrono::Utc;
 
 #[test]

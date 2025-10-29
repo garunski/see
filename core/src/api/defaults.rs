@@ -1,7 +1,7 @@
 // Default workflows ONLY
 
 use chrono::Utc;
-use persistence::WorkflowDefinition;
+use s_e_e_persistence::WorkflowDefinition;
 
 /// Get default workflow templates
 pub fn get_default_workflows() -> Vec<WorkflowDefinition> {

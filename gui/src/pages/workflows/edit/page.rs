@@ -1,6 +1,6 @@
 use crate::queries::{use_create_workflow_mutation, use_workflow_query};
 use dioxus::prelude::*;
-use engine::parse_workflow;
+use s_e_e_engine::parse_workflow;
 use s_e_e_core::WorkflowDefinition;
 
 use super::{EditorHeader, VisualEditor};

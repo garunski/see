@@ -5,7 +5,7 @@
 #[cfg(test)]
 mod tests {
     use chrono::Utc;
-    use persistence::{InputRequestStatus, InputType};
+    use s_e_e_persistence::{InputRequestStatus, InputType};
     use serde_json::Value;
 
     #[test]
@@ -35,7 +35,7 @@ mod tests {
 
     #[test]
     fn test_input_type_display() {
-        use persistence::InputType;
+        use s_e_e_persistence::InputType;
 
         assert_eq!(InputType::String.to_string(), "string");
         assert_eq!(InputType::Number.to_string(), "number");
@@ -44,7 +44,7 @@ mod tests {
 
     #[test]
     fn test_input_request_status_display() {
-        use persistence::InputRequestStatus;
+        use s_e_e_persistence::InputRequestStatus;
 
         assert_eq!(InputRequestStatus::Pending.to_string(), "pending");
         assert_eq!(InputRequestStatus::Fulfilled.to_string(), "fulfilled");

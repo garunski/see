@@ -2,7 +2,7 @@
 //!
 //! Tests the new user input fields added to TaskExecution following Single Responsibility Principle.
 
-use persistence::{TaskExecution, TaskStatus};
+use s_e_e_persistence::{TaskExecution, TaskStatus};
 use chrono::Utc;
 
 #[test]

@@ -2,7 +2,7 @@ use crate::queries::prompt_queries::{
     use_create_prompt_mutation, use_delete_prompt_mutation, use_update_prompt_mutation,
 };
 use dioxus::prelude::*;
-use dioxus_query_custom::prelude::MutationState;
+use s_e_e_dioxus_query::prelude::MutationState;
 use s_e_e_core::Prompt;
 
 pub struct PromptMutations {

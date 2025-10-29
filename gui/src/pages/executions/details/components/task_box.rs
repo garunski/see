@@ -15,15 +15,29 @@ pub fn TaskBox(props: TaskBoxProps) -> Element {
     let TaskBoxProps { task, execution_id } = props;
     let navigator = use_navigator();
 
+    let is_clickable = task.has_execution_data;
+    let cursor_class = if is_clickable {
+        "cursor-pointer"
+    } else {
+        "cursor-not-allowed"
+    };
+    let hover_class = if is_clickable {
+        "hover:bg-zinc-100 dark:hover:bg-zinc-700"
+    } else {
+        ""
+    };
+
     rsx! {
         div { class: "min-w-[120px]",
             div {
-                class: "bg-zinc-50 dark:bg-zinc-800 rounded-xl border border-zinc-200 dark:border-zinc-700 p-6 shadow-sm cursor-pointer hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors relative",
+                class: "bg-zinc-50 dark:bg-zinc-800 rounded-xl border border-zinc-200 dark:border-zinc-700 p-6 shadow-sm {cursor_class} {hover_class} transition-colors relative",
                 onclick: move |_| {
-                    navigator.push(Route::WorkflowDetailsTaskDetailsPage {
-                        execution_id: execution_id.clone(),
-                        task_id: task.id.clone()
-                    });
+                    if is_clickable {
+                        navigator.push(Route::WorkflowDetailsTaskDetailsPage {
+                            execution_id: execution_id.clone(),
+                            task_id: task.id.clone()
+                        });
+                    }
                 },
                 // Status icon - absolute positioned in top right
                 div {

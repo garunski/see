@@ -4,8 +4,8 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-persistence = { path = "../persistence" }
-engine = { path = "../engine" }
+s_e_e_persistence = { path = "../persistence" }
+s_e_e_engine = { path = "../engine" }
 tokio = { version = "1.0", features = ["full"] }
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["json"] }

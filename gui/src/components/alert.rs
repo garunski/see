@@ -75,7 +75,7 @@ pub fn Alert(props: AlertProps) -> Element {
                     if dismissible.unwrap_or(false) {
                         button {
                             r#type: "button",
-                            class: format!("inline-flex rounded-md {} hover:opacity-75 focus:outline focus:outline-2 focus:outline-offset-2", text_color),
+                            class: format!("inline-flex rounded-md cursor-pointer {} hover:opacity-75 focus:outline focus:outline-2 focus:outline-offset-2", text_color),
                             onclick: move |_| {
                                 if let Some(handler) = on_dismiss {
                                     handler.call(());

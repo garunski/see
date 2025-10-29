@@ -62,7 +62,7 @@ pub fn Notification(notification: Signal<NotificationData>, on_close: EventHandl
                             div { class: "ml-4 flex shrink-0",
                                 button {
                                     r#type: "button",
-                                    class: "inline-flex rounded-md text-gray-400 hover:text-gray-500 focus:outline focus:outline-2 focus:outline-offset-2 focus:outline-indigo-600 dark:hover:text-white dark:focus:outline-indigo-500",
+                                    class: "inline-flex rounded-md cursor-pointer text-gray-400 hover:text-gray-500 focus:outline focus:outline-2 focus:outline-offset-2 focus:outline-indigo-600 dark:hover:text-white dark:focus:outline-indigo-500",
                                     onclick: move |_| on_close.call(()),
                                     span { class: "sr-only", "Close" }
                                     Icon {

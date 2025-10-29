@@ -40,6 +40,6 @@ pub async fn init_global_store() -> Result<(), String> {
 }
 
 /// Get reference to the global persistence store
-pub fn get_global_store() -> Result<std::sync::Arc<persistence::Store>, String> {
+pub fn get_global_store() -> Result<std::sync::Arc<s_e_e_persistence::Store>, String> {
     store_singleton::get_global_store()
 }

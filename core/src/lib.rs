@@ -3,13 +3,14 @@
 
 pub mod api;
 pub mod bridge;
+pub mod embedded_data;
 pub mod errors;
 pub mod logging;
 pub mod store_singleton;
 pub mod validation;
 
 // Re-export persistence types
-pub use persistence::{
+pub use s_e_e_persistence::{
     AppSettings,
     AuditEvent,
     AuditStatus, // Re-export from persistence (has Display trait)
@@ -27,7 +28,7 @@ pub use persistence::{
 };
 
 // Re-export engine types
-pub use engine::{AuditEntry, EngineWorkflow, TaskInfo};
+pub use s_e_e_engine::{AuditEntry, EngineWorkflow, TaskInfo};
 
 // Type alias for GUI compatibility
 pub type WorkflowJson = EngineWorkflow;

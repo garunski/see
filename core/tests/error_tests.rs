@@ -1,6 +1,6 @@
 // Error handling tests ONLY
 
-use engine::{EngineError, HandlerError, ParserError};
+use s_e_e_engine::{EngineError, HandlerError, ParserError};
 use s_e_e_core::CoreError;
 
 #[test]

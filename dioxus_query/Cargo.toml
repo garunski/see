@@ -1,5 +1,5 @@
 [package]
-name = "dioxus_query_custom"
+name = "s_e_e_dioxus_query"
 version = "0.1.0"
 edition = "2021"
 description = "Custom Dioxus query system with type-safe in-memory cache"
@@ -18,6 +18,6 @@ tokio-test = "0.4"
 serde_json = "1.0"
 
 [lib]
-name = "dioxus_query_custom"
+name = "s_e_e_dioxus_query"
 path = "src/lib.rs"
 

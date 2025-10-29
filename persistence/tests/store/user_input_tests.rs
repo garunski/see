@@ -2,7 +2,7 @@
 //!
 //! Tests CRUD operations for UserInputRequest following Single Responsibility Principle.
 
-use persistence::{enums::*, Store, UserInputRequest};
+use s_e_e_persistence::{enums::*, Store, UserInputRequest};
 use chrono::Utc;
 use serde_json::json;
 

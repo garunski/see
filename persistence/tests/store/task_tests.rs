@@ -2,7 +2,7 @@
 //! 
 //! Tests save_task_execution, get_tasks_for_workflow following Single Responsibility Principle.
 
-use persistence::{Store, TaskExecution, TaskStatus};
+use s_e_e_persistence::{Store, TaskExecution, TaskStatus};
 use chrono::Utc;
 
 async fn create_test_store() -> Store {

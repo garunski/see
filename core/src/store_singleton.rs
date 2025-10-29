@@ -7,7 +7,7 @@
 //!
 //! Unit tests should use `Store::new(":memory:")` directly.
 
-use persistence::Store;
+use s_e_e_persistence::Store;
 use std::sync::{Arc, OnceLock};
 
 static GLOBAL_STORE: OnceLock<Arc<Store>> = OnceLock::new();

@@ -90,7 +90,7 @@ pub fn UserInputForm(
             }
 
             button {
-                class: "w-full px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-md font-medium transition-colors inline-flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed",
+                class: "w-full px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-md font-medium transition-colors inline-flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer",
                 disabled: is_submitting() || input_value().is_empty(),
                 onclick: move |_| {
                     let input = input_value();

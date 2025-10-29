@@ -1,8 +1,8 @@
 // Audit conversion tests ONLY
 
 use chrono::Datelike;
-use engine::{AuditEntry, AuditStatus as EngineAuditStatus};
-use persistence::AuditStatus as PersistenceAuditStatus;
+use s_e_e_engine::{AuditEntry, AuditStatus as EngineAuditStatus};
+use s_e_e_persistence::AuditStatus as PersistenceAuditStatus;
 use s_e_e_core::{bridge::*, CoreError};
 
 #[test]

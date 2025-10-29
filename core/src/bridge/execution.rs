@@ -1,7 +1,7 @@
 // Execution conversions ONLY
 
-use engine::WorkflowResult as EngineWorkflowResult;
-use persistence::{WorkflowExecution, WorkflowExecutionStatus};
+use s_e_e_engine::WorkflowResult as EngineWorkflowResult;
+use s_e_e_persistence::{WorkflowExecution, WorkflowExecutionStatus};
 
 /// Convert WorkflowResult to WorkflowExecution
 pub fn workflow_result_to_execution(

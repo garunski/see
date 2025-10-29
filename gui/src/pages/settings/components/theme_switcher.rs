@@ -16,7 +16,7 @@ pub fn ThemeSwitcher(props: ThemeSwitcherProps) -> Element {
     rsx! {
         div { class: "inline-flex rounded-lg bg-zinc-100 dark:bg-zinc-800 p-1",
             button {
-                class: format!("flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium transition-colors {}",
+                class: format!("flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium transition-colors cursor-pointer {}",
                     match current_theme == Theme::System {
                         true => "bg-white dark:bg-zinc-700 text-zinc-900 dark:text-white shadow-sm",
                         false => "text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white"
@@ -30,7 +30,7 @@ pub fn ThemeSwitcher(props: ThemeSwitcherProps) -> Element {
                 "System"
             }
             button {
-                class: format!("flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium transition-colors {}",
+                class: format!("flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium transition-colors cursor-pointer {}",
                     match current_theme == Theme::Light {
                         true => "bg-white dark:bg-zinc-700 text-zinc-900 dark:text-white shadow-sm",
                         false => "text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white"
@@ -44,7 +44,7 @@ pub fn ThemeSwitcher(props: ThemeSwitcherProps) -> Element {
                 "Light"
             }
             button {
-                class: format!("flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium transition-colors {}",
+                class: format!("flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium transition-colors cursor-pointer {}",
                     match current_theme == Theme::Dark {
                         true => "bg-white dark:bg-zinc-700 text-zinc-900 dark:text-white shadow-sm",
                         false => "text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white"

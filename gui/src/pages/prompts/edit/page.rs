@@ -1,4 +1,5 @@
 use crate::components::{Notification, NotificationData, NotificationType};
+use crate::layout::router::Route;
 use crate::queries::prompt_queries::use_prompt_query;
 use dioxus::prelude::*;
 use dioxus_router::prelude::use_navigator;
@@ -9,7 +10,7 @@ use super::validation::{create_prompt_from_fields, validate_prompt_fields};
 
 #[component]
 pub fn UserPromptEditPage(id: String) -> Element {
-    let _navigator = use_navigator();
+    let navigator = use_navigator();
     let is_new = id.is_empty();
 
     // Load existing prompt data if editing
@@ -46,6 +47,14 @@ pub fn UserPromptEditPage(id: String) -> Element {
     let mutations = use_prompt_mutations();
     let mut notification = use_notification_state();
     let mut show_delete_dialog = use_signal(|| false);
+
+    // Redirect to prompts list after successful deletion
+    use_effect(move || {
+        let delete_state = mutations.delete_state.read();
+        if delete_state.is_success {
+            navigator.push(Route::UserPromptsListPage {});
+        }
+    });
 
     // ALL EVENT HANDLERS INLINE - NO EXTRACTION
     rsx! {

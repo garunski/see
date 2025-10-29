@@ -6,8 +6,8 @@ use crate::bridge::workflow::workflow_definition_to_engine;
 use crate::bridge::{OutputCallback, WorkflowResult};
 use crate::errors::CoreError;
 use crate::store_singleton::get_global_store;
-use engine::WorkflowEngine;
-use persistence::{
+use s_e_e_engine::WorkflowEngine;
+use s_e_e_persistence::{
     InputRequestStatus, InputType, UserInputRequest, WorkflowExecution, WorkflowExecutionStatus,
 };
 use serde_json::Value;
@@ -130,14 +130,19 @@ pub async fn execute_workflow_by_id(
     tracing::debug!("Executing workflow: {}", workflow_id);
 
     // Step 1: Load WorkflowDefinition from Persistence
+    tracing::debug!("Step 1: Getting global store");
     let store = get_global_store()?;
+    tracing::debug!("Step 1: Got global store");
+    tracing::debug!("Step 1: Loading workflow from DB");
     let workflow = store
         .get_workflow(workflow_id)
         .await
         .map_err(CoreError::Persistence)?
         .ok_or_else(|| CoreError::WorkflowNotFound(workflow_id.to_string()))?;
+    tracing::debug!("Step 1: Loaded workflow: {}", workflow.name);
 
     // Step 2: Validate Workflow Content
+    tracing::debug!("Step 2: Validating workflow content");
     if workflow.content.is_empty() {
         return Err(CoreError::Execution(
             "Workflow content is empty".to_string(),
@@ -145,11 +150,15 @@ pub async fn execute_workflow_by_id(
     }
 
     // Step 3: Parse workflow content to JSON for snapshot
+    tracing::debug!("Step 3: Parsing workflow JSON");
     let workflow_json: serde_json::Value = serde_json::from_str(&workflow.content)
         .map_err(|e| CoreError::Execution(format!("Invalid workflow JSON: {}", e)))?;
+    tracing::debug!("Step 3: Parsed workflow JSON successfully");
 
     // Step 4: Parse JSON Content to EngineWorkflow
+    tracing::debug!("Step 4: Converting to engine workflow");
     let engine_workflow = workflow_definition_to_engine(&workflow)?;
+    tracing::debug!("Step 4: Converted to engine workflow");
 
     // Step 5: Create Initial WorkflowExecution Record
     let execution_id = uuid::Uuid::new_v4().to_string();
@@ -170,30 +179,51 @@ pub async fn execute_workflow_by_id(
     };
 
     // Step 6: Save Initial Execution to Persistence
+    tracing::debug!("Step 6: Saving initial execution to DB");
     store
         .save_workflow_execution(initial_execution.clone())
         .await
         .map_err(CoreError::Persistence)?;
+    tracing::debug!("Step 6: Saved initial execution");
 
     // Step 7: Execute Workflow Through Engine
+    tracing::debug!("Step 7: Creating workflow engine");
     let engine = WorkflowEngine::new();
-    let engine_result = engine
-        .execute_workflow(engine_workflow)
-        .await
-        .map_err(CoreError::Engine)?;
+    tracing::debug!("Step 7: Executing workflow through engine");
+    let engine_result = match engine.execute_workflow(engine_workflow).await {
+        Ok(result) => {
+            tracing::debug!("Step 7: Engine execution completed successfully");
+            result
+        }
+        Err(e) => {
+            tracing::error!("Step 7: Engine execution failed: {}", e);
+            // Update execution status to failed
+            let mut failed_execution = initial_execution.clone();
+            failed_execution.status = WorkflowExecutionStatus::Failed;
+            failed_execution.completed_at = Some(chrono::Utc::now());
+            failed_execution.errors = vec![e.to_string()];
+
+            store
+                .save_workflow_execution(failed_execution)
+                .await
+                .map_err(CoreError::Persistence)?;
+
+            return Err(CoreError::Engine(e));
+        }
+    };
 
     // Step 8: Check if workflow is waiting for input
     let has_input_waiting = engine_result
         .tasks
         .iter()
-        .any(|t| matches!(t.status, engine::TaskStatus::WaitingForInput));
+        .any(|t| matches!(t.status, s_e_e_engine::TaskStatus::WaitingForInput));
 
     if has_input_waiting {
         tracing::debug!("Workflow paused - waiting for user input: {}", workflow_id);
 
         // Create UserInputRequest records for tasks waiting for input BEFORE moving the snapshot
         for task_info in &engine_result.tasks {
-            if matches!(task_info.status, engine::TaskStatus::WaitingForInput) {
+            if matches!(task_info.status, s_e_e_engine::TaskStatus::WaitingForInput) {
                 // Extract user input parameters from workflow snapshot
                 if let Some(task_node) =
                     find_task_in_snapshot(&initial_execution.workflow_snapshot, &task_info.id)

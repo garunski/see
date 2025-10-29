@@ -1,6 +1,6 @@
 //! Simple CLI tool to test the workflow engine
 
-use ::engine::*;
+use ::s_e_e_engine::*;
 use std::env;
 use std::fs;
 

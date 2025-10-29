@@ -2,7 +2,7 @@
 //!
 //! Tests multiple concurrent readers, write during read following Single Responsibility Principle.
 
-use persistence::{
+use s_e_e_persistence::{
     Store, TaskExecution, TaskExecutionStatus, WorkflowDefinition, WorkflowExecution,
     WorkflowExecutionStatus,
 };

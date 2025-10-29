@@ -1,7 +1,7 @@
 // System prompt model tests ONLY
 // Tests for SystemPrompt struct and methods
 
-use persistence::SystemPrompt;
+use s_e_e_persistence::SystemPrompt;
 
 #[test]
 fn test_system_prompt_creation() {

@@ -2,7 +2,7 @@
 //! 
 //! Tests log_audit_event following Single Responsibility Principle.
 
-use persistence::{Store, AuditEvent, AuditStatus};
+use s_e_e_persistence::{Store, AuditEvent, AuditStatus};
 use chrono::Utc;
 
 async fn create_test_store() -> Store {

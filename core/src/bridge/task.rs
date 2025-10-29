@@ -1,7 +1,7 @@
 // Task conversions ONLY
 
-use engine::{TaskInfo, TaskStatus as EngineTaskStatus};
-use persistence::{TaskExecution, TaskExecutionStatus as PersistenceTaskExecutionStatus};
+use s_e_e_engine::{TaskInfo, TaskStatus as EngineTaskStatus};
+use s_e_e_persistence::{TaskExecution, TaskExecutionStatus as PersistenceTaskExecutionStatus};
 use std::collections::HashMap;
 
 /// Convert TaskInfo to TaskExecution

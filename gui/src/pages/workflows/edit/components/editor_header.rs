@@ -56,7 +56,7 @@ pub fn EditorHeader(props: EditorHeaderProps) -> Element {
                 // Edit in JSON button
                 if !is_new {
                     IconButton {
-                        variant: IconButtonVariant::Ghost,
+                        variant: IconButtonVariant::Secondary,
                         size: IconButtonSize::Medium,
                         onclick: move |_| {
                             navigator.push(Route::WorkflowJsonEditPage { id: workflow_id.clone() });

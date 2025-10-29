@@ -1,218 +1,200 @@
 //! System templates integration tests
 //!
-//! Tests that verify system templates load correctly from real files
-//! in the /system directory at workspace root
+//! Tests that verify system templates are correctly embedded into the binary
+//! and can be loaded and parsed properly.
 
-use std::path::PathBuf;
+use s_e_e_core::embedded_data;
 
 #[tokio::test]
-async fn test_system_workflows_directory_exists() {
-    // Get workspace root (parent of core directory)
-    let workspace = env!("CARGO_MANIFEST_DIR");
-    let workspace_path = PathBuf::from(workspace);
-    let workspace_root = workspace_path.parent().unwrap();
-    let workflows_dir = workspace_root.join("system/workflows");
-
-    assert!(
-        workflows_dir.exists(),
-        "system/workflows directory must exist at {:?}",
-        workflows_dir
+async fn test_embedded_workflows_count() {
+    let workflows = embedded_data::get_default_workflows();
+    assert_eq!(
+        workflows.len(),
+        4,
+        "Expected exactly 4 embedded workflows, found {}",
+        workflows.len()
     );
 }
 
 #[tokio::test]
-async fn test_system_prompts_directory_exists() {
-    // Get workspace root (parent of core directory)
-    let workspace = env!("CARGO_MANIFEST_DIR");
-    let workspace_path = PathBuf::from(workspace);
-    let workspace_root = workspace_path.parent().unwrap();
-    let prompts_dir = workspace_root.join("system/prompts");
-
-    assert!(
-        prompts_dir.exists(),
-        "system/prompts directory must exist at {:?}",
-        prompts_dir
+async fn test_embedded_prompts_count() {
+    let prompts = embedded_data::get_default_prompts();
+    assert_eq!(
+        prompts.len(),
+        3,
+        "Expected exactly 3 embedded prompts, found {}",
+        prompts.len()
     );
 }
 
 #[tokio::test]
-async fn test_system_workflows_file_count() {
-    let workspace = env!("CARGO_MANIFEST_DIR");
-    let workspace_path = PathBuf::from(workspace);
-    let workspace_root = workspace_path.parent().unwrap();
-    let workflows_dir = workspace_root.join("system/workflows");
+async fn test_embedded_workflows_parse() {
+    let workflows = embedded_data::get_default_workflows();
 
-    let json_count = std::fs::read_dir(&workflows_dir)
-        .unwrap()
-        .filter_map(|e| e.ok())
-        .filter(|e| e.path().extension().is_some_and(|ext| ext == "json"))
-        .count();
+    for (filename, content) in workflows {
+        let json: serde_json::Value = serde_json::from_str(content)
+            .unwrap_or_else(|_| panic!("Failed to parse workflow JSON in {}", filename));
+
+        assert!(
+            !json.is_null(),
+            "Workflow {} should not be null",
+            filename
+        );
+    }
+}
+
+#[tokio::test]
+async fn test_embedded_prompts_parse() {
+    let prompts = embedded_data::get_default_prompts();
+
+    for (filename, content) in prompts {
+        let json: serde_json::Value = serde_json::from_str(content)
+            .unwrap_or_else(|_| panic!("Failed to parse prompt JSON in {}", filename));
+
+        assert!(
+            !json.is_null(),
+            "Prompt {} should not be null",
+            filename
+        );
+    }
+}
+
+#[tokio::test]
+async fn test_embedded_workflows_valid() {
+    let workflows = embedded_data::get_default_workflows();
+
+    for (filename, content) in workflows {
+        let json: serde_json::Value = serde_json::from_str(content)
+            .unwrap_or_else(|_| panic!("Failed to parse workflow JSON in {}", filename));
+
+        // Verify required fields
+        assert!(
+            json["id"].is_string(),
+            "Missing or invalid 'id' in {}",
+            filename
+        );
+        assert!(
+            json["name"].is_string(),
+            "Missing or invalid 'name' in {}",
+            filename
+        );
+        assert!(
+            json["version"].is_string(),
+            "Missing or invalid 'version' in {}",
+            filename
+        );
+        assert!(
+            json["content"].is_object(),
+            "Missing or invalid 'content' (must be object) in {}",
+            filename
+        );
+        assert!(
+            json["description"].is_string() || json["description"].is_null(),
+            "Invalid 'description' (must be string or null) in {}",
+            filename
+        );
+    }
+}
+
+#[tokio::test]
+async fn test_embedded_prompts_valid() {
+    let prompts = embedded_data::get_default_prompts();
+
+    for (filename, content) in prompts {
+        let json: serde_json::Value = serde_json::from_str(content)
+            .unwrap_or_else(|_| panic!("Failed to parse prompt JSON in {}", filename));
+
+        // Verify required fields match the Prompt model
+        assert!(
+            json["id"].is_string(),
+            "Missing or invalid 'id' in {}",
+            filename
+        );
+        assert!(
+            json["name"].is_string(),
+            "Missing or invalid 'name' in {}",
+            filename
+        );
+        assert!(
+            json["content"].is_string(),
+            "Missing or invalid 'content' (must be string) in {}",
+            filename
+        );
+    }
+}
+
+#[tokio::test]
+async fn test_embedded_workflows_have_system_prefix() {
+    let workflows = embedded_data::get_default_workflows();
+
+    for (filename, content) in workflows {
+        let json: serde_json::Value = serde_json::from_str(content).unwrap();
+        let id = json["id"].as_str().unwrap();
+
+        assert!(
+            id.starts_with("system:"),
+            "System workflow ID '{}' in {} must start with 'system:'",
+            id,
+            filename
+        );
+    }
+}
+
+#[tokio::test]
+async fn test_embedded_prompts_have_system_prefix() {
+    let prompts = embedded_data::get_default_prompts();
+
+    for (filename, content) in prompts {
+        let json: serde_json::Value = serde_json::from_str(content).unwrap();
+        let id = json["id"].as_str().unwrap();
+
+        assert!(
+            id.starts_with("system:"),
+            "System prompt ID '{}' in {} must start with 'system:'",
+            id,
+            filename
+        );
+    }
+}
+
+#[tokio::test]
+async fn test_embedded_workflows_filenames() {
+    let workflows = embedded_data::get_default_workflows();
+    let filenames: Vec<&str> = workflows.iter().map(|(name, _)| *name).collect();
 
     assert!(
-        json_count >= 3,
-        "Expected at least 3 system workflows, found {}",
-        json_count
+        filenames.contains(&"code-review.json"),
+        "Missing code-review.json workflow"
+    );
+    assert!(
+        filenames.contains(&"deploy-app.json"),
+        "Missing deploy-app.json workflow"
+    );
+    assert!(
+        filenames.contains(&"setup-project.json"),
+        "Missing setup-project.json workflow"
+    );
+    assert!(
+        filenames.contains(&"user-input-sample.json"),
+        "Missing user-input-sample.json workflow"
     );
 }
 
 #[tokio::test]
-async fn test_system_prompts_file_count() {
-    let workspace = env!("CARGO_MANIFEST_DIR");
-    let workspace_path = PathBuf::from(workspace);
-    let workspace_root = workspace_path.parent().unwrap();
-    let prompts_dir = workspace_root.join("system/prompts");
-
-    let json_count = std::fs::read_dir(&prompts_dir)
-        .unwrap()
-        .filter_map(|e| e.ok())
-        .filter(|e| e.path().extension().is_some_and(|ext| ext == "json"))
-        .count();
+async fn test_embedded_prompts_filenames() {
+    let prompts = embedded_data::get_default_prompts();
+    let filenames: Vec<&str> = prompts.iter().map(|(name, _)| *name).collect();
 
     assert!(
-        json_count >= 3,
-        "Expected at least 3 system prompts, found {}",
-        json_count
+        filenames.contains(&"bug-fix.json"),
+        "Missing bug-fix.json prompt"
     );
-}
-
-#[tokio::test]
-async fn test_system_workflows_valid_json() {
-    let workspace = env!("CARGO_MANIFEST_DIR");
-    let workspace_path = PathBuf::from(workspace);
-    let workspace_root = workspace_path.parent().unwrap();
-    let workflows_dir = workspace_root.join("system/workflows");
-
-    for entry in std::fs::read_dir(&workflows_dir).unwrap() {
-        let entry = entry.unwrap();
-        let path = entry.path();
-
-        if path.extension().is_some_and(|ext| ext == "json") {
-            let content = std::fs::read_to_string(&path).unwrap_or_else(|_| {
-                panic!("Failed to read file: {:?}", path);
-            });
-
-            let json: serde_json::Value = serde_json::from_str(&content)
-                .unwrap_or_else(|_| panic!("Invalid JSON in {:?}", path));
-
-            // Verify required fields
-            assert!(
-                json["id"].is_string(),
-                "Missing or invalid 'id' in {:?}",
-                path
-            );
-            assert!(
-                json["name"].is_string(),
-                "Missing or invalid 'name' in {:?}",
-                path
-            );
-            assert!(
-                json["version"].is_string(),
-                "Missing or invalid 'version' in {:?}",
-                path
-            );
-            assert!(
-                json["content"].is_object(),
-                "Missing or invalid 'content' (must be object) in {:?}",
-                path
-            );
-            assert!(
-                json["description"].is_string() || json["description"].is_null(),
-                "Invalid 'description' (must be string or null) in {:?}",
-                path
-            );
-        }
-    }
-}
-
-#[tokio::test]
-async fn test_system_prompts_valid_json() {
-    let workspace = env!("CARGO_MANIFEST_DIR");
-    let workspace_path = PathBuf::from(workspace);
-    let workspace_root = workspace_path.parent().unwrap();
-    let prompts_dir = workspace_root.join("system/prompts");
-
-    for entry in std::fs::read_dir(&prompts_dir).unwrap() {
-        let entry = entry.unwrap();
-        let path = entry.path();
-
-        if path.extension().is_some_and(|ext| ext == "json") {
-            let content = std::fs::read_to_string(&path).unwrap_or_else(|_| {
-                panic!("Failed to read file: {:?}", path);
-            });
-
-            let json: serde_json::Value = serde_json::from_str(&content)
-                .unwrap_or_else(|_| panic!("Invalid JSON in {:?}", path));
-
-            // Verify required fields match the Prompt model
-            assert!(
-                json["id"].is_string(),
-                "Missing or invalid 'id' in {:?}",
-                path
-            );
-            assert!(
-                json["name"].is_string(),
-                "Missing or invalid 'name' in {:?}",
-                path
-            );
-            assert!(
-                json["content"].is_string(),
-                "Missing or invalid 'content' (must be string) in {:?}",
-                path
-            );
-        }
-    }
-}
-
-#[tokio::test]
-async fn test_system_workflows_have_system_prefix() {
-    let workspace = env!("CARGO_MANIFEST_DIR");
-    let workspace_path = PathBuf::from(workspace);
-    let workspace_root = workspace_path.parent().unwrap();
-    let workflows_dir = workspace_root.join("system/workflows");
-
-    for entry in std::fs::read_dir(&workflows_dir).unwrap() {
-        let entry = entry.unwrap();
-        let path = entry.path();
-
-        if path.extension().is_some_and(|ext| ext == "json") {
-            let content = std::fs::read_to_string(&path).unwrap();
-            let json: serde_json::Value = serde_json::from_str(&content).unwrap();
-
-            let id = json["id"].as_str().unwrap();
-
-            assert!(
-                id.starts_with("system:"),
-                "System workflow ID '{}' in {:?} must start with 'system:'",
-                id,
-                path
-            );
-        }
-    }
-}
-
-#[tokio::test]
-async fn test_system_prompts_have_system_prefix() {
-    let workspace = env!("CARGO_MANIFEST_DIR");
-    let workspace_path = PathBuf::from(workspace);
-    let workspace_root = workspace_path.parent().unwrap();
-    let prompts_dir = workspace_root.join("system/prompts");
-
-    for entry in std::fs::read_dir(&prompts_dir).unwrap() {
-        let entry = entry.unwrap();
-        let path = entry.path();
-
-        if path.extension().is_some_and(|ext| ext == "json") {
-            let content = std::fs::read_to_string(&path).unwrap();
-            let json: serde_json::Value = serde_json::from_str(&content).unwrap();
-
-            let id = json["id"].as_str().unwrap();
-
-            assert!(
-                id.starts_with("system:"),
-                "System prompt ID '{}' in {:?} must start with 'system:'",
-                id,
-                path
-            );
-        }
-    }
+    assert!(
+        filenames.contains(&"code-review.json"),
+        "Missing code-review.json prompt"
+    );
+    assert!(
+        filenames.contains(&"documentation.json"),
+        "Missing documentation.json prompt"
+    );
 }

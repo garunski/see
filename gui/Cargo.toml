@@ -5,9 +5,9 @@ edition = "2021"
 
 [dependencies]
 s_e_e_core = { path = "../core" }
-engine = { path = "../engine" }
+s_e_e_engine = { path = "../engine" }
 dioxus = { version = "0.6", features = ["desktop", "router"] }
-dioxus_query_custom = { path = "../dioxus_query_custom" }
+s_e_e_dioxus_query = { path = "../dioxus_query" }
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter", "fmt"] }
 dark-light = "0.2.0"

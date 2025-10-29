@@ -1,6 +1,6 @@
 use crate::services::SettingsService;
 use dioxus::prelude::Signal;
-use dioxus_query_custom::prelude::*;
+use s_e_e_dioxus_query::prelude::*;
 use s_e_e_core::AppSettings;
 use std::rc::Rc;
 

@@ -1571,21 +1571,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "dioxus_query_custom"
-version = "0.1.0"
-dependencies = [
- "dioxus",
- "futures",
- "serde",
- "serde_json",
- "tokio",
- "tokio-test",
- "tracing",
- "tracing-appender",
- "tracing-subscriber",
-]
-
-[[package]]
 name = "dioxus_server_macro"
 version = "0.6.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1741,23 +1726,6 @@ name = "endi"
 version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a3d8a32ae18130a3c84dd492d4215c3d913c3b07c6b63c2eb3eb7ff1101ab7bf"
-
-[[package]]
-name = "engine"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "async-trait",
- "chrono",
- "serde",
- "serde_json",
- "thiserror 1.0.69",
- "tokio",
- "tokio-test",
- "tracing",
- "tracing-subscriber",
- "uuid",
-]
 
 [[package]]
 name = "enumflags2"
@@ -3905,24 +3873,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9b4f627cb1b25917193a259e49bdad08f671f8d9708acfd5fe0a8c1455d87220"
 
 [[package]]
-name = "persistence"
-version = "0.1.0"
-dependencies = [
- "chrono",
- "serde",
- "serde_json",
- "sqlx",
- "tempfile",
- "thiserror 1.0.69",
- "tokio",
- "tokio-test",
- "tracing",
- "tracing-appender",
- "tracing-subscriber",
- "uuid",
-]
-
-[[package]]
 name = "phf"
 version = "0.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4649,9 +4599,9 @@ name = "s_e_e_core"
 version = "0.1.0"
 dependencies = [
  "chrono",
- "engine",
  "jsonschema",
- "persistence",
+ "s_e_e_engine",
+ "s_e_e_persistence",
  "serde",
  "serde_json",
  "tempfile",
@@ -4665,6 +4615,38 @@ dependencies = [
 ]
 
 [[package]]
+name = "s_e_e_dioxus_query"
+version = "0.1.0"
+dependencies = [
+ "dioxus",
+ "futures",
+ "serde",
+ "serde_json",
+ "tokio",
+ "tokio-test",
+ "tracing",
+ "tracing-appender",
+ "tracing-subscriber",
+]
+
+[[package]]
+name = "s_e_e_engine"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "async-trait",
+ "chrono",
+ "serde",
+ "serde_json",
+ "thiserror 1.0.69",
+ "tokio",
+ "tokio-test",
+ "tracing",
+ "tracing-subscriber",
+ "uuid",
+]
+
+[[package]]
 name = "s_e_e_gui"
 version = "0.1.0"
 dependencies = [
@@ -4672,14 +4654,32 @@ dependencies = [
  "dark-light",
  "dioxus",
  "dioxus-desktop",
- "dioxus_query_custom",
- "engine",
  "rfd",
  "s_e_e_core",
+ "s_e_e_dioxus_query",
+ "s_e_e_engine",
  "serde_json",
  "thiserror 1.0.69",
  "tokio",
  "tracing",
+ "tracing-subscriber",
+ "uuid",
+]
+
+[[package]]
+name = "s_e_e_persistence"
+version = "0.1.0"
+dependencies = [
+ "chrono",
+ "serde",
+ "serde_json",
+ "sqlx",
+ "tempfile",
+ "thiserror 1.0.69",
+ "tokio",
+ "tokio-test",
+ "tracing",
+ "tracing-appender",
  "tracing-subscriber",
  "uuid",
 ]

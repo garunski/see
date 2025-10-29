@@ -2,7 +2,7 @@
 //! 
 //! Tests serialization, validation, defaults following Single Responsibility Principle.
 
-use persistence::WorkflowDefinition;
+use s_e_e_persistence::WorkflowDefinition;
 use chrono::Utc;
 
 #[test]

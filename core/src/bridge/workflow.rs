@@ -2,8 +2,8 @@
 
 use crate::errors::CoreError;
 use crate::validation;
-use engine::{EngineWorkflow, WorkflowResult as EngineWorkflowResult};
-use persistence::WorkflowDefinition;
+use s_e_e_engine::{EngineWorkflow, WorkflowResult as EngineWorkflowResult};
+use s_e_e_persistence::WorkflowDefinition;
 use std::sync::Arc;
 
 /// Enhanced WorkflowResult with execution_id for GUI tracking
@@ -12,8 +12,8 @@ pub struct WorkflowResult {
     pub success: bool,
     pub workflow_name: String,
     pub execution_id: String, // Added for GUI tracking
-    pub tasks: Vec<engine::TaskInfo>,
-    pub audit_trail: Vec<engine::AuditEntry>,
+    pub tasks: Vec<s_e_e_engine::TaskInfo>,
+    pub audit_trail: Vec<s_e_e_engine::AuditEntry>,
     pub per_task_logs: std::collections::HashMap<String, Vec<String>>,
     pub errors: Vec<String>,
 }
@@ -29,8 +29,8 @@ pub fn workflow_definition_to_engine(
     validation::validate_workflow_json(&workflow.content).map_err(CoreError::Validation)?;
 
     // Step 2: Parse JSON content to get tasks (now we know it's valid)
-    let parsed = engine::parse_workflow(&workflow.content)
-        .map_err(|e| CoreError::Engine(engine::EngineError::Parser(e)))?;
+    let parsed = s_e_e_engine::parse_workflow(&workflow.content)
+        .map_err(|e| CoreError::Engine(s_e_e_engine::EngineError::Parser(e)))?;
 
     // EngineWorkflow is created by parse_workflow with:
     // - id: extracted from JSON

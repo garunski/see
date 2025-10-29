@@ -4,7 +4,7 @@ use crate::errors::*;
 use crate::types::*;
 use async_trait::async_trait;
 use serde_json::Value;
-use std::process::Command;
+use tokio::process::Command;
 use tracing::{debug, error, instrument, trace, warn};
 
 /// CLI command handler
@@ -56,17 +56,21 @@ impl super::TaskHandler for CliCommandHandler {
             "Spawning command process"
         );
 
-        // Execute the command
-        let output = Command::new(command).args(args).output().map_err(|e| {
-            error!(
-                execution_id = %context.execution_id,
-                task_id = %task.id,
-                command = %command,
-                error = %e,
-                "Failed to spawn command process"
-            );
-            HandlerError::ExecutionFailed(format!("Failed to execute command: {}", e))
-        })?;
+        // Execute the command (async)
+        let output = Command::new(command)
+            .args(args)
+            .output()
+            .await
+            .map_err(|e| {
+                error!(
+                    execution_id = %context.execution_id,
+                    task_id = %task.id,
+                    command = %command,
+                    error = %e,
+                    "Failed to spawn command process"
+                );
+                HandlerError::ExecutionFailed(format!("Failed to execute command: {}", e))
+            })?;
 
         let stdout = String::from_utf8_lossy(&output.stdout);
         let stderr = String::from_utf8_lossy(&output.stderr);

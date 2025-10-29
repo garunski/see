@@ -2,7 +2,7 @@
 //! 
 //! Tests save_prompt, list_prompts, delete_prompt following Single Responsibility Principle.
 
-use persistence::{Store, Prompt};
+use s_e_e_persistence::{Store, Prompt};
 use chrono::Utc;
 
 async fn create_test_store() -> Store {

@@ -126,3 +126,62 @@ fn test_empty_workflow_execution() {
         }
     }
 }
+
+#[test]
+fn test_embedded_data_population() {
+    let rt = tokio::runtime::Runtime::new().unwrap();
+    let init_result = rt.block_on(init_test_store());
+
+    match init_result {
+        Ok(_) => {
+            // Populate initial data from embedded templates
+            let populate_result = rt.block_on(populate_initial_data());
+            assert!(
+                populate_result.is_ok(),
+                "Failed to populate initial data: {:?}",
+                populate_result.err()
+            );
+
+            let store = get_global_store().unwrap();
+
+            // Verify workflows were loaded
+            let workflows = rt.block_on(store.list_workflows()).unwrap();
+            assert!(
+                workflows.len() >= 4,
+                "Expected at least 4 workflows, found {}",
+                workflows.len()
+            );
+
+            // Verify prompts were loaded
+            let prompts = rt.block_on(store.list_prompts()).unwrap();
+            assert!(
+                prompts.len() >= 3,
+                "Expected at least 3 prompts, found {}",
+                prompts.len()
+            );
+
+            // Verify system workflow IDs have correct prefix
+            for workflow in &workflows {
+                if workflow.is_default {
+                    assert!(
+                        workflow.id.starts_with("system:"),
+                        "System workflow '{}' should have 'system:' prefix",
+                        workflow.id
+                    );
+                }
+            }
+
+            // Verify system prompt IDs have correct prefix
+            for prompt in &prompts {
+                assert!(
+                    prompt.id.starts_with("system:"),
+                    "System prompt '{}' should have 'system:' prefix",
+                    prompt.id
+                );
+            }
+        }
+        Err(_) => {
+            // Store initialization failed - this is acceptable in test environment
+        }
+    }
+}

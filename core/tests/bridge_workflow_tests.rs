@@ -1,6 +1,6 @@
 // Workflow conversion tests ONLY
 
-use persistence::WorkflowDefinition;
+use s_e_e_persistence::WorkflowDefinition;
 use s_e_e_core::{bridge::*, CoreError};
 
 #[test]

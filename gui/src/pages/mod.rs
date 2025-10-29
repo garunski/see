@@ -9,5 +9,5 @@ pub use home::HomePage;
 pub use prompts::{UserPromptEditPage, UserPromptEditPageNew, UserPromptsListPage};
 pub use settings::SettingsPage;
 pub use workflows::{
-    UploadPage, WorkflowEditPage, WorkflowEditPageNew, WorkflowJsonEditPage, WorkflowsListPage,
+    WorkflowEditPage, WorkflowEditPageNew, WorkflowJsonEditPage, WorkflowsListPage,
 };

@@ -1,9 +1,9 @@
 // Audit conversions ONLY
 
 use crate::errors::CoreError;
-use engine::AuditEntry;
-use engine::AuditStatus as EngineAuditStatus;
-use persistence::{AuditEvent, AuditStatus as PersistenceAuditStatus};
+use s_e_e_engine::AuditEntry;
+use s_e_e_engine::AuditStatus as EngineAuditStatus;
+use s_e_e_persistence::{AuditEvent, AuditStatus as PersistenceAuditStatus};
 
 /// Convert AuditEntry to AuditEvent
 pub fn audit_entry_to_event(entry: &AuditEntry) -> Result<AuditEvent, CoreError> {

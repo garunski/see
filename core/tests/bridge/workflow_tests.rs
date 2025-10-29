@@ -1,7 +1,7 @@
 // Workflow conversion tests ONLY
 
 use core::bridge::*;
-use persistence::WorkflowDefinition;
+use s_e_e_persistence::WorkflowDefinition;
 
 #[test]
 fn test_workflow_result_creation() {
@@ -85,7 +85,7 @@ fn test_workflow_definition_to_engine_invalid_json() {
     assert!(result.is_err(), "Invalid JSON should fail conversion");
     
     match result.unwrap_err() {
-        core::CoreError::Engine(engine::EngineError::Parser(_)) => {}, // Expected
+        core::CoreError::Engine(s_e_e_engine::EngineError::Parser(_)) => {}, // Expected
         other => panic!("Expected Parser error, got: {:?}", other),
     }
 }
@@ -107,7 +107,7 @@ fn test_workflow_definition_to_engine_missing_fields() {
     assert!(result.is_err(), "Missing fields should fail conversion");
     
     match result.unwrap_err() {
-        core::CoreError::Engine(engine::EngineError::Parser(_)) => {}, // Expected
+        core::CoreError::Engine(s_e_e_engine::EngineError::Parser(_)) => {}, // Expected
         other => panic!("Expected Parser error, got: {:?}", other),
     }
 }

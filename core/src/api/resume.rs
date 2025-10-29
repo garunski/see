@@ -5,8 +5,8 @@ use crate::bridge::execution::workflow_result_to_execution;
 use crate::bridge::{OutputCallback, WorkflowResult};
 use crate::errors::CoreError;
 use crate::store_singleton::get_global_store;
-use engine::WorkflowEngine;
-use persistence::{TaskExecutionStatus, WorkflowExecutionStatus};
+use s_e_e_engine::WorkflowEngine;
+use s_e_e_persistence::{TaskExecutionStatus, WorkflowExecutionStatus};
 use std::collections::{HashMap, HashSet};
 
 /// Resume workflow execution after user input has been provided
@@ -59,8 +59,8 @@ pub async fn resume_workflow_execution(
         CoreError::Execution(format!("Failed to serialize workflow snapshot: {}", e))
     })?;
 
-    let engine_workflow = engine::parse_workflow(&workflow_json_str)
-        .map_err(|e| CoreError::Engine(engine::EngineError::Parser(e)))?;
+    let engine_workflow = s_e_e_engine::parse_workflow(&workflow_json_str)
+        .map_err(|e| CoreError::Engine(s_e_e_engine::EngineError::Parser(e)))?;
 
     tracing::debug!(
         execution_id = %execution_id,
@@ -143,7 +143,7 @@ pub async fn resume_workflow_execution(
     let has_input_waiting = engine_result
         .tasks
         .iter()
-        .any(|t| matches!(t.status, engine::TaskStatus::WaitingForInput));
+        .any(|t| matches!(t.status, s_e_e_engine::TaskStatus::WaitingForInput));
 
     if has_input_waiting {
         tracing::debug!(
@@ -153,7 +153,7 @@ pub async fn resume_workflow_execution(
 
         // Create UserInputRequest records for tasks waiting for input
         for task_info in &engine_result.tasks {
-            if matches!(task_info.status, engine::TaskStatus::WaitingForInput) {
+            if matches!(task_info.status, s_e_e_engine::TaskStatus::WaitingForInput) {
                 if let Some(task_node) =
                     find_task_in_snapshot(&execution.workflow_snapshot, &task_info.id)
                 {
@@ -311,7 +311,7 @@ fn create_input_request_from_task(
     task_node: &serde_json::Value,
     task_id: &str,
     execution_id: &str,
-) -> Option<persistence::UserInputRequest> {
+) -> Option<s_e_e_persistence::UserInputRequest> {
     let function = task_node.get("function")?;
     let function_type = function.get("name").and_then(|v| v.as_str())?;
 
@@ -332,12 +332,12 @@ fn create_input_request_from_task(
     let default = input.get("default").cloned();
 
     let input_type = match input_type_str {
-        "number" => persistence::InputType::Number,
-        "boolean" => persistence::InputType::Boolean,
-        _ => persistence::InputType::String,
+        "number" => s_e_e_persistence::InputType::Number,
+        "boolean" => s_e_e_persistence::InputType::Boolean,
+        _ => s_e_e_persistence::InputType::String,
     };
 
-    Some(persistence::UserInputRequest {
+    Some(s_e_e_persistence::UserInputRequest {
         id: uuid::Uuid::new_v4().to_string(),
         task_execution_id: task_id.to_string(),
         workflow_execution_id: execution_id.to_string(),
@@ -346,7 +346,7 @@ fn create_input_request_from_task(
         required,
         default_value: default,
         validation_rules: serde_json::Value::Object(serde_json::Map::new()),
-        status: persistence::InputRequestStatus::Pending,
+        status: s_e_e_persistence::InputRequestStatus::Pending,
         created_at: chrono::Utc::now(),
         fulfilled_at: None,
         fulfilled_value: None,

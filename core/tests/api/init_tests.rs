@@ -36,5 +36,5 @@ fn test_tracing_initialization() {
 fn test_initialization_functions_exist() {
     // Test that all initialization functions exist and have correct signatures
     let _init_store_fn: fn() -> std::pin::Pin<Box<dyn std::future::Future<Output = Result<(), String>> + Send>> = init_test_store;
-    let _get_store_fn: fn() -> Result<std::sync::Arc<persistence::Store>, String> = get_global_store;
+    let _get_store_fn: fn() -> Result<std::sync::Arc<s_e_e_persistence::Store>, String> = get_global_store;
 }

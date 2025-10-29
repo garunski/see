@@ -1,10 +1,14 @@
 use crate::components::{
     Badge, BadgeColor, IconButton, IconButtonSize, IconButtonVariant, SectionCard, TextInput,
 };
+use crate::layout::router::Route;
 use dioxus::prelude::*;
+use dioxus_router::prelude::use_navigator;
 
 #[component]
 pub fn TaskDetailsUserInputTab(input_request: Option<s_e_e_core::UserInputRequest>) -> Element {
+    let navigator = use_navigator();
+
     let mut input_value = use_signal(|| {
         // Initialize with default value if available
         if let Some(ref req) = input_request {
@@ -118,6 +122,7 @@ pub fn TaskDetailsUserInputTab(input_request: Option<s_e_e_core::UserInputReques
                                     let mut is_submitting_spawn = is_submitting;
                                     let mut error_message_spawn = error_message;
                                     let mut is_submitted_spawn = is_submitted;
+                                    let nav = navigator.clone();
 
                                     spawn(async move {
                                         match s_e_e_core::provide_user_input(
@@ -130,6 +135,11 @@ pub fn TaskDetailsUserInputTab(input_request: Option<s_e_e_core::UserInputReques
                                             Ok(_) => {
                                                 is_submitted_spawn.set(true);
                                                 error_message_spawn.set(None);
+
+                                                // Redirect back to execution details page after success
+                                                nav.push(Route::WorkflowDetailsPage {
+                                                    id: execution_id_spawn
+                                                });
                                             }
                                             Err(e) => {
                                                 error_message_spawn.set(Some(format!("Failed to submit input: {}", e)));

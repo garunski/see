@@ -2,7 +2,7 @@
 //!
 //! Tests serialization, variants following Single Responsibility Principle.
 
-use persistence::{AuditStatus, TaskExecutionStatus, Theme, WorkflowExecutionStatus};
+use s_e_e_persistence::{AuditStatus, TaskExecutionStatus, Theme, WorkflowExecutionStatus};
 
 #[test]
 fn test_execution_status_variants() {

@@ -2,7 +2,7 @@
 //!
 //! Tests log level configuration, structured logging following Single Responsibility Principle.
 
-use persistence::logging::{
+use s_e_e_persistence::logging::{
     init_logging, log_db_operation_error, log_db_operation_start, log_db_operation_success,
     log_deserialization, log_serialization,
 };
