@@ -27,7 +27,7 @@ export interface Workflow {
 }
 
 export interface MessageFromParent {
-  type: 'LOAD_WORKFLOW' | 'GET_WORKFLOW_STATE' | 'UPDATE_NODE';
+  type: 'LOAD_WORKFLOW' | 'GET_WORKFLOW_STATE' | 'UPDATE_NODE' | 'DELETE_EDGE';
   payload?: {
     workflow?: Workflow;
     workflowName?: string;
@@ -38,6 +38,7 @@ export interface MessageFromParent {
     args?: string[];
     prompt?: string;
   };
+  edgeId?: string;
 }
 
 export interface MessageToParent {

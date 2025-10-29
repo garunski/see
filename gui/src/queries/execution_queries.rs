@@ -1,7 +1,7 @@
 use crate::services::execution::ExecutionService;
 use dioxus::prelude::Signal;
-use s_e_e_dioxus_query::prelude::*;
 use s_e_e_core::{TaskExecution, WorkflowExecution, WorkflowExecutionSummary, WorkflowMetadata};
+use s_e_e_dioxus_query::prelude::*;
 use std::rc::Rc;
 
 // ==================== QUERIES ====================

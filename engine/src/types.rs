@@ -20,6 +20,7 @@ pub struct EngineTask {
 
 /// Task function types supported by the engine
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(tag = "name", content = "input")]
 pub enum TaskFunction {
     #[serde(rename = "cli_command")]
     CliCommand { command: String, args: Vec<String> },

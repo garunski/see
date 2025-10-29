@@ -1,5 +1,7 @@
 use crate::components::layout::{List, ListItem};
-use crate::components::{EmptyState, IconButton, IconButtonSize, IconButtonVariant, PageHeader, SectionCard};
+use crate::components::{
+    EmptyState, IconButton, IconButtonSize, IconButtonVariant, PageHeader, SectionCard,
+};
 use crate::icons::Icon;
 use crate::layout::router::Route;
 use crate::services::workflow::read_and_parse_workflow_file;
@@ -59,41 +61,41 @@ pub fn WorkflowsListPage() -> Element {
     };
 
     let mut on_save = move || {
-            if workflow_file().is_empty() {
-                error_message.set("Please select a workflow file first".to_string());
-                return;
-            }
+        if workflow_file().is_empty() {
+            error_message.set("Please select a workflow file first".to_string());
+            return;
+        }
 
-            error_message.set(String::new());
+        error_message.set(String::new());
 
-            let mut workflow_file_clone = workflow_file;
-            let mut error_message_clone = error_message;
-            let upload_fn = upload_state.upload_fn.clone();
+        let mut workflow_file_clone = workflow_file;
+        let mut error_message_clone = error_message;
+        let upload_fn = upload_state.upload_fn.clone();
 
-            spawn(async move {
-                // Read and parse the workflow file
-                match read_and_parse_workflow_file(workflow_file_clone().clone()) {
-                    Ok(workflow) => {
-                        // Upload using mutation
-                        let json_str = match serde_json::to_string(&workflow) {
-                            Ok(s) => s,
-                            Err(e) => {
-                                error_message_clone.set(format!("Failed to serialize workflow: {}", e));
-                                return;
-                            }
-                        };
+        spawn(async move {
+            // Read and parse the workflow file
+            match read_and_parse_workflow_file(workflow_file_clone().clone()) {
+                Ok(workflow) => {
+                    // Upload using mutation
+                    let json_str = match serde_json::to_string(&workflow) {
+                        Ok(s) => s,
+                        Err(e) => {
+                            error_message_clone.set(format!("Failed to serialize workflow: {}", e));
+                            return;
+                        }
+                    };
 
-                        upload_fn(json_str);
+                    upload_fn(json_str);
 
-                        // Clear the file input after successful upload
-                        tokio::time::sleep(tokio::time::Duration::from_millis(100)).await;
-                        workflow_file_clone.set(String::new());
-                    }
-                    Err(e) => {
-                        error_message_clone.set(e);
-                    }
+                    // Clear the file input after successful upload
+                    tokio::time::sleep(tokio::time::Duration::from_millis(100)).await;
+                    workflow_file_clone.set(String::new());
                 }
-            });
+                Err(e) => {
+                    error_message_clone.set(e);
+                }
+            }
+        });
     };
 
     rsx! {

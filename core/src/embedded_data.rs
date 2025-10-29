@@ -5,8 +5,7 @@
 //! are always available.
 
 // Workflows - embedded at compile time
-pub const CODE_REVIEW_WORKFLOW: &str =
-    include_str!("../initial_data/workflows/code-review.json");
+pub const CODE_REVIEW_WORKFLOW: &str = include_str!("../initial_data/workflows/code-review.json");
 pub const DEPLOY_APP_WORKFLOW: &str = include_str!("../initial_data/workflows/deploy-app.json");
 pub const SETUP_PROJECT_WORKFLOW: &str =
     include_str!("../initial_data/workflows/setup-project.json");
@@ -42,4 +41,3 @@ pub fn get_default_prompts() -> Vec<(&'static str, &'static str)> {
         ("documentation.json", DOCUMENTATION_PROMPT),
     ]
 }
-

@@ -18,11 +18,22 @@ A standalone React + TypeScript + Vite application that:
 - Communicates with Dioxus via `postMessage` API
 
 **Key Files**:
-- `src/WorkflowVisualizer.tsx` - Main visualization component
+- `src/WorkflowEditor.tsx` - Main editor component with full editing capabilities
 - `src/types.ts` - TypeScript definitions matching Rust structs
+- `src/components/AddNodeButton.tsx` - Floating action button for creating new tasks
 - `vite.config.ts` - Builds to `../assets/workflow-visualizer/`
 
 **Build Output**: `gui/assets/workflow-visualizer/index.html` (and bundled JS/CSS)
+
+**Features**:
+- ✅ Interactive node graph with drag, zoom, and pan
+- ✅ Add new tasks via floating "+" button
+- ✅ Create connections by dragging between tasks
+- ✅ Edit task properties via double-click
+- ✅ Auto-layout with Dagre algorithm
+- ✅ Visual quick guide for new users
+- ✅ Animated edge connections
+- ✅ Persistent node positions in metadata
 
 ### 2. Rust Workflow Schema Extensions
 
@@ -101,11 +112,33 @@ Added tasks:
 2. Click "Visualize" next to any workflow
 3. View interactive diagram with zoom/pan controls
 
+### Add New Tasks
+
+1. Click the blue **+** button in the bottom-right corner
+2. Select task type:
+   - **📝 CLI Command** - Execute shell commands
+   - **🤖 Cursor Agent** - AI-powered automation tasks
+3. The new task appears on the canvas and can be repositioned
+4. Double-click the task to edit its properties
+
+### Create Task Connections
+
+1. Hover over a task node - you'll see connection handles on the edges
+2. Click and drag from one task's handle to another task
+3. A connection line (edge) appears showing workflow direction
+4. Edges are animated and styled for visual clarity
+
 ### Edit Node Positions
 
 1. Drag nodes to reposition them
 2. Changes auto-save after 1 second debounce
 3. Positions persist in workflow metadata
+
+### Edit Task Details
+
+1. Double-click any task node
+2. Edit task name, function type, and parameters
+3. Save changes to update the task
 
 ### Development Workflow
 
@@ -192,8 +225,8 @@ task serve-gui
 
 1. Save workflow changes not yet implemented (positions saved but not persisted)
 2. No validation of workflow structure in visualizer
-3. Edge creation/deletion not yet supported
-4. No node creation/deletion from visualizer
+3. ~~Edge creation/deletion not yet supported~~ ✅ Edge creation now supported - users can drag connections between tasks
+4. ~~No node creation/deletion from visualizer~~ ✅ Node creation now supported via the "+" button
 
 ## Testing Checklist
 
@@ -202,6 +235,12 @@ task serve-gui
 - [x] Workflow JSON loads and renders as nodes
 - [x] Nodes are auto-connected sequentially
 - [x] Drag/zoom/pan interactions work
+- [x] Add node button displays menu with task types
+- [x] New tasks can be added to the workflow
+- [x] Users can drag connections between tasks
+- [x] Edges are styled and animated
+- [x] Double-click opens task editor modal
+- [x] Quick guide panel displays usage instructions
 - [ ] Saving workflow updates the database (pending implementation)
 - [x] Existing workflows without metadata still work
 - [x] Navigation to/from visualizer works smoothly
@@ -213,9 +252,12 @@ task serve-gui
   - `package.json` - NPM dependencies
   - `vite.config.ts` - Build configuration
   - `tsconfig.json` - TypeScript configuration
-  - `src/WorkflowVisualizer.tsx` - Main component
+  - `src/WorkflowEditor.tsx` - Main editor component (renamed from WorkflowVisualizer)
   - `src/types.ts` - Type definitions
   - `src/App.tsx`, `src/main.tsx` - Entry points
+  - `src/components/AddNodeButton.tsx` - Floating action button for adding tasks
+  - `src/components/NodeEditorModal.tsx` - Modal for editing task details
+  - `src/components/Toolbar.tsx` - Toolbar with layout and save actions
   - `README.md` - Documentation
 - `gui/assets/workflow-visualizer/` - Built React assets
 - `gui/src/pages/workflow/visualizer/mod.rs` - Dioxus page

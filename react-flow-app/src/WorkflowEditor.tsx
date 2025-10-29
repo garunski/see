@@ -1,5 +1,6 @@
 import React, { useState, useCallback, useEffect } from 'react';
-import ReactFlow, {
+import {
+  ReactFlow,
   Controls,
   Background,
   useNodesState,
@@ -8,180 +9,58 @@ import ReactFlow, {
   Connection,
   Node,
   Edge,
-  Panel,
   BackgroundVariant,
-} from 'reactflow';
-import 'reactflow/dist/style.css';
+} from '@xyflow/react';
+import '@xyflow/react/dist/style.css';
+import { CommandLineIcon, CursorArrowRaysIcon, PlayIcon, Bars3Icon } from '@heroicons/react/24/outline';
 import { Workflow, MessageFromParent, WorkflowTask } from './types';
 import { NodeEditorModal } from './components/NodeEditorModal';
 import { Input } from './components/input';
-import dagre from '@dagrejs/dagre';
+import { CustomEdge } from './components/CustomEdge';
+import { useWorkflowNodes } from './hooks/useWorkflowNodes';
+import { useWorkflowEdges } from './hooks/useWorkflowEdges';
+import { renderNodeLabel } from './utils/nodeRenderer';
+import { getLayoutedElements, NODE_WIDTH, START_NODE_ID, START_NODE_SIZE, INITIAL_X, INITIAL_Y } from './utils/layout';
 
-const NODE_WIDTH = 250;
-const NODE_HEIGHT = 80;
-const VERTICAL_SPACING = 150;
-const INITIAL_X = 100;
-const INITIAL_Y = 100;
-const START_NODE_ID = '__start__';
-const START_NODE_SIZE = 30;
-
-// Dagre layout function
-const getLayoutedElements = (nodes: Node[], edges: Edge[], direction = 'TB') => {
-  const dagreGraph = new dagre.graphlib.Graph();
-  dagreGraph.setDefaultEdgeLabel(() => ({}));
-  
-  dagreGraph.setGraph({ 
-    rankdir: direction,
-    nodesep: 50,
-    ranksep: 150
-  });
-  
-  // Add nodes to dagre
-  nodes.forEach((node) => {
-    // Use per-node styled dimensions when available (for visual-only start node)
-    const width = (node.style as any)?.width ?? (node.id === START_NODE_ID ? START_NODE_SIZE : NODE_WIDTH);
-    const height = (node.style as any)?.minHeight ?? (node.id === START_NODE_ID ? START_NODE_SIZE : NODE_HEIGHT);
-    dagreGraph.setNode(node.id, { width, height });
-  });
-  
-  // Add edges to dagre
-  edges.forEach((edge) => {
-    dagreGraph.setEdge(edge.source, edge.target);
-  });
-  
-  // Calculate layout
-  dagre.layout(dagreGraph);
-  
-  // Apply calculated positions
-  const layoutedNodes = nodes.map((node) => {
-    const nodeWithPosition = dagreGraph.node(node.id);
-    return {
-      ...node,
-      position: {
-        x: nodeWithPosition.x - NODE_WIDTH / 2,
-        y: nodeWithPosition.y - NODE_HEIGHT / 2,
-      },
-    };
-  });
-  
-  return { nodes: layoutedNodes, edges };
+const edgeTypes = {
+  default: CustomEdge,
+  smoothstep: CustomEdge,
 };
 
 const WorkflowEditor: React.FC = () => {
-  const [nodes, setNodes, onNodesChange] = useNodesState([]);
-  const [edges, setEdges, onEdgesChange] = useEdgesState([]);
+  const [nodes, setNodes, onNodesChange] = useNodesState<Node>([]);
+  const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([]);
   const [workflow, setWorkflow] = useState<Workflow | null>(null);
   const [isLoaded, setIsLoaded] = useState(false);
   const [workflowName, setWorkflowName] = useState<string>('');
   
-  // Modal state
   const [editingNode, setEditingNode] = useState<WorkflowTask | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  // Recursively flatten tasks from next_tasks tree
-  const flattenTasks = useCallback((tasks: WorkflowTask[]): WorkflowTask[] => {
-    const flattened: WorkflowTask[] = [];
-    const flattenRecursive = (taskList: WorkflowTask[]) => {
-      for (const task of taskList) {
-        flattened.push(task);
-        if (task.next_tasks && task.next_tasks.length > 0) {
-          flattenRecursive(task.next_tasks);
-        }
-      }
-    };
-    flattenRecursive(tasks);
-    return flattened;
-  }, []);
-
-  // Convert workflow tasks to React Flow nodes
-  const tasksToNodes = useCallback((wf: Workflow): Node[] => {
-    const savedPositions = wf.metadata?.node_positions || {};
-    const allTasks = flattenTasks(wf.tasks);
-    
-    return allTasks.map((task, index) => {
-      const savedPos = savedPositions[task.id];
-      // Use saved position if available, otherwise use placeholder (will be replaced by Dagre)
-      const position = savedPos || {
-        x: INITIAL_X,
-        y: INITIAL_Y + index * (NODE_HEIGHT + VERTICAL_SPACING),
-      };
-
-      return {
-        id: task.id,
-        type: 'default',
-        position,
-        data: {
-          label: (
-            <div className="p-2.5">
-              <div className="font-bold mb-1.5 text-zinc-900 dark:text-white">{task.name}</div>
-              <div className="text-xs text-zinc-500 dark:text-zinc-400">
-                {task.function.name}
-              </div>
-            </div>
-          ),
-          task: task,
-        },
-        style: {
-          background: '#fff',
-          border: '2px solid #3b82f6',
-          borderRadius: '8px',
-          width: NODE_WIDTH,
-          minHeight: NODE_HEIGHT,
-          boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-        },
-      };
-    });
-  }, [flattenTasks]);
-
-  // Generate edges from next_tasks relationships
-  const tasksToEdges = useCallback((wf: Workflow): Edge[] => {
-    const edgeList: Edge[] = [];
-    
-    const generateEdgesRecursive = (tasks: WorkflowTask[]) => {
-      for (const task of tasks) {
-        if (task.next_tasks && task.next_tasks.length > 0) {
-          for (const nextTask of task.next_tasks) {
-            edgeList.push({
-              id: `edge-${task.id}-${nextTask.id}`,
-              source: task.id,
-              target: nextTask.id,
-              type: 'smoothstep',
-              animated: true,
-              style: { stroke: '#3b82f6', strokeWidth: 2 },
-            });
-            // Recursively generate edges for nested tasks
-            if (nextTask.next_tasks && nextTask.next_tasks.length > 0) {
-              generateEdgesRecursive([nextTask]);
-            }
-          }
-        }
-      }
-    };
-    
-    generateEdgesRecursive(wf.tasks);
-    return edgeList;
-  }, []);
+  const { tasksToNodes, flattenTasks } = useWorkflowNodes();
+  const { tasksToEdges } = useWorkflowEdges();
 
   // Click handler with postMessage to Dioxus parent
   const handleNodeClick = useCallback((_event: React.MouseEvent, node: Node) => {
+    const task = node.data.task as WorkflowTask | undefined;
     // Send to Dioxus parent window - only send cloneable data
     window.parent.postMessage({
       type: 'NODE_CLICKED',
       payload: {
         nodeId: node.id,
-        nodeName: node.data.task?.name,
-        functionName: node.data.task?.function?.name
+        nodeName: task?.name,
+        functionName: task?.function?.name
       }
     }, '*');
   }, []);
 
   // Double-click handler for opening node editor modal
   const handleNodeDoubleClick = useCallback((_event: React.MouseEvent, node: Node) => {
-    setEditingNode(node.data.task);
+    const task = node.data.task as WorkflowTask;
+    setEditingNode(task);
     setIsModalOpen(true);
   }, []);
 
-  // Save handler for modal
   const handleSaveNode = useCallback((updatedNode: WorkflowTask) => {
     setNodes((currentNodes) => 
       currentNodes.map((node) => {
@@ -191,12 +70,7 @@ const WorkflowEditor: React.FC = () => {
             data: {
               ...node.data,
               task: updatedNode,
-              label: (
-                <div className="p-2.5">
-                  <div className="font-bold mb-1.5 text-zinc-900 dark:text-white">{updatedNode.name}</div>
-                  <div className="text-xs text-zinc-500 dark:text-zinc-400">{updatedNode.function.name}</div>
-                </div>
-              )
+              label: renderNodeLabel(updatedNode)
             }
           }
         }
@@ -205,10 +79,77 @@ const WorkflowEditor: React.FC = () => {
     );
   }, [setNodes]);
 
+  const handleAddNode = useCallback((taskData: WorkflowTask) => {
+    const newNode: Node = {
+      id: taskData.id,
+      type: 'default',
+      position: { x: 300, y: 200 },
+      data: {
+        label: renderNodeLabel(taskData),
+        task: taskData,
+      },
+      style: {
+        background: 'none',
+        border: 'none',
+        borderRadius: '6px',
+        width: NODE_WIDTH,
+        height: 'auto',
+        padding: 0,
+      },
+    };
+
+    setNodes((nds) => [...nds, newNode]);
+    
+    if (workflow) {
+      const updatedWorkflow = {
+        ...workflow,
+        tasks: [...workflow.tasks, taskData]
+      };
+      setWorkflow(updatedWorkflow);
+    }
+  }, [setNodes, workflow, setWorkflow]);
+
+  // Handle edge deletion
+  const handleDeleteEdge = useCallback((edgeId: string) => {
+    setEdges((eds) => eds.filter((e) => e.id !== edgeId));
+    
+    // Update workflow structure
+    if (workflow) {
+      const updatedWorkflow = { ...workflow };
+      
+      // Find the edge to remove
+      const edgeToRemove = edges.find(e => e.id === edgeId);
+      if (edgeToRemove) {
+        const removeEdgeFromTasks = (tasks: WorkflowTask[]): WorkflowTask[] => {
+          return tasks.map(task => {
+            if (task.id === edgeToRemove.source) {
+              return {
+                ...task,
+                next_tasks: (task.next_tasks || []).filter(nt => nt.id !== edgeToRemove.target)
+              };
+            }
+            if (task.next_tasks && task.next_tasks.length > 0) {
+              return {
+                ...task,
+                next_tasks: removeEdgeFromTasks(task.next_tasks)
+              };
+            }
+            return task;
+          });
+        };
+        
+        updatedWorkflow.tasks = removeEdgeFromTasks(updatedWorkflow.tasks);
+        setWorkflow(updatedWorkflow);
+      }
+    }
+  }, [edges, setEdges, workflow, setWorkflow]);
+
   // Listen for messages from parent window (Dioxus)
   useEffect(() => {
     const handleMessage = (event: MessageEvent<MessageFromParent>) => {
-      if (event.data.type === 'LOAD_WORKFLOW' && event.data.payload?.workflow) {
+      if (event.data.type === 'DELETE_EDGE' && event.data.edgeId) {
+        handleDeleteEdge(event.data.edgeId);
+      } else if (event.data.type === 'LOAD_WORKFLOW' && event.data.payload?.workflow) {
         const wf = event.data.payload.workflow;
         setWorkflow(wf);
         
@@ -248,30 +189,23 @@ const WorkflowEditor: React.FC = () => {
           position: { x: INITIAL_X, y: INITIAL_Y },
           data: {
             label: (
-              <div
-                style={{
-                  width: START_NODE_SIZE,
-                  height: START_NODE_SIZE,
-                  borderRadius: START_NODE_SIZE / 2,
-                  background: '#10b981',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  color: 'white',
-                  fontSize: 10,
-                }}
-                title="Start"
-              >
-                ●
+              <div className="flex items-center justify-center" style={{ width: START_NODE_SIZE, height: START_NODE_SIZE }} title="Start">
+                <PlayIcon className="w-5 h-5 text-white" />
               </div>
             ),
           },
+          sourcePosition: 'bottom' as any,
+          targetPosition: 'top' as any,
           style: {
             width: START_NODE_SIZE,
-            minHeight: START_NODE_SIZE,
-            border: '2px solid #10b981',
-            borderRadius: START_NODE_SIZE / 2,
-            background: 'white',
+            height: START_NODE_SIZE,
+            border: 'none',
+            borderRadius: '50%',
+            background: '#10b981',
+            padding: 0,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
           },
         };
 
@@ -300,10 +234,18 @@ const WorkflowEditor: React.FC = () => {
 
     window.addEventListener('message', handleMessage);
     return () => window.removeEventListener('message', handleMessage);
-  }, [tasksToNodes, tasksToEdges, setNodes, setEdges]);
+  }, [tasksToNodes, tasksToEdges, setNodes, setEdges, handleDeleteEdge]);
 
   const onConnect = useCallback(
-    (params: Connection) => setEdges((eds) => addEdge(params, eds)),
+    (params: Connection) => {
+      const newEdge = {
+        ...params,
+        type: 'smoothstep',
+        animated: true,
+        style: { stroke: '#3b82f6', strokeWidth: 2 },
+      };
+      setEdges((eds) => addEdge(newEdge, eds));
+    },
     [setEdges],
   );
 
@@ -317,42 +259,108 @@ const WorkflowEditor: React.FC = () => {
   }
 
   return (
-    <div className="w-full h-full min-h-0">
-      <ReactFlow
-        nodes={nodes}
-        edges={edges}
-        onNodesChange={onNodesChange}
-        onEdgesChange={onEdgesChange}
-        onConnect={onConnect}
-        onNodeClick={handleNodeClick}
-        onNodeDoubleClick={handleNodeDoubleClick}
-        fitView
-        attributionPosition="bottom-left"
-      >
-        <Background variant={BackgroundVariant.Dots} gap={16} size={1} />
-        <Controls />
-        
-        <Panel position="top-left" className="bg-white dark:bg-zinc-800 p-3 rounded-lg shadow-sm font-sans">
-          <div className="mb-2">
-            <Input
-              value={workflowName}
-              onChange={(e) => {
-                const newName = e.target.value;
-                setWorkflowName(newName);
-                // Send name change to parent window
-                window.parent.postMessage({
-                  type: 'WORKFLOW_NAME_CHANGED',
-                  payload: { name: newName }
-                }, '*');
-              }}
-              placeholder="Workflow Name"
-            />
+    <div className="w-full h-full min-h-0 flex flex-col">
+      <nav className="relative bg-white shadow dark:bg-gray-800/50 dark:shadow-none dark:after:pointer-events-none dark:after:absolute dark:after:inset-x-0 dark:after:bottom-0 dark:after:h-px dark:after:bg-white/10">
+        <div className="mx-auto max-w-full px-4 sm:px-6 lg:px-8">
+          <div className="flex h-16 justify-between">
+            <div className="flex px-2 lg:px-0">
+              <div className="flex items-center gap-4">
+                <Input
+                  value={workflowName}
+                  onChange={(e) => {
+                    const newName = e.target.value;
+                    setWorkflowName(newName);
+                    window.parent.postMessage({
+                      type: 'WORKFLOW_NAME_CHANGED',
+                      payload: { name: newName }
+                    }, '*');
+                  }}
+                  placeholder="Workflow Name"
+                  className="min-w-[300px]"
+                />
+                
+                <div className="flex items-center gap-1 border-l border-gray-200 dark:border-white/10 pl-4">
+                  <button
+                    onClick={() => handleAddNode({
+                      id: `task_${Date.now()}`,
+                      name: 'New CLI Command Task',
+                      function: {
+                        name: 'cli_command',
+                        input: { command: 'echo', args: ['Hello World'] }
+                      }
+                    })}
+                    className="relative shrink-0 rounded-full p-2 text-gray-400 hover:text-gray-500 focus:outline focus:outline-2 focus:outline-offset-2 focus:outline-indigo-600 dark:hover:text-white dark:focus:outline-indigo-500 group"
+                    title="Add CLI Command Task"
+                  >
+                    <CommandLineIcon className="w-6 h-6" />
+                    <span className="absolute top-full mt-2 left-1/2 -translate-x-1/2 px-2 py-1 bg-gray-900 text-white text-xs rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50">
+                      CLI Command
+                    </span>
+                  </button>
+                  
+                  <button
+                    onClick={() => handleAddNode({
+                      id: `task_${Date.now()}`,
+                      name: 'New Cursor Agent Task',
+                      function: {
+                        name: 'cursor_agent',
+                        input: { prompt: 'Enter your prompt here' }
+                      }
+                    })}
+                    className="relative shrink-0 rounded-full p-2 text-gray-400 hover:text-gray-500 focus:outline focus:outline-2 focus:outline-offset-2 focus:outline-indigo-600 dark:hover:text-white dark:focus:outline-indigo-500 group"
+                    title="Add Cursor Agent Task"
+                  >
+                    <CursorArrowRaysIcon className="w-6 h-6" />
+                    <span className="absolute top-full mt-2 left-1/2 -translate-x-1/2 px-2 py-1 bg-gray-900 text-white text-xs rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50">
+                      Cursor Agent
+                    </span>
+                  </button>
+                  
+                  <button
+                    onClick={() => handleAddNode({
+                      id: `task_${Date.now()}`,
+                      name: 'New User Input Task',
+                      function: {
+                        name: 'user_input',
+                        input: { 
+                          prompt: 'Enter prompt for user',
+                          input_type: 'text',
+                          required: true
+                        }
+                      }
+                    })}
+                    className="relative shrink-0 rounded-full p-2 text-gray-400 hover:text-gray-500 focus:outline focus:outline-2 focus:outline-offset-2 focus:outline-indigo-600 dark:hover:text-white dark:focus:outline-indigo-500 group"
+                    title="Add User Input Task"
+                  >
+                    <Bars3Icon className="w-6 h-6" />
+                    <span className="absolute top-full mt-2 left-1/2 -translate-x-1/2 px-2 py-1 bg-gray-900 text-white text-xs rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50">
+                      User Input
+                    </span>
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
-          <div className="text-sm text-zinc-500 dark:text-zinc-400">
-            {workflow ? flattenTasks(workflow.tasks).length : 0} task{(workflow ? flattenTasks(workflow.tasks).length : 0) !== 1 ? 's' : ''}
-          </div>
-        </Panel>
-      </ReactFlow>
+        </div>
+      </nav>
+      
+      <div className="flex-1 min-h-0">
+        <ReactFlow
+          nodes={nodes}
+          edges={edges}
+          onNodesChange={onNodesChange}
+          onEdgesChange={onEdgesChange}
+          onConnect={onConnect}
+          onNodeClick={handleNodeClick}
+          onNodeDoubleClick={handleNodeDoubleClick}
+          edgeTypes={edgeTypes}
+          fitView
+          attributionPosition="bottom-left"
+        >
+          <Background variant={BackgroundVariant.Dots} gap={16} size={1} />
+          <Controls />
+        </ReactFlow>
+      </div>
       
       <NodeEditorModal 
         isOpen={isModalOpen}

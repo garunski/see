@@ -28,9 +28,9 @@ pub fn TaskBox(props: TaskBoxProps) -> Element {
     };
 
     rsx! {
-        div { class: "min-w-[120px]",
+        div { class: "min-w-[200px]",
             div {
-                class: "bg-zinc-50 dark:bg-zinc-800 rounded-xl border border-zinc-200 dark:border-zinc-700 p-6 shadow-sm {cursor_class} {hover_class} transition-colors relative",
+                class: "{cursor_class} {hover_class} transition-colors",
                 onclick: move |_| {
                     if is_clickable {
                         navigator.push(Route::WorkflowDetailsTaskDetailsPage {
@@ -39,20 +39,33 @@ pub fn TaskBox(props: TaskBoxProps) -> Element {
                         });
                     }
                 },
-                // Status icon - absolute positioned in top right
-                div {
-                    class: "{task.status_color} absolute top-2 right-2 w-8 h-8 rounded-full flex items-center justify-center",
-                    Icon {
-                        name: task.status_icon.to_string(),
-                        size: Some("w-4 h-4".to_string()),
-                        variant: Some("outline".to_string()),
-                        class: Some("".to_string()),
+                div { class: "flex rounded-md shadow-sm dark:shadow-none",
+                    div {
+                        class: "flex w-16 shrink-0 items-center justify-center rounded-l-md {task.function_color} text-sm font-medium text-white relative",
+                        Icon {
+                            name: task.function_icon.to_string(),
+                            size: Some("w-6 h-6".to_string()),
+                            variant: Some("outline".to_string()),
+                            class: Some("".to_string()),
+                        }
+                        // Status icon badge in top-right
+                        div {
+                            class: "{task.status_color} absolute -top-1 -right-1 w-6 h-6 rounded-full flex items-center justify-center border-2 border-white dark:border-gray-900",
+                            Icon {
+                                name: task.status_icon.to_string(),
+                                size: Some("w-3 h-3".to_string()),
+                                variant: Some("outline".to_string()),
+                                class: Some("".to_string()),
+                            }
+                        }
+                    }
+                    div { class: "flex flex-1 items-center justify-between truncate rounded-r-md border-b border-r border-t border-gray-200 bg-white dark:border-white/10 dark:bg-gray-800/50",
+                        div { class: "flex-1 truncate px-4 py-2 text-sm",
+                            div { class: "font-medium text-gray-900 dark:text-white truncate", "{task.name}" }
+                            p { class: "text-gray-500 dark:text-gray-400 text-xs truncate", "{task.function_name}" }
+                        }
                     }
                 }
-                div { class: "flex items-start justify-between mb-2",
-                    h4 { class: "text-base font-semibold text-zinc-950 dark:text-white flex-1 pr-10 truncate", "{task.name}" }
-                }
-                div { class: "text-sm text-zinc-500 dark:text-zinc-400 truncate", "ID: {task.id}" }
             }
 
             if !task.children.is_empty() {

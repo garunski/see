@@ -28,7 +28,9 @@ const iconMap = {
   bars_3: 'bars-3',
   copy: 'document-duplicate',
   save: 'arrow-down-on-square',
-  code_bracket: 'code-bracket'
+  code_bracket: 'code-bracket',
+  terminal: 'command-line',
+  cursor: 'cursor-arrow-rays'
 };
 
 // Ensure output directory exists

@@ -1,7 +1,7 @@
 use crate::queries::{use_create_workflow_mutation, use_workflow_query};
 use dioxus::prelude::*;
-use s_e_e_engine::parse_workflow;
 use s_e_e_core::WorkflowDefinition;
+use s_e_e_engine::parse_workflow;
 
 use super::{EditorHeader, VisualEditor};
 
@@ -40,7 +40,6 @@ pub fn WorkflowEditPage(id: String) -> Element {
     let mut original_content = use_signal(String::new);
     let mut original_name = use_signal(String::new);
     let mut has_unsaved_changes = use_signal(|| false);
-    let selected_node_info = use_signal(|| String::from("No node selected"));
 
     // Load data into form
     use_effect(move || {
@@ -146,7 +145,6 @@ pub fn WorkflowEditPage(id: String) -> Element {
             VisualEditor {
                 workflow_json_str,
                 edited_workflow_name,
-                selected_node_info,
             }
         }
     }

@@ -6,6 +6,9 @@ use std::collections::HashMap;
 pub struct RenderableTask {
     pub id: String,
     pub name: String,
+    pub function_name: String,
+    pub function_icon: &'static str,
+    pub function_color: &'static str,
     pub status_icon: &'static str,
     pub status_color: &'static str,
     pub children: Vec<RenderableTask>,
@@ -22,6 +25,15 @@ pub fn build_renderable_task(
         .get("name")
         .and_then(|v| v.as_str())
         .unwrap_or("Unknown");
+
+    // Get function type
+    let function_name = task_data
+        .get("function")
+        .and_then(|f| f.get("name"))
+        .and_then(|n| n.as_str())
+        .unwrap_or("unknown");
+
+    let (function_icon, function_color) = get_function_style(function_name);
 
     // Try to get task execution data
     let has_execution_data = task_map.contains_key(task_id);
@@ -50,11 +62,23 @@ pub fn build_renderable_task(
     Some(RenderableTask {
         id: task_id.to_string(),
         name: task_name.to_string(),
+        function_name: function_name.to_string(),
+        function_icon,
+        function_color,
         status_icon,
         status_color,
         children,
         has_execution_data,
     })
+}
+
+pub fn get_function_style(function_name: &str) -> (&'static str, &'static str) {
+    match function_name {
+        "cli_command" => ("terminal", "bg-blue-600 dark:bg-blue-700"),
+        "cursor_agent" => ("cursor", "bg-purple-600 dark:bg-purple-700"),
+        "user_input" => ("bars_3", "bg-amber-600 dark:bg-amber-700"),
+        _ => ("code_bracket", "bg-gray-600 dark:bg-gray-700"),
+    }
 }
 
 pub fn get_status_style(status: &str) -> (&'static str, &'static str) {

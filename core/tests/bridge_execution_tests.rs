@@ -1,7 +1,7 @@
 // Execution conversion tests ONLY
 
-use s_e_e_engine::WorkflowResult as EngineWorkflowResult;
 use s_e_e_core::bridge::*;
+use s_e_e_engine::WorkflowResult as EngineWorkflowResult;
 
 #[test]
 fn test_engine_result_to_core_result() {

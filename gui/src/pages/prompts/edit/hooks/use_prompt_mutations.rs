@@ -2,8 +2,8 @@ use crate::queries::prompt_queries::{
     use_create_prompt_mutation, use_delete_prompt_mutation, use_update_prompt_mutation,
 };
 use dioxus::prelude::*;
-use s_e_e_dioxus_query::prelude::MutationState;
 use s_e_e_core::Prompt;
+use s_e_e_dioxus_query::prelude::MutationState;
 
 pub struct PromptMutations {
     #[allow(dead_code)]

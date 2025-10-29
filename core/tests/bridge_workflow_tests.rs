@@ -1,7 +1,7 @@
 // Workflow conversion tests ONLY
 
-use s_e_e_persistence::WorkflowDefinition;
 use s_e_e_core::{bridge::*, CoreError};
+use s_e_e_persistence::WorkflowDefinition;
 
 #[test]
 fn test_workflow_result_creation() {

@@ -1,7 +1,7 @@
 // Error handling tests ONLY
 
-use s_e_e_engine::{EngineError, HandlerError, ParserError};
 use s_e_e_core::CoreError;
+use s_e_e_engine::{EngineError, HandlerError, ParserError};
 
 #[test]
 fn test_core_error_engine_conversion() {

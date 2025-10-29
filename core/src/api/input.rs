@@ -214,7 +214,10 @@ pub async fn get_tasks_waiting_for_input(
 /// # Returns
 /// * `Ok(())` if value is valid
 /// * `Err(CoreError)` if value is invalid
-fn validate_input_value(value: &str, input_type: &s_e_e_persistence::InputType) -> Result<(), CoreError> {
+fn validate_input_value(
+    value: &str,
+    input_type: &s_e_e_persistence::InputType,
+) -> Result<(), CoreError> {
     match input_type {
         s_e_e_persistence::InputType::String => {
             // Any non-empty string is valid

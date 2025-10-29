@@ -45,3 +45,35 @@
     @apply bg-white dark:bg-zinc-800 p-3 rounded-lg shadow-sm font-sans;
   }
 }
+
+/* React Flow handle styling */
+.react-flow__handle {
+  width: 16px;
+  height: 16px;
+  background: #3b82f6;
+  border: 3px solid #93c5fd;
+  border-radius: 50%;
+}
+
+.react-flow__handle:hover {
+  width: 18px;
+  height: 18px;
+  background: #2563eb;
+  border: 4px solid #93c5fd;
+}
+
+.dark .react-flow__handle {
+  background: #3b82f6;
+  border: 3px solid #1e40af;
+}
+
+.dark .react-flow__handle:hover {
+  background: #2563eb;
+  border: 4px solid #1e40af;
+}
+
+/* Hide top handle on start node */
+.react-flow__node[data-id="__start__"] .react-flow__handle.react-flow__handle-top {
+  display: none !important;
+  pointer-events: none !important;
+}

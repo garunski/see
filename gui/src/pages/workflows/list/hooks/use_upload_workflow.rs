@@ -15,4 +15,3 @@ pub fn use_upload_workflow() -> UploadWorkflowMutation {
         upload_fn: std::rc::Rc::new(upload_fn),
     }
 }
-

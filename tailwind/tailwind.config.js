@@ -12,6 +12,20 @@ export default {
     // TypeScript components
     "../typescript/**/*.{ts,tsx}",
   ],
+  safelist: [
+    'bg-blue-600',
+    'bg-blue-700',
+    'bg-purple-600',
+    'bg-purple-700',
+    'bg-amber-600',
+    'bg-amber-700',
+    'bg-gray-600',
+    'bg-gray-700',
+    'dark:bg-blue-700',
+    'dark:bg-purple-700',
+    'dark:bg-amber-700',
+    'dark:bg-gray-700',
+  ],
   theme: {
     extend: {
       colors: {

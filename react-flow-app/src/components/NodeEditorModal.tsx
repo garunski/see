@@ -20,6 +20,8 @@ export function NodeEditorModal({ isOpen, node, onSave, onClose }: NodeEditorMod
   const [command, setCommand] = useState('')
   const [args, setArgs] = useState('')
   const [prompt, setPrompt] = useState('')
+  const [inputType, setInputType] = useState('text')
+  const [required, setRequired] = useState(true)
 
   // Update form when node changes
   useEffect(() => {
@@ -29,6 +31,8 @@ export function NodeEditorModal({ isOpen, node, onSave, onClose }: NodeEditorMod
       setCommand(node.function?.input?.command || '')
       setArgs(node.function?.input?.args?.join(', ') || '')
       setPrompt(node.function?.input?.prompt || '')
+      setInputType(node.function?.input?.input_type || 'text')
+      setRequired(node.function?.input?.required !== false)
     }
   }, [node])
 
@@ -45,6 +49,12 @@ export function NodeEditorModal({ isOpen, node, onSave, onClose }: NodeEditorMod
           ? { 
               command, 
               args: args.split(',').map(s => s.trim()).filter(Boolean) 
+            }
+          : functionType === 'user_input'
+          ? {
+              prompt,
+              input_type: inputType,
+              required
             }
           : { 
               prompt 
@@ -64,6 +74,8 @@ export function NodeEditorModal({ isOpen, node, onSave, onClose }: NodeEditorMod
       setCommand(node.function?.input?.command || '')
       setArgs(node.function?.input?.args?.join(', ') || '')
       setPrompt(node.function?.input?.prompt || '')
+      setInputType(node.function?.input?.input_type || 'text')
+      setRequired(node.function?.input?.required !== false)
     }
     onClose()
   }
@@ -90,6 +102,7 @@ export function NodeEditorModal({ isOpen, node, onSave, onClose }: NodeEditorMod
             >
               <option value="cli_command">CLI Command</option>
               <option value="cursor_agent">Cursor Agent</option>
+              <option value="user_input">User Input</option>
             </Select>
           </Field>
 
@@ -110,6 +123,40 @@ export function NodeEditorModal({ isOpen, node, onSave, onClose }: NodeEditorMod
                   onChange={(e) => setArgs(e.target.value)}
                   placeholder="e.g., Hello World, -l, /path/to/file"
                 />
+              </Field>
+            </>
+          ) : functionType === 'user_input' ? (
+            <>
+              <Field>
+                <Label>Prompt</Label>
+                <Textarea 
+                  value={prompt} 
+                  onChange={(e) => setPrompt(e.target.value)}
+                  rows={4}
+                  placeholder="Enter prompt to show the user"
+                />
+              </Field>
+              <Field>
+                <Label>Input Type</Label>
+                <Select 
+                  value={inputType} 
+                  onChange={(e) => setInputType(e.target.value)}
+                >
+                  <option value="text">Text</option>
+                  <option value="number">Number</option>
+                  <option value="boolean">Boolean</option>
+                </Select>
+              </Field>
+              <Field>
+                <Label>
+                  <input 
+                    type="checkbox" 
+                    checked={required} 
+                    onChange={(e) => setRequired(e.target.checked)}
+                    className="mr-2"
+                  />
+                  Required
+                </Label>
               </Field>
             </>
           ) : (

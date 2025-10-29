@@ -1,7 +1,7 @@
 use crate::services::prompt::UserPromptService;
 use dioxus::prelude::Signal;
-use s_e_e_dioxus_query::prelude::*;
 use s_e_e_core::Prompt;
+use s_e_e_dioxus_query::prelude::*;
 use std::rc::Rc;
 
 // ==================== QUERIES ====================

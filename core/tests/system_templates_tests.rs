@@ -35,11 +35,7 @@ async fn test_embedded_workflows_parse() {
         let json: serde_json::Value = serde_json::from_str(content)
             .unwrap_or_else(|_| panic!("Failed to parse workflow JSON in {}", filename));
 
-        assert!(
-            !json.is_null(),
-            "Workflow {} should not be null",
-            filename
-        );
+        assert!(!json.is_null(), "Workflow {} should not be null", filename);
     }
 }
 
@@ -51,11 +47,7 @@ async fn test_embedded_prompts_parse() {
         let json: serde_json::Value = serde_json::from_str(content)
             .unwrap_or_else(|_| panic!("Failed to parse prompt JSON in {}", filename));
 
-        assert!(
-            !json.is_null(),
-            "Prompt {} should not be null",
-            filename
-        );
+        assert!(!json.is_null(), "Prompt {} should not be null", filename);
     }
 }
 

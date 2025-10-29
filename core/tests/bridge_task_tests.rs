@@ -1,8 +1,8 @@
 // Task conversion tests ONLY
 
+use s_e_e_core::bridge::*;
 use s_e_e_engine::{TaskInfo, TaskStatus as EngineTaskStatus};
 use s_e_e_persistence::TaskExecutionStatus;
-use s_e_e_core::bridge::*;
 use std::collections::HashMap;
 
 #[test]

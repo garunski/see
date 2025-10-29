@@ -1,7 +1,7 @@
 use crate::queries::use_update_settings_mutation;
 use dioxus::prelude::*;
-use s_e_e_dioxus_query::prelude::MutationState;
 use s_e_e_core::AppSettings;
+use s_e_e_dioxus_query::prelude::MutationState;
 
 pub struct SettingsMutation {
     #[allow(dead_code)]
