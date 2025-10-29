@@ -1,11 +1,5 @@
 {
   "id": "system:documentation",
   "name": "Documentation",
-  "description": "Template for generating documentation",
-  "version": "1.0.0",
-  "content": "Generate documentation for:\n\nTopic: {{topic}}\nAudience: {{audience}}\nPurpose: {{purpose}}\n\nInclude:\n- Overview and context\n- Key concepts\n- Usage examples\n- API reference (if applicable)\n- Common pitfalls",
-  "template": "Generate documentation for:\n\nTopic: {{topic}}\nAudience: {{audience}}\nPurpose: {{purpose}}\n\nInclude:\n- Overview and context\n- Key concepts\n- Usage examples\n- API reference (if applicable)\n- Common pitfalls",
-  "variables": ["topic", "audience", "purpose"],
-  "tags": ["documentation", "docs", "writing"],
-  "metadata": {}
+  "content": "Generate documentation for:\n\nTopic:\n[Specify the topic to document]\n\nAudience:\n[Describe the target audience]\n\nPurpose:\n[Explain the purpose of the documentation]\n\nInclude:\n- Overview and context\n- Key concepts\n- Usage examples\n- API reference (if applicable)\n- Common pitfalls",
 }
