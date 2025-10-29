@@ -17,7 +17,7 @@ pub struct AppSettings {
 impl Default for AppSettings {
     fn default() -> Self {
         Self {
-            theme: Theme::Dark,
+            theme: Theme::System,
             auto_save: true,
             notifications: true,
             default_workflow: None,

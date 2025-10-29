@@ -20,8 +20,8 @@ pub fn use_theme() -> Memo<Theme> {
                 settings.theme.clone()
             }
             Err(e) => {
-                tracing::error!("[use_theme] Query failed: {}, using Dark as fallback", e);
-                Theme::Dark
+                tracing::error!("[use_theme] Query failed: {}, using System as fallback", e);
+                Theme::System
             }
         };
         tracing::trace!("[use_theme] Returning theme: {:?}", theme);

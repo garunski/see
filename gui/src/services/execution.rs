@@ -12,6 +12,8 @@ pub enum ExecutionError {
     FetchWorkflowExecutionFailed(String),
     #[error("Failed to fetch task details: {0}")]
     FetchTaskDetailsFailed(String),
+    #[error("Failed to delete workflow execution: {0}")]
+    DeleteExecutionFailed(String),
 }
 
 pub struct ExecutionService;
@@ -110,5 +112,11 @@ impl ExecutionService {
         let task = execution.tasks.into_iter().find(|t| t.id == task_id);
 
         Ok(task)
+    }
+
+    pub async fn delete_workflow_execution(execution_id: &str) -> Result<(), ExecutionError> {
+        s_e_e_core::delete_workflow_execution(execution_id)
+            .await
+            .map_err(|e| ExecutionError::DeleteExecutionFailed(e.to_string()))
     }
 }

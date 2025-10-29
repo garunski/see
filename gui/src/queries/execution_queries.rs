@@ -63,3 +63,23 @@ impl QueryCapability for GetTaskDetails {
             .map_err(|e| e.to_string())
     }
 }
+
+#[derive(Clone, PartialEq, Hash, Eq)]
+pub struct DeleteExecutionMutation;
+
+impl MutationCapability for DeleteExecutionMutation {
+    type Ok = ();
+    type Err = String;
+    type Keys = String; // execution_id
+
+    async fn run(&self, execution_id: &Self::Keys) -> Result<Self::Ok, Self::Err> {
+        ExecutionService::delete_workflow_execution(execution_id)
+            .await
+            .map_err(|e| e.to_string())
+    }
+
+    async fn on_settled(&self, _: &Self::Keys, _: &Result<Self::Ok, Self::Err>) {
+        // Invalidate the executions list query to refresh the UI
+        QueriesStorage::<GetWorkflowExecutions>::invalidate_matching(()).await;
+    }
+}
