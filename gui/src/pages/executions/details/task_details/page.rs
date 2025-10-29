@@ -42,6 +42,8 @@ pub fn TaskDetailsPage(execution_id: String, task_id: String) -> Element {
     use_effect({
         let task_id = task_id.clone();
         let execution_id = execution_id.clone();
+        let mut selected_tab_mirror = selected_tab.clone();
+        let input_request = input_request;
 
         move || {
             if !task_id.is_empty() && !execution_id.is_empty() {
@@ -58,6 +60,10 @@ pub fn TaskDetailsPage(execution_id: String, task_id: String) -> Element {
                             .find(|req| req.task_execution_id == task_id_for_spawn)
                         {
                             input_request_for_spawn.set(Some(req.clone()));
+                            // Auto-focus User Input tab if there's a pending request
+                            if req.status.to_string() == "pending" {
+                                selected_tab_mirror.set("User Input".to_string());
+                            }
                         } else {
                             input_request_for_spawn.set(None);
                         }
@@ -66,6 +72,8 @@ pub fn TaskDetailsPage(execution_id: String, task_id: String) -> Element {
             }
         }
     });
+
+    let show_user_input = input_request().is_some();
 
     let task_name = task
         .as_ref()
@@ -85,7 +93,8 @@ pub fn TaskDetailsPage(execution_id: String, task_id: String) -> Element {
                         selected_tab,
                         on_tab_change: EventHandler::new(move |tab_name| {
                             selected_tab.set(tab_name);
-                        })
+                        }),
+                        show_user_input,
                     }
 
                     div { class: "mt-6",
@@ -93,7 +102,7 @@ pub fn TaskDetailsPage(execution_id: String, task_id: String) -> Element {
                             TaskDetailsInfoTab { task: task.clone() }
                         } else if selected_tab() == "Output" {
                             TaskDetailsOutputTab { task: task.clone() }
-                        } else if selected_tab() == "User Input" {
+                        } else if selected_tab() == "User Input" && show_user_input {
                             TaskDetailsUserInputTab { input_request: input_request() }
                         }
                     }

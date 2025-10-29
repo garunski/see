@@ -1,10 +1,20 @@
 use dioxus::prelude::*;
 
+#[derive(Props, PartialEq, Clone)]
+pub struct TaskDetailsTabsProps {
+    pub selected_tab: Signal<String>,
+    pub on_tab_change: EventHandler<String>,
+    pub show_user_input: bool,
+}
+
 #[component]
-pub fn TaskDetailsTabs(
-    selected_tab: Signal<String>,
-    on_tab_change: EventHandler<String>,
-) -> Element {
+pub fn TaskDetailsTabs(props: TaskDetailsTabsProps) -> Element {
+    let TaskDetailsTabsProps {
+        selected_tab,
+        on_tab_change,
+        show_user_input,
+    } = props;
+
     let is_active = |tab: &str| -> String {
         format!(
             "py-2 px-1 border-b-2 font-medium text-sm {}",
@@ -29,10 +39,12 @@ pub fn TaskDetailsTabs(
                     onclick: move |_| on_tab_change.call("Output".to_string()),
                     "Output"
                 }
-                button {
-                    class: is_active("User Input"),
-                    onclick: move |_| on_tab_change.call("User Input".to_string()),
-                    "User Input"
+                if show_user_input {
+                    button {
+                        class: is_active("User Input"),
+                        onclick: move |_| on_tab_change.call("User Input".to_string()),
+                        "User Input"
+                    }
                 }
             }
         }
