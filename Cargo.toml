@@ -5,6 +5,7 @@ members = [
   "engine",
   "persistence",
   "core",
+  "dioxus_query_custom",
 ]
 resolver = "2"
 

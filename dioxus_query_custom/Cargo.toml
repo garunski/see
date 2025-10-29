@@ -1,0 +1,23 @@
+[package]
+name = "dioxus_query_custom"
+version = "0.1.0"
+edition = "2021"
+description = "Custom Dioxus query system with type-safe in-memory cache"
+
+[dependencies]
+dioxus = "0.6"
+futures = "0.3"
+serde = { version = "1.0", features = ["derive"] }
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["json", "env-filter"] }
+tracing-appender = "0.2"
+tokio = { version = "1.0", features = ["full"] }
+
+[dev-dependencies]
+tokio-test = "0.4"
+serde_json = "1.0"
+
+[lib]
+name = "dioxus_query_custom"
+path = "src/lib.rs"
+

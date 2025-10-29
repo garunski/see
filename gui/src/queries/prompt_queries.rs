@@ -1,95 +1,117 @@
 use crate::services::prompt::UserPromptService;
-use dioxus_query::prelude::*;
+use dioxus::prelude::Signal;
+use dioxus_query_custom::prelude::*;
 use s_e_e_core::Prompt;
+use std::rc::Rc;
 
-#[derive(Clone, PartialEq, Hash, Eq)]
-pub struct GetPrompts;
+// ==================== QUERIES ====================
 
-impl QueryCapability for GetPrompts {
-    type Ok = Vec<Prompt>;
-    type Err = String;
-    type Keys = ();
+/// Hook to fetch all prompts
+pub fn use_prompts_query() -> (QueryState<Vec<Prompt>>, impl Fn()) {
+    let key = QueryKey::new(&["prompts", "list"]);
 
-    async fn run(&self, _: &Self::Keys) -> Result<Self::Ok, Self::Err> {
+    let fetcher = move || async move {
         UserPromptService::fetch_prompts()
             .await
             .map_err(|e| e.to_string())
-    }
+    };
+
+    let options = QueryOptions {
+        stale_time: Some(30_000),  // 30 seconds
+        cache_time: Some(300_000), // 5 minutes
+        ..Default::default()
+    };
+
+    use_query(key, fetcher, options)
 }
 
-#[derive(Clone, PartialEq, Hash, Eq)]
-pub struct GetPrompt;
+/// Hook to fetch a single prompt by ID
+pub fn use_prompt_query(id: String) -> (QueryState<Option<Prompt>>, impl Fn()) {
+    let key = QueryKey::new(&["prompts", "detail", &id]);
 
-impl QueryCapability for GetPrompt {
-    type Ok = Option<Prompt>;
-    type Err = String;
-    type Keys = String;
+    let id_clone = id.clone();
+    let fetcher = move || {
+        let id = id_clone.clone();
+        async move {
+            let prompts = UserPromptService::fetch_prompts()
+                .await
+                .map_err(|e| e.to_string())?;
 
-    async fn run(&self, id: &Self::Keys) -> Result<Self::Ok, Self::Err> {
-        let prompts = UserPromptService::fetch_prompts()
-            .await
-            .map_err(|e| e.to_string())?;
+            Ok(prompts.into_iter().find(|p| p.id == id))
+        }
+    };
 
-        Ok(prompts.into_iter().find(|p| p.id == *id))
-    }
+    let options = QueryOptions {
+        stale_time: Some(30_000),
+        cache_time: Some(300_000),
+        ..Default::default()
+    };
+
+    use_query(key, fetcher, options)
 }
 
-#[derive(Clone, PartialEq, Hash, Eq)]
-pub struct CreatePromptMutation;
+// ==================== MUTATIONS ====================
 
-impl MutationCapability for CreatePromptMutation {
-    type Ok = ();
-    type Err = String;
-    type Keys = Prompt;
-
-    async fn run(&self, prompt: &Self::Keys) -> Result<Self::Ok, Self::Err> {
-        UserPromptService::create_prompt(prompt.clone())
-            .await
-            .map_err(|e| e.to_string())
-    }
-
-    async fn on_settled(&self, prompt: &Self::Keys, _: &Result<Self::Ok, Self::Err>) {
-        QueriesStorage::<GetPrompts>::invalidate_matching(()).await;
-        QueriesStorage::<GetPrompt>::invalidate_matching(prompt.id.clone()).await;
-    }
-}
-
-#[derive(Clone, PartialEq, Hash, Eq)]
-pub struct UpdatePromptMutation;
-
-impl MutationCapability for UpdatePromptMutation {
-    type Ok = ();
-    type Err = String;
-    type Keys = Prompt;
-
-    async fn run(&self, prompt: &Self::Keys) -> Result<Self::Ok, Self::Err> {
-        UserPromptService::update_prompt(prompt.clone())
+/// Hook to create a new prompt
+pub fn use_create_prompt_mutation() -> (Signal<MutationState<()>>, impl Fn(Prompt)) {
+    let mutation_fn = move |prompt: Prompt| async move {
+        UserPromptService::create_prompt(prompt)
             .await
             .map_err(|e| e.to_string())
-    }
+    };
 
-    async fn on_settled(&self, prompt: &Self::Keys, _: &Result<Self::Ok, Self::Err>) {
-        QueriesStorage::<GetPrompts>::invalidate_matching(()).await;
-        QueriesStorage::<GetPrompt>::invalidate_matching(prompt.id.clone()).await;
-    }
+    let callbacks = MutationCallbacks {
+        on_success: None,
+        on_error: None,
+        on_settled: Some(Rc::new(|| {
+            // Invalidate prompts list and detail queries
+            invalidate_queries_by_prefix("prompts:");
+        })),
+        invalidate_keys: vec![QueryKey::new(&["prompts", "list"])],
+        optimistic_update: None,
+    };
+
+    use_mutation(mutation_fn, callbacks)
 }
 
-#[derive(Clone, PartialEq, Hash, Eq)]
-pub struct DeletePromptMutation;
-
-impl MutationCapability for DeletePromptMutation {
-    type Ok = ();
-    type Err = String;
-    type Keys = String;
-
-    async fn run(&self, id: &Self::Keys) -> Result<Self::Ok, Self::Err> {
-        UserPromptService::delete_prompt(id)
+/// Hook to update an existing prompt
+pub fn use_update_prompt_mutation() -> (Signal<MutationState<()>>, impl Fn(Prompt)) {
+    let mutation_fn = move |prompt: Prompt| async move {
+        UserPromptService::update_prompt(prompt)
             .await
             .map_err(|e| e.to_string())
-    }
+    };
 
-    async fn on_settled(&self, id: &Self::Keys, _: &Result<Self::Ok, Self::Err>) {
-        QueriesStorage::<GetPrompts>::invalidate_matching(()).await;
-        QueriesStorage::<GetPrompt>::invalidate_matching(id.clone()).await;
-    }
+    let callbacks = MutationCallbacks {
+        on_success: None,
+        on_error: None,
+        on_settled: Some(Rc::new(|| {
+            invalidate_queries_by_prefix("prompts:");
+        })),
+        invalidate_keys: vec![QueryKey::new(&["prompts", "list"])],
+        optimistic_update: None,
+    };
+
+    use_mutation(mutation_fn, callbacks)
+}
+
+/// Hook to delete a prompt
+pub fn use_delete_prompt_mutation() -> (Signal<MutationState<()>>, impl Fn(String)) {
+    let mutation_fn = move |id: String| async move {
+        UserPromptService::delete_prompt(&id)
+            .await
+            .map_err(|e| e.to_string())
+    };
+
+    let callbacks = MutationCallbacks {
+        on_success: None,
+        on_error: None,
+        on_settled: Some(Rc::new(|| {
+            invalidate_queries_by_prefix("prompts:");
+        })),
+        invalidate_keys: vec![QueryKey::new(&["prompts", "list"])],
+        optimistic_update: None,
+    };
+
+    use_mutation(mutation_fn, callbacks)
 }

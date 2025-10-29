@@ -7,6 +7,7 @@ pub fn PromptFormFields(
     name: Signal<String>,
     content: Signal<String>,
     validation_error: Signal<String>,
+    is_new: bool,
 ) -> Element {
     rsx! {
         SectionCard {
@@ -20,7 +21,7 @@ pub fn PromptFormFields(
                         placeholder: Some("e.g., generate-rust-code".to_string()),
                         help_text: Some("Human-readable identifier used to reference this prompt in workflows".to_string()),
                         required: Some(true),
-                        disabled: None,
+                        disabled: Some(!is_new),
                     }
 
                     TextInput {

@@ -1585,6 +1585,21 @@ dependencies = [
 ]
 
 [[package]]
+name = "dioxus_query_custom"
+version = "0.1.0"
+dependencies = [
+ "dioxus",
+ "futures",
+ "serde",
+ "serde_json",
+ "tokio",
+ "tokio-test",
+ "tracing",
+ "tracing-appender",
+ "tracing-subscriber",
+]
+
+[[package]]
 name = "dioxus_server_macro"
 version = "0.6.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4672,6 +4687,7 @@ dependencies = [
  "dioxus",
  "dioxus-desktop",
  "dioxus-query",
+ "dioxus_query_custom",
  "engine",
  "rfd",
  "s_e_e_core",

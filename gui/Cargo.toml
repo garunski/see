@@ -7,7 +7,8 @@ edition = "2021"
 s_e_e_core = { path = "../core" }
 engine = { path = "../engine" }
 dioxus = { version = "0.6", features = ["desktop", "router"] }
-dioxus-query = "0.8.1"
+dioxus_query_custom = { path = "../dioxus_query_custom" }
+dioxus-query = "0.8.1"  # TODO: Remove after migrating all pages
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter", "fmt"] }
 dark-light = "0.2.0"
