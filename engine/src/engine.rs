@@ -3,7 +3,7 @@
 use crate::errors::*;
 use crate::handlers::{get_function_type, HandlerRegistry};
 use crate::types::*;
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 use std::sync::Arc;
 use tracing::{debug, error, info, instrument, trace, warn};
 
@@ -539,41 +539,232 @@ impl WorkflowEngine {
         Ok(results)
     }
 
-    /// Resume a task that was waiting for input
-    pub async fn resume_task_with_input(
+    /// Resume workflow execution after user input
+    /// This continues execution from where it left off, with knowledge of completed tasks
+    #[instrument(skip(self), fields(execution_id = %execution_id))]
+    pub async fn resume_workflow_execution(
         &self,
-        execution_id: &str,
-        task_id: &str,
-        input_value: String,
-    ) -> Result<TaskResult, EngineError> {
+        workflow: EngineWorkflow,
+        execution_id: String,
+        completed_task_ids: HashSet<String>,
+        task_user_inputs: HashMap<String, String>,
+    ) -> Result<WorkflowResult, EngineError> {
         info!(
             execution_id = %execution_id,
-            task_id = %task_id,
-            "Resuming task with input"
+            workflow_name = %workflow.name,
+            completed_count = completed_task_ids.len(),
+            "🔄 Resuming workflow execution"
         );
 
-        // Note: This is a simplified implementation
-        // In a full implementation, we would need to:
-        // 1. Load the execution state from persistence
-        // 2. Get the task that was waiting for input
-        // 3. Update the task with the input value
-        // 4. Continue execution from that point
-        // 5. Execute any next_tasks
+        // Create execution context
+        debug!(execution_id = %execution_id, "Creating execution context");
+        let mut context = ExecutionContext::new(execution_id.clone(), workflow.name.clone());
 
+        // Add all tasks to context
+        debug!(execution_id = %execution_id, "Adding tasks to execution context");
+        for task in &workflow.tasks {
+            context.tasks.insert(task.id.clone(), task.clone());
+        }
+
+        // Track execution state - start with already completed tasks
         debug!(
             execution_id = %execution_id,
-            task_id = %task_id,
-            input_length = input_value.len(),
-            "Task resumed with input"
+            initial_completed = completed_task_ids.len(),
+            "Initializing execution state with completed tasks"
+        );
+        let mut completed_tasks = completed_task_ids;
+
+        // For tasks that received user input, mark them as complete and store the input
+        for (task_id, input_value) in &task_user_inputs {
+            completed_tasks.insert(task_id.clone());
+            // Store input in context for tasks that might need it
+            context.log_task(
+                task_id.clone(),
+                format!("User input provided: {}", input_value),
+            );
+        }
+
+        let mut waiting_for_input = HashSet::new();
+        let mut audit_trail = Vec::new();
+        let mut errors = Vec::new();
+        let mut execution_round = 0;
+
+        // Main execution loop - continue until no more tasks are ready
+        loop {
+            execution_round += 1;
+
+            debug!(
+                execution_id = %execution_id,
+                round = execution_round,
+                completed_count = completed_tasks.len(),
+                "Starting execution round"
+            );
+
+            // Get ready tasks from tree structure
+            trace!(execution_id = %execution_id, "Determining ready tasks");
+            let ready_tasks = self.get_ready_tasks_from_tree(
+                &workflow.tasks,
+                &completed_tasks,
+                &waiting_for_input,
+            );
+
+            trace!(
+                execution_id = %execution_id,
+                round = execution_round,
+                ready_count = ready_tasks.len(),
+                completed_count = completed_tasks.len(),
+                ready_task_ids = ?ready_tasks.iter().map(|t| &t.id).collect::<Vec<_>>(),
+                "🔍 Execution round: {} ready tasks found",
+                ready_tasks.len()
+            );
+
+            // If no tasks are ready, check if we're done or waiting for input
+            if ready_tasks.is_empty() {
+                if waiting_for_input.is_empty() {
+                    debug!(
+                        execution_id = %execution_id,
+                        round = execution_round,
+                        completed_count = completed_tasks.len(),
+                        "No more ready tasks, execution complete"
+                    );
+                    break;
+                } else {
+                    debug!(
+                        execution_id = %execution_id,
+                        round = execution_round,
+                        waiting_count = waiting_for_input.len(),
+                        "Workflow paused - waiting for {} input(s)",
+                        waiting_for_input.len()
+                    );
+                    break;
+                }
+            }
+
+            // Execute all ready tasks in parallel
+            debug!(
+                execution_id = %execution_id,
+                round = execution_round,
+                ready_count = ready_tasks.len(),
+                "Executing ready tasks in parallel"
+            );
+            let results = self.execute_round(ready_tasks, &mut context).await?;
+
+            // Process results
+            debug!(
+                execution_id = %execution_id,
+                round = execution_round,
+                result_count = results.len(),
+                "Processing task execution results"
+            );
+
+            for (task, result) in results {
+                trace!(
+                    execution_id = %execution_id,
+                    task_id = %task.id,
+                    task_name = %task.name,
+                    success = result.success,
+                    "Processing task result"
+                );
+
+                // Check if task is waiting for input
+                if let Some(waiting) = result.output.get("waiting_for_input") {
+                    if waiting.as_bool().unwrap_or(false) {
+                        waiting_for_input.insert(task.id.clone());
+                        debug!(
+                            execution_id = %execution_id,
+                            task_id = %task.id,
+                            task_name = %task.name,
+                            "Task waiting for user input"
+                        );
+                        continue;
+                    }
+                }
+
+                if result.success {
+                    info!(
+                        execution_id = %execution_id,
+                        task_id = %task.id,
+                        task_name = %task.name,
+                        "✅ Task completed successfully"
+                    );
+
+                    // Add to audit trail
+                    audit_trail.push(AuditEntry {
+                        task_id: task.id.clone(),
+                        status: AuditStatus::Success,
+                        timestamp: chrono::Utc::now().to_rfc3339(),
+                        changes_count: 1,
+                        message: format!("Completed task: {}", task.name),
+                    });
+
+                    completed_tasks.insert(task.id.clone());
+                } else {
+                    let error_msg = result.error.unwrap_or_else(|| "Task failed".to_string());
+                    error!(
+                        execution_id = %execution_id,
+                        task_id = %task.id,
+                        task_name = %task.name,
+                        error = %error_msg,
+                        "❌ Task failed"
+                    );
+
+                    audit_trail.push(AuditEntry {
+                        task_id: task.id.clone(),
+                        status: AuditStatus::Failure,
+                        timestamp: chrono::Utc::now().to_rfc3339(),
+                        changes_count: 0,
+                        message: format!("Failed task: {} - {}", task.name, error_msg),
+                    });
+
+                    errors.push(format!("Task {}: {}", task.id, error_msg));
+                    completed_tasks.insert(task.id.clone());
+                }
+            }
+
+            debug!(
+                execution_id = %execution_id,
+                completed_count = completed_tasks.len(),
+                "📊 Progress: {} completed",
+                completed_tasks.len()
+            );
+        }
+
+        let success = errors.is_empty();
+
+        info!(
+            execution_id = %execution_id,
+            completed_tasks = completed_tasks.len(),
+            total_errors = errors.len(),
+            success = success,
+            "🏁 Workflow resume execution finished"
         );
 
-        Ok(TaskResult {
-            success: true,
-            output: serde_json::json!({
-                "resumed": true,
-                "input_value": input_value,
-            }),
-            error: None,
+        // Build task info for result
+        let tasks = workflow
+            .tasks
+            .iter()
+            .map(|t| TaskInfo {
+                id: t.id.clone(),
+                name: t.name.clone(),
+                status: if completed_tasks.contains(&t.id) {
+                    TaskStatus::Complete
+                } else if waiting_for_input.contains(&t.id) {
+                    TaskStatus::WaitingForInput
+                } else if let Some(context_task) = context.tasks.get(&t.id) {
+                    context_task.status.clone()
+                } else {
+                    TaskStatus::Failed
+                },
+            })
+            .collect();
+
+        Ok(WorkflowResult {
+            success,
+            workflow_name: workflow.name,
+            tasks,
+            audit_trail,
+            per_task_logs: context.per_task_logs,
+            errors,
         })
     }
 }

@@ -79,7 +79,7 @@ pub async fn provide_user_input(
     // Step 6: Update task with input
     let mut updated_task = task.clone();
     updated_task.user_input = Some(input_value.clone());
-    updated_task.status = TaskExecutionStatus::InProgress;
+    // Keep status as WaitingForInput until we mark it complete after resume
 
     store
         .save_task_execution(updated_task.clone())
@@ -103,6 +103,42 @@ pub async fn provide_user_input(
         task_id = %task_id,
         "Input provided successfully"
     );
+
+    // Step 8: Resume workflow execution automatically
+    // The task status remains WaitingForInput until resume marks it Complete
+    debug!(
+        execution_id = %execution_id,
+        "Automatically resuming workflow execution after input provided"
+    );
+
+    // Import resume_workflow_execution
+    use crate::api::resume::resume_workflow_execution;
+
+    // Resume the workflow - this will continue execution from where it left off
+    // The resume function will mark tasks with user_input as complete
+    match resume_workflow_execution(execution_id, None).await {
+        Ok(_) => {
+            info!(
+                execution_id = %execution_id,
+                task_id = %task_id,
+                "Workflow execution resumed successfully after input"
+            );
+        }
+        Err(e) => {
+            // Log error but don't fail the input provision
+            // The user input was successfully stored, workflow resume can be retried
+            // For now, manually mark the task as Complete if resume fails
+            debug!(
+                execution_id = %execution_id,
+                task_id = %task_id,
+                error = %e,
+                "Failed to resume workflow execution, marking task as complete manually"
+            );
+            updated_task.status = TaskExecutionStatus::Complete;
+            updated_task.completed_at = Some(chrono::Utc::now());
+            let _ = store.save_task_execution(updated_task).await;
+        }
+    }
 
     Ok(())
 }
