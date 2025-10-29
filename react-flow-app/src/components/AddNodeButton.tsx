@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { WorkflowTask } from '../types';
+import { WorkflowTask, TaskFunction } from '../types';
+import { createTaskNode } from '../utils/taskFactory';
 
 interface AddNodeButtonProps {
   onAddNode: (nodeData: WorkflowTask) => void;
@@ -8,18 +9,8 @@ interface AddNodeButtonProps {
 const AddNodeButton: React.FC<AddNodeButtonProps> = ({ onAddNode }) => {
   const [showMenu, setShowMenu] = useState(false);
 
-  const handleAddNode = (functionType: string) => {
-    const nodeData: WorkflowTask = {
-      id: `task_${Date.now()}`,
-      name: `New ${functionType === 'cli_command' ? 'CLI Command' : 'Cursor Agent'} Task`,
-      function: {
-        name: functionType,
-        input: functionType === 'cli_command' 
-          ? { command: 'echo', args: ['Hello World'] }
-          : { prompt: 'Enter your prompt here' }
-      }
-    };
-
+  const handleAddNode = (functionType: TaskFunction['name']) => {
+    const nodeData = createTaskNode(functionType);
     onAddNode(nodeData);
     setShowMenu(false);
   };

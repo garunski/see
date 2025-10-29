@@ -4,6 +4,7 @@ import * as Headless from '@headlessui/react'
 export const Textarea = forwardRef<HTMLTextAreaElement, {
   value: string
   onChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void
+  onBlur?: (e: React.FocusEvent<HTMLTextAreaElement>) => void
   placeholder?: string
   rows?: number
   className?: string

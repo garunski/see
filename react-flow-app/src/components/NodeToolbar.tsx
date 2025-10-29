@@ -1,25 +1,16 @@
 import React from 'react';
 import { Panel } from '@xyflow/react';
-import { CommandLineIcon, CursorArrowRaysIcon } from '@heroicons/react/24/outline';
-import { WorkflowTask } from '../types';
+import { CommandLineIcon, CursorArrowRaysIcon, Bars3Icon, Cog6ToothIcon } from '@heroicons/react/24/outline';
+import { WorkflowTask, TaskFunction } from '../types';
+import { createTaskNode } from '../utils/taskFactory';
 
 interface NodeToolbarProps {
   onAddNode: (nodeData: WorkflowTask) => void;
 }
 
 const NodeToolbar: React.FC<NodeToolbarProps> = ({ onAddNode }) => {
-  const handleAddNode = (functionType: string) => {
-    const nodeData: WorkflowTask = {
-      id: `task_${Date.now()}`,
-      name: `New ${functionType === 'cli_command' ? 'CLI Command' : 'Cursor Agent'} Task`,
-      function: {
-        name: functionType,
-        input: functionType === 'cli_command' 
-          ? { command: 'echo', args: ['Hello World'] }
-          : { prompt: 'Enter your prompt here' }
-      }
-    };
-
+  const handleAddNode = (functionType: TaskFunction['name']) => {
+    const nodeData = createTaskNode(functionType);
     onAddNode(nodeData);
   };
 
@@ -45,6 +36,28 @@ const NodeToolbar: React.FC<NodeToolbarProps> = ({ onAddNode }) => {
           <CursorArrowRaysIcon className="w-5 h-5" />
           <span className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 px-2 py-1 bg-zinc-900 text-white text-xs rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
             Cursor Agent
+          </span>
+        </button>
+        
+        <button
+          onClick={() => handleAddNode('user_input')}
+          className="p-2 rounded hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors text-zinc-700 dark:text-zinc-300 relative group"
+          title="Add User Input Task"
+        >
+          <Bars3Icon className="w-5 h-5" />
+          <span className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 px-2 py-1 bg-zinc-900 text-white text-xs rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+            User Input
+          </span>
+        </button>
+        
+        <button
+          onClick={() => handleAddNode('custom')}
+          className="p-2 rounded hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors text-zinc-700 dark:text-zinc-300 relative group"
+          title="Add Custom Task"
+        >
+          <Cog6ToothIcon className="w-5 h-5" />
+          <span className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 px-2 py-1 bg-zinc-900 text-white text-xs rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+            Custom
           </span>
         </button>
       </div>

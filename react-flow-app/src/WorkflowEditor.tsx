@@ -12,7 +12,7 @@ import {
   BackgroundVariant,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
-import { CommandLineIcon, CursorArrowRaysIcon, PlayIcon, Bars3Icon } from '@heroicons/react/24/outline';
+import { CommandLineIcon, CursorArrowRaysIcon, PlayIcon, Bars3Icon, Cog6ToothIcon } from '@heroicons/react/24/outline';
 import { Workflow, MessageFromParent, WorkflowTask } from './types';
 import { NodeEditorModal } from './components/NodeEditorModal';
 import { Input } from './components/input';
@@ -21,6 +21,7 @@ import { useWorkflowNodes } from './hooks/useWorkflowNodes';
 import { useWorkflowEdges } from './hooks/useWorkflowEdges';
 import { renderNodeLabel } from './utils/nodeRenderer';
 import { getLayoutedElements, NODE_WIDTH, START_NODE_ID, START_NODE_SIZE, INITIAL_X, INITIAL_Y } from './utils/layout';
+import { createTaskNode } from './utils/taskFactory';
 
 const edgeTypes = {
   default: CustomEdge,
@@ -281,14 +282,7 @@ const WorkflowEditor: React.FC = () => {
                 
                 <div className="flex items-center gap-1 border-l border-gray-200 dark:border-white/10 pl-4">
                   <button
-                    onClick={() => handleAddNode({
-                      id: `task_${Date.now()}`,
-                      name: 'New CLI Command Task',
-                      function: {
-                        name: 'cli_command',
-                        input: { command: 'echo', args: ['Hello World'] }
-                      }
-                    })}
+                    onClick={() => handleAddNode(createTaskNode('cli_command'))}
                     className="relative shrink-0 rounded-full p-2 text-gray-400 hover:text-gray-500 focus:outline focus:outline-2 focus:outline-offset-2 focus:outline-indigo-600 dark:hover:text-white dark:focus:outline-indigo-500 group"
                     title="Add CLI Command Task"
                   >
@@ -299,14 +293,7 @@ const WorkflowEditor: React.FC = () => {
                   </button>
                   
                   <button
-                    onClick={() => handleAddNode({
-                      id: `task_${Date.now()}`,
-                      name: 'New Cursor Agent Task',
-                      function: {
-                        name: 'cursor_agent',
-                        input: { prompt: 'Enter your prompt here' }
-                      }
-                    })}
+                    onClick={() => handleAddNode(createTaskNode('cursor_agent'))}
                     className="relative shrink-0 rounded-full p-2 text-gray-400 hover:text-gray-500 focus:outline focus:outline-2 focus:outline-offset-2 focus:outline-indigo-600 dark:hover:text-white dark:focus:outline-indigo-500 group"
                     title="Add Cursor Agent Task"
                   >
@@ -317,24 +304,24 @@ const WorkflowEditor: React.FC = () => {
                   </button>
                   
                   <button
-                    onClick={() => handleAddNode({
-                      id: `task_${Date.now()}`,
-                      name: 'New User Input Task',
-                      function: {
-                        name: 'user_input',
-                        input: { 
-                          prompt: 'Enter prompt for user',
-                          input_type: 'text',
-                          required: true
-                        }
-                      }
-                    })}
+                    onClick={() => handleAddNode(createTaskNode('user_input'))}
                     className="relative shrink-0 rounded-full p-2 text-gray-400 hover:text-gray-500 focus:outline focus:outline-2 focus:outline-offset-2 focus:outline-indigo-600 dark:hover:text-white dark:focus:outline-indigo-500 group"
                     title="Add User Input Task"
                   >
                     <Bars3Icon className="w-6 h-6" />
                     <span className="absolute top-full mt-2 left-1/2 -translate-x-1/2 px-2 py-1 bg-gray-900 text-white text-xs rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50">
                       User Input
+                    </span>
+                  </button>
+                  
+                  <button
+                    onClick={() => handleAddNode(createTaskNode('custom'))}
+                    className="relative shrink-0 rounded-full p-2 text-gray-400 hover:text-gray-500 focus:outline focus:outline-2 focus:outline-offset-2 focus:outline-indigo-600 dark:hover:text-white dark:focus:outline-indigo-500 group"
+                    title="Add Custom Task"
+                  >
+                    <Cog6ToothIcon className="w-6 h-6" />
+                    <span className="absolute top-full mt-2 left-1/2 -translate-x-1/2 px-2 py-1 bg-gray-900 text-white text-xs rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50">
+                      Custom
                     </span>
                   </button>
                 </div>

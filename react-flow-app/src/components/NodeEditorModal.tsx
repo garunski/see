@@ -3,9 +3,10 @@ import { Dialog, DialogActions, DialogBody, DialogTitle } from './dialog'
 import { Field, FieldGroup, Label } from './fieldset'
 import { Input } from './input'
 import { Select } from './select'
-import { Textarea } from './textarea'
 import { Button } from './button'
+import { FunctionFormFields } from './FunctionFormFields'
 import { WorkflowTask } from '../types'
+import { validateJson, buildTaskFunction } from '../utils/functionBuilder'
 
 interface NodeEditorModalProps {
   isOpen: boolean
@@ -16,50 +17,105 @@ interface NodeEditorModalProps {
 
 export function NodeEditorModal({ isOpen, node, onSave, onClose }: NodeEditorModalProps) {
   const [name, setName] = useState('')
-  const [functionType, setFunctionType] = useState('cli_command')
+  const [functionType, setFunctionType] = useState<WorkflowTask['function']['name']>('cli_command')
+  
+  // CLI Command fields
   const [command, setCommand] = useState('')
   const [args, setArgs] = useState('')
+  
+  // Cursor Agent fields
   const [prompt, setPrompt] = useState('')
+  const [configJson, setConfigJson] = useState('{}')
+  const [configError, setConfigError] = useState('')
+  
+  // User Input fields
   const [inputType, setInputType] = useState('text')
   const [required, setRequired] = useState(true)
+  const [defaultValue, setDefaultValue] = useState('')
+  
+  // Custom fields
+  const [customName, setCustomName] = useState('custom')
+  const [customInputJson, setCustomInputJson] = useState('{}')
+  const [customInputError, setCustomInputError] = useState('')
 
-  // Update form when node changes
+  // Load node data into form
   useEffect(() => {
-    if (node) {
-      setName(node.name || '')
-      setFunctionType(node.function?.name || 'cli_command')
-      setCommand(node.function?.input?.command || '')
-      setArgs(node.function?.input?.args?.join(', ') || '')
-      setPrompt(node.function?.input?.prompt || '')
-      setInputType(node.function?.input?.input_type || 'text')
-      setRequired(node.function?.input?.required !== false)
+    if (!node) return;
+
+    setName(node.name || '')
+    setFunctionType(node.function.name)
+    
+    switch (node.function.name) {
+      case 'cli_command':
+        setCommand(node.function.input.command || '')
+        setArgs(node.function.input.args?.join(', ') || '')
+        break
+        
+      case 'cursor_agent':
+        setPrompt(node.function.input.prompt || '')
+        setConfigJson(JSON.stringify(node.function.input.config || {}, null, 2))
+        break
+        
+      case 'user_input':
+        setPrompt(node.function.input.prompt || '')
+        setInputType(node.function.input.input_type || 'text')
+        setRequired(node.function.input.required !== false)
+        setDefaultValue(
+          node.function.input.default !== undefined && node.function.input.default !== null
+            ? String(node.function.input.default)
+            : ''
+        )
+        break
+        
+      case 'custom':
+        setCustomName(node.function.name || 'custom')
+        setCustomInputJson(JSON.stringify(node.function.input || {}, null, 2))
+        break
     }
   }, [node])
+
+  const handleConfigBlur = () => {
+    setConfigError(validateJson(configJson) ? '' : 'Invalid JSON')
+  }
+
+  const handleCustomInputBlur = () => {
+    setCustomInputError(validateJson(customInputJson) ? '' : 'Invalid JSON')
+  }
 
   const handleSave = () => {
     if (!node) return
 
-    // Build updated node
+    // Validate JSON fields before saving
+    if (functionType === 'cursor_agent' && !validateJson(configJson)) {
+      setConfigError('Invalid JSON - cannot save')
+      return
+    }
+    
+    if (functionType === 'custom' && !validateJson(customInputJson)) {
+      setCustomInputError('Invalid JSON - cannot save')
+      return
+    }
+
+    // Build function using helper
+    const updatedFunction = buildTaskFunction({
+      functionType,
+      command,
+      args,
+      prompt,
+      configJson,
+      inputType,
+      required,
+      defaultValue,
+      customName,
+      customInputJson
+    })
+
+    if (!updatedFunction) return
+
     const updatedNode: WorkflowTask = {
       ...node,
       name,
-      function: {
-        name: functionType,
-        input: functionType === 'cli_command'
-          ? { 
-              command, 
-              args: args.split(',').map(s => s.trim()).filter(Boolean) 
-            }
-          : functionType === 'user_input'
-          ? {
-              prompt,
-              input_type: inputType,
-              required
-            }
-          : { 
-              prompt 
-            }
-      }
+      function: updatedFunction
     }
     
     onSave(updatedNode)
@@ -67,21 +123,14 @@ export function NodeEditorModal({ isOpen, node, onSave, onClose }: NodeEditorMod
   }
 
   const handleCancel = () => {
-    // Reset form to original values
-    if (node) {
-      setName(node.name || '')
-      setFunctionType(node.function?.name || 'cli_command')
-      setCommand(node.function?.input?.command || '')
-      setArgs(node.function?.input?.args?.join(', ') || '')
-      setPrompt(node.function?.input?.prompt || '')
-      setInputType(node.function?.input?.input_type || 'text')
-      setRequired(node.function?.input?.required !== false)
-    }
+    // Reset errors
+    setConfigError('')
+    setCustomInputError('')
     onClose()
   }
 
   return (
-    <Dialog open={isOpen} onClose={handleCancel} size="md">
+    <Dialog open={isOpen} onClose={handleCancel} size="xl">
       <DialogTitle>Edit Node</DialogTitle>
       <DialogBody>
         <FieldGroup>
@@ -98,78 +147,40 @@ export function NodeEditorModal({ isOpen, node, onSave, onClose }: NodeEditorMod
             <Label>Function Type</Label>
             <Select 
               value={functionType} 
-              onChange={(e) => setFunctionType(e.target.value)}
+              onChange={(e) => setFunctionType(e.target.value as WorkflowTask['function']['name'])}
             >
               <option value="cli_command">CLI Command</option>
               <option value="cursor_agent">Cursor Agent</option>
               <option value="user_input">User Input</option>
+              <option value="custom">Custom</option>
             </Select>
           </Field>
 
-          {functionType === 'cli_command' ? (
-            <>
-              <Field>
-                <Label>Command</Label>
-                <Input 
-                  value={command} 
-                  onChange={(e) => setCommand(e.target.value)}
-                  placeholder="e.g., echo, ls, curl"
-                />
-              </Field>
-              <Field>
-                <Label>Arguments (comma-separated)</Label>
-                <Input 
-                  value={args} 
-                  onChange={(e) => setArgs(e.target.value)}
-                  placeholder="e.g., Hello World, -l, /path/to/file"
-                />
-              </Field>
-            </>
-          ) : functionType === 'user_input' ? (
-            <>
-              <Field>
-                <Label>Prompt</Label>
-                <Textarea 
-                  value={prompt} 
-                  onChange={(e) => setPrompt(e.target.value)}
-                  rows={4}
-                  placeholder="Enter prompt to show the user"
-                />
-              </Field>
-              <Field>
-                <Label>Input Type</Label>
-                <Select 
-                  value={inputType} 
-                  onChange={(e) => setInputType(e.target.value)}
-                >
-                  <option value="text">Text</option>
-                  <option value="number">Number</option>
-                  <option value="boolean">Boolean</option>
-                </Select>
-              </Field>
-              <Field>
-                <Label>
-                  <input 
-                    type="checkbox" 
-                    checked={required} 
-                    onChange={(e) => setRequired(e.target.checked)}
-                    className="mr-2"
-                  />
-                  Required
-                </Label>
-              </Field>
-            </>
-          ) : (
-            <Field>
-              <Label>Prompt</Label>
-              <Textarea 
-                value={prompt} 
-                onChange={(e) => setPrompt(e.target.value)}
-                rows={4}
-                placeholder="Enter your prompt for the Cursor agent"
-              />
-            </Field>
-          )}
+          <FunctionFormFields
+            functionType={functionType}
+            command={command}
+            args={args}
+            onCommandChange={setCommand}
+            onArgsChange={setArgs}
+            prompt={prompt}
+            configJson={configJson}
+            configError={configError}
+            onPromptChange={setPrompt}
+            onConfigJsonChange={setConfigJson}
+            onConfigBlur={handleConfigBlur}
+            inputType={inputType}
+            required={required}
+            defaultValue={defaultValue}
+            onInputTypeChange={setInputType}
+            onRequiredChange={setRequired}
+            onDefaultValueChange={setDefaultValue}
+            customName={customName}
+            customInputJson={customInputJson}
+            customInputError={customInputError}
+            onCustomNameChange={setCustomName}
+            onCustomInputJsonChange={setCustomInputJson}
+            onCustomInputBlur={handleCustomInputBlur}
+          />
         </FieldGroup>
       </DialogBody>
       <DialogActions>
