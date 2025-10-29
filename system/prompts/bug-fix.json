@@ -1,5 +1,5 @@
 {
   "id": "system:bug-fix",
   "name": "Bug Fix",
-  "content": "Fix the following bug:\n\nDescription:\n[Describe the bug here]\n\nSteps to reproduce:\n[Provide steps to reproduce the issue]\n\nExpected behavior:\n[Describe what should happen]\n\nCurrent behavior:\n[Describe what actually happens]\n\nPlease:\n1. Identify the root cause\n2. Implement the fix\n3. Add tests to prevent regression",
+  "content": "Fix the following bug:\n\nDescription:\n[Describe the bug here]\n\nSteps to reproduce:\n[Provide steps to reproduce the issue]\n\nExpected behavior:\n[Describe what should happen]\n\nCurrent behavior:\n[Describe what actually happens]\n\nPlease:\n1. Identify the root cause\n2. Implement the fix\n3. Add tests to prevent regression"
 }

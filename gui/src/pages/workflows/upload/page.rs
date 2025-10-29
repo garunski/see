@@ -33,10 +33,9 @@ pub fn UploadPage() -> Element {
     };
 
     let mut on_save = {
-        let workflow_file = workflow_file.clone();
-        let mut error_message = error_message.clone();
+        let workflow_file = workflow_file;
+        let mut error_message = error_message;
         let upload_fn = upload_state.upload_fn.clone();
-        let navigator = navigator.clone();
 
         move || {
             if workflow_file().is_empty() {
@@ -46,10 +45,10 @@ pub fn UploadPage() -> Element {
 
             error_message.set(String::new());
 
-            let workflow_file = workflow_file.clone();
-            let mut error_message = error_message.clone();
+            let workflow_file = workflow_file;
+            let mut error_message = error_message;
             let upload_fn = upload_fn.clone();
-            let navigator = navigator.clone();
+            let navigator = navigator;
 
             spawn(async move {
                 // Read and parse the workflow file

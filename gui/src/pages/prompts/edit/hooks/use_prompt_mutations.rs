@@ -6,10 +6,13 @@ use dioxus_query_custom::prelude::MutationState;
 use s_e_e_core::Prompt;
 
 pub struct PromptMutations {
+    #[allow(dead_code)]
     pub create_state: Signal<MutationState<()>>,
     pub create_fn: Box<dyn Fn(Prompt)>,
+    #[allow(dead_code)]
     pub update_state: Signal<MutationState<()>>,
     pub update_fn: Box<dyn Fn(Prompt)>,
+    #[allow(dead_code)]
     pub delete_state: Signal<MutationState<()>>,
     pub delete_fn: Box<dyn Fn(String)>,
     pub is_saving: Memo<bool>,

@@ -1,5 +1,5 @@
 {
   "id": "system:documentation",
   "name": "Documentation",
-  "content": "Generate documentation for:\n\nTopic:\n[Specify the topic to document]\n\nAudience:\n[Describe the target audience]\n\nPurpose:\n[Explain the purpose of the documentation]\n\nInclude:\n- Overview and context\n- Key concepts\n- Usage examples\n- API reference (if applicable)\n- Common pitfalls",
+  "content": "Generate documentation for:\n\nTopic:\n[Specify the topic to document]\n\nAudience:\n[Describe the target audience]\n\nPurpose:\n[Explain the purpose of the documentation]\n\nInclude:\n- Overview and context\n- Key concepts\n- Usage examples\n- API reference (if applicable)\n- Common pitfalls"
 }

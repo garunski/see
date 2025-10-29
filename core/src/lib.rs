@@ -35,7 +35,7 @@ pub type WorkflowJson = EngineWorkflow;
 // Re-export core types
 pub use crate::api::{
     delete_workflow_execution, execute_workflow_by_id, get_pending_inputs,
-    get_tasks_waiting_for_input, populate_initial_data, provide_user_input, resume_task,
+    get_tasks_waiting_for_input, populate_initial_data, provide_user_input,
 };
 pub use crate::bridge::WorkflowResult;
 pub use crate::errors::CoreError;

@@ -33,7 +33,7 @@ pub fn ExecutionItem(execution: WorkflowExecutionSummary) -> Element {
     let execution_id_for_delete = execution.id.clone();
     let execution_id_for_dialog = execution.id.clone();
     let execution_name = execution.workflow_name.clone();
-    let navigator_clone = navigator.clone();
+    let navigator_clone = navigator;
 
     rsx! {
         div {

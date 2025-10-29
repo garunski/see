@@ -13,7 +13,7 @@ pub fn HomePage() -> Element {
     // Use new query hooks with auto-refresh
     let (workflows_state, _refetch_workflows) = use_workflows_query();
     let (executions_state, _refetch_executions) = use_workflow_executions_query();
-    let (exec_mutation_state, execute_fn) = use_execute_workflow_mutation();
+    let (_exec_mutation_state, execute_fn) = use_execute_workflow_mutation();
 
     // Handle workflows query result
     let workflows = if workflows_state.is_loading {
@@ -23,11 +23,7 @@ pub fn HomePage() -> Element {
             }
         };
     } else if workflows_state.is_error {
-        let e = workflows_state
-            .error
-            .as_ref()
-            .map(|s| s.as_str())
-            .unwrap_or("Unknown error");
+        let e = workflows_state.error.as_deref().unwrap_or("Unknown error");
         return rsx! {
             div { class: "space-y-8",
                 PageHeader {
@@ -54,11 +50,7 @@ pub fn HomePage() -> Element {
     let workflow_executions = if executions_state.is_loading {
         vec![]
     } else if executions_state.is_error {
-        let e = executions_state
-            .error
-            .as_ref()
-            .map(|s| s.as_str())
-            .unwrap_or("Unknown error");
+        let e = executions_state.error.as_deref().unwrap_or("Unknown error");
         return rsx! {
             div { class: "space-y-8",
                 PageHeader {

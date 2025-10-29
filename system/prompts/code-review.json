@@ -1,5 +1,5 @@
 {
   "id": "system:code-review",
   "name": "Code Review",
-  "content": "Review the following code changes:\n\n[Paste the code changes to review here]\n\nFocus on:\n- Code quality and best practices\n- Potential bugs or issues\n- Performance considerations\n- Documentation completeness",
+  "content": "Review the following code changes:\n\n[Paste the code changes to review here]\n\nFocus on:\n- Code quality and best practices\n- Potential bugs or issues\n- Performance considerations\n- Documentation completeness"
 }

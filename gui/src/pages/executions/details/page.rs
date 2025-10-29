@@ -66,10 +66,9 @@ pub fn WorkflowDetailsPage(id: String) -> Element {
                         on_confirm: move |_| {
                             show_delete_dialog.set(false);
                             let execution_id = exec_id.clone();
-                            let nav = navigator.clone();
                             delete_fn(execution_id.clone());
                             // Navigate back to execution list after deletion
-                            nav.push(Route::ExecutionListPage {});
+                            navigator.push(Route::ExecutionListPage {});
                         },
                         on_cancel: move |_| {
                             show_delete_dialog.set(false);

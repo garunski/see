@@ -10,16 +10,6 @@ use crate::cache::{get_typed_value, mark_fetch_complete, start_cleanup_task, Typ
 use crate::query_key::QueryKey;
 use crate::state::{QueryOptions, QueryState};
 
-/// Helper function - not used yet but reserved for future shared state implementation
-#[allow(dead_code)]
-fn get_shared_state_signal<T: Clone + PartialEq + 'static>(
-    _key: &QueryKey,
-) -> GlobalSignal<QueryState<T>> {
-    // For now, each component has its own signal but they all read from shared cache
-    // Future: implement proper shared state signals per key
-    Signal::global(QueryState::default)
-}
-
 /// Main query hook - fetches and caches data with type-safe storage
 #[instrument(skip(fetcher, options), fields(key = %key))]
 pub fn use_query<T, F, Fut>(
@@ -315,30 +305,4 @@ where
     // Force temporary to be dropped before end of function
     let current_state = state.read().clone();
     (current_state, refetch)
-}
-
-/// Parallel queries hook - fetches multiple queries in parallel
-///
-/// ⚠️ WARNING: This function cannot use dynamic number of hooks.
-/// Instead, callers should manually call use_query multiple times.
-/// This is kept as a utility but NOT a hook itself.
-///
-/// Correct usage:
-/// ```ignore
-/// let (user_state, _) = use_query(user_key, fetch_user, opts);
-/// let (posts_state, _) = use_query(posts_key, fetch_posts, opts);
-/// ```
-#[deprecated(
-    since = "0.1.0",
-    note = "Cannot use dynamic hooks. Call use_query multiple times directly instead."
-)]
-pub fn use_queries<T, F, Fut>(_queries: Vec<(QueryKey, F, QueryOptions)>) -> Vec<QueryState<T>>
-where
-    T: Clone + PartialEq + Send + Sync + 'static,
-    F: Fn() -> Fut + 'static + Clone,
-    Fut: Future<Output = Result<T, String>> + 'static,
-{
-    // This function violates Dioxus hook rules and will panic!
-    // Kept for API compatibility but should not be used.
-    panic!("use_queries cannot be implemented with dynamic hooks. Call use_query multiple times directly.");
 }

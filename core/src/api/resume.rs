@@ -277,45 +277,6 @@ pub async fn resume_workflow_execution(
     Ok(result)
 }
 
-/// Resume a paused task that's waiting for input
-/// This is a convenience function that calls resume_workflow_execution
-#[deprecated(note = "Use resume_workflow_execution instead")]
-pub async fn resume_task(execution_id: &str, task_id: &str) -> Result<(), CoreError> {
-    tracing::debug!("Resuming task {} in execution {}", task_id, execution_id);
-
-    // Validate task has input
-    let store = get_global_store()?;
-    let execution = store
-        .get_workflow_execution(execution_id)
-        .await
-        .map_err(CoreError::Persistence)?
-        .ok_or_else(|| CoreError::WorkflowNotFound(execution_id.to_string()))?;
-
-    let task = execution
-        .tasks
-        .iter()
-        .find(|t| t.id == task_id)
-        .ok_or_else(|| CoreError::TaskNotFound(task_id.to_string()))?;
-
-    if task.status != TaskExecutionStatus::WaitingForInput {
-        return Err(CoreError::Execution(format!(
-            "Task {} is not waiting for input (status: {:?})",
-            task_id, task.status
-        )));
-    }
-
-    if task.user_input.is_none() {
-        return Err(CoreError::Execution(
-            "Task is waiting for input but no input provided".to_string(),
-        ));
-    }
-
-    // Resume the workflow execution
-    resume_workflow_execution(execution_id, None).await?;
-
-    Ok(())
-}
-
 /// Find a task in the workflow snapshot by task ID
 fn find_task_in_snapshot<'a>(
     snapshot: &'a serde_json::Value,

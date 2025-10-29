@@ -143,7 +143,7 @@ async fn test_system_prompts_valid_json() {
             let json: serde_json::Value = serde_json::from_str(&content)
                 .unwrap_or_else(|_| panic!("Invalid JSON in {:?}", path));
 
-            // Verify required fields
+            // Verify required fields match the Prompt model
             assert!(
                 json["id"].is_string(),
                 "Missing or invalid 'id' in {:?}",
@@ -155,23 +155,8 @@ async fn test_system_prompts_valid_json() {
                 path
             );
             assert!(
-                json["version"].is_string(),
-                "Missing or invalid 'version' in {:?}",
-                path
-            );
-            assert!(
                 json["content"].is_string(),
                 "Missing or invalid 'content' (must be string) in {:?}",
-                path
-            );
-            assert!(
-                json["template"].is_string(),
-                "Missing or invalid 'template' (must be string) in {:?}",
-                path
-            );
-            assert!(
-                json["description"].is_string() || json["description"].is_null(),
-                "Invalid 'description' (must be string or null) in {:?}",
                 path
             );
         }

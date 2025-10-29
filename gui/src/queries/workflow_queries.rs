@@ -74,11 +74,14 @@ pub fn use_create_workflow_mutation() -> (Signal<MutationState<()>>, impl Fn(Str
     use_mutation(mutation_fn, callbacks)
 }
 
-/// Hook to execute a workflow
-pub fn use_execute_workflow_mutation() -> (
+/// Type alias for execute workflow mutation return type
+pub type ExecuteWorkflowMutationResult = (
     Signal<MutationState<WorkflowResult>>,
     std::rc::Rc<dyn Fn(String)>,
-) {
+);
+
+/// Hook to execute a workflow
+pub fn use_execute_workflow_mutation() -> ExecuteWorkflowMutationResult {
     let mutation_fn = move |workflow_id: String| async move {
         tracing::debug!(
             "[ExecuteWorkflowMutation] Starting workflow execution for ID: {}",

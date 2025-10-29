@@ -42,8 +42,7 @@ pub fn TaskDetailsPage(execution_id: String, task_id: String) -> Element {
     use_effect({
         let task_id = task_id.clone();
         let execution_id = execution_id.clone();
-        let mut selected_tab_mirror = selected_tab.clone();
-        let input_request = input_request;
+        let mut selected_tab_mirror = selected_tab;
 
         move || {
             if !task_id.is_empty() && !execution_id.is_empty() {
