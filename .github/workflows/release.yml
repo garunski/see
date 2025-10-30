@@ -205,6 +205,44 @@ jobs:
         if: steps.cache-dx.outputs.cache-hit != 'true'
         run: cargo binstall dioxus-cli --no-confirm
 
+      - name: Import code signing certificate
+        if: github.event_name == 'workflow_dispatch' || startsWith(github.ref, 'refs/tags/')
+        env:
+          APPLE_CERTIFICATE_BASE64: ${{ secrets.APPLE_CERTIFICATE_BASE64 }}
+          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+        run: |
+          # Check if certificate is available
+          if [ -z "$APPLE_CERTIFICATE_BASE64" ]; then
+            echo "⚠️  No signing certificate found - will build unsigned"
+            echo "signed=false" >> $GITHUB_ENV
+            exit 0
+          fi
+          
+          echo "🔐 Importing signing certificate..."
+          
+          # Create variables
+          CERTIFICATE_PATH=$RUNNER_TEMP/build_certificate.p12
+          KEYCHAIN_PATH=$RUNNER_TEMP/app-signing.keychain-db
+          KEYCHAIN_PASSWORD=$(openssl rand -base64 32)
+          
+          # Decode certificate
+          echo "$APPLE_CERTIFICATE_BASE64" | base64 --decode -o $CERTIFICATE_PATH
+          
+          # Create temporary keychain
+          security create-keychain -p "$KEYCHAIN_PASSWORD" $KEYCHAIN_PATH
+          security set-keychain-settings -lut 21600 $KEYCHAIN_PATH
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" $KEYCHAIN_PATH
+          
+          # Import certificate to keychain
+          security import $CERTIFICATE_PATH -P "$APPLE_CERTIFICATE_PASSWORD" -A -t cert -f pkcs12 -k $KEYCHAIN_PATH
+          security list-keychain -d user -s $KEYCHAIN_PATH
+          
+          # Enable codesigning from the keychain
+          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KEYCHAIN_PASSWORD" $KEYCHAIN_PATH
+          
+          echo "✅ Certificate imported successfully"
+          echo "signed=true" >> $GITHUB_ENV
+
       - name: Build desktop app bundle
         id: bundle
         run: |
@@ -228,30 +266,154 @@ jobs:
           which dx
           dx --version
           
+          # Build the app bundle (without creating DMG yet)
           dx bundle --package s_e_e_gui --release --json-output 2>&1 | tee bundle_output.log
           
-          # Extract DMG path from the log - it's in a message like "Bundled app at: /path/to/file.dmg"
-          DMG_PATH=$(grep "Bundled app at:.*\.dmg" bundle_output.log | grep -o "/.*\.dmg" | head -1)
+          # Find the .app bundle
+          APP_PATH=$(find target/dx/s_e_e_gui/release/bundle/macos -name "*.app" -type d | head -1)
           
-          if [ -z "$DMG_PATH" ]; then
-            echo "Error: DMG path not found in bundle output"
-            cat bundle_output.log
+          if [ -z "$APP_PATH" ]; then
+            echo "Error: .app bundle not found"
+            find target/dx -name "*.app" -type d || echo "No .app found"
             exit 1
           fi
           
+          echo "app_path=$APP_PATH" >> $GITHUB_OUTPUT
+          echo "App bundle created at: $APP_PATH"
+
+      - name: Sign app bundle
+        if: env.signed == 'true'
+        env:
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        run: |
+          APP_PATH="${{ steps.bundle.outputs.app_path }}"
+          
+          echo "🔏 Signing app bundle..."
+          
+          # Sign all frameworks and dylibs first
+          find "$APP_PATH/Contents" -name "*.dylib" -o -name "*.framework" | while read file; do
+            echo "Signing: $file"
+            codesign --force --sign "Developer ID Application: $APPLE_TEAM_ID" \
+              --options runtime \
+              --timestamp \
+              --deep \
+              "$file" || true
+          done
+          
+          # Sign the main app bundle
+          codesign --force --sign "Developer ID Application: $APPLE_TEAM_ID" \
+            --options runtime \
+            --entitlements gui/Entitlements.plist \
+            --timestamp \
+            --deep \
+            "$APP_PATH"
+          
+          # Verify signature
+          codesign --verify --verbose=4 "$APP_PATH"
+          spctl -a -vv "$APP_PATH" || echo "⚠️  Gatekeeper check will pass after notarization"
+          
+          echo "✅ App signed successfully"
+
+      - name: Notarize app
+        if: env.signed == 'true'
+        env:
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        run: |
+          APP_PATH="${{ steps.bundle.outputs.app_path }}"
+          
+          echo "📤 Notarizing app..."
+          
+          # Create a zip for notarization (faster than DMG)
+          ditto -c -k --keepParent "$APP_PATH" "$APP_PATH.zip"
+          
+          # Submit for notarization
+          xcrun notarytool submit "$APP_PATH.zip" \
+            --apple-id "$APPLE_ID" \
+            --password "$APPLE_APP_SPECIFIC_PASSWORD" \
+            --team-id "$APPLE_TEAM_ID" \
+            --wait \
+            --timeout 30m
+          
+          # Staple the notarization ticket
+          xcrun stapler staple "$APP_PATH"
+          
+          # Clean up zip
+          rm "$APP_PATH.zip"
+          
+          # Verify notarization
+          spctl -a -vv "$APP_PATH"
+          
+          echo "✅ App notarized and stapled successfully"
+
+      - name: Create DMG
+        id: create_dmg
+        run: |
+          APP_PATH="${{ steps.bundle.outputs.app_path }}"
+          VERSION="${{ steps.version.outputs.version }}"
+          DMG_NAME="SEEGui-${VERSION}-macos.dmg"
+          DMG_PATH="$PWD/$DMG_NAME"
+          
+          echo "📦 Creating DMG..."
+          
+          # Install create-dmg if not available
+          if ! command -v create-dmg &> /dev/null; then
+            brew install create-dmg
+          fi
+          
+          # Create DMG with the signed app
+          create-dmg \
+            --volname "SEE GUI" \
+            --window-pos 200 120 \
+            --window-size 800 400 \
+            --icon-size 100 \
+            --icon "SEEGui.app" 200 190 \
+            --hide-extension "SEEGui.app" \
+            --app-drop-link 600 185 \
+            --no-internet-enable \
+            "$DMG_PATH" \
+            "$APP_PATH" || {
+              # If create-dmg fails with icon, try without custom positioning
+              hdiutil create -volname "SEE GUI" -srcfolder "$APP_PATH" -ov -format UDZO "$DMG_PATH"
+            }
+          
           echo "dmg_path=$DMG_PATH" >> $GITHUB_OUTPUT
+          echo "dmg_filename=$DMG_NAME" >> $GITHUB_OUTPUT
           echo "DMG created at: $DMG_PATH"
           
           # Verify DMG exists
           if [ ! -f "$DMG_PATH" ]; then
             echo "Error: DMG file not found at $DMG_PATH"
-            ls -la "$(dirname "$DMG_PATH")"
             exit 1
           fi
+
+      - name: Sign and notarize DMG
+        if: env.signed == 'true'
+        env:
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        run: |
+          DMG_PATH="${{ steps.create_dmg.outputs.dmg_path }}"
           
-          # Get DMG filename
-          DMG_FILENAME=$(basename "$DMG_PATH")
-          echo "dmg_filename=$DMG_FILENAME" >> $GITHUB_OUTPUT
+          echo "🔏 Signing DMG..."
+          codesign --force --sign "Developer ID Application: $APPLE_TEAM_ID" \
+            --timestamp \
+            "$DMG_PATH"
+          
+          echo "📤 Notarizing DMG..."
+          xcrun notarytool submit "$DMG_PATH" \
+            --apple-id "$APPLE_ID" \
+            --password "$APPLE_APP_SPECIFIC_PASSWORD" \
+            --team-id "$APPLE_TEAM_ID" \
+            --wait \
+            --timeout 30m
+          
+          echo "📌 Stapling notarization to DMG..."
+          xcrun stapler staple "$DMG_PATH"
+          
+          echo "✅ DMG signed and notarized successfully"
 
       - name: Build CLI binary
         run: |
@@ -281,8 +443,8 @@ jobs:
       - name: Upload DMG artifact
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ steps.bundle.outputs.dmg_filename }}
-          path: ${{ steps.bundle.outputs.dmg_path }}
+          name: ${{ steps.create_dmg.outputs.dmg_filename }}
+          path: ${{ steps.create_dmg.outputs.dmg_path }}
           retention-days: 90
 
       - name: Upload CLI artifact
