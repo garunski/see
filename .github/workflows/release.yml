@@ -586,9 +586,9 @@ jobs:
           
           dx bundle --package s_e_e_gui --release 2>&1 | Tee-Object -FilePath bundle_output.log
           
-          # Extract MSI path from the log
-          $MSI_PATH = (Select-String -Path bundle_output.log -Pattern "\.msi$" | Select-Object -First 1).Line
-          if ($MSI_PATH -match '(?:Bundled app at: )(.+\.msi)') {
+          # Extract MSI path from the log - look for line with .msi
+          $MSI_LINE = (Select-String -Path bundle_output.log -Pattern "Bundled app at:.*\.msi" | Select-Object -First 1).Line
+          if ($MSI_LINE -match '(?:Bundled app at: )(.+\.msi)') {
             $MSI_PATH = $matches[1].Trim()
           } else {
             Write-Host "Error: MSI path not found in bundle output"
@@ -596,7 +596,7 @@ jobs:
             exit 1
           }
           
-          Write-Host "msi_path=$MSI_PATH" >> $env:GITHUB_OUTPUT
+          "msi_path=$MSI_PATH" >> $env:GITHUB_OUTPUT
           Write-Host "MSI created at: $MSI_PATH"
           
           # Verify MSI exists
@@ -608,7 +608,8 @@ jobs:
           
           # Get MSI filename
           $MSI_FILENAME = Split-Path $MSI_PATH -Leaf
-          Write-Host "msi_filename=$MSI_FILENAME" >> $env:GITHUB_OUTPUT
+          "msi_filename=$MSI_FILENAME" >> $env:GITHUB_OUTPUT
+          Write-Host "MSI filename: $MSI_FILENAME"
 
       - name: Build CLI binary
         run: |
@@ -622,7 +623,7 @@ jobs:
           
           Compress-Archive -Path target\release\s_e_e_cli.exe -DestinationPath $CLI_ARCHIVE
           
-          Write-Host "cli_archive=$CLI_ARCHIVE" >> $env:GITHUB_OUTPUT
+          "cli_archive=$CLI_ARCHIVE" >> $env:GITHUB_OUTPUT
           Write-Host "CLI archive created: $CLI_ARCHIVE"
           
           # Verify archive exists
