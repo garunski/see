@@ -29,7 +29,7 @@ export function NodeEditorModal({ isOpen, node, onSave, onClose }: NodeEditorMod
   const [configError, setConfigError] = useState('')
   
   // User Input fields
-  const [inputType, setInputType] = useState('text')
+  const [inputType, setInputType] = useState('string')
   const [required, setRequired] = useState(true)
   const [defaultValue, setDefaultValue] = useState('')
   
@@ -58,7 +58,7 @@ export function NodeEditorModal({ isOpen, node, onSave, onClose }: NodeEditorMod
         
       case 'user_input':
         setPrompt(node.function.input.prompt || '')
-        setInputType(node.function.input.input_type || 'text')
+        setInputType(node.function.input.input_type || 'string')
         setRequired(node.function.input.required !== false)
         setDefaultValue(
           node.function.input.default !== undefined && node.function.input.default !== null

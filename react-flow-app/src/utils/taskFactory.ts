@@ -36,7 +36,7 @@ export function createTaskNode(
         name: 'user_input',
         input: { 
           prompt: 'Enter prompt for user',
-          input_type: 'text',
+          input_type: 'string',
           required: true
         }
       };

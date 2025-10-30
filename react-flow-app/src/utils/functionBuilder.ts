@@ -71,13 +71,13 @@ export function buildTaskFunction(params: BuildFunctionParams): TaskFunction | n
 
     case 'user_input':
       const parsedDefault = params.defaultValue 
-        ? parseDefaultValue(params.defaultValue, params.inputType || 'text') 
+        ? parseDefaultValue(params.defaultValue, params.inputType || 'string') 
         : undefined;
       return {
         name: 'user_input',
         input: {
           prompt: params.prompt || '',
-          input_type: params.inputType || 'text',
+          input_type: params.inputType || 'string',
           ...(params.required !== true ? { required: params.required } : {}),
           ...(parsedDefault !== undefined ? { default: parsedDefault } : {})
         }

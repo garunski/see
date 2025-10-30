@@ -25,10 +25,9 @@ export class UserInputFieldStrategy {
         value: props.inputType,
         onChange: props.onInputTypeChange,
         options: [
-          { value: 'text', label: 'Text' },
+          { value: 'string', label: 'String' },
           { value: 'number', label: 'Number' },
-          { value: 'boolean', label: 'Boolean' },
-          { value: 'string', label: 'String' }
+          { value: 'boolean', label: 'Boolean' }
         ]
       },
       {
