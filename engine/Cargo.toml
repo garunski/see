@@ -1,6 +1,6 @@
 [package]
 name = "s_e_e_engine"
-version = "0.1.11"
+version = "0.1.12"
 edition = "2021"
 
 [dependencies]

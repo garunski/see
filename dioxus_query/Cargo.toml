@@ -1,6 +1,6 @@
 [package]
 name = "s_e_e_dioxus_query"
-version = "0.1.11"
+version = "0.1.12"
 edition = "2021"
 description = "Custom Dioxus query system with type-safe in-memory cache"
 
