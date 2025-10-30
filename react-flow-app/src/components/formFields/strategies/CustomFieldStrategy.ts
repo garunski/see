@@ -1,6 +1,7 @@
 /**
  * Custom Field Strategy
- * Single Responsibility: Create custom function field configurations
+ * Single Responsibility: Display custom function field configurations (read-only)
+ * Note: Custom functions are placeholder/catch-all types and should not be edited in the UI
  */
 
 import { FieldConfig } from '../types'
@@ -13,22 +14,23 @@ export class CustomFieldStrategy {
         name: 'customName',
         label: 'Function Name',
         type: 'text',
-        placeholder: 'e.g., my_custom_function',
+        placeholder: 'Custom function type',
         value: props.customName,
-        onChange: props.onCustomNameChange
+        onChange: () => {}, // No-op for read-only
+        disabled: true
       },
       {
         name: 'customInputJson',
         label: 'Input (JSON)',
         type: 'json',
-        placeholder: '{"key": "value", "param": 123}',
+        placeholder: 'Custom function input',
         rows: 6,
         value: props.customInputJson,
-        onChange: props.onCustomInputJsonChange,
-        onBlur: props.onCustomInputBlur,
-        error: props.customInputError
+        onChange: () => {}, // No-op for read-only
+        onBlur: () => {}, // No-op for read-only
+        error: '', // No validation for read-only
+        disabled: true
       }
     ]
   }
 }
-

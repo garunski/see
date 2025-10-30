@@ -1,6 +1,6 @@
 import React from 'react';
 import { Panel } from '@xyflow/react';
-import { CommandLineIcon, CursorArrowRaysIcon, Bars3Icon, Cog6ToothIcon } from '@heroicons/react/24/outline';
+import { CommandLineIcon, CursorArrowRaysIcon, Bars3Icon } from '@heroicons/react/24/outline';
 import { WorkflowTask, TaskFunction } from '../types';
 import { createTaskNode } from '../utils/taskFactory';
 
@@ -47,17 +47,6 @@ const NodeToolbar: React.FC<NodeToolbarProps> = ({ onAddNode }) => {
           <Bars3Icon className="w-5 h-5" />
           <span className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 px-2 py-1 bg-zinc-900 text-white text-xs rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
             User Input
-          </span>
-        </button>
-        
-        <button
-          onClick={() => handleAddNode('custom')}
-          className="p-2 rounded hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors text-zinc-700 dark:text-zinc-300 relative group"
-          title="Add Custom Task"
-        >
-          <Cog6ToothIcon className="w-5 h-5" />
-          <span className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 px-2 py-1 bg-zinc-900 text-white text-xs rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
-            Custom
           </span>
         </button>
       </div>

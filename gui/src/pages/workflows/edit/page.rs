@@ -85,6 +85,11 @@ pub fn WorkflowEditPage(id: String) -> Element {
     // Handlers
     let workflow_id_clone = id.clone();
     let save_workflow = move || {
+        // TODO: Request workflow state from React editor before saving
+        // Send message to iframe: { type: 'GET_WORKFLOW_STATE' }
+        // React will respond with SAVE_WORKFLOW message containing serialized workflow
+        // That will trigger workflowSave event which should update content() signal
+
         let content_str = content();
         let name_str = edited_workflow_name();
 

@@ -15,9 +15,9 @@ import {
 export interface FieldFactoryProps {
   // CLI Command
   command: string
-  args: string
+  args: string[]
   onCommandChange: (value: string) => void
-  onArgsChange: (value: string) => void
+  onArgsChange: (value: string[]) => void
   
   // Cursor Agent
   prompt: string
@@ -42,6 +42,9 @@ export interface FieldFactoryProps {
   onCustomNameChange: (value: string) => void
   onCustomInputJsonChange: (value: string) => void
   onCustomInputBlur: () => void
+  
+  // Validation errors
+  validationErrors: Record<string, string>
 }
 
 /**

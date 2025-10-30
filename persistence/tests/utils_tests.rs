@@ -3,8 +3,8 @@
 //! Tests clear_all_data following Single Responsibility Principle.
 
 use s_e_e_persistence::{
-    AppSettings, AuditEvent, Prompt, Store, TaskExecution, TaskExecutionStatus, WorkflowDefinition,
-    WorkflowExecution, WorkflowExecutionStatus,
+    AppSettings, AuditEvent, Prompt, Store, TaskExecution, TaskExecutionStatus, Theme,
+    WorkflowDefinition, WorkflowExecution, WorkflowExecutionStatus,
 };
 
 async fn create_test_store() -> Store {
@@ -54,7 +54,7 @@ async fn test_clear_all_data_with_data() {
     };
 
     let settings = AppSettings {
-        theme: persistence::Theme::Dark,
+        theme: Theme::Dark,
         auto_save: false,
         notifications: true,
         default_workflow: Some("workflow-1".to_string()),
@@ -93,7 +93,7 @@ async fn test_clear_all_data_with_data() {
     assert_eq!(prompts.len(), 1);
 
     let loaded_settings = store.load_settings().await.unwrap().unwrap();
-    assert_eq!(loaded_settings.theme, persistence::Theme::Dark);
+    assert_eq!(loaded_settings.theme, Theme::Dark);
 
     // Clear all data
     let result = store.clear_all_data().await;

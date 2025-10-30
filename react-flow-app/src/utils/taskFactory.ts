@@ -18,7 +18,7 @@ export function createTaskNode(
       name = 'New CLI Command Task';
       taskFunction = {
         name: 'cli_command',
-        input: { command: 'echo', args: ['Hello World'] }
+        input: { command: '', args: [] }
       };
       break;
 
@@ -26,7 +26,7 @@ export function createTaskNode(
       name = 'New Cursor Agent Task';
       taskFunction = {
         name: 'cursor_agent',
-        input: { prompt: 'Enter your prompt here' }
+        input: { prompt: '' }
       };
       break;
 
@@ -35,7 +35,7 @@ export function createTaskNode(
       taskFunction = {
         name: 'user_input',
         input: { 
-          prompt: 'Enter prompt for user',
+          prompt: '',
           input_type: 'string',
           required: true
         }

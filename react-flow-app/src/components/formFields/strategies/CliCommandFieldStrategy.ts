@@ -8,24 +8,25 @@ import { FieldFactoryProps } from '../fieldFactory'
 
 export class CliCommandFieldStrategy {
   static createFields(props: FieldFactoryProps): FieldConfig[] {
-    return [
+    const fields: FieldConfig[] = [
       {
         name: 'command',
         label: 'Command',
         type: 'text',
-        placeholder: 'e.g., echo, ls, curl',
         value: props.command,
-        onChange: props.onCommandChange
+        onChange: props.onCommandChange,
+        error: props.validationErrors['command']
       },
       {
         name: 'args',
-        label: 'Arguments (comma-separated)',
-        type: 'text',
-        placeholder: 'e.g., Hello World, -l, /path/to/file',
+        label: 'Arguments',
+        type: 'array',
         value: props.args,
         onChange: props.onArgsChange
       }
     ]
+    
+    return fields
   }
 }
 

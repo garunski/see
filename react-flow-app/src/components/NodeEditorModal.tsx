@@ -21,7 +21,10 @@ export function NodeEditorModal({ isOpen, node, onSave, onClose }: NodeEditorMod
   
   // CLI Command fields
   const [command, setCommand] = useState('')
-  const [args, setArgs] = useState('')
+  const [args, setArgs] = useState<string[]>([])
+  
+  // Validation errors
+  const [validationErrors, setValidationErrors] = useState<Record<string, string>>({})
   
   // Cursor Agent fields
   const [prompt, setPrompt] = useState('')
@@ -48,7 +51,7 @@ export function NodeEditorModal({ isOpen, node, onSave, onClose }: NodeEditorMod
     switch (node.function.name) {
       case 'cli_command':
         setCommand(node.function.input.command || '')
-        setArgs(node.function.input.args?.join(', ') || '')
+        setArgs(node.function.input.args || [])
         break
         
       case 'cursor_agent':
@@ -82,17 +85,47 @@ export function NodeEditorModal({ isOpen, node, onSave, onClose }: NodeEditorMod
     setCustomInputError(validateJson(customInputJson) ? '' : 'Invalid JSON')
   }
 
+  const validateFields = (): boolean => {
+    const errors: Record<string, string> = {}
+    
+    // CLI Command validation
+    if (functionType === 'cli_command') {
+      if (!command.trim()) {
+        errors.command = 'Command is required'
+      }
+    }
+    
+    // Cursor Agent validation
+    if (functionType === 'cursor_agent') {
+      if (!prompt.trim()) {
+        errors.prompt = 'Prompt is required'
+      }
+      if (!validateJson(configJson)) {
+        errors.config = 'Invalid JSON'
+      }
+    }
+    
+    // User Input validation
+    if (functionType === 'user_input') {
+      if (!prompt.trim()) {
+        errors.prompt = 'Prompt is required'
+      }
+    }
+    
+    // Custom validation
+    if (functionType === 'custom' && !validateJson(customInputJson)) {
+      errors.customInput = 'Invalid JSON'
+    }
+    
+    setValidationErrors(errors)
+    return Object.keys(errors).length === 0
+  }
+
   const handleSave = () => {
     if (!node) return
 
-    // Validate JSON fields before saving
-    if (functionType === 'cursor_agent' && !validateJson(configJson)) {
-      setConfigError('Invalid JSON - cannot save')
-      return
-    }
-    
-    if (functionType === 'custom' && !validateJson(customInputJson)) {
-      setCustomInputError('Invalid JSON - cannot save')
+    // Validate all fields
+    if (!validateFields()) {
       return
     }
 
@@ -148,11 +181,14 @@ export function NodeEditorModal({ isOpen, node, onSave, onClose }: NodeEditorMod
             <Select 
               value={functionType} 
               onChange={(e) => setFunctionType(e.target.value as WorkflowTask['function']['name'])}
+              disabled={functionType === 'custom'}
             >
               <option value="cli_command">CLI Command</option>
               <option value="cursor_agent">Cursor Agent</option>
               <option value="user_input">User Input</option>
-              <option value="custom">Custom</option>
+              {functionType === 'custom' && (
+                <option value="custom">Custom (Read-only)</option>
+              )}
             </Select>
           </Field>
 
@@ -180,6 +216,7 @@ export function NodeEditorModal({ isOpen, node, onSave, onClose }: NodeEditorMod
             onCustomNameChange={setCustomName}
             onCustomInputJsonChange={setCustomInputJson}
             onCustomInputBlur={handleCustomInputBlur}
+            validationErrors={validationErrors}
           />
         </FieldGroup>
       </DialogBody>

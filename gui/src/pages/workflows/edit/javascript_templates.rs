@@ -18,6 +18,16 @@ window.addEventListener('message', function(event) {
             nameInput.value = event.data.payload.name;
             nameInput.dispatchEvent(new Event('input', { bubbles: true }));
         }
+    } else if (event.data && event.data.type === 'SAVE_WORKFLOW') {
+        // Handle workflow save from React editor
+        if (event.data.payload && event.data.payload.workflow) {
+            console.log('Workflow save requested from React editor:', event.data.payload.workflow);
+            // Dispatch custom event that Dioxus can listen to
+            const saveEvent = new CustomEvent('workflowSave', { 
+                detail: event.data.payload.workflow 
+            });
+            window.dispatchEvent(saveEvent);
+        }
     }
 });
 "#;

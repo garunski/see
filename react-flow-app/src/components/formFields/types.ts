@@ -2,13 +2,15 @@
  * Form field configuration types for the Factory Pattern
  */
 
-export type FieldType = 'text' | 'textarea' | 'select' | 'checkbox' | 'json'
+export type FieldType = 'text' | 'textarea' | 'select' | 'checkbox' | 'json' | 'array'
 
 export interface BaseFieldConfig {
   name: string
   label: string
   type: FieldType
   placeholder?: string
+  disabled?: boolean
+  error?: string
 }
 
 export interface TextFieldConfig extends BaseFieldConfig {
@@ -46,10 +48,18 @@ export interface JsonFieldConfig extends BaseFieldConfig {
   rows: number
 }
 
+export interface ArrayFieldConfig extends BaseFieldConfig {
+  type: 'array'
+  value: string[]
+  onChange: (value: string[]) => void
+  itemPlaceholder?: string
+}
+
 export type FieldConfig = 
   | TextFieldConfig 
   | TextareaFieldConfig 
   | SelectFieldConfig 
   | CheckboxFieldConfig 
   | JsonFieldConfig
+  | ArrayFieldConfig
 

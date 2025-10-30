@@ -122,7 +122,7 @@ pub fn TaskDetailsUserInputTab(input_request: Option<s_e_e_core::UserInputReques
                                     let mut is_submitting_spawn = is_submitting;
                                     let mut error_message_spawn = error_message;
                                     let mut is_submitted_spawn = is_submitted;
-                                    let nav = navigator.clone();
+                                    let nav = navigator;
 
                                     spawn(async move {
                                         match s_e_e_core::provide_user_input(

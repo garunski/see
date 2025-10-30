@@ -6,6 +6,8 @@ import { Field, Label } from '../fieldset'
 import { Input } from '../input'
 import { Select } from '../select'
 import { Textarea } from '../textarea'
+import { Button } from '../button'
+import { PlusIcon, XMarkIcon } from '@heroicons/react/20/solid'
 import { FieldConfig } from './types'
 
 interface FieldRendererProps {
@@ -25,7 +27,14 @@ export function FieldRenderer({ config }: FieldRendererProps) {
             value={config.value}
             onChange={(e) => config.onChange(e.target.value)}
             placeholder={config.placeholder}
+            disabled={config.disabled}
+            className={config.error ? 'border-red-500' : ''}
           />
+          {config.error && (
+            <p className="text-red-600 dark:text-red-400 text-sm mt-1">
+              {config.error}
+            </p>
+          )}
         </Field>
       )
 
@@ -38,7 +47,14 @@ export function FieldRenderer({ config }: FieldRendererProps) {
             onChange={(e) => config.onChange(e.target.value)}
             rows={config.rows}
             placeholder={config.placeholder}
+            disabled={config.disabled}
+            className={config.error ? 'border-red-500' : ''}
           />
+          {config.error && (
+            <p className="text-red-600 dark:text-red-400 text-sm mt-1">
+              {config.error}
+            </p>
+          )}
         </Field>
       )
 
@@ -85,12 +101,60 @@ export function FieldRenderer({ config }: FieldRendererProps) {
             rows={config.rows}
             placeholder={config.placeholder}
             className={config.error ? 'border-red-500' : ''}
+            disabled={config.disabled}
           />
-          {config.error && (
+          {config.error && !config.disabled && (
             <p className="text-red-600 dark:text-red-400 text-sm mt-1">
               {config.error}
             </p>
           )}
+        </Field>
+      )
+
+    case 'array':
+      return (
+        <Field key={config.name}>
+          <Label>{config.label}</Label>
+          <div className="space-y-2">
+            {config.value.map((item, index) => (
+              <div key={index} className="flex gap-2">
+                <Input
+                  value={item}
+                  onChange={(e) => {
+                    const newArray = [...config.value]
+                    newArray[index] = e.target.value
+                    config.onChange(newArray)
+                  }}
+                  placeholder={config.itemPlaceholder || `Item ${index + 1}`}
+                  disabled={config.disabled}
+                />
+                {!config.disabled && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const newArray = config.value.filter((_, i) => i !== index)
+                      config.onChange(newArray)
+                    }}
+                    className="shrink-0 p-2 text-gray-400 hover:text-red-500 rounded"
+                  >
+                    <XMarkIcon className="w-5 h-5" />
+                  </button>
+                )}
+              </div>
+            ))}
+            {!config.disabled && (
+              <Button
+                onClick={() => {
+                  config.onChange([...config.value, ''])
+                }}
+                variant="plain"
+                className="w-full mt-2"
+              >
+                <PlusIcon className="w-4 h-4 mr-1 inline" />
+                Add Argument
+              </Button>
+            )}
+          </div>
         </Field>
       )
 

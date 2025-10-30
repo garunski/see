@@ -13,7 +13,7 @@ impl QueryKey {
     ///
     /// # Example
     /// ```
-    /// use dioxus_query_custom::prelude::QueryKey;
+    /// use s_e_e_dioxus_query::prelude::QueryKey;
     /// let key = QueryKey::new(&["user", "123"]);
     /// assert_eq!(key.to_string(), "user:123");
     /// ```

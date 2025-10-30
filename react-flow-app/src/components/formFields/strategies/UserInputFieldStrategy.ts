@@ -13,10 +13,10 @@ export class UserInputFieldStrategy {
         name: 'prompt',
         label: 'Prompt',
         type: 'textarea',
-        placeholder: 'Enter prompt to show the user',
         rows: 4,
         value: props.prompt,
-        onChange: props.onPromptChange
+        onChange: props.onPromptChange,
+        error: props.validationErrors['prompt']
       },
       {
         name: 'inputType',
@@ -41,7 +41,6 @@ export class UserInputFieldStrategy {
         name: 'defaultValue',
         label: 'Default Value',
         type: 'text',
-        placeholder: 'Optional default value',
         value: props.defaultValue,
         onChange: props.onDefaultValueChange
       }

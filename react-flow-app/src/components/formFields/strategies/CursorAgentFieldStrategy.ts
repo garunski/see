@@ -13,21 +13,20 @@ export class CursorAgentFieldStrategy {
         name: 'prompt',
         label: 'Prompt',
         type: 'textarea',
-        placeholder: 'Enter your prompt for the Cursor agent',
         rows: 4,
         value: props.prompt,
-        onChange: props.onPromptChange
+        onChange: props.onPromptChange,
+        error: props.validationErrors['prompt']
       },
       {
         name: 'configJson',
         label: 'Config (JSON)',
         type: 'json',
-        placeholder: '{"key": "value"}',
         rows: 4,
         value: props.configJson,
         onChange: props.onConfigJsonChange,
         onBlur: props.onConfigBlur,
-        error: props.configError
+        error: props.configError || props.validationErrors['config']
       }
     ]
   }

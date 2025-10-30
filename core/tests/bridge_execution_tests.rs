@@ -27,7 +27,7 @@ fn test_engine_result_to_core_result() {
 
 #[test]
 fn test_engine_result_to_core_result_with_data() {
-    use engine::{AuditEntry, AuditStatus, TaskInfo, TaskStatus};
+    use s_e_e_engine::{AuditEntry, AuditStatus, TaskInfo, TaskStatus};
 
     let tasks = vec![TaskInfo {
         id: "task-1".to_string(),

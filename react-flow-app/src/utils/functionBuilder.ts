@@ -35,7 +35,7 @@ export function validateJson(jsonString: string): boolean {
 interface BuildFunctionParams {
   functionType: TaskFunction['name'];
   command?: string;
-  args?: string;
+  args?: string[];
   prompt?: string;
   configJson?: string;
   inputType?: string;
@@ -54,7 +54,7 @@ export function buildTaskFunction(params: BuildFunctionParams): TaskFunction | n
         name: 'cli_command',
         input: {
           command: params.command || '',
-          ...(params.args ? { args: params.args.split(',').map(s => s.trim()).filter(Boolean) } : {})
+          ...(params.args && params.args.length > 0 ? { args: params.args.filter(arg => arg.trim() !== '') } : {})
         }
       };
 
