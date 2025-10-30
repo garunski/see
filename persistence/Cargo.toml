@@ -1,6 +1,6 @@
 [package]
 name = "s_e_e_persistence"
-version = "0.1.2"
+version = "0.1.3"
 edition = "2021"
 description = "Persistence layer for S.E.E. workflow engine using SQLite with sqlx"
 
