@@ -203,6 +203,8 @@ jobs:
 
       - name: Install Dioxus CLI
         if: steps.cache-dx.outputs.cache-hit != 'true'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: cargo binstall dioxus-cli --no-confirm
 
       - name: Import code signing certificate
@@ -259,7 +261,7 @@ jobs:
           # If dx not found, install it
           if ! which dx; then
             echo "Installing dx..."
-            cargo binstall dioxus-cli --no-confirm --force
+            GITHUB_TOKEN="${{ secrets.GITHUB_TOKEN }}" cargo binstall dioxus-cli --no-confirm --force
           fi
           
           # Verify dx is now available
@@ -560,6 +562,8 @@ jobs:
 
       - name: Install Dioxus CLI
         if: steps.cache-dx.outputs.cache-hit != 'true'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: cargo binstall dioxus-cli --no-confirm
 
       - name: Build desktop app bundle
@@ -578,6 +582,7 @@ jobs:
           # If dx not found, install it
           if (-not (Get-Command dx -ErrorAction SilentlyContinue)) {
             Write-Host "Installing dx..."
+            $env:GITHUB_TOKEN = "${{ secrets.GITHUB_TOKEN }}"
             cargo binstall dioxus-cli --no-confirm --force
           }
           
