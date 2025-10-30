@@ -1,0 +1,19 @@
+[profile.default]
+# Default profile for local development
+# Show test output immediately when a test fails
+failure-output = "immediate-final"
+# Don't stop on first failure - run all tests
+fail-fast = false
+# Run tests with #[serial] attribute one at a time
+test-threads = 1
+
+[profile.ci]
+# CI profile - generates JUnit XML reports for GitHub Actions
+junit.path = "junit.xml"
+# Show test output immediately when a test fails
+failure-output = "immediate-final"
+# Don't stop on first failure - run all tests
+fail-fast = false
+# Run tests with #[serial] attribute one at a time
+test-threads = 1
+

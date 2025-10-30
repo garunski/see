@@ -41,6 +41,11 @@ jobs:
         with:
           shared-key: "ci-cache"
 
+      - name: Install cargo-nextest
+        uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-nextest
+
       - name: Build icons
         run: |
           cd icons
@@ -66,7 +71,14 @@ jobs:
         run: cargo clippy --workspace --all-targets --all-features -- -D warnings
 
       - name: Run tests
-        run: cargo test --workspace
+        run: cargo nextest run --workspace --profile ci
+
+      - name: Publish test results
+        uses: EnricoMi/publish-unit-test-result-action@v2
+        if: always()
+        with:
+          files: target/nextest/ci/junit.xml
+          check_name: Test Results
 
       - name: Build workspace
         run: cargo build --workspace
