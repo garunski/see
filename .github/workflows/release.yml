@@ -208,13 +208,14 @@ jobs:
       - name: Build desktop app bundle
         id: bundle
         run: |
-          dx bundle --package s_e_e_gui --release --json-output | tee bundle_output.json
+          dx bundle --package s_e_e_gui --release --json-output 2>&1 | tee bundle_output.log
           
-          # Extract DMG path from the last line of JSON output
-          DMG_PATH=$(tail -1 bundle_output.json | jq -r '.json | fromjson | .BundleOutput.bundles[] | select(endswith(".dmg"))')
+          # Extract DMG path from the log - it's in a message like "Bundled app at: /path/to/file.dmg"
+          DMG_PATH=$(grep "Bundled app at:.*\.dmg" bundle_output.log | grep -o "/.*\.dmg" | head -1)
           
           if [ -z "$DMG_PATH" ]; then
             echo "Error: DMG path not found in bundle output"
+            cat bundle_output.log
             exit 1
           fi
           
@@ -224,6 +225,7 @@ jobs:
           # Verify DMG exists
           if [ ! -f "$DMG_PATH" ]; then
             echo "Error: DMG file not found at $DMG_PATH"
+            ls -la "$(dirname "$DMG_PATH")"
             exit 1
           fi
           
