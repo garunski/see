@@ -162,44 +162,7 @@ See `engine/examples/` for more workflows: `simple.json`, `parallel.json`, `nest
 
 ---
 
-## Documentation
-
-- [CLI Reference](docs/CLI.md)  
-- [Core API](docs/CORE.md)  
-- [Engine Guide](docs/ENGINE.md)  
-- [Persistence](docs/PERSISTENCE.md)  
-
----
-
-## Contributing
-
-Development workflow:
-
-```bash
-cargo build
-cargo test
-cargo fmt
-cargo clippy
-```
-
-Fork the repository, create a feature branch, implement changes, add tests, and submit a pull request.
-
-[Detailed contribution guidelines →](CONTRIBUTING.md)
-
----
-
 ## License
 
 Apache License 2.0 — [LICENSE](LICENSE)
 
----
-
-## Code of Conduct
-
-Please refer to [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) for expected contributor behavior.
-
----
-
-## Security
-
-Report vulnerabilities privately as described in [SECURITY.md](SECURITY.md). Do not disclose publicly until addressed.
