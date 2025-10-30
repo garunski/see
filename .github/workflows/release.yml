@@ -269,12 +269,21 @@ jobs:
           # Build the app bundle (without creating DMG yet)
           dx bundle --package s_e_e_gui --release --json-output 2>&1 | tee bundle_output.log
           
-          # Find the .app bundle
-          APP_PATH=$(find target/dx/s_e_e_gui/release/bundle/macos -name "*.app" -type d | head -1)
+          # Extract the .app path from the bundle output
+          APP_PATH=$(grep "Bundled app at:.*\.app" bundle_output.log | grep -o "/.*\.app" | head -1)
           
           if [ -z "$APP_PATH" ]; then
-            echo "Error: .app bundle not found"
+            echo "Error: .app bundle not found in bundle output"
+            echo "Bundle output:"
+            cat bundle_output.log
+            echo "Searching for .app bundles:"
             find target/dx -name "*.app" -type d || echo "No .app found"
+            exit 1
+          fi
+          
+          # Verify the app bundle exists
+          if [ ! -d "$APP_PATH" ]; then
+            echo "Error: .app bundle not found at $APP_PATH"
             exit 1
           fi
           
