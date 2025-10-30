@@ -1,4 +1,6 @@
 name: Release
+# This workflow handles version bumping and releasing for both macOS and Windows
+# It uses cargo-release for idiomatic Rust version management
 
 on:
   workflow_dispatch:
@@ -52,63 +54,46 @@ jobs:
         with:
           shared-key: "version-bump-cache"
 
-      - name: Cache cargo-edit
-        id: cache-cargo-edit
+      - name: Cache cargo-release
+        id: cache-cargo-release
         uses: actions/cache@v4
         with:
-          path: ~/.cargo/bin/cargo-set-version
-          key: ${{ runner.os }}-cargo-edit
+          path: ~/.cargo/bin/cargo-release
+          key: ${{ runner.os }}-cargo-release-v1
 
-      - name: Install cargo-edit
-        if: steps.cache-cargo-edit.outputs.cache-hit != 'true'
-        run: cargo install cargo-edit
+      - name: Install cargo-release
+        if: steps.cache-cargo-release.outputs.cache-hit != 'true'
+        run: cargo install cargo-release
 
-      - name: Parse current version
+      - name: Get current version (for output)
         id: current
         run: |
           CURRENT_VERSION=$(cargo metadata --no-deps --format-version 1 | jq -r '.packages[] | select(.name == "s_e_e_gui") | .version')
           echo "current_version=$CURRENT_VERSION" >> $GITHUB_OUTPUT
           echo "Current version: $CURRENT_VERSION"
 
-      - name: Calculate new version
+      - name: Bump version and create tag
         id: bump
         run: |
-          CURRENT="${{ steps.current.outputs.current_version }}"
-          BUMP_TYPE="${{ github.event.inputs.bump_type }}"
+          # cargo-release will handle version bumping, committing, and tagging
+          # Capture the output to extract the new version
+          cargo release ${{ github.event.inputs.bump_type }} \
+            --workspace \
+            --execute \
+            --no-confirm \
+            --no-publish \
+            --no-push 2>&1 | tee release_output.log
           
-          IFS='.' read -r MAJOR MINOR PATCH <<< "$CURRENT"
-          
-          case "$BUMP_TYPE" in
-            major)
-              MAJOR=$((MAJOR + 1))
-              MINOR=0
-              PATCH=0
-              ;;
-            minor)
-              MINOR=$((MINOR + 1))
-              PATCH=0
-              ;;
-            patch)
-              PATCH=$((PATCH + 1))
-              ;;
-          esac
-          
-          NEW_VERSION="$MAJOR.$MINOR.$PATCH"
-          NEW_TAG="v$NEW_VERSION"
+          # Extract the new version from git tags (most recent tag)
+          NEW_TAG=$(git describe --tags --abbrev=0)
+          NEW_VERSION="${NEW_TAG#v}"
           
           echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
           echo "new_tag=$NEW_TAG" >> $GITHUB_OUTPUT
-          echo "New version: $NEW_VERSION"
+          echo "Bumped to version: $NEW_VERSION (tag: $NEW_TAG)"
 
-      - name: Bump version in workspace
+      - name: Push version bump and tag
         run: |
-          cargo set-version --workspace ${{ steps.bump.outputs.new_version }}
-
-      - name: Commit and tag version bump
-        run: |
-          git add .
-          git commit -m "chore: bump version to ${{ steps.bump.outputs.new_tag }}"
-          git tag ${{ steps.bump.outputs.new_tag }}
           git push origin main
           git push origin ${{ steps.bump.outputs.new_tag }}
 
@@ -127,12 +112,17 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Fetch and checkout new tag
+        if: github.event_name == 'workflow_dispatch' && needs.version-bump.outputs.new_tag != ''
+        run: |
+          git fetch --tags
+          git checkout ${{ needs.version-bump.outputs.new_tag }}
+
       - name: Determine version
         id: version
         run: |
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            # For manual dispatch, fetch the latest code with the new tag
-            git fetch --tags
+            # For manual dispatch, use the version from version-bump job
             VERSION="${{ needs.version-bump.outputs.new_version }}"
             TAG="${{ needs.version-bump.outputs.new_tag }}"
           else
@@ -296,15 +286,17 @@ jobs:
         if: env.signed == 'true'
         env:
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
         run: |
           APP_PATH="${{ steps.bundle.outputs.app_path }}"
+          IDENTITY="${SIGNING_IDENTITY:-Developer ID Application: Garun N Vagidov (6UUQ92953S)}"
           
           echo "🔏 Signing app bundle..."
           
           # Sign all frameworks and dylibs first
-          find "$APP_PATH/Contents" -name "*.dylib" -o -name "*.framework" | while read file; do
+          find "$APP_PATH/Contents" \( -name "*.dylib" -o -name "*.framework" \) | while read file; do
             echo "Signing: $file"
-            codesign --force --sign "Developer ID Application: Garun N Vagidov (6UUQ92953S)" \
+            codesign --force --sign "$IDENTITY" \
               --options runtime \
               --timestamp \
               --deep \
@@ -312,7 +304,7 @@ jobs:
           done
           
           # Sign the main app bundle
-          codesign --force --sign "Developer ID Application: Garun N Vagidov (6UUQ92953S)" \
+          codesign --force --sign "$IDENTITY" \
             --options runtime \
             --entitlements gui/Entitlements.plist \
             --timestamp \
@@ -405,11 +397,13 @@ jobs:
           APPLE_ID: ${{ secrets.APPLE_ID }}
           APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
         run: |
           DMG_PATH="${{ steps.create_dmg.outputs.dmg_path }}"
+          IDENTITY="${SIGNING_IDENTITY:-Developer ID Application: Garun N Vagidov (6UUQ92953S)}"
           
           echo "🔏 Signing DMG..."
-          codesign --force --sign "Developer ID Application: Garun N Vagidov (6UUQ92953S)" \
+          codesign --force --sign "$IDENTITY" \
             --timestamp \
             "$DMG_PATH"
           
@@ -468,8 +462,11 @@ jobs:
   build-windows:
     name: Build Windows
     runs-on: windows-latest
-    if: always()
-    needs: version-bump
+    needs: [version-bump]
+    if: |
+      always() &&
+      (needs.version-bump.result == 'success' || 
+       needs.version-bump.result == 'skipped')
     outputs:
       msi_path: ${{ steps.bundle.outputs.msi_path }}
       msi_filename: ${{ steps.bundle.outputs.msi_filename }}
@@ -481,13 +478,19 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Fetch and checkout new tag
+        if: github.event_name == 'workflow_dispatch' && needs.version-bump.outputs.new_tag != ''
+        shell: bash
+        run: |
+          git fetch --tags
+          git checkout ${{ needs.version-bump.outputs.new_tag }}
+
       - name: Determine version
         id: version
         shell: bash
         run: |
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            # For manual dispatch, fetch the latest code with the new tag
-            git fetch --tags
+            # For manual dispatch, use the version from version-bump job
             VERSION="${{ needs.version-bump.outputs.new_version }}"
             TAG="${{ needs.version-bump.outputs.new_tag }}"
           else
@@ -715,26 +718,36 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          # Collect all artifacts
+          # Collect all artifacts, finding actual files (skipping nested directories)
           ARTIFACTS=()
           
-          # Add macOS artifacts if available
+          # Find all files recursively, avoiding duplicates
           if [ -d "artifacts-macos" ]; then
-            for file in artifacts-macos/**/*; do
-              if [ -f "$file" ]; then
-                ARTIFACTS+=("$file")
-              fi
-            done
+            while IFS= read -r -d '' file; do
+              ARTIFACTS+=("$file")
+            done < <(find artifacts-macos -type f -print0)
           fi
           
-          # Add Windows artifacts if available
           if [ -d "artifacts-windows" ]; then
-            for file in artifacts-windows/**/*; do
-              if [ -f "$file" ]; then
+            while IFS= read -r -d '' file; do
+              # Check if this file is already in the array (by basename)
+              basename_file=$(basename "$file")
+              duplicate=false
+              for existing in "${ARTIFACTS[@]}"; do
+                if [ "$(basename "$existing")" = "$basename_file" ]; then
+                  duplicate=true
+                  break
+                fi
+              done
+              if [ "$duplicate" = false ]; then
                 ARTIFACTS+=("$file")
               fi
-            done
+            done < <(find artifacts-windows -type f -print0)
           fi
+          
+          # Debug: show what we're uploading
+          echo "Artifacts to upload:"
+          printf '%s\n' "${ARTIFACTS[@]}"
           
           # Create release with all artifacts
           gh release create "${{ steps.version.outputs.tag }}" \
