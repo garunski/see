@@ -47,6 +47,12 @@ fn get_test_database_path() -> Result<String, String> {
 }
 
 pub async fn init_test_store() -> Result<(), String> {
+    // Check if store is already initialized
+    if GLOBAL_STORE.get().is_some() {
+        tracing::debug!("Test store already initialized, reusing existing store");
+        return Ok(());
+    }
+
     let db_path = get_test_database_path()?;
 
     if let Err(e) = std::fs::remove_file(&db_path) {
