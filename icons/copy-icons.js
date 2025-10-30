@@ -75,7 +75,7 @@ if (fs.existsSync(svgSrc)) {
 }
 
 // Copy generated PNGs if they exist
-const pngSizes = [32, 64, 128];
+const pngSizes = [32, 64, 128, 256];
 for (const size of pngSizes) {
   const pngSrc = path.join(distDir, "png", size.toString(), "see.png");
   const pngDest = path.join(brandingOutputDir, `logo-${size}.png`);
@@ -85,6 +85,29 @@ for (const size of pngSizes) {
   } else {
     console.log(`⚠ Skipping logo-${size}.png (not generated yet - run npm run build:branding first)`);
   }
+}
+
+// Copy bundle icons (for app packaging)
+console.log("\nCopying bundle icons...");
+
+// Copy .icns for macOS
+const icnsSrc = path.join(distDir, "macos", "see.icns");
+const icnsDest = path.join(brandingOutputDir, "see.icns");
+if (fs.existsSync(icnsSrc)) {
+  fs.copyFileSync(icnsSrc, icnsDest);
+  console.log("✓ Copied see.icns (macOS)");
+} else {
+  console.log("⚠ Skipping see.icns (not generated yet)");
+}
+
+// Copy .ico for Windows
+const icoSrc = path.join(distDir, "windows", "see.ico");
+const icoDest = path.join(brandingOutputDir, "see.ico");
+if (fs.existsSync(icoSrc)) {
+  fs.copyFileSync(icoSrc, icoDest);
+  console.log("✓ Copied see.ico (Windows)");
+} else {
+  console.log("⚠ Skipping see.ico (not generated yet)");
 }
 
 console.log("\nIcon copying complete!");

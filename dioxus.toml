@@ -11,3 +11,10 @@ proxy = ""
 [bundle]
 identifier = "com.s_e_e.workflow-engine"
 publisher = "Garunski"
+icon = [
+    "gui/assets/branding/logo-32.png",
+    "gui/assets/branding/logo-128.png",
+    "gui/assets/branding/logo-256.png",
+    "gui/assets/branding/see.icns",
+    "gui/assets/branding/see.ico"
+]

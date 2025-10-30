@@ -40,3 +40,4 @@ typescript_sample
 node_modules
 coverage/
 data/
+.tmp-release/

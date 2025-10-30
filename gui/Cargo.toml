@@ -27,9 +27,9 @@ identifier = "com.s_e_e.workflow-engine"
 name = "Speculative Execution Engine"
 publisher = "Garunski"
 icon = [
-    "../icons/dist/png/32/see.png",
-    "../icons/dist/png/128/see.png",
-    "../icons/dist/png/256/see.png",
-    "../icons/dist/macos/see.icns",
-    "../icons/dist/windows/see.ico"
+    "assets/branding/logo-32.png",
+    "assets/branding/logo-128.png",
+    "assets/branding/logo-256.png",
+    "assets/branding/see.icns",
+    "assets/branding/see.ico"
 ]

@@ -85,3 +85,78 @@ tasks:
       - rm -f ~/.s_e_e/data.db-shm
       - rm -f ~/.s_e_e/audit.redb
       - echo "✅ Database cleared successfully"
+
+  build-release:
+    desc: Build release DMG locally (mimics GitHub workflow)
+    cmds:
+      # Clean temp directory
+      - rm -rf ./.tmp-release
+      - mkdir -p ./.tmp-release
+      
+      # Build all frontend assets (same order as CI)
+      - task: icons
+      - task: tailwind
+      - task: visualizer
+      
+      # Bundle the app
+      - |
+        echo "📦 Building release bundle..."
+        dx bundle --package s_e_e_gui --release 2>&1 | tee ./.tmp-release/bundle_output.log
+      
+      # Extract DMG path
+      - |
+        DMG_PATH=$(grep "Bundled app at:.*\.dmg" ./.tmp-release/bundle_output.log | grep -o "/.*\.dmg" | head -1)
+        if [ -z "$DMG_PATH" ]; then
+          echo "❌ Error: DMG path not found in bundle output"
+          exit 1
+        fi
+        echo "✅ DMG created at: $DMG_PATH"
+        
+        # Copy to temp directory for easy access
+        cp "$DMG_PATH" ./.tmp-release/
+        DMG_NAME=$(basename "$DMG_PATH")
+        echo "📋 Copied to: ./.tmp-release/$DMG_NAME"
+        
+        # Also copy the .app bundle for inspection
+        APP_PATH=$(grep "Bundled app at:.*\.app\"" ./.tmp-release/bundle_output.log | grep -o "/.*\.app" | head -1)
+        if [ ! -z "$APP_PATH" ]; then
+          cp -r "$APP_PATH" ./.tmp-release/
+          echo "📋 App bundle: ./.tmp-release/$(basename "$APP_PATH")"
+        fi
+      
+      # Print diagnostic info
+      - |
+        echo ""
+        echo "🔍 Bundle Diagnostics:"
+        echo "===================="
+        
+        # Check icon files exist
+        echo "📁 Icon files:"
+        ls -lh icons/dist/macos/see.icns 2>/dev/null && echo "  ✅ macOS .icns exists" || echo "  ❌ macOS .icns MISSING"
+        ls -lh icons/dist/png/128/see.png 2>/dev/null && echo "  ✅ PNG 128x128 exists" || echo "  ❌ PNG 128x128 MISSING"
+        
+        # Check what's in .tmp-release
+        echo ""
+        echo "📦 Output files:"
+        ls -lh ./.tmp-release/
+        
+        # Check app bundle structure
+        APP_BUNDLE=$(find ./.tmp-release -name "*.app" -type d | head -1)
+        if [ ! -z "$APP_BUNDLE" ]; then
+          echo ""
+          echo "🔍 App bundle contents:"
+          ls -la "$APP_BUNDLE/Contents/"
+          if [ -f "$APP_BUNDLE/Contents/Info.plist" ]; then
+            echo ""
+            echo "📄 Info.plist CFBundleIconFile:"
+            plutil -p "$APP_BUNDLE/Contents/Info.plist" | grep -i icon || echo "  ⚠️  No icon entry found"
+          fi
+          if [ -d "$APP_BUNDLE/Contents/Resources" ]; then
+            echo ""
+            echo "🖼️  Resources folder:"
+            ls -la "$APP_BUNDLE/Contents/Resources/" | grep -i icon || echo "  ⚠️  No icon files in Resources"
+          fi
+        fi
+        
+        echo ""
+        echo "✅ Build complete! Check ./.tmp-release/ directory"
