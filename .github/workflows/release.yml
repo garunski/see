@@ -43,7 +43,20 @@ jobs:
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
 
+      - name: Cache Rust dependencies
+        uses: Swatinem/rust-cache@v2
+        with:
+          shared-key: "version-bump-cache"
+
+      - name: Cache cargo-edit
+        id: cache-cargo-edit
+        uses: actions/cache@v4
+        with:
+          path: ~/.cargo/bin/cargo-set-version
+          key: ${{ runner.os }}-cargo-edit
+
       - name: Install cargo-edit
+        if: steps.cache-cargo-edit.outputs.cache-hit != 'true'
         run: cargo install cargo-edit
 
       - name: Parse current version
@@ -145,6 +158,21 @@ jobs:
         uses: Swatinem/rust-cache@v2
         with:
           shared-key: "release-cache"
+          cache-all-crates: true
+
+      - name: Cache cargo-binstall
+        id: cache-binstall
+        uses: actions/cache@v4
+        with:
+          path: ~/.cargo/bin/cargo-binstall
+          key: ${{ runner.os }}-cargo-binstall-${{ hashFiles('**/Cargo.lock') }}
+
+      - name: Cache Dioxus CLI
+        id: cache-dx
+        uses: actions/cache@v4
+        with:
+          path: ~/.cargo/bin/dx
+          key: ${{ runner.os }}-dioxus-cli-${{ hashFiles('**/Cargo.lock') }}
 
       - name: Build icons
         run: |
@@ -165,10 +193,12 @@ jobs:
           npm run build
 
       - name: Install cargo-binstall
+        if: steps.cache-binstall.outputs.cache-hit != 'true'
         run: |
           curl -L --proto '=https' --tlsv1.2 -sSf https://raw.githubusercontent.com/cargo-bins/cargo-binstall/main/install-from-binstall-release.sh | bash
 
       - name: Install Dioxus CLI
+        if: steps.cache-dx.outputs.cache-hit != 'true'
         run: cargo binstall dioxus-cli --no-confirm
 
       - name: Build desktop app bundle
