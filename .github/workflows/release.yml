@@ -205,6 +205,9 @@ jobs:
         if: steps.cache-dx.outputs.cache-hit != 'true'
         run: cargo binstall dioxus-cli --no-confirm
 
+      - name: Add cargo bin to PATH
+        run: echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+
       - name: Build desktop app bundle
         id: bundle
         run: |
