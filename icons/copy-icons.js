@@ -6,7 +6,9 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const heroiconsDir = path.join(__dirname, "node_modules", "heroicons");
-const outputDir = path.join(__dirname, "..", "gui", "assets", "icons");
+const iconsOutputDir = path.join(__dirname, "..", "gui", "assets", "icons");
+const brandingOutputDir = path.join(__dirname, "..", "gui", "assets", "branding");
+const distDir = path.join(__dirname, "dist");
 
 const iconMap = {
   home: "home",
@@ -32,8 +34,8 @@ const iconMap = {
   cursor: "cursor-arrow-rays",
 };
 
-if (!fs.existsSync(outputDir)) {
-  fs.mkdirSync(outputDir, { recursive: true });
+if (!fs.existsSync(iconsOutputDir)) {
+  fs.mkdirSync(iconsOutputDir, { recursive: true });
 }
 
 console.log("Copying Heroicons...");
@@ -45,7 +47,7 @@ Object.entries(iconMap).forEach(([ourName, heroiconName]) => {
     "outline",
     `${heroiconName}.svg`,
   );
-  const outlineDest = path.join(outputDir, `${ourName}-outline.svg`);
+  const outlineDest = path.join(iconsOutputDir, `${ourName}-outline.svg`);
   if (fs.existsSync(outlineSrc)) {
     fs.copyFileSync(outlineSrc, outlineDest);
     console.log(`✓ Copied ${ourName}-outline.svg`);
@@ -54,4 +56,33 @@ Object.entries(iconMap).forEach(([ourName, heroiconName]) => {
   }
 });
 
-console.log("Icon copying complete!");
+console.log("\nCopying branding icons...");
+
+if (!fs.existsSync(brandingOutputDir)) {
+  fs.mkdirSync(brandingOutputDir, { recursive: true });
+}
+
+// Copy source SVG
+const svgSrc = path.join(__dirname, "branding", "s_e_e.svg");
+const svgDest = path.join(brandingOutputDir, "logo.svg");
+if (fs.existsSync(svgSrc)) {
+  fs.copyFileSync(svgSrc, svgDest);
+  console.log("✓ Copied logo.svg");
+} else {
+  console.log("✗ Missing: branding/s_e_e.svg");
+}
+
+// Copy generated PNGs if they exist
+const pngSizes = [32, 64, 128];
+for (const size of pngSizes) {
+  const pngSrc = path.join(distDir, "png", size.toString(), "see.png");
+  const pngDest = path.join(brandingOutputDir, `logo-${size}.png`);
+  if (fs.existsSync(pngSrc)) {
+    fs.copyFileSync(pngSrc, pngDest);
+    console.log(`✓ Copied logo-${size}.png`);
+  } else {
+    console.log(`⚠ Skipping logo-${size}.png (not generated yet - run npm run build:branding first)`);
+  }
+}
+
+console.log("\nIcon copying complete!");

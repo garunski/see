@@ -1,44 +1,24 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 64 64">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
   <defs>
-    <!-- yellow core glow -->
-    <radialGradient id="coreGlow" cx="32" cy="32" r="8" gradientUnits="userSpaceOnUse">
+    <radialGradient id="see-logo-coreGlow" cx="32" cy="32" r="8" gradientUnits="userSpaceOnUse">
       <stop offset="0%" stop-color="#fbbf24" stop-opacity="0.9"/>
       <stop offset="70%" stop-color="#fbbf24" stop-opacity="0.3"/>
       <stop offset="100%" stop-color="#fbbf24" stop-opacity="0"/>
     </radialGradient>
-
-    <!-- central core blur -->
-    <filter id="blurGlow" x="-50%" y="-50%" width="200%" height="200%">
+    <filter id="see-logo-blurGlow" x="-50%" y="-50%" width="200%" height="200%">
       <feGaussianBlur stdDeviation="3"/>
       <feMerge>
         <feMergeNode in="blur"/>
         <feMergeNode in="SourceGraphic"/>
       </feMerge>
     </filter>
-
-    <!-- inner gear glow -->
-    <filter id="gearInnerGlow" x="-50%" y="-50%" width="200%" height="200%">
-      <feGaussianBlur stdDeviation="2"/>
-    </filter>
   </defs>
-
-  <!-- group strokes with same color for clarity -->
   <g stroke="#38bdf8" fill="none">
-    <!-- inner dark blue glow -->
-    <circle cx="32" cy="32" r="14" stroke-width="6" opacity="0.8" filter="url(#gearInnerGlow)"/>
-    
-    <!-- central gear circle -->
     <circle cx="32" cy="32" r="14" stroke-width="2"/>
-    
-    <!-- top dashed arc -->
     <path d="M12,32 A20,20 0 0,1 52,32" stroke-width="2" stroke-linecap="round" stroke-dasharray="6 4" stroke-dashoffset="2"/>
-    
-    <!-- bottom two rays solid -->
     <path d="M32,52 A20,20 0 0,1 52,32" stroke-width="2" stroke-linecap="round"/>
     <path d="M32,52 A20,20 0 0,0 12,32" stroke-width="2" stroke-linecap="round"/>
   </g>
-
-  <!-- central energy core with yellow glow -->
-  <circle cx="32" cy="32" r="4" fill="#fbbf24" filter="url(#blurGlow)"/>
-  <circle cx="32" cy="32" r="8" fill="url(#coreGlow)"/>
+  <circle cx="32" cy="32" r="4" fill="#fbbf24" filter="url(#see-logo-blurGlow)"/>
+  <circle cx="32" cy="32" r="8" fill="url(#see-logo-coreGlow)"/>
 </svg>

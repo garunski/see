@@ -74,10 +74,21 @@ fn main() {
     drop(rt);
     tracing::debug!("Persistence layer initialized successfully");
 
+    let icon_bytes = include_bytes!("../assets/branding/logo-128.png");
+    let icon = image::load_from_memory(icon_bytes)
+        .expect("Failed to load icon")
+        .to_rgba8();
+    let (width, height) = icon.dimensions();
+    let icon = dioxus_desktop::tao::window::Icon::from_rgba(icon.into_raw(), width, height)
+        .expect("Failed to create icon");
+
     LaunchBuilder::desktop()
         .with_cfg(
-            Config::new()
-                .with_window(WindowBuilder::new().with_title("Speculative Execution Engine")),
+            Config::new().with_window(
+                WindowBuilder::new()
+                    .with_title("Speculative Execution Engine")
+                    .with_window_icon(Some(icon)),
+            ),
         )
         .launch(layout::App);
 }

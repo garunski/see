@@ -4,9 +4,17 @@
   "description": "SVG icons for Speculative Execution Engine",
   "type": "module",
   "scripts": {
-    "build": "node copy-icons.js"
+    "clean": "rm -rf dist",
+    "build": "npm run build:heroicons && npm run build:branding",
+    "build:heroicons": "node copy-icons.js",
+    "build:branding": "node scripts/build.mjs",
+    "verify": "node scripts/verify.mjs"
   },
   "dependencies": {
     "heroicons": "^2.2.0"
+  },
+  "devDependencies": {
+    "@ctjs/png2icons": "^3.0.3",
+    "sharp": "^0.33.0"
   }
 }

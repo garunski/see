@@ -13,7 +13,8 @@ pub fn Icon(
 
     rsx! {
         div {
-            class: format!("{} {}", size, class),
+            class: format!("{} {} inline-block", size, class),
+            style: "line-height: 0;",
             dangerous_inner_html: icon_svg
         }
     }
@@ -21,6 +22,7 @@ pub fn Icon(
 
 fn get_icon_svg(name: &str) -> String {
     match name {
+        "logo" => include_str!("../assets/branding/logo.svg").to_string(),
         "home" => include_str!("../assets/icons/home-outline.svg").to_string(),
         "upload" => include_str!("../assets/icons/upload-outline.svg").to_string(),
         "workflows" => include_str!("../assets/icons/workflows-outline.svg").to_string(),
