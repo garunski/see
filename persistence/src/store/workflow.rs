@@ -1,7 +1,3 @@
-//! Workflow store operations
-//!
-//! This file contains ONLY workflow CRUD operations following Single Responsibility Principle.
-
 use super::Store;
 use crate::logging::{
     log_db_operation_error, log_db_operation_start, log_db_operation_success, log_deserialization,
@@ -11,7 +7,6 @@ use crate::models::WorkflowDefinition;
 use sqlx::Row;
 
 impl Store {
-    /// Save a workflow definition
     pub async fn save_workflow(&self, workflow: &WorkflowDefinition) -> Result<(), String> {
         log_db_operation_start("save_workflow", "workflows");
 
@@ -36,7 +31,6 @@ impl Store {
         Ok(())
     }
 
-    /// Get a workflow definition by ID
     pub async fn get_workflow(&self, id: &str) -> Result<Option<WorkflowDefinition>, String> {
         log_db_operation_start("get_workflow", "workflows");
 
@@ -69,7 +63,6 @@ impl Store {
         }
     }
 
-    /// List all workflow definitions
     pub async fn list_workflows(&self) -> Result<Vec<WorkflowDefinition>, String> {
         log_db_operation_start("list_workflows", "workflows");
 
@@ -99,7 +92,6 @@ impl Store {
         Ok(workflows)
     }
 
-    /// Delete a workflow definition
     pub async fn delete_workflow(&self, id: &str) -> Result<(), String> {
         log_db_operation_start("delete_workflow", "workflows");
 

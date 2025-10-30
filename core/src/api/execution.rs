@@ -1,5 +1,3 @@
-// Workflow execution API ONLY
-
 use crate::bridge::audit::audit_entry_to_event;
 use crate::bridge::execution::workflow_result_to_execution;
 use crate::bridge::workflow::workflow_definition_to_engine;
@@ -12,13 +10,11 @@ use s_e_e_persistence::{
 };
 use serde_json::Value;
 
-/// Delete a workflow execution and all related data (tasks, input requests, audit events)
 pub async fn delete_workflow_execution(execution_id: &str) -> Result<(), CoreError> {
     tracing::info!("Deleting workflow execution: {}", execution_id);
 
     let store = get_global_store()?;
 
-    // Verify execution exists
     let execution = store
         .get_workflow_execution(execution_id)
         .await
@@ -31,15 +27,11 @@ pub async fn delete_workflow_execution(execution_id: &str) -> Result<(), CoreErr
         "Found execution to delete"
     );
 
-    // Delete workflow execution and all associated tasks
-    // This uses delete_workflow_metadata_and_tasks which handles both
     store
         .delete_workflow_metadata_and_tasks(execution_id)
         .await
         .map_err(CoreError::Persistence)?;
 
-    // Delete all user input requests for this execution
-    // First get pending inputs, then we'll also get fulfilled ones
     let pending_requests = store
         .get_pending_inputs_for_workflow(execution_id)
         .await
@@ -47,7 +39,6 @@ pub async fn delete_workflow_execution(execution_id: &str) -> Result<(), CoreErr
 
     let mut deleted_count = 0;
 
-    // Delete pending requests
     for request in pending_requests {
         store
             .delete_input_request(&request.id)
@@ -61,17 +52,12 @@ pub async fn delete_workflow_execution(execution_id: &str) -> Result<(), CoreErr
         );
     }
 
-    // For fulfilled requests, we need to check all requests
-    // Since there's no method to get all requests for a workflow,
-    // we'll get all pending inputs (which includes both pending and fulfilled)
-    // and filter by workflow_execution_id
     let all_requests = store
         .get_all_pending_inputs()
         .await
         .map_err(CoreError::Persistence)?;
 
     for request in all_requests {
-        // Only process if it belongs to this execution and wasn't already deleted (not pending)
         if request.workflow_execution_id == execution_id
             && !matches!(request.status, InputRequestStatus::Pending)
         {
@@ -94,8 +80,6 @@ pub async fn delete_workflow_execution(execution_id: &str) -> Result<(), CoreErr
         "Deleted input requests for execution"
     );
 
-    // Delete all audit events for tasks in this execution
-    // Load tasks first to get their IDs
     let execution_tasks = store
         .get_tasks_for_workflow(execution_id)
         .await
@@ -104,10 +88,6 @@ pub async fn delete_workflow_execution(execution_id: &str) -> Result<(), CoreErr
     let task_ids: std::collections::HashSet<String> =
         execution_tasks.iter().map(|t| t.id.clone()).collect();
 
-    // Get all audit events and delete those that reference tasks in this execution
-    // Since we don't have a list_audit_events method yet, we'll query directly
-    // For now, we'll skip audit event deletion - they can be cleaned up separately
-    // as audit events are primarily for historical tracking
     tracing::debug!(
         execution_id = %execution_id,
         task_count = task_ids.len(),
@@ -122,14 +102,12 @@ pub async fn delete_workflow_execution(execution_id: &str) -> Result<(), CoreErr
     Ok(())
 }
 
-/// Execute a workflow by loading it from persistence and running it through the engine
 pub async fn execute_workflow_by_id(
     workflow_id: &str,
     callback: Option<OutputCallback>,
 ) -> Result<WorkflowResult, CoreError> {
     tracing::debug!("Executing workflow: {}", workflow_id);
 
-    // Step 1: Load WorkflowDefinition from Persistence
     tracing::debug!("Step 1: Getting global store");
     let store = get_global_store()?;
     tracing::debug!("Step 1: Got global store");
@@ -141,7 +119,6 @@ pub async fn execute_workflow_by_id(
         .ok_or_else(|| CoreError::WorkflowNotFound(workflow_id.to_string()))?;
     tracing::debug!("Step 1: Loaded workflow: {}", workflow.name);
 
-    // Step 2: Validate Workflow Content
     tracing::debug!("Step 2: Validating workflow content");
     if workflow.content.is_empty() {
         return Err(CoreError::Execution(
@@ -149,18 +126,15 @@ pub async fn execute_workflow_by_id(
         ));
     }
 
-    // Step 3: Parse workflow content to JSON for snapshot
     tracing::debug!("Step 3: Parsing workflow JSON");
     let workflow_json: serde_json::Value = serde_json::from_str(&workflow.content)
         .map_err(|e| CoreError::Execution(format!("Invalid workflow JSON: {}", e)))?;
     tracing::debug!("Step 3: Parsed workflow JSON successfully");
 
-    // Step 4: Parse JSON Content to EngineWorkflow
     tracing::debug!("Step 4: Converting to engine workflow");
     let engine_workflow = workflow_definition_to_engine(&workflow)?;
     tracing::debug!("Step 4: Converted to engine workflow");
 
-    // Step 5: Create Initial WorkflowExecution Record
     let execution_id = uuid::Uuid::new_v4().to_string();
     let now = chrono::Utc::now();
 
@@ -171,14 +145,13 @@ pub async fn execute_workflow_by_id(
         status: WorkflowExecutionStatus::Running,
         created_at: now,
         completed_at: None,
-        tasks: Vec::new(), // Will be populated after execution
+        tasks: Vec::new(),
         timestamp: now,
         audit_trail: Vec::new(),
         per_task_logs: std::collections::HashMap::new(),
         errors: Vec::new(),
     };
 
-    // Step 6: Save Initial Execution to Persistence
     tracing::debug!("Step 6: Saving initial execution to DB");
     store
         .save_workflow_execution(initial_execution.clone())
@@ -186,7 +159,6 @@ pub async fn execute_workflow_by_id(
         .map_err(CoreError::Persistence)?;
     tracing::debug!("Step 6: Saved initial execution");
 
-    // Step 7: Execute Workflow Through Engine
     tracing::debug!("Step 7: Creating workflow engine");
     let engine = WorkflowEngine::new();
     tracing::debug!("Step 7: Executing workflow through engine");
@@ -197,7 +169,7 @@ pub async fn execute_workflow_by_id(
         }
         Err(e) => {
             tracing::error!("Step 7: Engine execution failed: {}", e);
-            // Update execution status to failed
+
             let mut failed_execution = initial_execution.clone();
             failed_execution.status = WorkflowExecutionStatus::Failed;
             failed_execution.completed_at = Some(chrono::Utc::now());
@@ -212,7 +184,6 @@ pub async fn execute_workflow_by_id(
         }
     };
 
-    // Step 8: Check if workflow is waiting for input
     let has_input_waiting = engine_result
         .tasks
         .iter()
@@ -221,10 +192,8 @@ pub async fn execute_workflow_by_id(
     if has_input_waiting {
         tracing::debug!("Workflow paused - waiting for user input: {}", workflow_id);
 
-        // Create UserInputRequest records for tasks waiting for input BEFORE moving the snapshot
         for task_info in &engine_result.tasks {
             if matches!(task_info.status, s_e_e_engine::TaskStatus::WaitingForInput) {
-                // Extract user input parameters from workflow snapshot
                 if let Some(task_node) =
                     find_task_in_snapshot(&initial_execution.workflow_snapshot, &task_info.id)
                 {
@@ -245,22 +214,18 @@ pub async fn execute_workflow_by_id(
             }
         }
 
-        // Convert Engine Result to Persistence Types BEFORE saving
         let waiting_execution = workflow_result_to_execution(
             engine_result.clone(),
             execution_id.clone(),
             initial_execution.created_at,
         );
 
-        // Preserve the workflow snapshot for task ordering
         let mut updated_execution = waiting_execution.clone();
         updated_execution.workflow_snapshot = initial_execution.workflow_snapshot;
 
-        // Update status to WaitingForInput
         updated_execution.status = WorkflowExecutionStatus::WaitingForInput;
-        updated_execution.completed_at = None; // Not completed yet
+        updated_execution.completed_at = None;
 
-        // Save Task Executions to Persistence
         for task in &updated_execution.tasks {
             store
                 .save_task_execution(task.clone())
@@ -268,20 +233,17 @@ pub async fn execute_workflow_by_id(
                 .map_err(CoreError::Persistence)?;
         }
 
-        // Save the execution with tasks
         store
             .save_workflow_execution(updated_execution)
             .await
             .map_err(CoreError::Persistence)?;
 
-        // Stream progress via OutputCallback
         if let Some(ref callback) = callback {
             callback("Workflow paused - waiting for user input".to_string());
         }
 
-        // Return result indicating workflow is paused for input
         return Ok(WorkflowResult {
-            success: false, // Workflow not complete, waiting for input
+            success: false,
             workflow_name: engine_result.workflow_name,
             execution_id,
             tasks: engine_result.tasks,
@@ -291,12 +253,10 @@ pub async fn execute_workflow_by_id(
         });
     }
 
-    // Step 9: Stream Progress via OutputCallback
     if let Some(ref callback) = callback {
         callback("Workflow execution completed".to_string());
     }
 
-    // Step 10: Convert Engine Result to Persistence Types
     let _completed_at = chrono::Utc::now();
     let mut final_execution = workflow_result_to_execution(
         engine_result.clone(),
@@ -304,10 +264,8 @@ pub async fn execute_workflow_by_id(
         initial_execution.created_at,
     );
 
-    // Preserve the workflow snapshot for task ordering
     final_execution.workflow_snapshot = initial_execution.workflow_snapshot;
 
-    // Step 11: Save Task Executions to Persistence
     for task in &final_execution.tasks {
         store
             .save_task_execution(task.clone())
@@ -315,7 +273,6 @@ pub async fn execute_workflow_by_id(
             .map_err(CoreError::Persistence)?;
     }
 
-    // Step 12: Save Audit Events to Persistence
     for audit_entry in &engine_result.audit_trail {
         let audit_event = audit_entry_to_event(audit_entry)?;
         store
@@ -324,13 +281,11 @@ pub async fn execute_workflow_by_id(
             .map_err(CoreError::Persistence)?;
     }
 
-    // Step 13: Update Final Execution Record
     store
         .save_workflow_execution(final_execution.clone())
         .await
         .map_err(CoreError::Persistence)?;
 
-    // Step 14: Return WorkflowResult
     let result = WorkflowResult {
         success: engine_result.success,
         workflow_name: engine_result.workflow_name,
@@ -349,7 +304,6 @@ pub async fn execute_workflow_by_id(
     Ok(result)
 }
 
-/// Find a task in the workflow snapshot by task ID
 fn find_task_in_snapshot<'a>(snapshot: &'a Value, task_id: &str) -> Option<&'a Value> {
     if let Some(tasks) = snapshot.get("tasks").and_then(|t| t.as_array()) {
         // Helper function to recursively search tasks
@@ -360,7 +314,7 @@ fn find_task_in_snapshot<'a>(snapshot: &'a Value, task_id: &str) -> Option<&'a V
                         return Some(task);
                     }
                 }
-                // Search in next_tasks
+
                 if let Some(next_tasks) = task.get("next_tasks").and_then(|t| t.as_array()) {
                     if let Some(found) = search_task(next_tasks, task_id) {
                         return Some(found);
@@ -374,13 +328,11 @@ fn find_task_in_snapshot<'a>(snapshot: &'a Value, task_id: &str) -> Option<&'a V
     None
 }
 
-/// Create a UserInputRequest from a task node in the snapshot
 fn create_input_request_from_task(
     task_node: &Value,
     task_id: &str,
     execution_id: &str,
 ) -> Option<UserInputRequest> {
-    // Check if this is a user_input task
     let function = task_node.get("function")?;
     let function_type = function.get("name").and_then(|v| v.as_str())?;
 
@@ -400,7 +352,6 @@ fn create_input_request_from_task(
         .unwrap_or(true);
     let default = input.get("default").cloned();
 
-    // Convert input type string to InputType enum
     let input_type = match input_type_str {
         "number" => InputType::Number,
         "boolean" => InputType::Boolean,

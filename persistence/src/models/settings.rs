@@ -1,11 +1,6 @@
-//! AppSettings model
-//!
-//! This file contains ONLY AppSettings struct following Single Responsibility Principle.
-
 use crate::models::Theme;
 use serde::{Deserialize, Serialize};
 
-/// Application configuration settings
 #[derive(Debug, Clone, PartialEq, Hash, Eq, Serialize, Deserialize)]
 pub struct AppSettings {
     pub theme: Theme,
@@ -26,28 +21,22 @@ impl Default for AppSettings {
 }
 
 impl AppSettings {
-    /// Validate settings
     pub fn validate(&self) -> Result<(), String> {
-        // All fields have valid defaults, no validation needed
         Ok(())
     }
 
-    /// Update theme
     pub fn set_theme(&mut self, theme: Theme) {
         self.theme = theme;
     }
 
-    /// Update auto-save setting
     pub fn set_auto_save(&mut self, auto_save: bool) {
         self.auto_save = auto_save;
     }
 
-    /// Update notifications setting
     pub fn set_notifications(&mut self, notifications: bool) {
         self.notifications = notifications;
     }
 
-    /// Update default workflow
     pub fn set_default_workflow(&mut self, workflow_id: Option<String>) {
         self.default_workflow = workflow_id;
     }

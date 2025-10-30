@@ -1,12 +1,9 @@
-//! Task handlers for executing different types of tasks
-
 use crate::errors::*;
 use crate::types::*;
 use async_trait::async_trait;
 use std::collections::HashMap;
 use tracing::{debug, trace, warn};
 
-/// Trait for task handlers
 #[async_trait]
 pub trait TaskHandler: Send + Sync {
     async fn execute(
@@ -16,7 +13,6 @@ pub trait TaskHandler: Send + Sync {
     ) -> Result<TaskResult, HandlerError>;
 }
 
-/// Registry for task handlers
 pub struct HandlerRegistry {
     handlers: HashMap<String, Box<dyn TaskHandler>>,
 }
@@ -88,7 +84,6 @@ impl Default for HandlerRegistry {
     }
 }
 
-/// Get the function type from a task
 pub fn get_function_type(task: &EngineTask) -> &'static str {
     let function_type = match &task.function {
         TaskFunction::CliCommand { .. } => "cli_command",

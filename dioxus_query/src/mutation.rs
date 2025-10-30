@@ -5,7 +5,6 @@ use tracing::{debug, error, info, instrument, trace};
 use crate::invalidate::invalidate_query;
 use crate::state::{MutationCallbacks, MutationState};
 
-/// Mutation hook for performing data mutations with optimistic updates
 #[instrument(skip(mutation_fn, callbacks))]
 pub fn use_mutation<T, V, F, Fut>(
     mutation_fn: F,
@@ -49,11 +48,9 @@ where
             });
             debug!("Mutation state: is_loading = true");
 
-            // Apply optimistic update if provided
             if let Some((key, _optimistic_data)) = &callbacks.optimistic_update {
                 info!(key = %key, "Applying optimistic update");
-                // Optimistic update sets data directly in cache
-                // This is simplified - in full implementation would set proper typed entry
+
                 debug!(key = %key, "Optimistic update applied to cache");
             }
 
@@ -70,7 +67,6 @@ where
                     });
                     debug!("Mutation state updated: success");
 
-                    // Invalidate specified queries
                     if !callbacks.invalidate_keys.is_empty() {
                         debug!(
                             count = callbacks.invalidate_keys.len(),
@@ -81,13 +77,11 @@ where
                         }
                     }
 
-                    // Success callback
                     if let Some(on_success) = &callbacks.on_success {
                         trace!("Executing on_success callback");
                         on_success(result);
                     }
 
-                    // Settled callback
                     if let Some(on_settled) = &callbacks.on_settled {
                         trace!("Executing on_settled callback (success path)");
                         on_settled();
@@ -105,13 +99,11 @@ where
                     });
                     debug!("Mutation state updated: error");
 
-                    // Error callback
                     if let Some(on_error) = &callbacks.on_error {
                         trace!("Executing on_error callback");
                         on_error(err);
                     }
 
-                    // Settled callback
                     if let Some(on_settled) = &callbacks.on_settled {
                         trace!("Executing on_settled callback (error path)");
                         on_settled();

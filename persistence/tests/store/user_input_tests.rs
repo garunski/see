@@ -1,6 +1,6 @@
-//! Tests for user input store operations
-//!
-//! Tests CRUD operations for UserInputRequest following Single Responsibility Principle.
+
+
+
 
 use s_e_e_persistence::{enums::*, Store, UserInputRequest};
 use chrono::Utc;
@@ -31,7 +31,7 @@ fn create_test_input_request() -> UserInputRequest {
 async fn test_save_input_request() {
     let store = create_test_store().await;
     let request = create_test_input_request();
-    
+
     let result = store.save_input_request(&request).await;
     assert!(result.is_ok());
 }
@@ -39,7 +39,7 @@ async fn test_save_input_request() {
 #[tokio::test]
 async fn test_get_input_request_not_found() {
     let store = create_test_store().await;
-    
+
     let result = store.get_input_request("non-existent-id").await.unwrap();
     assert!(result.is_none());
 }
@@ -48,14 +48,14 @@ async fn test_get_input_request_not_found() {
 async fn test_get_input_request_found() {
     let store = create_test_store().await;
     let request = create_test_input_request();
-    
-    // Save request
+
+
     store.save_input_request(&request).await.unwrap();
-    
-    // Get request
+
+
     let retrieved = store.get_input_request("test-request-1").await.unwrap();
     assert!(retrieved.is_some());
-    
+
     let retrieved_request = retrieved.unwrap();
     assert_eq!(retrieved_request.id, request.id);
     assert_eq!(retrieved_request.task_execution_id, request.task_execution_id);
@@ -69,11 +69,11 @@ async fn test_get_input_request_found() {
 async fn test_get_input_request_by_task() {
     let store = create_test_store().await;
     let request = create_test_input_request();
-    
-    // Save request
+
+
     store.save_input_request(&request).await.unwrap();
-    
-    // Get request by task ID
+
+
     let retrieved = store.get_input_request_by_task("test-task-1").await.unwrap();
     assert!(retrieved.is_some());
     assert_eq!(retrieved.unwrap().id, "test-request-1");
@@ -82,7 +82,7 @@ async fn test_get_input_request_by_task() {
 #[tokio::test]
 async fn test_get_input_request_by_task_not_found() {
     let store = create_test_store().await;
-    
+
     let result = store.get_input_request_by_task("non-existent-task").await.unwrap();
     assert!(result.is_none());
 }
@@ -90,8 +90,8 @@ async fn test_get_input_request_by_task_not_found() {
 #[tokio::test]
 async fn test_get_pending_inputs_for_workflow() {
     let store = create_test_store().await;
-    
-    // Create multiple requests for same workflow
+
+
     let request1 = UserInputRequest {
         id: "request-1".to_string(),
         task_execution_id: "task-1".to_string(),
@@ -99,7 +99,7 @@ async fn test_get_pending_inputs_for_workflow() {
         status: InputRequestStatus::Pending,
         ..create_test_input_request()
     };
-    
+
     let request2 = UserInputRequest {
         id: "request-2".to_string(),
         task_execution_id: "task-2".to_string(),
@@ -107,7 +107,7 @@ async fn test_get_pending_inputs_for_workflow() {
         status: InputRequestStatus::Pending,
         ..create_test_input_request()
     };
-    
+
     let request3 = UserInputRequest {
         id: "request-3".to_string(),
         task_execution_id: "task-3".to_string(),
@@ -117,41 +117,41 @@ async fn test_get_pending_inputs_for_workflow() {
         fulfilled_value: Some("value".to_string()),
         ..create_test_input_request()
     };
-    
+
     let request4 = UserInputRequest {
         id: "request-4".to_string(),
         task_execution_id: "task-4".to_string(),
-        workflow_execution_id: "workflow-2".to_string(), // Different workflow
+        workflow_execution_id: "workflow-2".to_string(),
         status: InputRequestStatus::Pending,
         ..create_test_input_request()
     };
-    
-    // Save all requests
+
+
     store.save_input_request(&request1).await.unwrap();
     store.save_input_request(&request2).await.unwrap();
     store.save_input_request(&request3).await.unwrap();
     store.save_input_request(&request4).await.unwrap();
-    
-    // Get pending inputs for workflow-1
+
+
     let pending = store.get_pending_inputs_for_workflow("workflow-1").await.unwrap();
     assert_eq!(pending.len(), 2);
-    
+
     let request_ids: Vec<&str> = pending.iter().map(|r| r.id.as_str()).collect();
     assert!(request_ids.contains(&"request-1"));
     assert!(request_ids.contains(&"request-2"));
-    assert!(!request_ids.contains(&"request-3")); // Fulfilled
-    assert!(!request_ids.contains(&"request-4")); // Different workflow
+    assert!(!request_ids.contains(&"request-3"));
+    assert!(!request_ids.contains(&"request-4"));
 }
 
 #[tokio::test]
 async fn test_get_all_pending_inputs() {
     let store = create_test_store().await;
-    
+
     let request1 = UserInputRequest {
         status: InputRequestStatus::Pending,
         ..create_test_input_request()
     };
-    
+
     let request2 = UserInputRequest {
         id: "request-2".to_string(),
         task_execution_id: "task-2".to_string(),
@@ -160,10 +160,10 @@ async fn test_get_all_pending_inputs() {
         fulfilled_value: Some("value".to_string()),
         ..create_test_input_request()
     };
-    
+
     store.save_input_request(&request1).await.unwrap();
     store.save_input_request(&request2).await.unwrap();
-    
+
     let all_pending = store.get_all_pending_inputs().await.unwrap();
     assert_eq!(all_pending.len(), 1);
     assert_eq!(all_pending[0].id, "test-request-1");
@@ -173,15 +173,15 @@ async fn test_get_all_pending_inputs() {
 async fn test_fulfill_input_request() {
     let store = create_test_store().await;
     let request = create_test_input_request();
-    
-    // Save pending request
+
+
     store.save_input_request(&request).await.unwrap();
-    
-    // Fulfill request
+
+
     let result = store.fulfill_input_request("test-request-1", "user-input-value".to_string()).await;
     assert!(result.is_ok());
-    
-    // Verify status change
+
+
     let retrieved = store.get_input_request("test-request-1").await.unwrap().unwrap();
     assert!(matches!(retrieved.status, InputRequestStatus::Fulfilled));
     assert!(retrieved.fulfilled_at.is_some());
@@ -191,7 +191,7 @@ async fn test_fulfill_input_request() {
 #[tokio::test]
 async fn test_fulfill_input_request_not_found() {
     let store = create_test_store().await;
-    
+
     let result = store.fulfill_input_request("non-existent", "value".to_string()).await;
     assert!(result.is_err());
 }
@@ -200,19 +200,19 @@ async fn test_fulfill_input_request_not_found() {
 async fn test_delete_input_request() {
     let store = create_test_store().await;
     let request = create_test_input_request();
-    
-    // Save request
+
+
     store.save_input_request(&request).await.unwrap();
-    
-    // Verify request exists
+
+
     let retrieved = store.get_input_request("test-request-1").await.unwrap();
     assert!(retrieved.is_some());
-    
-    // Delete request
+
+
     let result = store.delete_input_request("test-request-1").await;
     assert!(result.is_ok());
-    
-    // Verify request deleted
+
+
     let retrieved = store.get_input_request("test-request-1").await.unwrap();
     assert!(retrieved.is_none());
 }
@@ -221,11 +221,11 @@ async fn test_delete_input_request() {
 async fn test_input_request_serialization_round_trip() {
     let store = create_test_store().await;
     let request = create_test_input_request();
-    
-    // Save request
+
+
     store.save_input_request(&request).await.unwrap();
-    
-    // Retrieve and verify all fields
+
+
     let retrieved = store.get_input_request("test-request-1").await.unwrap().unwrap();
     assert_eq!(retrieved.id, request.id);
     assert_eq!(retrieved.task_execution_id, request.task_execution_id);

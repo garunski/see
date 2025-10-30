@@ -1,7 +1,3 @@
-//! Tests for execution store operations
-//!
-//! Tests save/get/list/delete workflow executions, list_workflow_metadata, delete_workflow_metadata_and_tasks, get_workflow_with_tasks following Single Responsibility Principle.
-
 use chrono::Utc;
 use s_e_e_persistence::{
     Store, TaskExecution, TaskExecutionStatus, WorkflowExecution, WorkflowExecutionStatus,
@@ -46,13 +42,11 @@ async fn test_get_workflow_execution_success() {
     let store = create_test_store().await;
     let execution = create_test_execution();
 
-    // Save execution
     store
         .save_workflow_execution(execution.clone())
         .await
         .unwrap();
 
-    // Get execution
     let retrieved = store.get_workflow_execution("exec-1").await.unwrap();
     assert!(retrieved.is_some());
 
@@ -86,8 +80,6 @@ async fn test_list_workflow_executions_multiple() {
     let store = create_test_store().await;
     use chrono::Utc;
 
-    // Create multiple executions with distinct timestamps
-    // exec-2 has later timestamp, so should appear first when sorted DESC
     let execution1 = WorkflowExecution {
         id: "exec-1".to_string(),
         workflow_name: "Workflow 1".to_string(),
@@ -116,16 +108,13 @@ async fn test_list_workflow_executions_multiple() {
         ..Default::default()
     };
 
-    // Save executions
     store.save_workflow_execution(execution1).await.unwrap();
     store.save_workflow_execution(execution2).await.unwrap();
 
-    // List executions
     let executions = store.list_workflow_executions().await.unwrap();
     assert_eq!(executions.len(), 2);
 
-    // Check that executions are ordered by created_at DESC (newest first)
-    assert_eq!(executions[0].id, "exec-2"); // Newest first
+    assert_eq!(executions[0].id, "exec-2");
     assert_eq!(executions[1].id, "exec-1");
 }
 
@@ -134,18 +123,14 @@ async fn test_delete_workflow_execution() {
     let store = create_test_store().await;
     let execution = create_test_execution();
 
-    // Save execution
     store.save_workflow_execution(execution).await.unwrap();
 
-    // Verify it exists
     let retrieved = store.get_workflow_execution("exec-1").await.unwrap();
     assert!(retrieved.is_some());
 
-    // Delete execution
     let result = store.delete_workflow_execution("exec-1").await;
     assert!(result.is_ok());
 
-    // Verify it's gone
     let retrieved = store.get_workflow_execution("exec-1").await.unwrap();
     assert!(retrieved.is_none());
 }
@@ -154,7 +139,6 @@ async fn test_delete_workflow_execution() {
 async fn test_list_workflow_metadata() {
     let store = create_test_store().await;
 
-    // Create execution
     let execution = WorkflowExecution {
         id: "exec-1".to_string(),
         workflow_name: "Test Workflow".to_string(),
@@ -164,7 +148,6 @@ async fn test_list_workflow_metadata() {
 
     store.save_workflow_execution(execution).await.unwrap();
 
-    // List metadata
     let metadata = store.list_workflow_metadata().await.unwrap();
     assert_eq!(metadata.len(), 1);
 
@@ -178,7 +161,6 @@ async fn test_list_workflow_metadata() {
 async fn test_delete_workflow_metadata_and_tasks() {
     let store = create_test_store().await;
 
-    // Create execution with tasks
     let execution = WorkflowExecution {
         id: "exec-1".to_string(),
         workflow_name: "Test Workflow".to_string(),
@@ -204,7 +186,6 @@ async fn test_delete_workflow_metadata_and_tasks() {
 
     store.save_workflow_execution(execution).await.unwrap();
 
-    // Save tasks separately
     let task1 = TaskExecution {
         id: "task-1".to_string(),
         workflow_id: "exec-1".to_string(),
@@ -224,7 +205,6 @@ async fn test_delete_workflow_metadata_and_tasks() {
     store.save_task_execution(task1).await.unwrap();
     store.save_task_execution(task2).await.unwrap();
 
-    // Verify execution and tasks exist
     assert!(store
         .get_workflow_execution("exec-1")
         .await
@@ -233,11 +213,9 @@ async fn test_delete_workflow_metadata_and_tasks() {
     let tasks = store.get_tasks_for_workflow("exec-1").await.unwrap();
     assert_eq!(tasks.len(), 2);
 
-    // Delete execution and tasks
     let result = store.delete_workflow_metadata_and_tasks("exec-1").await;
     assert!(result.is_ok());
 
-    // Verify execution and tasks are gone
     assert!(store
         .get_workflow_execution("exec-1")
         .await
@@ -251,7 +229,6 @@ async fn test_delete_workflow_metadata_and_tasks() {
 async fn test_get_workflow_with_tasks() {
     let store = create_test_store().await;
 
-    // Create execution without tasks initially
     let execution = WorkflowExecution {
         id: "exec-1".to_string(),
         workflow_name: "Test Workflow".to_string(),
@@ -262,7 +239,6 @@ async fn test_get_workflow_with_tasks() {
 
     store.save_workflow_execution(execution).await.unwrap();
 
-    // Save tasks separately
     let task1 = TaskExecution {
         id: "task-1".to_string(),
         workflow_id: "exec-1".to_string(),
@@ -282,12 +258,10 @@ async fn test_get_workflow_with_tasks() {
     store.save_task_execution(task1).await.unwrap();
     store.save_task_execution(task2).await.unwrap();
 
-    // Get workflow with tasks
     let execution_with_tasks = store.get_workflow_with_tasks("exec-1").await.unwrap();
     assert_eq!(execution_with_tasks.id, "exec-1");
     assert_eq!(execution_with_tasks.tasks.len(), 2);
 
-    // Check task details
     let task_names: Vec<&str> = execution_with_tasks
         .tasks
         .iter()

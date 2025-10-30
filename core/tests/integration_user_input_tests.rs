@@ -1,15 +1,9 @@
-//! Integration tests for user input functionality
-//!
-//! Tests complete workflows with user input from start to finish
-
 use s_e_e_core::*;
 
-/// Helper to create a test store
 async fn create_test_store() -> Result<(), String> {
     init_test_store().await
 }
 
-/// Helper to create a simple workflow with user input
 fn create_simple_input_workflow() -> WorkflowDefinition {
     WorkflowDefinition {
         id: uuid::Uuid::new_v4().to_string(),
@@ -69,7 +63,6 @@ fn create_simple_input_workflow() -> WorkflowDefinition {
     }
 }
 
-/// Helper to create a parallel workflow with multiple inputs
 fn create_parallel_input_workflow() -> WorkflowDefinition {
     WorkflowDefinition {
         id: uuid::Uuid::new_v4().to_string(),
@@ -130,7 +123,6 @@ fn create_parallel_input_workflow() -> WorkflowDefinition {
     }
 }
 
-/// Helper to create a nested workflow with sequential inputs
 fn create_nested_input_workflow() -> WorkflowDefinition {
     WorkflowDefinition {
         id: uuid::Uuid::new_v4().to_string(),
@@ -190,18 +182,8 @@ fn create_nested_input_workflow() -> WorkflowDefinition {
     }
 }
 
-/// End-to-End Test 1: Simple Input Workflow
-///
-/// This test verifies the complete flow:
-/// 1. Create workflow with user input task
-/// 2. Start workflow execution  
-/// 3. Workflow pauses at input task
-/// 4. Provide input via API
-/// 5. Verify task resumes
-/// 6. Verify workflow completes
 #[tokio::test]
 async fn test_simple_input_workflow_e2e() {
-    // Setup
     let init_result = create_test_store().await;
     if init_result.is_err() {
         println!("Store initialization skipped in test environment");
@@ -211,13 +193,10 @@ async fn test_simple_input_workflow_e2e() {
     let workflow = create_simple_input_workflow();
     let store = get_global_store().unwrap();
 
-    // Save workflow
     store.save_workflow(&workflow).await.unwrap();
 
-    // Start workflow execution
     let execution_result = execute_workflow_by_id(&workflow.id, None).await;
 
-    // Execution should either complete or wait for input
     match execution_result {
         Ok(workflow_result) => {
             println!(
@@ -226,7 +205,6 @@ async fn test_simple_input_workflow_e2e() {
             );
             println!("Tasks: {}", workflow_result.tasks.len());
 
-            // Check for tasks waiting for input
             let waiting_tasks: Vec<_> = workflow_result
                 .tasks
                 .iter()
@@ -238,12 +216,10 @@ async fn test_simple_input_workflow_e2e() {
 
             println!("Tasks waiting for input: {}", waiting_tasks.len());
 
-            // If workflow paused for input, provide input and resume
             if !waiting_tasks.is_empty() {
                 let task = waiting_tasks[0];
                 println!("Providing input for task: {}", task.id);
 
-                // Provide input
                 let input_result = provide_user_input(
                     &workflow_result.execution_id,
                     &task.id,
@@ -256,21 +232,12 @@ async fn test_simple_input_workflow_e2e() {
         }
         Err(e) => {
             println!("Workflow execution error: {:?}", e);
-            // Acceptable in test environment
         }
     }
 }
 
-/// End-to-End Test 2: Parallel Input Workflow
-///
-/// This test verifies:
-/// 1. Multiple parallel tasks waiting for input
-/// 2. Each task can receive input independently
-/// 3. Non-input tasks can continue
-/// 4. Workflow completes when all inputs provided
 #[tokio::test]
 async fn test_parallel_input_workflow_e2e() {
-    // Setup
     let init_result = create_test_store().await;
     if init_result.is_err() {
         println!("Store initialization skipped in test environment");
@@ -280,10 +247,8 @@ async fn test_parallel_input_workflow_e2e() {
     let workflow = create_parallel_input_workflow();
     let store = get_global_store().unwrap();
 
-    // Save workflow
     store.save_workflow(&workflow).await.unwrap();
 
-    // Start workflow execution
     let execution_result = execute_workflow_by_id(&workflow.id, None).await;
 
     match execution_result {
@@ -293,7 +258,6 @@ async fn test_parallel_input_workflow_e2e() {
                 workflow_result.success
             );
 
-            // Check for tasks waiting for input
             let waiting_tasks: Vec<_> = workflow_result
                 .tasks
                 .iter()
@@ -305,7 +269,6 @@ async fn test_parallel_input_workflow_e2e() {
 
             println!("Tasks waiting for input: {}", waiting_tasks.len());
 
-            // Provide input for each waiting task
             for task in &waiting_tasks {
                 println!("Providing input for parallel task: {}", task.id);
 
@@ -325,15 +288,8 @@ async fn test_parallel_input_workflow_e2e() {
     }
 }
 
-/// End-to-End Test 3: Nested Input Workflow
-///
-/// This test verifies:
-/// 1. Sequential input collection (input → task → input)
-/// 2. Each input is captured correctly
-/// 3. Workflow progresses through multiple inputs
 #[tokio::test]
 async fn test_nested_input_workflow_e2e() {
-    // Setup
     let init_result = create_test_store().await;
     if init_result.is_err() {
         println!("Store initialization skipped in test environment");
@@ -343,10 +299,8 @@ async fn test_nested_input_workflow_e2e() {
     let workflow = create_nested_input_workflow();
     let store = get_global_store().unwrap();
 
-    // Save workflow
     store.save_workflow(&workflow).await.unwrap();
 
-    // Start workflow execution
     let execution_result = execute_workflow_by_id(&workflow.id, None).await;
 
     match execution_result {
@@ -387,15 +341,8 @@ async fn test_nested_input_workflow_e2e() {
     }
 }
 
-/// End-to-End Test 4: Error Handling
-///
-/// This test verifies:
-/// 1. Invalid input is rejected
-/// 2. Error messages are shown
-/// 3. Valid input can be provided after error
 #[tokio::test]
 async fn test_input_error_handling_e2e() {
-    // Setup
     let init_result = create_test_store().await;
     if init_result.is_err() {
         println!("Store initialization skipped in test environment");
@@ -421,11 +368,9 @@ async fn test_input_error_handling_e2e() {
                 .collect();
 
             if !waiting_tasks.is_empty() {
-                // Try to get pending inputs
                 let pending_result = get_pending_inputs(&workflow_result.execution_id).await;
                 println!("Pending inputs result: {:?}", pending_result);
 
-                // Verify get_tasks_waiting_for_input works
                 let tasks_result = get_tasks_waiting_for_input(&workflow_result.execution_id).await;
                 println!("Tasks waiting for input result: {:?}", tasks_result);
             }
@@ -436,34 +381,22 @@ async fn test_input_error_handling_e2e() {
     }
 }
 
-/// End-to-End Test 5: Multiple Inputs
-///
-/// This test verifies:
-/// 1. Multiple sequential inputs are handled
-/// 2. Each input is captured correctly
-/// 3. Workflow progresses through all inputs
 #[tokio::test]
 async fn test_multiple_inputs_e2e() {
-    // Setup
     let init_result = create_test_store().await;
     if init_result.is_err() {
         println!("Store initialization skipped in test environment");
         return;
     }
 
-    // This test is a placeholder for a more complex scenario
-    // In real implementation, would test a workflow with multiple sequential inputs
-
     println!("Multiple inputs test - placeholder");
 }
 
-// Performance tests are in a separate module
 #[cfg(test)]
 mod performance_tests {
     use super::*;
     use std::time::Instant;
 
-    /// Performance Test 1: Input Creation Speed
     #[tokio::test]
     async fn test_input_creation_performance() {
         let init_result = create_test_store().await;
@@ -474,7 +407,6 @@ mod performance_tests {
 
         let start = Instant::now();
 
-        // Create and save an input request
         let request = UserInputRequest::default();
         let store = get_global_store().unwrap();
 
@@ -484,7 +416,6 @@ mod performance_tests {
 
         println!("Input creation took: {:?}", duration);
 
-        // Should complete in under 10ms
         assert!(
             duration.as_millis() < 100,
             "Input creation too slow: {:?}",
@@ -492,17 +423,11 @@ mod performance_tests {
         );
     }
 
-    /// Performance Test 2: Input Validation Speed
-    ///
-    /// Note: This is a placeholder for performance testing.
-    /// Actual validation performance tests are in input.rs module tests.
     #[test]
     fn test_input_validation_performance() {
         println!("Input validation performance tests should be run in module tests");
-        // Test logic would go here if needed
     }
 
-    /// Performance Test 3: Workflow with Input Speed
     #[tokio::test]
     async fn test_input_workflow_performance() {
         let init_result = create_test_store().await;
@@ -522,7 +447,6 @@ mod performance_tests {
 
         println!("Workflow with input took: {:?}", duration);
 
-        // Should start quickly even if it pauses for input
         assert!(
             duration.as_millis() < 5000,
             "Workflow start too slow: {:?}",
@@ -531,7 +455,6 @@ mod performance_tests {
     }
 }
 
-// Concurrency tests
 #[cfg(test)]
 mod concurrency_tests {
     use super::*;
@@ -539,12 +462,6 @@ mod concurrency_tests {
     use tokio::sync::Semaphore;
     use tokio::time::{timeout, Duration};
 
-    /// Concurrency Test 1: Multiple Simultaneous Inputs
-    ///
-    /// This test verifies:
-    /// 1. Multiple inputs can be provided concurrently
-    /// 2. No race conditions occur
-    /// 3. Data consistency is maintained
     #[tokio::test]
     async fn test_concurrent_input_submission() {
         let init_result = create_test_store().await;
@@ -558,7 +475,6 @@ mod concurrency_tests {
 
         store.save_workflow(&workflow).await.unwrap();
 
-        // Execute workflow
         let execution_result = execute_workflow_by_id(&workflow.id, None).await;
 
         match execution_result {
@@ -573,7 +489,6 @@ mod concurrency_tests {
                     .collect();
 
                 if waiting_tasks.len() >= 2 {
-                    // Try to submit inputs concurrently
                     let semaphore = Arc::new(Semaphore::new(waiting_tasks.len()));
 
                     let mut handles = Vec::new();
@@ -599,7 +514,6 @@ mod concurrency_tests {
                         handles.push(handle);
                     }
 
-                    // Wait for all submissions with timeout
                     let result = timeout(Duration::from_secs(10), async {
                         let mut results = Vec::new();
                         for handle in handles {
@@ -626,7 +540,6 @@ mod concurrency_tests {
         }
     }
 
-    /// Concurrency Test 2: Concurrent Workflow Executions
     #[tokio::test]
     async fn test_concurrent_workflow_executions() {
         let init_result = create_test_store().await;
@@ -640,7 +553,6 @@ mod concurrency_tests {
 
         store.save_workflow(&workflow).await.unwrap();
 
-        // Try to start multiple executions concurrently
         let mut handles = Vec::new();
 
         for i in 0..3 {

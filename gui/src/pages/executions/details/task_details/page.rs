@@ -8,10 +8,8 @@ use dioxus::prelude::*;
 
 #[component]
 pub fn TaskDetailsPage(execution_id: String, task_id: String) -> Element {
-    // Query task details
     let (task_state, refetch) = use_task_details_query(execution_id.clone(), task_id.clone());
 
-    // Refetch when task_id changes
     let task_id_for_invalidation = task_id.clone();
     use_effect(move || {
         if !task_id_for_invalidation.is_empty() {
@@ -19,7 +17,6 @@ pub fn TaskDetailsPage(execution_id: String, task_id: String) -> Element {
         }
     });
 
-    // Get task from query
     let task = if task_id.is_empty() {
         None
     } else if task_state.is_loading {
@@ -36,7 +33,6 @@ pub fn TaskDetailsPage(execution_id: String, task_id: String) -> Element {
 
     let mut selected_tab = use_signal(|| "Details".to_string());
 
-    // Fetch user input request
     let input_request = use_signal(|| None::<s_e_e_core::UserInputRequest>);
 
     use_effect({
@@ -59,7 +55,7 @@ pub fn TaskDetailsPage(execution_id: String, task_id: String) -> Element {
                             .find(|req| req.task_execution_id == task_id_for_spawn)
                         {
                             input_request_for_spawn.set(Some(req.clone()));
-                            // Auto-focus User Input tab if there's a pending request
+
                             if req.status.to_string() == "pending" {
                                 selected_tab_mirror.set("User Input".to_string());
                             }

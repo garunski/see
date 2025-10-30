@@ -12,7 +12,6 @@ pub fn WorkflowJsonEditPage(id: String) -> Element {
     let navigator = use_navigator();
     let is_new = id.is_empty();
 
-    // Load existing workflow data if editing
     let loaded_workflow = if !is_new {
         let (query_state, _refetch) = use_workflow_query(id.clone());
 
@@ -37,9 +36,8 @@ pub fn WorkflowJsonEditPage(id: String) -> Element {
         None
     };
 
-    // Form signals inline (keep it simple!)
     let mut content = use_signal(String::new);
-    let workflow_name = use_signal(String::new); // Not displayed but kept for props compatibility
+    let workflow_name = use_signal(String::new);
     let validation_error = use_signal(String::new);
     let mut has_unsaved_changes = use_signal(|| false);
     let mut original_content = use_signal(String::new);
@@ -51,11 +49,9 @@ pub fn WorkflowJsonEditPage(id: String) -> Element {
         show: false,
     });
 
-    // Mutations
     let (mutation_state, create_fn) = use_create_workflow_mutation();
     let is_saving = use_memo(move || mutation_state.read().is_loading);
 
-    // Load data into form
     use_effect(move || {
         if let Some(workflow) = &loaded_workflow {
             content.set(workflow.content.clone());
@@ -63,13 +59,11 @@ pub fn WorkflowJsonEditPage(id: String) -> Element {
         }
     });
 
-    // Track unsaved changes
     use_effect(move || {
         let content_changed = content() != original_content();
         has_unsaved_changes.set(content_changed);
     });
 
-    // Save handler
     let save_workflow = move |_| {
         let content_str = content();
 
@@ -83,7 +77,6 @@ pub fn WorkflowJsonEditPage(id: String) -> Element {
             return;
         }
 
-        // Parse the content to ensure it's valid JSON and extract name
         let json_value: serde_json::Value = match serde_json::from_str(&content_str) {
             Ok(v) => v,
             Err(e) => {
@@ -97,14 +90,12 @@ pub fn WorkflowJsonEditPage(id: String) -> Element {
             }
         };
 
-        // Extract workflow name from JSON
         let workflow_name_str = json_value
             .get("name")
             .and_then(|v| v.as_str())
             .unwrap_or("Unnamed Workflow")
             .to_string();
 
-        // Create/update workflow
         let workflow_id = if is_new {
             format!("custom-workflow-{}", chrono::Utc::now().timestamp())
         } else {
@@ -148,7 +139,7 @@ pub fn WorkflowJsonEditPage(id: String) -> Element {
 
     rsx! {
         div { class: "space-y-8",
-            // Notification
+
             if notification().show {
                 Notification {
                     notification,
@@ -163,7 +154,7 @@ pub fn WorkflowJsonEditPage(id: String) -> Element {
                 }
             }
 
-            // Header
+
             div { class: "flex items-center justify-between",
                 div { class: "flex items-center gap-4",
                     IconButton {
@@ -171,7 +162,7 @@ pub fn WorkflowJsonEditPage(id: String) -> Element {
                         size: IconButtonSize::Medium,
                         onclick: move |_| {
                             if has_unsaved_changes() {
-                                // TODO: Show confirmation dialog
+
                             }
                             navigator.go_back();
                         },
@@ -203,7 +194,7 @@ pub fn WorkflowJsonEditPage(id: String) -> Element {
                 }
             }
 
-            // JSON Editor
+
             JsonEditor {
                 content,
                 workflow_name,

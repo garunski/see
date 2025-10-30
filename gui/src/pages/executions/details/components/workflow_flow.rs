@@ -13,27 +13,22 @@ pub fn WorkflowFlowGraph(
     execution_id: String,
     workflow_status: WorkflowExecutionStatus,
 ) -> Element {
-    // Build task_id -> TaskExecution map for quick lookups during prep
     let task_map: HashMap<String, &TaskExecution> =
         tasks.iter().map(|t| (t.id.clone(), t)).collect();
 
-    // Extract root tasks from snapshot
     let root_tasks = snapshot
         .get("tasks")
         .and_then(|v| v.as_array())
         .map(|arr| arr.to_vec())
         .unwrap_or_default();
 
-    // Determine if workflow failed (to show errored tasks)
     let workflow_is_failed = matches!(workflow_status, WorkflowExecutionStatus::Failed);
 
-    // Build the full tree structure before rendering
     let renderable_tasks = root_tasks
         .iter()
         .filter_map(|task_data| build_renderable_task(task_data, &task_map, workflow_is_failed))
         .collect::<Vec<_>>();
 
-    // Show message if no tasks have been executed yet (workflow still initializing)
     if renderable_tasks.is_empty() && tasks.is_empty() {
         return rsx! {
             div { class: "bg-white dark:bg-zinc-900 rounded-lg shadow-sm ring-1 ring-zinc-950/5 dark:ring-white/10 overflow-x-auto p-4",

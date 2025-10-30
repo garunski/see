@@ -1,6 +1,3 @@
-/// JavaScript templates for the workflow editor
-/// Extracted from workflow_edit.rs to reduce file size and improve maintainability
-/// Message listener script for handling communication between iframe and parent
 pub const MESSAGE_LISTENER_SCRIPT: &str = r#"
 window.addEventListener('message', function(event) {
     if (event.data && event.data.type === 'NODE_CLICKED') {
@@ -23,8 +20,8 @@ window.addEventListener('message', function(event) {
         if (event.data.payload && event.data.payload.workflow) {
             console.log('Workflow save requested from React editor:', event.data.payload.workflow);
             // Dispatch custom event that Dioxus can listen to
-            const saveEvent = new CustomEvent('workflowSave', { 
-                detail: event.data.payload.workflow 
+            const saveEvent = new CustomEvent('workflowSave', {
+                detail: event.data.payload.workflow
             });
             window.dispatchEvent(saveEvent);
         }
@@ -32,7 +29,6 @@ window.addEventListener('message', function(event) {
 });
 "#;
 
-/// Script to load workflow data into the iframe
 pub fn load_workflow_script(workflow_json: &str, workflow_name: &str) -> String {
     format!(
         r#"
@@ -43,7 +39,7 @@ pub fn load_workflow_script(workflow_json: &str, workflow_name: &str) -> String 
                     const workflowData = {};
                     iframe.contentWindow.postMessage({{
                         type: 'LOAD_WORKFLOW',
-                        payload: {{ 
+                        payload: {{
                             workflow: workflowData,
                             workflowName: '{}'
                         }}

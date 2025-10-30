@@ -10,22 +10,18 @@ struct Args {
     #[command(subcommand)]
     command: Option<Commands>,
 
-    // Legacy support for workflow execution
     #[arg(short, long)]
     file: Option<String>,
 }
 
 #[derive(Subcommand, Debug)]
 enum Commands {
-    /// List all system workflows
     #[command(name = "list-system-workflows")]
     ListSystemWorkflows,
 
-    /// List all system prompts
     #[command(name = "list-system-prompts")]
     ListSystemPrompts,
 
-    /// Clone a system workflow to create a user workflow
     #[command(name = "clone-workflow")]
     CloneWorkflow {
         #[arg(short, long)]
@@ -34,7 +30,6 @@ enum Commands {
         name: Option<String>,
     },
 
-    /// Clone a system prompt to create a user prompt
     #[command(name = "clone-prompt")]
     ClonePrompt {
         #[arg(short, long)]
@@ -52,13 +47,11 @@ async fn main() {
 
     let args = Args::parse();
 
-    // Handle subcommands
     if let Some(command) = args.command {
         handle_command(command).await;
         return;
     }
 
-    // Legacy workflow execution
     if let Some(file) = args.file {
         tracing::info!(file = %file, "CLI starting");
         execute_workflow_from_file(file).await;
@@ -69,14 +62,12 @@ async fn main() {
 }
 
 async fn handle_command(command: Commands) {
-    // Initialize the global store with a local database
     if let Err(e) = init_global_store().await {
         tracing::error!(error = %e, "Failed to initialize global store");
         eprintln!("Failed to initialize database: {}", e);
         std::process::exit(1);
     }
 
-    // Populate initial data if needed
     if let Err(e) = populate_initial_data().await {
         tracing::error!("Failed to populate initial data: {}", e);
         eprintln!("Failed to populate initial data: {}", e);
@@ -136,14 +127,12 @@ async fn handle_command(command: Commands) {
 }
 
 async fn execute_workflow_from_file(file: String) {
-    // Initialize the global store with a local database
     if let Err(e) = init_global_store().await {
         tracing::error!(error = %e, "Failed to initialize global store");
         eprintln!("Failed to initialize database: {}", e);
         std::process::exit(1);
     }
 
-    // Read workflow file
     let workflow_content = match fs::read_to_string(&file) {
         Ok(content) => content,
         Err(e) => {
@@ -153,7 +142,6 @@ async fn execute_workflow_from_file(file: String) {
         }
     };
 
-    // Parse workflow JSON to get the ID
     let workflow_json: serde_json::Value = match serde_json::from_str(&workflow_content) {
         Ok(json) => json,
         Err(e) => {
@@ -168,7 +156,6 @@ async fn execute_workflow_from_file(file: String) {
         .and_then(|v| v.as_str())
         .unwrap_or("default");
 
-    // Save workflow to persistence
     let store = s_e_e_core::get_global_store()
         .map_err(|e| format!("Failed to get global store: {}", e))
         .expect("Failed to get global store");
@@ -197,7 +184,6 @@ async fn execute_workflow_from_file(file: String) {
         std::process::exit(1);
     }
 
-    // Execute the workflow
     let output: OutputCallback = std::sync::Arc::new(|line| println!("{}", line));
     match execute_workflow_by_id(workflow_id, Some(output)).await {
         Ok(result) => {

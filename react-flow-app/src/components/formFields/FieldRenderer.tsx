@@ -1,25 +1,18 @@
-/**
- * Strategy Pattern: Renders different field types based on configuration
- */
-
-import { Field, Label } from '../fieldset'
-import { Input } from '../input'
-import { Select } from '../select'
-import { Textarea } from '../textarea'
-import { Button } from '../button'
-import { PlusIcon, XMarkIcon } from '@heroicons/react/20/solid'
-import { FieldConfig } from './types'
+import { Field, Label } from "../fieldset";
+import { Input } from "../input";
+import { Select } from "../select";
+import { Textarea } from "../textarea";
+import { Button } from "../button";
+import { PlusIcon, XMarkIcon } from "@heroicons/react/20/solid";
+import { FieldConfig } from "./types";
 
 interface FieldRendererProps {
-  config: FieldConfig
+  config: FieldConfig;
 }
 
-/**
- * Strategy for rendering form fields based on their type
- */
 export function FieldRenderer({ config }: FieldRendererProps) {
   switch (config.type) {
-    case 'text':
+    case "text":
       return (
         <Field key={config.name}>
           <Label>{config.label}</Label>
@@ -28,7 +21,7 @@ export function FieldRenderer({ config }: FieldRendererProps) {
             onChange={(e) => config.onChange(e.target.value)}
             placeholder={config.placeholder}
             disabled={config.disabled}
-            className={config.error ? 'border-red-500' : ''}
+            className={config.error ? "border-red-500" : ""}
           />
           {config.error && (
             <p className="text-red-600 dark:text-red-400 text-sm mt-1">
@@ -36,9 +29,9 @@ export function FieldRenderer({ config }: FieldRendererProps) {
             </p>
           )}
         </Field>
-      )
+      );
 
-    case 'textarea':
+    case "textarea":
       return (
         <Field key={config.name}>
           <Label>{config.label}</Label>
@@ -48,7 +41,7 @@ export function FieldRenderer({ config }: FieldRendererProps) {
             rows={config.rows}
             placeholder={config.placeholder}
             disabled={config.disabled}
-            className={config.error ? 'border-red-500' : ''}
+            className={config.error ? "border-red-500" : ""}
           />
           {config.error && (
             <p className="text-red-600 dark:text-red-400 text-sm mt-1">
@@ -56,9 +49,9 @@ export function FieldRenderer({ config }: FieldRendererProps) {
             </p>
           )}
         </Field>
-      )
+      );
 
-    case 'select':
+    case "select":
       return (
         <Field key={config.name}>
           <Label>{config.label}</Label>
@@ -73,9 +66,9 @@ export function FieldRenderer({ config }: FieldRendererProps) {
             ))}
           </Select>
         </Field>
-      )
+      );
 
-    case 'checkbox':
+    case "checkbox":
       return (
         <Field key={config.name}>
           <Label>
@@ -88,9 +81,9 @@ export function FieldRenderer({ config }: FieldRendererProps) {
             {config.label}
           </Label>
         </Field>
-      )
+      );
 
-    case 'json':
+    case "json":
       return (
         <Field key={config.name}>
           <Label>{config.label}</Label>
@@ -100,7 +93,7 @@ export function FieldRenderer({ config }: FieldRendererProps) {
             onBlur={config.onBlur}
             rows={config.rows}
             placeholder={config.placeholder}
-            className={config.error ? 'border-red-500' : ''}
+            className={config.error ? "border-red-500" : ""}
             disabled={config.disabled}
           />
           {config.error && !config.disabled && (
@@ -109,9 +102,9 @@ export function FieldRenderer({ config }: FieldRendererProps) {
             </p>
           )}
         </Field>
-      )
+      );
 
-    case 'array':
+    case "array":
       return (
         <Field key={config.name}>
           <Label>{config.label}</Label>
@@ -121,9 +114,9 @@ export function FieldRenderer({ config }: FieldRendererProps) {
                 <Input
                   value={item}
                   onChange={(e) => {
-                    const newArray = [...config.value]
-                    newArray[index] = e.target.value
-                    config.onChange(newArray)
+                    const newArray = [...config.value];
+                    newArray[index] = e.target.value;
+                    config.onChange(newArray);
                   }}
                   placeholder={config.itemPlaceholder || `Item ${index + 1}`}
                   disabled={config.disabled}
@@ -132,8 +125,10 @@ export function FieldRenderer({ config }: FieldRendererProps) {
                   <button
                     type="button"
                     onClick={() => {
-                      const newArray = config.value.filter((_, i) => i !== index)
-                      config.onChange(newArray)
+                      const newArray = config.value.filter(
+                        (_, i) => i !== index,
+                      );
+                      config.onChange(newArray);
                     }}
                     className="shrink-0 p-2 text-gray-400 hover:text-red-500 rounded"
                   >
@@ -145,7 +140,7 @@ export function FieldRenderer({ config }: FieldRendererProps) {
             {!config.disabled && (
               <Button
                 onClick={() => {
-                  config.onChange([...config.value, ''])
+                  config.onChange([...config.value, ""]);
                 }}
                 variant="plain"
                 className="w-full mt-2"
@@ -156,10 +151,9 @@ export function FieldRenderer({ config }: FieldRendererProps) {
             )}
           </div>
         </Field>
-      )
+      );
 
     default:
-      return null
+      return null;
   }
 }
-

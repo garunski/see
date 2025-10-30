@@ -1,5 +1,3 @@
-//! CLI command handler for executing shell commands
-
 use crate::errors::*;
 use crate::types::*;
 use async_trait::async_trait;
@@ -7,7 +5,6 @@ use serde_json::Value;
 use tokio::process::Command;
 use tracing::{debug, error, instrument, trace, warn};
 
-/// CLI command handler
 pub struct CliCommandHandler;
 
 #[async_trait]
@@ -56,7 +53,6 @@ impl super::TaskHandler for CliCommandHandler {
             "Spawning command process"
         );
 
-        // Execute the command (async)
         let output = Command::new(command)
             .args(args)
             .output()

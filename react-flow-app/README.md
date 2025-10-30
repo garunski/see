@@ -49,6 +49,7 @@ This builds to `../assets/workflow-visualizer/` which is served by the Dioxus ap
 ### Message Protocol
 
 **Load Workflow** (Dioxus → React):
+
 ```typescript
 {
   type: 'LOAD_WORKFLOW',
@@ -66,6 +67,7 @@ This builds to `../assets/workflow-visualizer/` which is served by the Dioxus ap
 ```
 
 **Save Workflow** (React → Dioxus):
+
 ```typescript
 {
   type: 'SAVE_WORKFLOW',
@@ -86,6 +88,7 @@ This builds to `../assets/workflow-visualizer/` which is served by the Dioxus ap
 ## Integration with Dioxus
 
 The built assets are loaded by the Dioxus Desktop app from:
+
 ```
 /assets/workflow-visualizer/index.html
 ```
@@ -105,4 +108,3 @@ Modify `VERTICAL_SPACING`, `NODE_WIDTH`, etc. constants, or implement a custom l
 ### Edge styling
 
 Edit the edge configuration in `tasksToEdges()` function.
-

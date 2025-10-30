@@ -1,14 +1,10 @@
-//! Manual JSON Schema loader for workflow validation
-
 use serde_json::Value;
 
-/// Load the manual JSON Schema from the embedded file
 pub fn load_workflow_schema() -> Value {
     let schema_json = include_str!("../../schema/workflow.schema.json");
     serde_json::from_str(schema_json).expect("Failed to parse workflow schema")
 }
 
-/// Get schema version
 pub fn get_schema_version() -> String {
     let schema = load_workflow_schema();
     schema["version"].as_str().unwrap_or("unknown").to_string()
@@ -35,7 +31,6 @@ mod tests {
         let schema = load_workflow_schema();
         assert!(schema.is_object());
 
-        // Check top-level required fields
         assert!(schema.get("$schema").is_some());
         assert!(schema.get("version").is_some());
         assert!(schema.get("definitions").is_some());

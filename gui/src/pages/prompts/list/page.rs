@@ -10,7 +10,6 @@ use crate::pages::prompts::list::hooks::use_prompts_list;
 pub fn UserPromptsListPage() -> Element {
     let navigator = use_navigator();
 
-    // Load prompts via hook
     let prompts = match use_prompts_list() {
         Ok(p) => p,
         Err(e) => {

@@ -1,12 +1,9 @@
-//! JSON parser for workflow definitions with recursive next_tasks support
-
 use crate::errors::*;
 use crate::types::*;
 use serde_json::Value;
 use std::collections::HashSet;
 use tracing::{debug, error, instrument, trace, warn};
 
-/// Parse a workflow from JSON string
 #[instrument]
 pub fn parse_workflow(json: &str) -> Result<EngineWorkflow, ParserError> {
     debug!("Starting workflow JSON parsing");
@@ -15,7 +12,6 @@ pub fn parse_workflow(json: &str) -> Result<EngineWorkflow, ParserError> {
     parse_workflow_from_value(&workflow_json)
 }
 
-/// Parse a workflow from serde_json::Value
 #[instrument(skip(workflow_json))]
 pub fn parse_workflow_from_value(workflow_json: &Value) -> Result<EngineWorkflow, ParserError> {
     let id = workflow_json
@@ -46,7 +42,6 @@ pub fn parse_workflow_from_value(workflow_json: &Value) -> Result<EngineWorkflow
     let mut all_tasks = Vec::new();
     let mut task_ids = HashSet::new();
 
-    // Parse all tasks recursively
     for (i, task_json) in tasks_array.iter().enumerate() {
         trace!(
             workflow_id = %id,
@@ -56,7 +51,6 @@ pub fn parse_workflow_from_value(workflow_json: &Value) -> Result<EngineWorkflow
         parse_task_recursive(task_json, &mut all_tasks, None, &mut task_ids)?;
     }
 
-    // Validate no duplicate task IDs
     if all_tasks.len() != task_ids.len() {
         warn!(
             workflow_id = %id,
@@ -83,7 +77,6 @@ pub fn parse_workflow_from_value(workflow_json: &Value) -> Result<EngineWorkflow
     })
 }
 
-/// Recursively parse a task and its next_tasks
 #[instrument(skip(all_tasks, task_ids), fields(parent_id = ?parent_id))]
 fn parse_task_recursive(
     task_json: &Value,
@@ -103,7 +96,6 @@ fn parse_task_recursive(
         "Parsing task"
     );
 
-    // Check for duplicate IDs
     if !task_ids.insert(task_id.clone()) {
         warn!(
             task_id = %task_id,
@@ -121,11 +113,9 @@ fn parse_task_recursive(
         .unwrap_or("Unnamed Task")
         .to_string();
 
-    // Parse function
     trace!(task_id = %task_id, "Parsing task function");
     let function = parse_task_function(task_json)?;
 
-    // Parse next_tasks recursively
     let mut next_tasks = Vec::new();
     if let Some(next_tasks_array) = task_json.get("next_tasks").and_then(|v| v.as_array()) {
         trace!(
@@ -161,7 +151,7 @@ fn parse_task_recursive(
         function,
         next_tasks,
         status: TaskStatus::Pending,
-        is_root: parent_id.is_none(), // Root task if no parent
+        is_root: parent_id.is_none(),
     };
 
     trace!(
@@ -179,7 +169,6 @@ fn parse_task_recursive(
         "Task parsing completed"
     );
 
-    // Add task to all_tasks
     all_tasks.push(task.clone());
     trace!(
         task_id = %task_id,
@@ -190,7 +179,6 @@ fn parse_task_recursive(
     Ok(task)
 }
 
-/// Parse task function from JSON
 #[instrument(skip(task_json), fields(task_id = ?task_json.get("id").and_then(|v| v.as_str())))]
 fn parse_task_function(task_json: &Value) -> Result<TaskFunction, ParserError> {
     trace!("Starting task function parsing");

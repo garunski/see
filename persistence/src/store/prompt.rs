@@ -1,7 +1,3 @@
-//! Prompt store operations
-//!
-//! This file contains ONLY prompt operations following Single Responsibility Principle.
-
 use super::Store;
 use crate::logging::{
     log_db_operation_error, log_db_operation_start, log_db_operation_success, log_deserialization,
@@ -11,7 +7,6 @@ use crate::models::Prompt;
 use sqlx::Row;
 
 impl Store {
-    /// Save a prompt
     pub async fn save_prompt(&self, prompt: &Prompt) -> Result<(), String> {
         log_db_operation_start("save_prompt", "prompts");
 
@@ -36,7 +31,6 @@ impl Store {
         Ok(())
     }
 
-    /// List all prompts
     pub async fn list_prompts(&self) -> Result<Vec<Prompt>, String> {
         log_db_operation_start("list_prompts", "prompts");
 
@@ -64,7 +58,6 @@ impl Store {
         Ok(prompts)
     }
 
-    /// Delete a prompt
     pub async fn delete_prompt(&self, id: &str) -> Result<(), String> {
         log_db_operation_start("delete_prompt", "prompts");
 

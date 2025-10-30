@@ -1,6 +1,6 @@
-//! Tests for UserInputRequest model
-//!
-//! Tests serialization, validation, and status management following Single Responsibility Principle.
+
+
+
 
 use s_e_e_persistence::{enums::*, UserInputRequest};
 use chrono::Utc;
@@ -26,7 +26,7 @@ fn create_test_input_request() -> UserInputRequest {
 #[test]
 fn test_user_input_request_default() {
     let request = UserInputRequest::default();
-    
+
     assert!(!request.id.is_empty());
     assert!(request.task_execution_id.is_empty());
     assert!(request.workflow_execution_id.is_empty());
@@ -87,7 +87,7 @@ fn test_user_input_request_validation_empty_prompt() {
 fn test_user_input_request_validation_fulfilled_without_timestamp() {
     let mut request = create_test_input_request();
     request.status = InputRequestStatus::Fulfilled;
-    // Missing fulfilled_at and fulfilled_value
+
     let result = request.validate();
     assert!(result.is_err());
     assert!(result.unwrap_err().contains("fulfillment timestamp"));
@@ -116,7 +116,7 @@ fn test_user_input_request_validation_pending_with_timestamp() {
 fn test_user_input_request_is_fulfilled() {
     let pending_request = create_test_input_request();
     assert!(!pending_request.is_fulfilled());
-    
+
     let mut fulfilled_request = create_test_input_request();
     fulfilled_request.status = InputRequestStatus::Fulfilled;
     fulfilled_request.fulfilled_at = Some(Utc::now());
@@ -128,7 +128,7 @@ fn test_user_input_request_is_fulfilled() {
 fn test_user_input_request_is_pending() {
     let pending_request = create_test_input_request();
     assert!(pending_request.is_pending());
-    
+
     let mut fulfilled_request = create_test_input_request();
     fulfilled_request.status = InputRequestStatus::Fulfilled;
     fulfilled_request.fulfilled_at = Some(Utc::now());
@@ -139,8 +139,8 @@ fn test_user_input_request_is_pending() {
 #[test]
 fn test_user_input_request_serialization() {
     let request = create_test_input_request();
-    
-    // Test serialization
+
+
     let json = serde_json::to_string(&request).unwrap();
     assert!(json.contains("test-request-1"));
     assert!(json.contains("test-task-1"));
@@ -148,8 +148,8 @@ fn test_user_input_request_serialization() {
     assert!(json.contains("Please enter your name"));
     assert!(json.contains("string"));
     assert!(json.contains("pending"));
-    
-    // Test deserialization
+
+
     let deserialized: UserInputRequest = serde_json::from_str(&json).unwrap();
     assert_eq!(deserialized.id, request.id);
     assert_eq!(deserialized.task_execution_id, request.task_execution_id);

@@ -1,5 +1,3 @@
-// Integration tests ONLY
-
 use s_e_e_core::*;
 use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::Arc;
@@ -27,7 +25,6 @@ fn test_workflow_execution_persistence() {
         Ok(_) => {
             let store = get_global_store().unwrap();
 
-            // Create and save a test workflow
             let workflow = WorkflowDefinition {
                 id: uuid::Uuid::new_v4().to_string(),
                 name: "Test Workflow".to_string(),
@@ -58,12 +55,9 @@ fn test_workflow_execution_persistence() {
 
             rt.block_on(store.save_workflow(&workflow)).unwrap();
 
-            // Execute the workflow
             let result = rt.block_on(execute_workflow_by_id(&workflow.id, None));
 
-            // Check that execution was persisted (if it succeeded)
             if let Ok(workflow_result) = result {
-                // Try to get the execution from persistence
                 let execution =
                     rt.block_on(store.get_workflow_execution(&workflow_result.execution_id));
 
@@ -72,19 +66,14 @@ fn test_workflow_execution_persistence() {
                         assert_eq!(exec.id, workflow_result.execution_id);
                         assert_eq!(exec.workflow_name, workflow_result.workflow_name);
                     }
-                    Ok(None) => {
-                        // Execution might not be persisted if it failed early
-                    }
+                    Ok(None) => {}
                     Err(e) => {
-                        // Database error - this is acceptable in test environment
                         println!("Database error (acceptable in tests): {}", e);
                     }
                 }
             }
         }
-        Err(_) => {
-            // Store initialization failed - this is acceptable in test environment
-        }
+        Err(_) => {}
     }
 }
 
@@ -97,7 +86,6 @@ fn test_empty_workflow_execution() {
         Ok(_) => {
             let store = get_global_store().unwrap();
 
-            // Create workflow with empty content
             let empty_workflow = WorkflowDefinition {
                 id: "empty-workflow".to_string(),
                 name: "Empty Workflow".to_string(),
@@ -121,9 +109,7 @@ fn test_empty_workflow_execution() {
                 Ok(_) => panic!("Should have failed for empty content"),
             }
         }
-        Err(_) => {
-            // Store initialization failed - this is acceptable in test environment
-        }
+        Err(_) => {}
     }
 }
 
@@ -134,7 +120,6 @@ fn test_embedded_data_population() {
 
     match init_result {
         Ok(_) => {
-            // Populate initial data from embedded templates
             let populate_result = rt.block_on(populate_initial_data());
             assert!(
                 populate_result.is_ok(),
@@ -144,7 +129,6 @@ fn test_embedded_data_population() {
 
             let store = get_global_store().unwrap();
 
-            // Verify workflows were loaded
             let workflows = rt.block_on(store.list_workflows()).unwrap();
             assert!(
                 workflows.len() >= 4,
@@ -152,7 +136,6 @@ fn test_embedded_data_population() {
                 workflows.len()
             );
 
-            // Verify prompts were loaded
             let prompts = rt.block_on(store.list_prompts()).unwrap();
             assert!(
                 prompts.len() >= 3,
@@ -160,7 +143,6 @@ fn test_embedded_data_population() {
                 prompts.len()
             );
 
-            // Verify system workflow IDs have correct prefix
             for workflow in &workflows {
                 if workflow.is_default {
                     assert!(
@@ -171,7 +153,6 @@ fn test_embedded_data_population() {
                 }
             }
 
-            // Verify system prompt IDs have correct prefix
             for prompt in &prompts {
                 assert!(
                     prompt.id.starts_with("system:"),
@@ -180,8 +161,6 @@ fn test_embedded_data_population() {
                 );
             }
         }
-        Err(_) => {
-            // Store initialization failed - this is acceptable in test environment
-        }
+        Err(_) => {}
     }
 }

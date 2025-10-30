@@ -1,5 +1,3 @@
-//! Engine tests for the new workflow engine
-
 use crate::engine::*;
 use crate::parser::*;
 use crate::types::*;
@@ -107,8 +105,6 @@ async fn test_workflow_handler_not_found() {
     let engine = WorkflowEngine::new();
     let result = engine.execute_workflow(workflow).await.unwrap();
 
-    // The workflow completes successfully even with unknown handlers
-    // The engine treats unknown handlers as failed tasks but doesn't fail the entire workflow
     assert!(result.success);
     assert_eq!(result.workflow_name, "Unknown Handler Test");
     assert_eq!(result.tasks.len(), 1);
@@ -153,11 +149,9 @@ async fn test_workflow_with_failing_dependency() {
     let engine = WorkflowEngine::new();
     let result = engine.execute_workflow(workflow).await.unwrap();
 
-    // Workflow should complete but with errors
     assert!(!result.success);
     assert!(!result.errors.is_empty());
 
-    // Both tasks should be marked complete (even failed ones)
     assert_eq!(result.tasks.len(), 2);
     assert!(result
         .tasks

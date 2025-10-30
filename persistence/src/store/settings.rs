@@ -1,7 +1,3 @@
-//! Settings store operations
-//!
-//! This file contains ONLY settings operations following Single Responsibility Principle.
-
 use super::Store;
 use crate::logging::{
     log_db_operation_error, log_db_operation_start, log_db_operation_success, log_deserialization,
@@ -11,7 +7,6 @@ use crate::models::AppSettings;
 use sqlx::Row;
 
 impl Store {
-    /// Load application settings
     pub async fn load_settings(&self) -> Result<Option<AppSettings>, String> {
         log_db_operation_start("load_settings", "settings");
 
@@ -43,7 +38,6 @@ impl Store {
         }
     }
 
-    /// Save application settings
     pub async fn save_settings(&self, settings: &AppSettings) -> Result<(), String> {
         log_db_operation_start("save_settings", "settings");
 

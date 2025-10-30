@@ -9,13 +9,13 @@ fn test_typed_cache_entry_creation() {
 
     assert_eq!(entry.value(), &value);
     assert!(!entry.is_fetching());
-    assert_eq!(entry.cache_time(), Some(300_000)); // Default 5 minutes
+    assert_eq!(entry.cache_time(), Some(300_000));
 }
 
 #[test]
 fn test_typed_cache_entry_with_custom_cache_time() {
     let value = Arc::new(42);
-    let cache_time = Some(60_000); // 1 minute
+    let cache_time = Some(60_000);
     let entry = TypedCacheEntry::with_cache_time(value.clone(), cache_time);
 
     assert_eq!(entry.cache_time(), cache_time);
@@ -76,7 +76,6 @@ fn test_get_typed_value_wrong_type() {
     let entry = TypedCacheEntry::new(value);
     let entry_trait: &dyn CacheEntry = &entry;
 
-    // Try to get as String, should fail
     let retrieved: Option<Arc<String>> = get_typed_value(entry_trait);
     assert!(retrieved.is_none());
 }
@@ -99,7 +98,6 @@ fn test_fetched_at() {
     let fetched_at = entry.fetched_at();
     assert!(fetched_at.is_some());
 
-    // Should be very recent
     let elapsed = fetched_at.unwrap().elapsed();
     assert!(elapsed < Duration::from_secs(1));
 }

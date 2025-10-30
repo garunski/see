@@ -1,25 +1,17 @@
-//! Store struct and initialization
-//!
-//! This file contains ONLY Store struct and initialization following Single Responsibility Principle.
-
 use crate::errors::PersistenceError;
 use crate::logging::{log_db_operation_start, log_db_operation_success};
 use sqlx::SqlitePool;
 use std::sync::Arc;
 
-/// Main store struct for database operations
 pub struct Store {
     pool: Arc<SqlitePool>,
 }
 
 impl Store {
-    /// Create a new store instance
     pub async fn new(db_path: &str) -> Result<Self, PersistenceError> {
         log_db_operation_start("connect", "database");
         tracing::info!("Attempting to connect to database: {}", db_path);
 
-        // Enable WAL mode for better concurrency
-        // Note: sqlx requires specific formats for absolute paths on macOS
         let connection_string = if db_path.starts_with('/') {
             format!("sqlite://file:{}?mode=rwc", db_path)
         } else {
@@ -31,13 +23,11 @@ impl Store {
             PersistenceError::Database(e.to_string())
         })?;
 
-        // Enable WAL mode
         sqlx::query("PRAGMA journal_mode=WAL")
             .execute(&pool)
             .await
             .map_err(|e| PersistenceError::Database(e.to_string()))?;
 
-        // Create tables
         Self::create_tables(&pool).await?;
 
         log_db_operation_success("connect", "database", 0);
@@ -47,7 +37,6 @@ impl Store {
         })
     }
 
-    /// Create all required tables
     async fn create_tables(pool: &SqlitePool) -> Result<(), PersistenceError> {
         log_db_operation_start("create_tables", "all");
 
@@ -72,7 +61,6 @@ impl Store {
         Ok(())
     }
 
-    /// Get the database pool (for internal use by store modules)
     pub(crate) fn pool(&self) -> &SqlitePool {
         &self.pool
     }

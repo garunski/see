@@ -10,7 +10,6 @@ use crate::cache::{get_typed_value, mark_fetch_complete, start_cleanup_task, Typ
 use crate::query_key::QueryKey;
 use crate::state::{QueryOptions, QueryState};
 
-/// Main query hook - fetches and caches data with type-safe storage
 #[instrument(skip(fetcher, options), fields(key = %key))]
 pub fn use_query<T, F, Fut>(
     key: QueryKey,
@@ -198,7 +197,6 @@ where
                         );
                         trace!(key = %key, cache_time = ?opts.cache_time, "Updated cache with fresh data");
 
-                        // Update state
                         let new_state = QueryState {
                             data: Some(data),
                             is_loading: false,
@@ -234,8 +232,6 @@ where
                             "Fetch failed after all retry attempts"
                         );
 
-                        // Remove failed entry from cache to prevent memory leak
-                        // Next fetch attempt will try again fresh
                         {
                             let cache = QUERY_CACHE();
                             let mut cache_map = cache.borrow_mut();
@@ -262,7 +258,6 @@ where
         });
     });
 
-    // Auto-fetch on mount or when dependencies change
     let effect_key = key.clone();
     use_effect(move || {
         if should_fetch() {
@@ -271,7 +266,6 @@ where
         }
     });
 
-    // Refetch interval
     if let Some(interval) = options.refetch_interval {
         info!(
             key = %key,
@@ -301,8 +295,6 @@ where
         fetch(())
     };
 
-    // Return current state value (will update reactively)
-    // Force temporary to be dropped before end of function
     let current_state = state.read().clone();
     (current_state, refetch)
 }

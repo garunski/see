@@ -1,10 +1,7 @@
-//! Validation error types
-
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::collections::HashSet;
 
-/// Top-level workflow structure for duplicate ID checking
 #[derive(Debug, Clone, PartialEq, Deserialize)]
 pub struct WorkflowSchema {
     pub id: String,
@@ -12,7 +9,6 @@ pub struct WorkflowSchema {
     pub tasks: Vec<TaskSchema>,
 }
 
-/// Task structure with recursive next_tasks support
 #[derive(Debug, Clone, PartialEq, Deserialize)]
 pub struct TaskSchema {
     pub id: String,
@@ -23,16 +19,14 @@ pub struct TaskSchema {
     pub next_tasks: Vec<TaskSchema>,
 }
 
-/// Validation error with detailed field path information
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct ValidationError {
-    /// JSON pointer path to the error location (e.g., "tasks[0].function.input.command")
     pub path: String,
-    /// Error message describing what's wrong
+
     pub message: String,
-    /// Expected value or type
+
     pub expected: Option<String>,
-    /// Suggestions for fixing the error
+
     pub suggestions: Vec<String>,
 }
 
@@ -73,7 +67,6 @@ impl std::fmt::Display for ValidationErrors {
 
 impl std::error::Error for ValidationErrors {}
 
-/// Check for duplicate task IDs recursively
 pub fn check_duplicate_task_ids(
     task: &TaskSchema,
     seen_ids: &mut HashSet<String>,
@@ -89,7 +82,6 @@ pub fn check_duplicate_task_ids(
     Ok(())
 }
 
-/// Validate all tasks in a workflow for duplicate IDs
 pub fn validate_no_duplicate_task_ids(workflow: &WorkflowSchema) -> Result<(), String> {
     let mut seen_ids = HashSet::new();
 

@@ -1,8 +1,5 @@
-// Core error types ONLY
-
 use crate::validation::ValidationErrors;
 
-/// Main error type for core crate operations
 #[derive(thiserror::Error, Debug)]
 pub enum CoreError {
     #[error("Engine error: {0}")]

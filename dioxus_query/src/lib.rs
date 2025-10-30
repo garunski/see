@@ -1,7 +1,3 @@
-//! Custom Dioxus Query System
-//!
-//! A type-safe, in-memory query caching system for Dioxus with no serialization overhead.
-
 pub mod cache;
 pub mod invalidate;
 pub mod mutation;
@@ -10,7 +6,6 @@ pub mod query_key;
 pub mod state;
 pub mod utils;
 
-// Minimal public surface
 pub mod prelude {
     pub use crate::invalidate::{
         invalidate_all_queries, invalidate_queries_by_prefix, invalidate_query,

@@ -1,10 +1,5 @@
-//! PersistenceError definitions
-//!
-//! This file contains ONLY error types following Single Responsibility Principle.
-
 use thiserror::Error;
 
-/// Main error type for persistence operations
 #[derive(Error, Debug)]
 pub enum PersistenceError {
     #[error("Database error: {0}")]

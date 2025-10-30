@@ -1,13 +1,8 @@
-//! Logging configuration and helpers
-//!
-//! This file contains ONLY logging setup following Single Responsibility Principle.
-
 use std::path::Path;
 use tracing::{debug, error, info, instrument, warn};
 use tracing_appender::{non_blocking, rolling};
 use tracing_subscriber::{fmt, EnvFilter};
 
-/// Initialize logging with optional file output
 pub fn init_logging(
     log_file: Option<&Path>,
 ) -> Result<non_blocking::WorkerGuard, Box<dyn std::error::Error>> {
@@ -32,31 +27,26 @@ pub fn init_logging(
     Ok(guard)
 }
 
-/// Log database operation start
 #[instrument(skip_all)]
 pub fn log_db_operation_start(operation: &str, table: &str) {
     info!("Starting {} on {}", operation, table);
 }
 
-/// Log database operation success
 #[instrument(skip_all)]
 pub fn log_db_operation_success(operation: &str, table: &str, duration_ms: u64) {
     info!("Completed {} on {} in {}ms", operation, table, duration_ms);
 }
 
-/// Log database operation error
 #[instrument(skip_all)]
 pub fn log_db_operation_error(operation: &str, table: &str, error: &str) {
     error!("Failed {} on {}: {}", operation, table, error);
 }
 
-/// Log serialization operation
 #[instrument(skip_all)]
 pub fn log_serialization(operation: &str, size_bytes: usize) {
     debug!("Serialized {} ({} bytes)", operation, size_bytes);
 }
 
-/// Log deserialization operation
 #[instrument(skip_all)]
 pub fn log_deserialization(operation: &str, size_bytes: usize) {
     debug!("Deserialized {} ({} bytes)", operation, size_bytes);

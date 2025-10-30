@@ -10,12 +10,10 @@ use super::components::ExecutionListItem;
 
 #[component]
 pub fn HomePage() -> Element {
-    // Use new query hooks with auto-refresh
     let (workflows_state, _refetch_workflows) = use_workflows_query();
     let (executions_state, _refetch_executions) = use_workflow_executions_query();
     let (_exec_mutation_state, execute_fn) = use_execute_workflow_mutation();
 
-    // Handle workflows query result
     let workflows = if workflows_state.is_loading {
         return rsx! {
             div { class: "flex items-center justify-center h-64",
@@ -46,7 +44,6 @@ pub fn HomePage() -> Element {
         workflows_state.data.clone().unwrap_or_default()
     };
 
-    // Handle workflow executions query result
     let workflow_executions = if executions_state.is_loading {
         vec![]
     } else if executions_state.is_error {
@@ -73,7 +70,6 @@ pub fn HomePage() -> Element {
         executions_state.data.clone().unwrap_or_default()
     };
 
-    // Filter state (None = All). Default to All
     let mut active_filter = use_signal(|| None::<WorkflowExecutionStatus>);
 
     rsx! {
@@ -84,12 +80,12 @@ pub fn HomePage() -> Element {
                 actions: None,
             }
 
-            // Executions Section
+
             SectionCard {
                 title: Some("Recent Executions".to_string()),
                 children: rsx! {
                     {{
-                        // Filter and sort executions inline so it reacts to workflow_executions changes
+
                         let mut items: Vec<_> = match active_filter() {
                             Some(status) => workflow_executions
                                 .iter()
@@ -104,9 +100,9 @@ pub fn HomePage() -> Element {
 
                         rsx! {
                             div { class: "space-y-4",
-                                // Filter Badges
+
                                 div { class: "flex items-center gap-2 flex-wrap",
-                                    // All badge (clears filter)
+
                                     BadgeButton {
                                         color: BadgeColor::Zinc,
                                         active: active_filter().is_none(),
@@ -161,7 +157,7 @@ pub fn HomePage() -> Element {
                 padding: None,
             }
 
-            // Execute Workflows Section
+
             div { class: "space-y-4",
                 h2 { class: "text-lg font-semibold text-zinc-900 dark:text-white", "Execute Workflows" }
 

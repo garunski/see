@@ -13,7 +13,6 @@ pub fn UserInputForm(
     let mut error_message = use_signal(String::new);
     let mut needs_refresh = use_signal(|| false);
 
-    // Determine label, placeholder, and input type from UserInputRequest
     let label_text = input_request
         .as_ref()
         .map(|req| req.prompt_text.clone())
@@ -44,7 +43,7 @@ pub fn UserInputForm(
         div {
             class: "space-y-4",
 
-            // Show input request details if available
+
             if let Some(req) = input_request.as_ref() {
                 div {
                     class: "text-sm text-amber-700 dark:text-amber-300 space-y-1",
@@ -111,9 +110,9 @@ pub fn UserInputForm(
                                     Ok(_) => {
                                         tracing::debug!("Input provided successfully for task {}", task_id);
                                         needs_refresh.set(true);
-                                        // Trigger a page refresh after a short delay
+
                                         tokio::time::sleep(tokio::time::Duration::from_millis(500)).await;
-                                        // The parent component should detect needs_refresh and reload
+
                                     }
                                     Err(e) => {
                                         error!("Failed to provide input: {}", e);

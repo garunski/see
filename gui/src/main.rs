@@ -24,11 +24,9 @@ fn main() {
 
     tracing::trace!("GUI application starting");
 
-    // Change to workspace root directory for system templates loading
     let workspace_root = std::env::var("CARGO_MANIFEST_DIR")
         .ok()
         .and_then(|manifest| {
-            // If running from CARGO_MANIFEST_DIR, go up to workspace root
             if manifest.ends_with("/gui") {
                 std::fs::canonicalize(&manifest)
                     .ok()
@@ -38,7 +36,6 @@ fn main() {
             }
         })
         .or_else(|| {
-            // Fallback: try to find workspace root by looking for Cargo.toml
             let mut path = std::env::current_exe().ok()?;
             loop {
                 if path.join("Cargo.toml").exists() {
@@ -63,7 +60,6 @@ fn main() {
         }
     }
 
-    // Initialize persistence layer with a temporary runtime
     tracing::debug!("Initializing persistence layer");
     let rt = tokio::runtime::Runtime::new().unwrap();
     if let Err(e) = rt.block_on(async {
@@ -75,7 +71,7 @@ fn main() {
         eprintln!("Failed to initialize persistence layer: {}", e);
         std::process::exit(1);
     }
-    drop(rt); // Explicitly drop the runtime before launching Dioxus
+    drop(rt);
     tracing::debug!("Persistence layer initialized successfully");
 
     LaunchBuilder::desktop()

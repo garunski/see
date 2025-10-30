@@ -30,7 +30,6 @@ impl ExecutionService {
             .await
             .map_err(|e| ExecutionError::FetchExecutionsFailed(e.to_string()))?;
 
-        // Convert WorkflowExecution to WorkflowExecutionSummary
         let summaries = executions
             .into_iter()
             .map(|exec| WorkflowExecutionSummary {
@@ -58,8 +57,6 @@ impl ExecutionService {
             .await
             .map_err(|e| ExecutionError::FetchRunningWorkflowsFailed(e.to_string()))?;
 
-        // Filter for truly active running workflows
-        // Exclude workflows that are in workflow_executions (which means they're waiting or completed)
         let all_execution_ids = store
             .list_workflow_executions()
             .await
@@ -73,7 +70,6 @@ impl ExecutionService {
             .filter(|m| m.status == "running" && !all_execution_ids.contains(&m.id))
             .collect();
 
-        // Only log when there are actual running workflows to avoid spam
         if !running.is_empty() {
             tracing::trace!(
                 running_count = running.len(),

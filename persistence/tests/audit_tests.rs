@@ -1,7 +1,3 @@
-//! Tests for audit store operations
-//!
-//! Tests log_audit_event following Single Responsibility Principle.
-
 use chrono::Utc;
 use s_e_e_persistence::{AuditEvent, AuditStatus, Store};
 
@@ -72,17 +68,15 @@ async fn test_audit_event_serialization() {
 
 #[tokio::test]
 async fn test_audit_event_validation_error() {
-    // Create invalid event (empty task_id)
     let event = AuditEvent {
         id: "audit-1".to_string(),
-        task_id: "".to_string(), // Invalid: empty task_id
+        task_id: "".to_string(),
         status: AuditStatus::Success,
         timestamp: Utc::now(),
         changes_count: 5,
         message: "Test message".to_string(),
     };
 
-    // This should fail during validation
     let result = event.validate();
     assert!(result.is_err());
     assert!(result.unwrap_err().contains("Task ID cannot be empty"));
@@ -90,17 +84,15 @@ async fn test_audit_event_validation_error() {
 
 #[tokio::test]
 async fn test_audit_event_empty_message() {
-    // Create invalid event (empty message)
     let event = AuditEvent {
         id: "audit-1".to_string(),
         task_id: "task-1".to_string(),
         status: AuditStatus::Success,
         timestamp: Utc::now(),
         changes_count: 5,
-        message: "".to_string(), // Invalid: empty message
+        message: "".to_string(),
     };
 
-    // This should fail during validation
     let result = event.validate();
     assert!(result.is_err());
     assert!(result.unwrap_err().contains("message cannot be empty"));

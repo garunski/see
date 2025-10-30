@@ -1,6 +1,6 @@
-//! Tests for execution models
-//! 
-//! Tests WorkflowExecution, WorkflowExecutionSummary, WorkflowMetadata following Single Responsibility Principle.
+
+
+
 
 use s_e_e_persistence::{WorkflowExecutionStatus, TaskExecution, TaskStatus, WorkflowExecution, WorkflowExecutionSummary, WorkflowMetadata};
 use chrono::Utc;
@@ -8,7 +8,7 @@ use chrono::Utc;
 #[test]
 fn test_workflow_execution_default() {
     let execution = WorkflowExecution::default();
-    
+
     assert!(!execution.id.is_empty());
     assert!(execution.workflow_name.is_empty());
     assert_eq!(execution.workflow_snapshot, serde_json::json!({}));
@@ -38,14 +38,14 @@ fn test_workflow_execution_serialization() {
         per_task_logs: std::collections::HashMap::new(),
         errors: Vec::new(),
     };
-    
-    // Test serialization
+
+
     let json = serde_json::to_string(&execution).unwrap();
     assert!(json.contains("exec-1"));
     assert!(json.contains("Test Workflow"));
     assert!(json.contains("complete"));
-    
-    // Test deserialization
+
+
     let deserialized: WorkflowExecution = serde_json::from_str(&json).unwrap();
     assert_eq!(deserialized.id, execution.id);
     assert_eq!(deserialized.workflow_name, execution.workflow_name);
@@ -74,10 +74,10 @@ fn test_workflow_execution_serialization_with_snapshot() {
         per_task_logs: std::collections::HashMap::new(),
         errors: Vec::new(),
     };
-    
+
     let json = serde_json::to_string(&execution).unwrap();
     let deserialized: WorkflowExecution = serde_json::from_str(&json).unwrap();
-    
+
     assert_eq!(deserialized.workflow_snapshot, execution.workflow_snapshot);
     assert_eq!(deserialized.id, execution.id);
     assert_eq!(deserialized.workflow_name, execution.workflow_name);
@@ -105,9 +105,9 @@ fn test_workflow_execution_to_summary() {
         per_task_logs: std::collections::HashMap::new(),
         errors: Vec::new(),
     };
-    
+
     let summary = execution.to_summary();
-    
+
     assert_eq!(summary.id, execution.id);
     assert_eq!(summary.workflow_name, execution.workflow_name);
     assert_eq!(summary.status, execution.status);
@@ -125,9 +125,9 @@ fn test_workflow_execution_to_metadata() {
         status: WorkflowExecutionStatus::Running,
         ..Default::default()
     };
-    
+
     let metadata = execution.to_metadata();
-    
+
     assert_eq!(metadata.id, execution.id);
     assert_eq!(metadata.name, execution.workflow_name);
     assert_eq!(metadata.status, "running");
@@ -135,7 +135,7 @@ fn test_workflow_execution_to_metadata() {
 
 #[test]
 fn test_workflow_execution_waiting_for_input_status() {
-    // Test that WaitingForInput status is properly handled
+
     let execution = WorkflowExecution {
         id: "exec-1".to_string(),
         workflow_name: "Test Workflow".to_string(),
@@ -153,15 +153,15 @@ fn test_workflow_execution_waiting_for_input_status() {
         per_task_logs: std::collections::HashMap::new(),
         errors: Vec::new(),
     };
-    
+
     assert_eq!(execution.status, WorkflowExecutionStatus::WaitingForInput);
     assert_eq!(execution.status.as_str(), "waiting_for_input");
-    
-    // Test serialization with WaitingForInput status
+
+
     let json = serde_json::to_string(&execution).unwrap();
     assert!(json.contains("waiting_for_input"));
-    
-    // Test that summary preserves WaitingForInput status
+
+
     let summary = execution.to_summary();
     assert_eq!(summary.status, WorkflowExecutionStatus::WaitingForInput);
 }
@@ -169,7 +169,7 @@ fn test_workflow_execution_waiting_for_input_status() {
 #[test]
 fn test_workflow_execution_summary_default() {
     let summary = WorkflowExecutionSummary::default();
-    
+
     assert!(!summary.id.is_empty());
     assert!(summary.workflow_name.is_empty());
     assert_eq!(summary.status, WorkflowExecutionStatus::Pending);
@@ -187,14 +187,14 @@ fn test_workflow_execution_summary_serialization() {
         task_count: 5,
         timestamp: Utc::now(),
     };
-    
-    // Test serialization
+
+
     let json = serde_json::to_string(&summary).unwrap();
     assert!(json.contains("exec-1"));
     assert!(json.contains("failed"));
     assert!(json.contains("task_count"));
-    
-    // Test deserialization
+
+
     let deserialized: WorkflowExecutionSummary = serde_json::from_str(&json).unwrap();
     assert_eq!(deserialized.id, summary.id);
     assert_eq!(deserialized.task_count, summary.task_count);
@@ -203,7 +203,7 @@ fn test_workflow_execution_summary_serialization() {
 #[test]
 fn test_workflow_metadata_default() {
     let metadata = WorkflowMetadata::default();
-    
+
     assert!(!metadata.id.is_empty());
     assert!(metadata.name.is_empty());
     assert_eq!(metadata.status, "pending");
@@ -216,13 +216,13 @@ fn test_workflow_metadata_serialization() {
         name: "Test Workflow".to_string(),
         status: "running".to_string(),
     };
-    
-    // Test serialization
+
+
     let json = serde_json::to_string(&metadata).unwrap();
     assert!(json.contains("exec-1"));
     assert!(json.contains("running"));
-    
-    // Test deserialization
+
+
     let deserialized: WorkflowMetadata = serde_json::from_str(&json).unwrap();
     assert_eq!(deserialized.id, metadata.id);
     assert_eq!(deserialized.name, metadata.name);

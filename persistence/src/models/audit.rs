@@ -1,12 +1,7 @@
-//! AuditEvent model
-//!
-//! This file contains ONLY AuditEvent struct following Single Responsibility Principle.
-
 use crate::models::AuditStatus;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 
-/// Audit trail entry
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct AuditEvent {
     pub id: String,
@@ -31,7 +26,6 @@ impl Default for AuditEvent {
 }
 
 impl AuditEvent {
-    /// Validate audit event
     pub fn validate(&self) -> Result<(), String> {
         if self.id.is_empty() {
             return Err("Audit event ID cannot be empty".to_string());
@@ -46,7 +40,6 @@ impl AuditEvent {
         Ok(())
     }
 
-    /// Create a success audit event
     pub fn success(task_id: String, message: String, changes_count: usize) -> Self {
         Self {
             id: uuid::Uuid::new_v4().to_string(),
@@ -58,7 +51,6 @@ impl AuditEvent {
         }
     }
 
-    /// Create a failure audit event
     pub fn failure(task_id: String, message: String, changes_count: usize) -> Self {
         Self {
             id: uuid::Uuid::new_v4().to_string(),

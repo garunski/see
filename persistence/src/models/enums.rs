@@ -1,11 +1,6 @@
-//! Enums for persistence layer
-//!
-//! This file contains ONLY enum definitions following Single Responsibility Principle.
-
 use serde::{Deserialize, Serialize};
 use std::fmt;
 
-/// Workflow execution status
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub enum WorkflowExecutionStatus {
     #[serde(rename = "pending")]
@@ -21,7 +16,6 @@ pub enum WorkflowExecutionStatus {
 }
 
 impl WorkflowExecutionStatus {
-    /// Convert WorkflowExecutionStatus to string representation
     pub fn as_str(&self) -> &'static str {
         match self {
             WorkflowExecutionStatus::Pending => "pending",
@@ -39,7 +33,6 @@ impl fmt::Display for WorkflowExecutionStatus {
     }
 }
 
-/// Task execution status
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub enum TaskExecutionStatus {
     #[serde(rename = "pending")]
@@ -95,7 +88,6 @@ impl std::fmt::Display for AuditStatus {
     }
 }
 
-/// User input type
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub enum InputType {
     #[serde(rename = "string")]

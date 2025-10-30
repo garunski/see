@@ -1,4 +1,4 @@
-// Execution conversion tests ONLY
+
 
 use core::bridge::*;
 use s_e_e_engine::WorkflowResult as EngineWorkflowResult;
@@ -13,10 +13,10 @@ fn test_engine_result_to_core_result() {
         per_task_logs: std::collections::HashMap::new(),
         errors: vec![],
     };
-    
+
     let execution_id = "exec-123".to_string();
     let core_result = core::bridge::workflow::engine_result_to_core_result(engine_result, execution_id.clone());
-    
+
     assert!(core_result.success);
     assert_eq!(core_result.workflow_name, "Test Workflow");
     assert_eq!(core_result.execution_id, execution_id);
@@ -28,7 +28,7 @@ fn test_engine_result_to_core_result() {
 #[test]
 fn test_engine_result_to_core_result_with_data() {
     use engine::{TaskInfo, TaskStatus, AuditEntry, AuditStatus};
-    
+
     let tasks = vec![
         TaskInfo {
             id: "task-1".to_string(),
@@ -36,7 +36,7 @@ fn test_engine_result_to_core_result_with_data() {
             status: TaskStatus::Complete,
         }
     ];
-    
+
     let audit_trail = vec![
         AuditEntry {
             task_id: "task-1".to_string(),
@@ -46,12 +46,12 @@ fn test_engine_result_to_core_result_with_data() {
             message: "Task completed".to_string(),
         }
     ];
-    
+
     let mut per_task_logs = std::collections::HashMap::new();
     per_task_logs.insert("task-1".to_string(), vec!["output line 1".to_string()]);
-    
+
     let errors = vec!["Some error".to_string()];
-    
+
     let engine_result = EngineWorkflowResult {
         success: false,
         workflow_name: "Failed Workflow".to_string(),
@@ -60,10 +60,10 @@ fn test_engine_result_to_core_result_with_data() {
         per_task_logs,
         errors,
     };
-    
+
     let execution_id = "exec-456".to_string();
     let core_result = core::bridge::workflow::engine_result_to_core_result(engine_result, execution_id.clone());
-    
+
     assert!(!core_result.success);
     assert_eq!(core_result.workflow_name, "Failed Workflow");
     assert_eq!(core_result.execution_id, execution_id);

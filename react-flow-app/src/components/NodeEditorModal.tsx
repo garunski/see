@@ -1,135 +1,134 @@
-import { useState, useEffect } from 'react'
-import { Dialog, DialogActions, DialogBody, DialogTitle } from './dialog'
-import { Field, FieldGroup, Label } from './fieldset'
-import { Input } from './input'
-import { Select } from './select'
-import { Button } from './button'
-import { FunctionFormFields } from './FunctionFormFields'
-import { WorkflowTask } from '../types'
-import { validateJson, buildTaskFunction } from '../utils/functionBuilder'
+import { useState, useEffect } from "react";
+import { Dialog, DialogActions, DialogBody, DialogTitle } from "./dialog";
+import { Field, FieldGroup, Label } from "./fieldset";
+import { Input } from "./input";
+import { Select } from "./select";
+import { Button } from "./button";
+import { FunctionFormFields } from "./FunctionFormFields";
+import { WorkflowTask } from "../types";
+import { validateJson, buildTaskFunction } from "../utils/functionBuilder";
 
 interface NodeEditorModalProps {
-  isOpen: boolean
-  node: WorkflowTask | null
-  onSave: (updatedNode: WorkflowTask) => void
-  onClose: () => void
+  isOpen: boolean;
+  node: WorkflowTask | null;
+  onSave: (updatedNode: WorkflowTask) => void;
+  onClose: () => void;
 }
 
-export function NodeEditorModal({ isOpen, node, onSave, onClose }: NodeEditorModalProps) {
-  const [name, setName] = useState('')
-  const [functionType, setFunctionType] = useState<WorkflowTask['function']['name']>('cli_command')
-  
-  // CLI Command fields
-  const [command, setCommand] = useState('')
-  const [args, setArgs] = useState<string[]>([])
-  
-  // Validation errors
-  const [validationErrors, setValidationErrors] = useState<Record<string, string>>({})
-  
-  // Cursor Agent fields
-  const [prompt, setPrompt] = useState('')
-  const [configJson, setConfigJson] = useState('{}')
-  const [configError, setConfigError] = useState('')
-  
-  // User Input fields
-  const [inputType, setInputType] = useState('string')
-  const [required, setRequired] = useState(true)
-  const [defaultValue, setDefaultValue] = useState('')
-  
-  // Custom fields
-  const [customName, setCustomName] = useState('custom')
-  const [customInputJson, setCustomInputJson] = useState('{}')
-  const [customInputError, setCustomInputError] = useState('')
+export function NodeEditorModal({
+  isOpen,
+  node,
+  onSave,
+  onClose,
+}: NodeEditorModalProps) {
+  const [name, setName] = useState("");
+  const [functionType, setFunctionType] =
+    useState<WorkflowTask["function"]["name"]>("cli_command");
 
-  // Load node data into form
+  const [command, setCommand] = useState("");
+  const [args, setArgs] = useState<string[]>([]);
+
+  const [validationErrors, setValidationErrors] = useState<
+    Record<string, string>
+  >({});
+
+  const [prompt, setPrompt] = useState("");
+  const [configJson, setConfigJson] = useState("{}");
+  const [configError, setConfigError] = useState("");
+
+  const [inputType, setInputType] = useState("string");
+  const [required, setRequired] = useState(true);
+  const [defaultValue, setDefaultValue] = useState("");
+
+  const [customName, setCustomName] = useState("custom");
+  const [customInputJson, setCustomInputJson] = useState("{}");
+  const [customInputError, setCustomInputError] = useState("");
+
   useEffect(() => {
     if (!node) return;
 
-    setName(node.name || '')
-    setFunctionType(node.function.name)
-    
+    setName(node.name || "");
+    setFunctionType(node.function.name);
+
     switch (node.function.name) {
-      case 'cli_command':
-        setCommand(node.function.input.command || '')
-        setArgs(node.function.input.args || [])
-        break
-        
-      case 'cursor_agent':
-        setPrompt(node.function.input.prompt || '')
-        setConfigJson(JSON.stringify(node.function.input.config || {}, null, 2))
-        break
-        
-      case 'user_input':
-        setPrompt(node.function.input.prompt || '')
-        setInputType(node.function.input.input_type || 'string')
-        setRequired(node.function.input.required !== false)
+      case "cli_command":
+        setCommand(node.function.input.command || "");
+        setArgs(node.function.input.args || []);
+        break;
+
+      case "cursor_agent":
+        setPrompt(node.function.input.prompt || "");
+        setConfigJson(
+          JSON.stringify(node.function.input.config || {}, null, 2),
+        );
+        break;
+
+      case "user_input":
+        setPrompt(node.function.input.prompt || "");
+        setInputType(node.function.input.input_type || "string");
+        setRequired(node.function.input.required !== false);
         setDefaultValue(
-          node.function.input.default !== undefined && node.function.input.default !== null
+          node.function.input.default !== undefined &&
+            node.function.input.default !== null
             ? String(node.function.input.default)
-            : ''
-        )
-        break
-        
-      case 'custom':
-        setCustomName(node.function.name || 'custom')
-        setCustomInputJson(JSON.stringify(node.function.input || {}, null, 2))
-        break
+            : "",
+        );
+        break;
+
+      case "custom":
+        setCustomName(node.function.name || "custom");
+        setCustomInputJson(JSON.stringify(node.function.input || {}, null, 2));
+        break;
     }
-  }, [node])
+  }, [node]);
 
   const handleConfigBlur = () => {
-    setConfigError(validateJson(configJson) ? '' : 'Invalid JSON')
-  }
+    setConfigError(validateJson(configJson) ? "" : "Invalid JSON");
+  };
 
   const handleCustomInputBlur = () => {
-    setCustomInputError(validateJson(customInputJson) ? '' : 'Invalid JSON')
-  }
+    setCustomInputError(validateJson(customInputJson) ? "" : "Invalid JSON");
+  };
 
   const validateFields = (): boolean => {
-    const errors: Record<string, string> = {}
-    
-    // CLI Command validation
-    if (functionType === 'cli_command') {
+    const errors: Record<string, string> = {};
+
+    if (functionType === "cli_command") {
       if (!command.trim()) {
-        errors.command = 'Command is required'
+        errors.command = "Command is required";
       }
     }
-    
-    // Cursor Agent validation
-    if (functionType === 'cursor_agent') {
+
+    if (functionType === "cursor_agent") {
       if (!prompt.trim()) {
-        errors.prompt = 'Prompt is required'
+        errors.prompt = "Prompt is required";
       }
       if (!validateJson(configJson)) {
-        errors.config = 'Invalid JSON'
+        errors.config = "Invalid JSON";
       }
     }
-    
-    // User Input validation
-    if (functionType === 'user_input') {
+
+    if (functionType === "user_input") {
       if (!prompt.trim()) {
-        errors.prompt = 'Prompt is required'
+        errors.prompt = "Prompt is required";
       }
     }
-    
-    // Custom validation
-    if (functionType === 'custom' && !validateJson(customInputJson)) {
-      errors.customInput = 'Invalid JSON'
+
+    if (functionType === "custom" && !validateJson(customInputJson)) {
+      errors.customInput = "Invalid JSON";
     }
-    
-    setValidationErrors(errors)
-    return Object.keys(errors).length === 0
-  }
+
+    setValidationErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
 
   const handleSave = () => {
-    if (!node) return
+    if (!node) return;
 
-    // Validate all fields
     if (!validateFields()) {
-      return
+      return;
     }
 
-    // Build function using helper
     const updatedFunction = buildTaskFunction({
       functionType,
       command,
@@ -140,27 +139,26 @@ export function NodeEditorModal({ isOpen, node, onSave, onClose }: NodeEditorMod
       required,
       defaultValue,
       customName,
-      customInputJson
-    })
+      customInputJson,
+    });
 
-    if (!updatedFunction) return
+    if (!updatedFunction) return;
 
     const updatedNode: WorkflowTask = {
       ...node,
       name,
-      function: updatedFunction
-    }
-    
-    onSave(updatedNode)
-    onClose()
-  }
+      function: updatedFunction,
+    };
+
+    onSave(updatedNode);
+    onClose();
+  };
 
   const handleCancel = () => {
-    // Reset errors
-    setConfigError('')
-    setCustomInputError('')
-    onClose()
-  }
+    setConfigError("");
+    setCustomInputError("");
+    onClose();
+  };
 
   return (
     <Dialog open={isOpen} onClose={handleCancel} size="xl">
@@ -169,8 +167,8 @@ export function NodeEditorModal({ isOpen, node, onSave, onClose }: NodeEditorMod
         <FieldGroup>
           <Field>
             <Label>Node Name</Label>
-            <Input 
-              value={name} 
+            <Input
+              value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="Enter node name"
             />
@@ -178,15 +176,19 @@ export function NodeEditorModal({ isOpen, node, onSave, onClose }: NodeEditorMod
 
           <Field>
             <Label>Function Type</Label>
-            <Select 
-              value={functionType} 
-              onChange={(e) => setFunctionType(e.target.value as WorkflowTask['function']['name'])}
-              disabled={functionType === 'custom'}
+            <Select
+              value={functionType}
+              onChange={(e) =>
+                setFunctionType(
+                  e.target.value as WorkflowTask["function"]["name"],
+                )
+              }
+              disabled={functionType === "custom"}
             >
               <option value="cli_command">CLI Command</option>
               <option value="cursor_agent">Cursor Agent</option>
               <option value="user_input">User Input</option>
-              {functionType === 'custom' && (
+              {functionType === "custom" && (
                 <option value="custom">Custom (Read-only)</option>
               )}
             </Select>
@@ -221,9 +223,11 @@ export function NodeEditorModal({ isOpen, node, onSave, onClose }: NodeEditorMod
         </FieldGroup>
       </DialogBody>
       <DialogActions>
-        <Button variant="plain" onClick={handleCancel}>Cancel</Button>
+        <Button variant="plain" onClick={handleCancel}>
+          Cancel
+        </Button>
         <Button onClick={handleSave}>Save Changes</Button>
       </DialogActions>
     </Dialog>
-  )
+  );
 }

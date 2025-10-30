@@ -1,9 +1,6 @@
-// Default workflows ONLY
-
 use chrono::Utc;
 use s_e_e_persistence::WorkflowDefinition;
 
-/// Get default workflow templates
 pub fn get_default_workflows() -> Vec<WorkflowDefinition> {
     let now = Utc::now();
 

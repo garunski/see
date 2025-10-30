@@ -1,13 +1,8 @@
-//! Execution models
-//!
-//! This file contains ONLY execution-related models following Single Responsibility Principle.
-
 use crate::models::{AuditEvent, TaskExecution, WorkflowExecutionStatus};
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
-/// Full workflow execution record
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct WorkflowExecution {
     pub id: String,
@@ -23,7 +18,6 @@ pub struct WorkflowExecution {
     pub errors: Vec<String>,
 }
 
-/// Lightweight execution summary
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct WorkflowExecutionSummary {
     pub id: String,
@@ -35,15 +29,14 @@ pub struct WorkflowExecutionSummary {
     pub timestamp: DateTime<Utc>,
 }
 
-/// Basic workflow metadata
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct WorkflowMetadata {
     pub id: String,
     pub name: String,
-    pub status: String,                 // "running" or other status
-    pub workflow_name: String,          // For GUI compatibility
-    pub start_timestamp: DateTime<Utc>, // For GUI compatibility
-    pub task_ids: Vec<String>,          // For GUI compatibility
+    pub status: String,
+    pub workflow_name: String,
+    pub start_timestamp: DateTime<Utc>,
+    pub task_ids: Vec<String>,
 }
 
 impl Default for WorkflowExecution {
@@ -95,7 +88,6 @@ impl Default for WorkflowMetadata {
 }
 
 impl WorkflowExecution {
-    /// Create a summary from this execution
     pub fn to_summary(&self) -> WorkflowExecutionSummary {
         WorkflowExecutionSummary {
             id: self.id.clone(),
@@ -108,7 +100,6 @@ impl WorkflowExecution {
         }
     }
 
-    /// Create metadata from this execution
     pub fn to_metadata(&self) -> WorkflowMetadata {
         WorkflowMetadata {
             id: self.id.clone(),

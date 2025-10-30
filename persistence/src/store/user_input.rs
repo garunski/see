@@ -1,7 +1,3 @@
-//! User input store operations
-//!
-//! This file contains ONLY user input operations following Single Responsibility Principle.
-
 use super::Store;
 use crate::logging::{
     log_db_operation_error, log_db_operation_start, log_db_operation_success, log_deserialization,
@@ -12,7 +8,6 @@ use chrono::Utc;
 use sqlx::Row;
 
 impl Store {
-    /// Save a user input request
     pub async fn save_input_request(&self, request: &UserInputRequest) -> Result<(), String> {
         log_db_operation_start("save_input_request", "user_input_requests");
 
@@ -37,7 +32,6 @@ impl Store {
         Ok(())
     }
 
-    /// Get an input request by ID
     pub async fn get_input_request(&self, id: &str) -> Result<Option<UserInputRequest>, String> {
         log_db_operation_start("get_input_request", "user_input_requests");
 
@@ -67,7 +61,6 @@ impl Store {
         Ok(Some(request))
     }
 
-    /// Get input request by task execution ID
     pub async fn get_input_request_by_task(
         &self,
         task_id: &str,
@@ -109,7 +102,6 @@ impl Store {
         Ok(None)
     }
 
-    /// Get all pending input requests for a workflow execution
     pub async fn get_pending_inputs_for_workflow(
         &self,
         workflow_id: &str,
@@ -153,7 +145,6 @@ impl Store {
         Ok(requests)
     }
 
-    /// Get all pending input requests
     pub async fn get_all_pending_inputs(&self) -> Result<Vec<UserInputRequest>, String> {
         log_db_operation_start("get_all_pending_inputs", "user_input_requests");
 
@@ -192,34 +183,28 @@ impl Store {
         Ok(requests)
     }
 
-    /// Mark input request as fulfilled
     pub async fn fulfill_input_request(&self, id: &str, value: String) -> Result<(), String> {
         log_db_operation_start("fulfill_input_request", "user_input_requests");
 
-        // Get existing request
         let mut request = self
             .get_input_request(id)
             .await?
             .ok_or_else(|| "Input request not found".to_string())?;
 
-        // Update request
         request.status = InputRequestStatus::Fulfilled;
         request.fulfilled_at = Some(Utc::now());
         request.fulfilled_value = Some(value.clone());
 
-        // Validate
         request
             .validate()
             .map_err(|e| format!("Validation error: {}", e))?;
 
-        // Save updated request
         self.save_input_request(&request).await?;
 
         log_db_operation_success("fulfill_input_request", "user_input_requests", 0);
         Ok(())
     }
 
-    /// Delete an input request
     pub async fn delete_input_request(&self, id: &str) -> Result<(), String> {
         log_db_operation_start("delete_input_request", "user_input_requests");
 

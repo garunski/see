@@ -1,8 +1,3 @@
-//! System templates integration tests
-//!
-//! Tests that verify system templates are correctly embedded into the binary
-//! and can be loaded and parsed properly.
-
 use s_e_e_core::embedded_data;
 
 #[tokio::test]
@@ -59,7 +54,6 @@ async fn test_embedded_workflows_valid() {
         let json: serde_json::Value = serde_json::from_str(content)
             .unwrap_or_else(|_| panic!("Failed to parse workflow JSON in {}", filename));
 
-        // Verify required fields
         assert!(
             json["id"].is_string(),
             "Missing or invalid 'id' in {}",
@@ -96,7 +90,6 @@ async fn test_embedded_prompts_valid() {
         let json: serde_json::Value = serde_json::from_str(content)
             .unwrap_or_else(|_| panic!("Failed to parse prompt JSON in {}", filename));
 
-        // Verify required fields match the Prompt model
         assert!(
             json["id"].is_string(),
             "Missing or invalid 'id' in {}",

@@ -4,9 +4,6 @@ use s_e_e_core::{TaskExecution, WorkflowExecution, WorkflowExecutionSummary, Wor
 use s_e_e_dioxus_query::prelude::*;
 use std::rc::Rc;
 
-// ==================== QUERIES ====================
-
-/// Hook to fetch workflow executions with auto-refresh
 pub fn use_workflow_executions_query() -> (QueryState<Vec<WorkflowExecutionSummary>>, impl Fn()) {
     let key = QueryKey::new(&["executions", "list"]);
 
@@ -17,16 +14,15 @@ pub fn use_workflow_executions_query() -> (QueryState<Vec<WorkflowExecutionSumma
     };
 
     let options = QueryOptions {
-        stale_time: Some(0),          // Always fetch fresh data
-        cache_time: Some(60_000),     // 1 minute
-        refetch_interval: Some(1000), // Poll every second
+        stale_time: Some(0),
+        cache_time: Some(60_000),
+        refetch_interval: Some(1000),
         ..Default::default()
     };
 
     use_query(key, fetcher, options)
 }
 
-/// Hook to fetch running workflows with auto-refresh
 pub fn use_running_workflows_query() -> (QueryState<Vec<WorkflowMetadata>>, impl Fn()) {
     let key = QueryKey::new(&["workflows", "running"]);
 
@@ -39,14 +35,13 @@ pub fn use_running_workflows_query() -> (QueryState<Vec<WorkflowMetadata>>, impl
     let options = QueryOptions {
         stale_time: Some(0),
         cache_time: Some(60_000),
-        refetch_interval: Some(1000), // Poll every second
+        refetch_interval: Some(1000),
         ..Default::default()
     };
 
     use_query(key, fetcher, options)
 }
 
-/// Hook to fetch a single workflow execution
 pub fn use_workflow_execution_query(
     execution_id: String,
 ) -> (QueryState<WorkflowExecution>, impl Fn()) {
@@ -63,16 +58,15 @@ pub fn use_workflow_execution_query(
     };
 
     let options = QueryOptions {
-        stale_time: Some(5_000),      // 5 seconds
-        cache_time: Some(300_000),    // 5 minutes
-        refetch_interval: Some(2000), // Poll every 2 seconds
+        stale_time: Some(5_000),
+        cache_time: Some(300_000),
+        refetch_interval: Some(2000),
         ..Default::default()
     };
 
     use_query(key, fetcher, options)
 }
 
-/// Hook to fetch task execution details
 pub fn use_task_details_query(
     execution_id: String,
     task_id: String,
@@ -92,7 +86,7 @@ pub fn use_task_details_query(
     };
 
     let options = QueryOptions {
-        stale_time: Some(0), // Always fresh
+        stale_time: Some(0),
         cache_time: Some(60_000),
         ..Default::default()
     };
@@ -100,9 +94,6 @@ pub fn use_task_details_query(
     use_query(key, fetcher, options)
 }
 
-// ==================== MUTATIONS ====================
-
-/// Hook to delete a workflow execution
 pub fn use_delete_execution_mutation() -> (Signal<MutationState<()>>, impl Fn(String)) {
     let mutation_fn = move |execution_id: String| async move {
         ExecutionService::delete_workflow_execution(&execution_id)

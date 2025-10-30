@@ -5,29 +5,16 @@ use tracing::{debug, info};
 use crate::cache::entry::CacheEntry;
 use crate::query_key::QueryKey;
 
-/// Maximum cache size before LRU eviction kicks in
 const MAX_CACHE_SIZE: usize = 1000;
 
-/// Start the periodic cache cleanup task
-///
-/// NOTE: This is now a no-op. Cleanup happens lazily during cache operations
-/// to avoid requiring a Dioxus runtime context in background tasks.
-pub fn start_cleanup_task() {
-    // No-op: cleanup now happens lazily during use_query calls
-}
+pub fn start_cleanup_task() {}
 
-/// Clean up stale cache entries and enforce size limits
-///
-/// This should be called from within Dioxus context (e.g., during use_query)
-/// Pass the cache map directly to avoid GlobalSignal access issues
 pub fn cleanup_stale_entries_sync(map: &mut HashMap<QueryKey, Box<dyn CacheEntry>>) {
     let now = Instant::now();
     let mut to_remove: Vec<QueryKey> = Vec::new();
 
-    // Find entries to remove based on their individual cache_time
     for (key, entry) in map.iter() {
         if let Some(fetched_at) = entry.fetched_at() {
-            // Use per-entry cache_time (defaults to 5 minutes if not set)
             let cache_time_ms = entry.cache_time().unwrap_or(300_000);
             let cache_time = std::time::Duration::from_millis(cache_time_ms);
 
@@ -37,13 +24,11 @@ pub fn cleanup_stale_entries_sync(map: &mut HashMap<QueryKey, Box<dyn CacheEntry
         }
     }
 
-    // Remove expired entries
     for key in &to_remove {
         map.remove(key);
         debug!(key = %key, "Removed expired cache entry");
     }
 
-    // If cache is still too large, use LRU eviction
     if map.len() > MAX_CACHE_SIZE {
         evict_lru_entries(map);
     }
@@ -57,19 +42,15 @@ pub fn cleanup_stale_entries_sync(map: &mut HashMap<QueryKey, Box<dyn CacheEntry
     }
 }
 
-/// Evict least-recently-used entries until cache is under MAX_CACHE_SIZE
 fn evict_lru_entries(map: &mut HashMap<QueryKey, Box<dyn CacheEntry>>) {
-    // Collect all entries with their last_accessed time
     let mut entries: Vec<(QueryKey, Instant)> = map
         .iter()
         .map(|(k, v)| (k.clone(), v.last_accessed()))
         .collect();
 
-    // Sort by last_accessed (oldest first)
     entries.sort_by_key(|(_, accessed)| *accessed);
 
-    // Remove oldest entries until we're under the limit
-    let target_size = MAX_CACHE_SIZE - (MAX_CACHE_SIZE / 10); // Remove 10% extra for buffer
+    let target_size = MAX_CACHE_SIZE - (MAX_CACHE_SIZE / 10);
     let to_remove = entries.len().saturating_sub(target_size);
 
     for i in 0..to_remove {

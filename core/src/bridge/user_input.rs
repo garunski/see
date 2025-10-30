@@ -1,14 +1,6 @@
-//! User input bridge conversions
-//!
-//! This file contains ONLY user input conversions between persistence and engine layers.
-
 use s_e_e_persistence::{InputRequestStatus, InputType, UserInputRequest};
 use serde_json::Value;
 
-/// Convert persistence UserInputRequest to engine-compatible format
-///
-/// Since the engine doesn't have a separate UserInputRequest type,
-/// we convert to a format that can be used by the engine layer.
 pub fn persistence_to_engine_input_request(input: &UserInputRequest) -> Result<Value, String> {
     let engine_value = serde_json::json!({
         "id": input.id,
@@ -28,7 +20,6 @@ pub fn persistence_to_engine_input_request(input: &UserInputRequest) -> Result<V
     Ok(engine_value)
 }
 
-/// Convert engine-compatible value to persistence UserInputRequest
 pub fn engine_to_persistence_input_request(value: &Value) -> Result<UserInputRequest, String> {
     let input: UserInputRequest = serde_json::from_value(value.clone())
         .map_err(|e| format!("Failed to deserialize UserInputRequest: {}", e))?;
@@ -36,7 +27,6 @@ pub fn engine_to_persistence_input_request(value: &Value) -> Result<UserInputReq
     Ok(input)
 }
 
-/// Convert InputType enum from string
 pub fn parse_input_type(type_str: &str) -> Result<InputType, String> {
     match type_str {
         "string" => Ok(InputType::String),
@@ -46,7 +36,6 @@ pub fn parse_input_type(type_str: &str) -> Result<InputType, String> {
     }
 }
 
-/// Convert InputRequestStatus enum from string
 pub fn parse_input_request_status(status_str: &str) -> Result<InputRequestStatus, String> {
     match status_str {
         "pending" => Ok(InputRequestStatus::Pending),

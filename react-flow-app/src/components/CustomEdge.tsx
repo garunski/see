@@ -1,6 +1,12 @@
-import React from 'react';
-import { BaseEdge, EdgeLabelRenderer, getSmoothStepPath, EdgeProps, useReactFlow } from '@xyflow/react';
-import { XMarkIcon } from '@heroicons/react/24/solid';
+import React from "react";
+import {
+  BaseEdge,
+  EdgeLabelRenderer,
+  getSmoothStepPath,
+  EdgeProps,
+  useReactFlow,
+} from "@xyflow/react";
+import { XMarkIcon } from "@heroicons/react/24/solid";
 
 export const CustomEdge: React.FC<EdgeProps> = ({
   id,
@@ -29,9 +35,9 @@ export const CustomEdge: React.FC<EdgeProps> = ({
       <EdgeLabelRenderer>
         <button
           style={{
-            position: 'absolute',
+            position: "absolute",
             transform: `translate(-50%, -50%) translate(${labelX}px,${labelY}px)`,
-            pointerEvents: 'all',
+            pointerEvents: "all",
           }}
           className="nodrag nopan flex items-center justify-center w-6 h-6 bg-orange-500 hover:bg-orange-600 rounded-full border-2 border-white dark:border-zinc-800 cursor-pointer transition-colors"
           onClick={() => {
@@ -44,4 +50,3 @@ export const CustomEdge: React.FC<EdgeProps> = ({
     </>
   );
 };
-

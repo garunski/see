@@ -1,5 +1,3 @@
-// Task conversion tests ONLY
-
 use s_e_e_core::bridge::*;
 use s_e_e_engine::{TaskInfo, TaskStatus as EngineTaskStatus};
 use s_e_e_persistence::TaskExecutionStatus;
@@ -7,7 +5,6 @@ use std::collections::HashMap;
 
 #[test]
 fn test_task_status_conversion() {
-    // Test all engine to persistence status conversions
     let test_cases = vec![
         (EngineTaskStatus::Pending, TaskExecutionStatus::Pending),
         (
@@ -68,7 +65,6 @@ fn test_task_output_extraction() {
 
     assert_eq!(task_execution.output, Some("line 1\nline 2".to_string()));
 
-    // Test empty logs
     let task_info2 = TaskInfo {
         id: "task-2".to_string(),
         name: "Test Task 2".to_string(),
@@ -95,7 +91,6 @@ fn test_task_error_extraction() {
         "General workflow error".to_string(),
     ];
 
-    // Test task-specific error
     let task_info = TaskInfo {
         id: "task-1".to_string(),
         name: "Failed Task".to_string(),
@@ -116,7 +111,6 @@ fn test_task_error_extraction() {
         Some("Task task-1 failed: command not found".to_string())
     );
 
-    // Test task without specific error
     let task_info2 = TaskInfo {
         id: "task-3".to_string(),
         name: "Failed Task 3".to_string(),
@@ -134,7 +128,6 @@ fn test_task_error_extraction() {
 
     assert_eq!(task_execution2.error, Some("Task failed".to_string()));
 
-    // Test successful task (no error)
     let task_info3 = TaskInfo {
         id: "task-4".to_string(),
         name: "Successful Task".to_string(),

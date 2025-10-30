@@ -13,7 +13,6 @@ pub fn UserPromptEditPage(id: String) -> Element {
     let navigator = use_navigator();
     let is_new = id.is_empty();
 
-    // Load existing prompt data if editing
     let loaded_prompt = if !is_new {
         let (query_state, _refetch) = use_prompt_query(id.clone());
 
@@ -42,13 +41,11 @@ pub fn UserPromptEditPage(id: String) -> Element {
         None
     };
 
-    // Initialize state via hooks (NO CLOSURES RETURNED)
     let mut form_state = use_prompt_form(id.clone(), loaded_prompt);
     let mutations = use_prompt_mutations();
     let mut notification = use_notification_state();
     let mut show_delete_dialog = use_signal(|| false);
 
-    // Redirect to prompts list after successful deletion
     use_effect(move || {
         let delete_state = mutations.delete_state.read();
         if delete_state.is_success {
@@ -56,7 +53,6 @@ pub fn UserPromptEditPage(id: String) -> Element {
         }
     });
 
-    // ALL EVENT HANDLERS INLINE - NO EXTRACTION
     rsx! {
         div { class: "space-y-8",
             PromptFormHeader {
@@ -67,7 +63,7 @@ pub fn UserPromptEditPage(id: String) -> Element {
                     show_delete_dialog.set(true);
                 },
                 on_save_click: move |_| {
-                    // Validation
+
                     match validate_prompt_fields(&form_state.prompt_id.read(), &form_state.name.read(), &form_state.content.read()) {
                         Ok(_) => form_state.validation_error.set(String::new()),
                         Err(e) => {
@@ -82,15 +78,15 @@ pub fn UserPromptEditPage(id: String) -> Element {
                         form_state.content.read().to_string(),
                     );
 
-                    // Call mutation directly (non-async API)
-                    // Note: Mutations are async, notifications will show on next render when state changes
+
+
                     if is_new {
                         (mutations.create_fn)(prompt);
                     } else {
                         (mutations.update_fn)(prompt);
                     }
 
-                    // Show immediate feedback
+
                     notification.set(NotificationData {
                         r#type: NotificationType::Success,
                         title: "Saving...".to_string(),
@@ -127,10 +123,10 @@ pub fn UserPromptEditPage(id: String) -> Element {
                     on_confirm: move |_| {
                         show_delete_dialog.set(false);
 
-                        // Call delete mutation
+
                         (mutations.delete_fn)(id.clone());
 
-                        // Show immediate feedback (actual result will show on next render)
+
                         notification.set(NotificationData {
                             r#type: NotificationType::Success,
                             title: "Deleting...".to_string(),

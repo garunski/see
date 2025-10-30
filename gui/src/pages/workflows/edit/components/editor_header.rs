@@ -32,10 +32,10 @@ pub fn EditorHeader(props: EditorHeaderProps) -> Element {
                     size: IconButtonSize::Medium,
                     onclick: move |_| {
                         if has_unsaved_changes() {
-                            // For now, just navigate back - in a real app you'd want a proper confirmation dialog
-                            // TODO: Implement proper confirmation dialog using Dioxus components
+
+
                         }
-                        // Navigate back using Dioxus router
+
                         navigator.go_back();
                     },
                     class: Some("inline-flex items-center gap-x-1.5 rounded-md bg-zinc-100 dark:bg-zinc-800 px-3 py-2 text-sm font-semibold text-zinc-900 dark:text-zinc-100 shadow-sm hover:bg-zinc-200 dark:hover:bg-zinc-700".to_string()),
@@ -53,7 +53,7 @@ pub fn EditorHeader(props: EditorHeaderProps) -> Element {
                 }
             }
             div { class: "flex items-center gap-3",
-                // Edit in JSON button
+
                 if !is_new {
                     IconButton {
                         variant: IconButtonVariant::Secondary,

@@ -1,7 +1,3 @@
-//! Tests for settings store operations
-//!
-//! Tests load_settings, save_settings following Single Responsibility Principle.
-
 use s_e_e_persistence::{AppSettings, Store, Theme};
 
 async fn create_test_store() -> Store {
@@ -14,7 +10,6 @@ async fn test_load_settings_default() {
 
     let settings = store.load_settings().await.unwrap();
 
-    // Should return None when no settings are saved
     assert!(settings.is_none());
 }
 
@@ -44,10 +39,8 @@ async fn test_load_settings_after_save() {
         default_workflow: Some("workflow-2".to_string()),
     };
 
-    // Save settings
     store.save_settings(&original_settings).await.unwrap();
 
-    // Load settings
     let loaded_settings = store.load_settings().await.unwrap().unwrap();
 
     assert_eq!(loaded_settings.theme, Theme::Light);
@@ -63,7 +56,6 @@ async fn test_load_settings_after_save() {
 async fn test_save_settings_update() {
     let store = create_test_store().await;
 
-    // Save initial settings
     let initial_settings = AppSettings {
         theme: Theme::System,
         auto_save: true,
@@ -73,7 +65,6 @@ async fn test_save_settings_update() {
 
     store.save_settings(&initial_settings).await.unwrap();
 
-    // Update settings
     let updated_settings = AppSettings {
         theme: Theme::Dark,
         auto_save: false,
@@ -83,7 +74,6 @@ async fn test_save_settings_update() {
 
     store.save_settings(&updated_settings).await.unwrap();
 
-    // Verify update
     let loaded_settings = store.load_settings().await.unwrap().unwrap();
     assert_eq!(loaded_settings.theme, Theme::Dark);
     assert!(!loaded_settings.auto_save);
@@ -105,10 +95,8 @@ async fn test_settings_serialization() {
         default_workflow: Some("workflow-1".to_string()),
     };
 
-    // Save settings
     store.save_settings(&settings).await.unwrap();
 
-    // Load and verify
     let loaded_settings = store.load_settings().await.unwrap().unwrap();
     assert_eq!(loaded_settings.theme, settings.theme);
     assert_eq!(loaded_settings.auto_save, settings.auto_save);
@@ -130,10 +118,8 @@ async fn test_settings_all_themes() {
             default_workflow: None,
         };
 
-        // Save settings
         store.save_settings(&settings).await.unwrap();
 
-        // Load and verify
         let loaded_settings = store.load_settings().await.unwrap().unwrap();
         assert_eq!(loaded_settings.theme, theme);
     }

@@ -1,12 +1,7 @@
-//! TaskExecution model
-//!
-//! This file contains ONLY TaskExecution struct following Single Responsibility Principle.
-
 use crate::models::TaskExecutionStatus;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 
-/// Individual task execution record
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct TaskExecution {
     pub id: String,
@@ -42,7 +37,6 @@ impl Default for TaskExecution {
 }
 
 impl TaskExecution {
-    /// Validate task execution
     pub fn validate(&self) -> Result<(), String> {
         if self.id.is_empty() {
             return Err("Task ID cannot be empty".to_string());
@@ -54,7 +48,6 @@ impl TaskExecution {
             return Err("Task name cannot be empty".to_string());
         }
 
-        // Validate status consistency
         match self.status {
             TaskExecutionStatus::Complete | TaskExecutionStatus::Failed => {
                 if self.completed_at.is_none() {
@@ -66,13 +59,12 @@ impl TaskExecution {
                     return Err("Waiting tasks should not have completion timestamp".to_string());
                 }
             }
-            _ => {} // Pending, InProgress are fine
+            _ => {}
         }
 
         Ok(())
     }
 
-    /// Check if task is finished (complete or failed)
     pub fn is_finished(&self) -> bool {
         matches!(
             self.status,
@@ -80,17 +72,14 @@ impl TaskExecution {
         )
     }
 
-    /// Check if task is waiting for input
     pub fn is_waiting_for_input(&self) -> bool {
         matches!(self.status, TaskExecutionStatus::WaitingForInput)
     }
 
-    /// Check if task has user input
     pub fn has_user_input(&self) -> bool {
         self.user_input.is_some()
     }
 
-    /// Get input request ID
     pub fn get_input_request_id(&self) -> Option<&str> {
         self.input_request_id.as_deref()
     }

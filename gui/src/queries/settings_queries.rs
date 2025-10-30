@@ -4,9 +4,6 @@ use s_e_e_core::AppSettings;
 use s_e_e_dioxus_query::prelude::*;
 use std::rc::Rc;
 
-// ==================== QUERIES ====================
-
-/// Hook to fetch application settings
 pub fn use_settings_query() -> (QueryState<AppSettings>, impl Fn()) {
     let key = QueryKey::new(&["settings"]);
 
@@ -28,17 +25,14 @@ pub fn use_settings_query() -> (QueryState<AppSettings>, impl Fn()) {
     };
 
     let options = QueryOptions {
-        stale_time: Some(60_000),  // 1 minute
-        cache_time: Some(300_000), // 5 minutes
+        stale_time: Some(60_000),
+        cache_time: Some(300_000),
         ..Default::default()
     };
 
     use_query(key, fetcher, options)
 }
 
-// ==================== MUTATIONS ====================
-
-/// Hook to update application settings
 pub fn use_update_settings_mutation() -> (Signal<MutationState<()>>, impl Fn(AppSettings)) {
     let mutation_fn = move |settings: AppSettings| async move {
         tracing::info!(

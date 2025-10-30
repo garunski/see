@@ -1,7 +1,3 @@
-//! Tests for workflow store operations
-//!
-//! Tests save_workflow, get_workflow, list_workflows, delete_workflow following Single Responsibility Principle.
-
 use chrono::Utc;
 use s_e_e_persistence::{Store, WorkflowDefinition};
 
@@ -36,10 +32,8 @@ async fn test_get_workflow_success() {
     let store = create_test_store().await;
     let workflow = create_test_workflow();
 
-    // Save workflow
     store.save_workflow(&workflow).await.unwrap();
 
-    // Get workflow
     let retrieved = store.get_workflow("test-workflow").await.unwrap();
     assert!(retrieved.is_some());
 
@@ -74,8 +68,6 @@ async fn test_list_workflows_multiple() {
 
     use chrono::Utc;
 
-    // Create multiple workflows with distinct timestamps
-    // workflow-2 has later timestamp, so should appear first when sorted DESC
     let workflow1 = WorkflowDefinition {
         id: "workflow-1".to_string(),
         name: "Workflow 1".to_string(),
@@ -94,16 +86,13 @@ async fn test_list_workflows_multiple() {
         ..Default::default()
     };
 
-    // Save workflows
     store.save_workflow(&workflow1).await.unwrap();
     store.save_workflow(&workflow2).await.unwrap();
 
-    // List workflows
     let workflows = store.list_workflows().await.unwrap();
     assert_eq!(workflows.len(), 2);
 
-    // Check that workflows are ordered by created_at DESC (newest first)
-    assert_eq!(workflows[0].id, "workflow-2"); // Newest first
+    assert_eq!(workflows[0].id, "workflow-2");
     assert_eq!(workflows[1].id, "workflow-1");
 }
 
@@ -112,18 +101,14 @@ async fn test_delete_workflow() {
     let store = create_test_store().await;
     let workflow = create_test_workflow();
 
-    // Save workflow
     store.save_workflow(&workflow).await.unwrap();
 
-    // Verify it exists
     let retrieved = store.get_workflow("test-workflow").await.unwrap();
     assert!(retrieved.is_some());
 
-    // Delete workflow
     let result = store.delete_workflow("test-workflow").await;
     assert!(result.is_ok());
 
-    // Verify it's gone
     let retrieved = store.get_workflow("test-workflow").await.unwrap();
     assert!(retrieved.is_none());
 }
@@ -132,7 +117,6 @@ async fn test_delete_workflow() {
 async fn test_delete_workflow_not_found() {
     let store = create_test_store().await;
 
-    // Delete non-existent workflow should not error
     let result = store.delete_workflow("nonexistent").await;
     assert!(result.is_ok());
 }
@@ -142,17 +126,13 @@ async fn test_save_workflow_update() {
     let store = create_test_store().await;
     let mut workflow = create_test_workflow();
 
-    // Save initial workflow
     store.save_workflow(&workflow).await.unwrap();
 
-    // Update workflow
     workflow.name = "Updated Workflow".to_string();
     workflow.description = Some("Updated description".to_string());
 
-    // Save updated workflow
     store.save_workflow(&workflow).await.unwrap();
 
-    // Verify update
     let retrieved = store.get_workflow("test-workflow").await.unwrap().unwrap();
     assert_eq!(retrieved.name, "Updated Workflow");
     assert_eq!(
@@ -165,7 +145,6 @@ async fn test_save_workflow_update() {
 async fn test_workflow_serialization_error() {
     let store = create_test_store().await;
 
-    // Create workflow with invalid JSON content
     let workflow = WorkflowDefinition {
         id: "test-workflow".to_string(),
         name: "Test Workflow".to_string(),
@@ -173,12 +152,9 @@ async fn test_workflow_serialization_error() {
         ..Default::default()
     };
 
-    // This should fail during validation, not during save
-    // The save operation itself should succeed, but the content is invalid
     let result = store.save_workflow(&workflow).await;
-    assert!(result.is_ok()); // Save succeeds
+    assert!(result.is_ok());
 
-    // But retrieval should work (we don't validate on retrieval)
     let retrieved = store.get_workflow("test-workflow").await.unwrap();
     assert!(retrieved.is_some());
 }

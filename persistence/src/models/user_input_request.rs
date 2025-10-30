@@ -1,13 +1,8 @@
-//! UserInputRequest model
-//!
-//! This file contains ONLY UserInputRequest struct following Single Responsibility Principle.
-
 use crate::models::enums::{InputRequestStatus, InputType};
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
-/// Runtime input request for a task execution
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct UserInputRequest {
     pub id: String,
@@ -45,7 +40,6 @@ impl Default for UserInputRequest {
 }
 
 impl UserInputRequest {
-    /// Validate input request
     pub fn validate(&self) -> Result<(), String> {
         if self.id.is_empty() {
             return Err("Request ID cannot be empty".to_string());
@@ -60,7 +54,6 @@ impl UserInputRequest {
             return Err("Prompt text cannot be empty".to_string());
         }
 
-        // Validate fulfillment status consistency
         match self.status {
             InputRequestStatus::Fulfilled => {
                 if self.fulfilled_at.is_none() {
@@ -85,12 +78,10 @@ impl UserInputRequest {
         Ok(())
     }
 
-    /// Check if request is fulfilled
     pub fn is_fulfilled(&self) -> bool {
         matches!(self.status, InputRequestStatus::Fulfilled)
     }
 
-    /// Check if request is pending
     pub fn is_pending(&self) -> bool {
         matches!(self.status, InputRequestStatus::Pending)
     }

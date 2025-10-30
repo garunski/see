@@ -73,10 +73,8 @@ pub fn WorkflowsListPage() -> Element {
         let upload_fn = upload_state.upload_fn.clone();
 
         spawn(async move {
-            // Read and parse the workflow file
             match read_and_parse_workflow_file(workflow_file_clone().clone()) {
                 Ok(workflow) => {
-                    // Upload using mutation
                     let json_str = match serde_json::to_string(&workflow) {
                         Ok(s) => s,
                         Err(e) => {
@@ -87,7 +85,6 @@ pub fn WorkflowsListPage() -> Element {
 
                     upload_fn(json_str);
 
-                    // Clear the file input after successful upload
                     tokio::time::sleep(tokio::time::Duration::from_millis(100)).await;
                     workflow_file_clone.set(String::new());
                 }
@@ -118,7 +115,7 @@ pub fn WorkflowsListPage() -> Element {
                 }),
             }
 
-            // Upload Section
+
             SectionCard {
                 title: Some("Upload Workflow".to_string()),
                 children: rsx! {
@@ -176,7 +173,7 @@ pub fn WorkflowsListPage() -> Element {
                 padding: None,
             }
 
-            // Workflows Section
+
             if workflows.is_empty() {
                 SectionCard {
                     title: Some("Workflows".to_string()),

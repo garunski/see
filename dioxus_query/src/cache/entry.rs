@@ -3,10 +3,6 @@ use std::sync::Arc;
 use std::time::Instant;
 use tokio::task::JoinHandle;
 
-/// Trait for type-erased cache entries
-///
-/// Allows storing different types in the same cache HashMap
-/// without serialization overhead.
 pub trait CacheEntry: Send + Sync {
     fn as_any(&self) -> &dyn Any;
     fn type_id(&self) -> TypeId;
@@ -15,12 +11,10 @@ pub trait CacheEntry: Send + Sync {
     fn is_fetching(&self) -> bool;
     fn set_fetching(&mut self, fetching: bool);
     fn set_fetch_handle(&mut self, handle: Option<Arc<JoinHandle<()>>>);
-    fn touch(&mut self); // Update last_accessed
-    fn cache_time(&self) -> Option<u64>; // Get cache_time in milliseconds
+    fn touch(&mut self);
+    fn cache_time(&self) -> Option<u64>;
 }
 
-/// Typed cache entry - stores Arc<T> directly (no serialization)
-/// Uses Arc instead of Rc for thread safety (required by CacheEntry: Send + Sync)
 pub struct TypedCacheEntry<T: Clone + Send + Sync + 'static> {
     value: Arc<T>,
     fetched_at: Instant,
@@ -32,7 +26,7 @@ pub struct TypedCacheEntry<T: Clone + Send + Sync + 'static> {
 
 impl<T: Clone + Send + Sync + 'static> TypedCacheEntry<T> {
     pub fn new(value: Arc<T>) -> Self {
-        Self::with_cache_time(value, Some(300_000)) // Default 5 minutes
+        Self::with_cache_time(value, Some(300_000))
     }
 
     pub fn with_cache_time(value: Arc<T>, cache_time_ms: Option<u64>) -> Self {
@@ -47,17 +41,15 @@ impl<T: Clone + Send + Sync + 'static> TypedCacheEntry<T> {
         }
     }
 
-    /// Create a placeholder entry that's marked as fetching
-    /// Used for deduplication - prevents multiple concurrent fetches
     pub fn placeholder(default_value: Arc<T>) -> Self {
         let now = Instant::now();
         Self {
             value: default_value,
             fetched_at: now,
             last_accessed: now,
-            is_fetching: true, // Mark as currently fetching
+            is_fetching: true,
             fetch_handle: None,
-            cache_time_ms: Some(300_000), // Default
+            cache_time_ms: Some(300_000),
         }
     }
 

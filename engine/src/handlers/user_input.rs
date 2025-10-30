@@ -1,11 +1,8 @@
-//! User input handler for collecting runtime input from users
-
 use crate::errors::*;
 use crate::types::*;
 use async_trait::async_trait;
 use tracing::{debug, error, instrument, trace};
 
-/// User input handler
 pub struct UserInputHandler;
 
 #[async_trait]
@@ -59,7 +56,6 @@ impl super::TaskHandler for UserInputHandler {
             "Marking task as WaitingForInput"
         );
 
-        // Mark task as waiting for input
         context.update_task_status(task.id.clone(), TaskStatus::WaitingForInput);
 
         debug!(
@@ -68,15 +64,12 @@ impl super::TaskHandler for UserInputHandler {
             "User input task marked as WaitingForInput"
         );
 
-        // Log the request
         context.log(format!("Waiting for user input: {}", prompt));
         context.log_task(
             task.id.clone(),
             format!("Requesting input: {} (type: {})", prompt, input_type),
         );
 
-        // Return special result indicating input required
-        // This is not a failure - the task is waiting for user input
         let result = TaskResult {
             success: true,
             output: serde_json::json!({

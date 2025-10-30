@@ -1,15 +1,19 @@
-import React from 'react';
-import { Panel } from '@xyflow/react';
-import { CommandLineIcon, CursorArrowRaysIcon, Bars3Icon } from '@heroicons/react/24/outline';
-import { WorkflowTask, TaskFunction } from '../types';
-import { createTaskNode } from '../utils/taskFactory';
+import React from "react";
+import { Panel } from "@xyflow/react";
+import {
+  CommandLineIcon,
+  CursorArrowRaysIcon,
+  Bars3Icon,
+} from "@heroicons/react/24/outline";
+import { WorkflowTask, TaskFunction } from "../types";
+import { createTaskNode } from "../utils/taskFactory";
 
 interface NodeToolbarProps {
   onAddNode: (nodeData: WorkflowTask) => void;
 }
 
 const NodeToolbar: React.FC<NodeToolbarProps> = ({ onAddNode }) => {
-  const handleAddNode = (functionType: TaskFunction['name']) => {
+  const handleAddNode = (functionType: TaskFunction["name"]) => {
     const nodeData = createTaskNode(functionType);
     onAddNode(nodeData);
   };
@@ -18,7 +22,7 @@ const NodeToolbar: React.FC<NodeToolbarProps> = ({ onAddNode }) => {
     <Panel position="top-right">
       <div className="bg-white dark:bg-zinc-800 rounded-lg shadow-sm border border-zinc-200 dark:border-zinc-700 flex gap-1 p-1">
         <button
-          onClick={() => handleAddNode('cli_command')}
+          onClick={() => handleAddNode("cli_command")}
           className="p-2 rounded hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors text-zinc-700 dark:text-zinc-300 relative group"
           title="Add CLI Command Task"
         >
@@ -27,9 +31,9 @@ const NodeToolbar: React.FC<NodeToolbarProps> = ({ onAddNode }) => {
             CLI Command
           </span>
         </button>
-        
+
         <button
-          onClick={() => handleAddNode('cursor_agent')}
+          onClick={() => handleAddNode("cursor_agent")}
           className="p-2 rounded hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors text-zinc-700 dark:text-zinc-300 relative group"
           title="Add Cursor Agent Task"
         >
@@ -38,9 +42,9 @@ const NodeToolbar: React.FC<NodeToolbarProps> = ({ onAddNode }) => {
             Cursor Agent
           </span>
         </button>
-        
+
         <button
-          onClick={() => handleAddNode('user_input')}
+          onClick={() => handleAddNode("user_input")}
           className="p-2 rounded hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors text-zinc-700 dark:text-zinc-300 relative group"
           title="Add User Input Task"
         >
@@ -55,4 +59,3 @@ const NodeToolbar: React.FC<NodeToolbarProps> = ({ onAddNode }) => {
 };
 
 export default NodeToolbar;
-

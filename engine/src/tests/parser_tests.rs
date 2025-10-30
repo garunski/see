@@ -1,5 +1,3 @@
-//! Parser tests for the new workflow engine
-
 use crate::errors::*;
 use crate::parser::*;
 
@@ -79,17 +77,14 @@ fn test_parse_nested_next_tasks() {
     "#;
 
     let workflow = parse_workflow(json).unwrap();
-    assert_eq!(workflow.tasks.len(), 3); // root + 2 children
+    assert_eq!(workflow.tasks.len(), 3);
 
-    // Find root task
     let root_task = workflow.tasks.iter().find(|t| t.id == "root").unwrap();
     assert_eq!(root_task.next_tasks.len(), 2);
 
-    // Find child tasks
     let _child1 = workflow.tasks.iter().find(|t| t.id == "child1").unwrap();
     let _child2 = workflow.tasks.iter().find(|t| t.id == "child2").unwrap();
 
-    // Children should be in root's next_tasks
     assert!(root_task.next_tasks.iter().any(|t| t.id == "child1"));
     assert!(root_task.next_tasks.iter().any(|t| t.id == "child2"));
 }
@@ -143,10 +138,10 @@ fn test_parse_deeply_nested() {
     "#;
 
     let workflow = parse_workflow(json).unwrap();
-    assert_eq!(workflow.tasks.len(), 3); // level1 + level2 + level3
+    assert_eq!(workflow.tasks.len(), 3);
 
     let _level3 = workflow.tasks.iter().find(|t| t.id == "level3").unwrap();
-    // level3 should be in level2's next_tasks
+
     let level2 = workflow.tasks.iter().find(|t| t.id == "level2").unwrap();
     assert!(level2.next_tasks.iter().any(|t| t.id == "level3"));
 }
@@ -288,6 +283,6 @@ fn test_parse_circular_dependency_parent_child() {
     }
     "#;
     let workflow = parse_workflow(json).unwrap();
-    // This should parse successfully - circular deps are detected at graph level
+
     assert_eq!(workflow.tasks.len(), 2);
 }

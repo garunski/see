@@ -1,6 +1,6 @@
-//! Tests for AuditEvent model
-//! 
-//! Tests serialization, validation following Single Responsibility Principle.
+
+
+
 
 use s_e_e_persistence::{AuditEvent, AuditStatus};
 use chrono::Utc;
@@ -8,7 +8,7 @@ use chrono::Utc;
 #[test]
 fn test_audit_event_default() {
     let event = AuditEvent::default();
-    
+
     assert!(!event.id.is_empty());
     assert!(event.task_id.is_empty());
     assert_eq!(event.status, AuditStatus::Success);
@@ -27,7 +27,7 @@ fn test_audit_event_validation_success() {
         changes_count: 5,
         message: "Task completed successfully".to_string(),
     };
-    
+
     let result = event.validate();
     assert!(result.is_ok());
 }
@@ -40,7 +40,7 @@ fn test_audit_event_validation_empty_id() {
         message: "Test message".to_string(),
         ..Default::default()
     };
-    
+
     let result = event.validate();
     assert!(result.is_err());
     assert!(result.unwrap_err().contains("ID cannot be empty"));
@@ -54,7 +54,7 @@ fn test_audit_event_validation_empty_task_id() {
         message: "Test message".to_string(),
         ..Default::default()
     };
-    
+
     let result = event.validate();
     assert!(result.is_err());
     assert!(result.unwrap_err().contains("Task ID cannot be empty"));
@@ -68,7 +68,7 @@ fn test_audit_event_validation_empty_message() {
         message: "".to_string(),
         ..Default::default()
     };
-    
+
     let result = event.validate();
     assert!(result.is_err());
     assert!(result.unwrap_err().contains("message cannot be empty"));
@@ -81,7 +81,7 @@ fn test_audit_event_success_constructor() {
         "Task completed successfully".to_string(),
         3
     );
-    
+
     assert!(!event.id.is_empty());
     assert_eq!(event.task_id, "task-1");
     assert_eq!(event.status, AuditStatus::Success);
@@ -97,7 +97,7 @@ fn test_audit_event_failure_constructor() {
         "Task failed with error".to_string(),
         0
     );
-    
+
     assert!(!event.id.is_empty());
     assert_eq!(event.task_id, "task-1");
     assert_eq!(event.status, AuditStatus::Failure);
@@ -116,15 +116,15 @@ fn test_audit_event_serialization() {
         changes_count: 5,
         message: "Task completed successfully".to_string(),
     };
-    
-    // Test serialization
+
+
     let json = serde_json::to_string(&event).unwrap();
     assert!(json.contains("audit-1"));
     assert!(json.contains("task-1"));
     assert!(json.contains("success"));
     assert!(json.contains("Task completed successfully"));
-    
-    // Test deserialization
+
+
     let deserialized: AuditEvent = serde_json::from_str(&json).unwrap();
     assert_eq!(deserialized.id, event.id);
     assert_eq!(deserialized.task_id, event.task_id);

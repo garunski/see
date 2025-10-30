@@ -10,7 +10,6 @@ pub fn TaskDetailsUserInputTab(input_request: Option<s_e_e_core::UserInputReques
     let navigator = use_navigator();
 
     let mut input_value = use_signal(|| {
-        // Initialize with default value if available
         if let Some(ref req) = input_request {
             if let Some(ref default) = req.default_value {
                 if let Some(default_str) = default.as_str() {
@@ -85,7 +84,6 @@ pub fn TaskDetailsUserInputTab(input_request: Option<s_e_e_core::UserInputReques
                 }
             }
         } else {
-            // Active form for pending requests
             let task_id = req.task_execution_id.clone();
             let execution_id = req.workflow_execution_id.clone();
 
@@ -107,7 +105,7 @@ pub fn TaskDetailsUserInputTab(input_request: Option<s_e_e_core::UserInputReques
                                 onsubmit: move |evt| {
                                     evt.prevent_default();
 
-                                    // Validate input
+
                                     if input_value().trim().is_empty() && req.required {
                                         error_message.set(Some("This field is required".to_string()));
                                         return;
@@ -136,7 +134,7 @@ pub fn TaskDetailsUserInputTab(input_request: Option<s_e_e_core::UserInputReques
                                                 is_submitted_spawn.set(true);
                                                 error_message_spawn.set(None);
 
-                                                // Redirect back to execution details page after success
+
                                                 nav.push(Route::WorkflowDetailsPage {
                                                     id: execution_id_spawn
                                                 });

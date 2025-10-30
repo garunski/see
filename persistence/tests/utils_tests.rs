@@ -1,7 +1,3 @@
-//! Tests for utility store operations
-//!
-//! Tests clear_all_data following Single Responsibility Principle.
-
 use s_e_e_persistence::{
     AppSettings, AuditEvent, Prompt, Store, TaskExecution, TaskExecutionStatus, Theme,
     WorkflowDefinition, WorkflowExecution, WorkflowExecutionStatus,
@@ -15,7 +11,6 @@ async fn create_test_store() -> Store {
 async fn test_clear_all_data_empty() {
     let store = create_test_store().await;
 
-    // Clear empty database should not error
     let result = store.clear_all_data().await;
     assert!(result.is_ok());
 }
@@ -24,7 +19,6 @@ async fn test_clear_all_data_empty() {
 async fn test_clear_all_data_with_data() {
     let store = create_test_store().await;
 
-    // Add some test data
     let workflow = WorkflowDefinition {
         id: "workflow-1".to_string(),
         name: "Test Workflow".to_string(),
@@ -62,7 +56,6 @@ async fn test_clear_all_data_with_data() {
 
     let audit_event = AuditEvent::success("task-1".to_string(), "Task completed".to_string(), 3);
 
-    // Save all data
     store.save_workflow(&workflow).await.unwrap();
     store.save_workflow_execution(execution).await.unwrap();
     store
@@ -79,7 +72,6 @@ async fn test_clear_all_data_with_data() {
     store.save_settings(&settings).await.unwrap();
     store.log_audit_event(audit_event).await.unwrap();
 
-    // Verify data exists
     let workflows = store.list_workflows().await.unwrap();
     assert_eq!(workflows.len(), 1);
 
@@ -95,11 +87,9 @@ async fn test_clear_all_data_with_data() {
     let loaded_settings = store.load_settings().await.unwrap().unwrap();
     assert_eq!(loaded_settings.theme, Theme::Dark);
 
-    // Clear all data
     let result = store.clear_all_data().await;
     assert!(result.is_ok());
 
-    // Verify all data is cleared
     let workflows = store.list_workflows().await.unwrap();
     assert!(workflows.is_empty());
 
@@ -112,7 +102,6 @@ async fn test_clear_all_data_with_data() {
     let prompts = store.list_prompts().await.unwrap();
     assert!(prompts.is_empty());
 
-    // Settings should return None after clear
     let loaded_settings = store.load_settings().await.unwrap();
     assert!(loaded_settings.is_none());
 }
@@ -121,7 +110,6 @@ async fn test_clear_all_data_with_data() {
 async fn test_clear_all_data_multiple_times() {
     let store = create_test_store().await;
 
-    // Add data
     let workflow = WorkflowDefinition {
         id: "workflow-1".to_string(),
         name: "Test Workflow".to_string(),
@@ -131,18 +119,14 @@ async fn test_clear_all_data_multiple_times() {
 
     store.save_workflow(&workflow).await.unwrap();
 
-    // Clear first time
     let result = store.clear_all_data().await;
     assert!(result.is_ok());
 
-    // Add data again
     store.save_workflow(&workflow).await.unwrap();
 
-    // Clear second time
     let result = store.clear_all_data().await;
     assert!(result.is_ok());
 
-    // Verify cleared
     let workflows = store.list_workflows().await.unwrap();
     assert!(workflows.is_empty());
 }

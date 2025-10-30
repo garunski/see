@@ -1,5 +1,3 @@
-// Default workflows tests ONLY
-
 use s_e_e_core::api::defaults;
 
 #[test]
@@ -8,7 +6,6 @@ fn test_default_workflows() {
 
     assert!(!defaults.is_empty(), "Should have default workflows");
 
-    // Check that all defaults have is_default = true
     for workflow in &defaults {
         assert!(
             workflow.is_default,
@@ -20,7 +17,6 @@ fn test_default_workflows() {
         );
     }
 
-    // Check specific default workflows exist
     let ids: Vec<&String> = defaults.iter().map(|w| &w.id).collect();
     assert!(ids.contains(&&"default-simple".to_string()));
     assert!(ids.contains(&&"default-parallel".to_string()));
@@ -32,7 +28,6 @@ fn test_default_workflows_content_valid() {
     let defaults = defaults::get_default_workflows();
 
     for workflow in &defaults {
-        // Test that the content is valid JSON
         let parse_result: Result<serde_json::Value, _> = serde_json::from_str(&workflow.content);
         assert!(
             parse_result.is_ok(),
@@ -42,7 +37,6 @@ fn test_default_workflows_content_valid() {
 
         let json = parse_result.unwrap();
 
-        // Check required fields exist
         assert!(
             json.get("id").is_some(),
             "Default workflow should have id field: {}",

@@ -1,18 +1,13 @@
-// Audit conversions ONLY
-
 use crate::errors::CoreError;
 use s_e_e_engine::AuditEntry;
 use s_e_e_engine::AuditStatus as EngineAuditStatus;
 use s_e_e_persistence::{AuditEvent, AuditStatus as PersistenceAuditStatus};
 
-/// Convert AuditEntry to AuditEvent
 pub fn audit_entry_to_event(entry: &AuditEntry) -> Result<AuditEvent, CoreError> {
-    // Parse RFC3339 timestamp
     let timestamp = chrono::DateTime::parse_from_rfc3339(&entry.timestamp)
         .map_err(|e| CoreError::Execution(format!("Invalid timestamp: {}", e)))?
         .with_timezone(&chrono::Utc);
 
-    // Convert engine AuditStatus to persistence AuditStatus
     let persistence_status = match entry.status {
         EngineAuditStatus::Success => PersistenceAuditStatus::Success,
         EngineAuditStatus::Failure => PersistenceAuditStatus::Failure,
@@ -28,9 +23,7 @@ pub fn audit_entry_to_event(entry: &AuditEntry) -> Result<AuditEvent, CoreError>
     })
 }
 
-/// Convert AuditEvent to AuditEntry (for GUI compatibility)
 pub fn audit_event_to_entry(event: &AuditEvent) -> AuditEntry {
-    // Convert persistence AuditStatus to engine AuditStatus
     let engine_status = match event.status {
         PersistenceAuditStatus::Success => EngineAuditStatus::Success,
         PersistenceAuditStatus::Failure => EngineAuditStatus::Failure,

@@ -1,11 +1,6 @@
-//! Prompt model
-//!
-//! This file contains ONLY Prompt struct following Single Responsibility Principle.
-
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 
-/// Prompt template
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct Prompt {
     pub id: String,
@@ -27,7 +22,6 @@ impl Default for Prompt {
 }
 
 impl Prompt {
-    /// Validate prompt
     pub fn validate(&self) -> Result<(), String> {
         if self.id.is_empty() {
             return Err("Prompt ID cannot be empty".to_string());
@@ -42,12 +36,10 @@ impl Prompt {
         Ok(())
     }
 
-    /// Update the prompt content
     pub fn update_content(&mut self, content: String) {
         self.content = content;
     }
 
-    /// Update the prompt name
     pub fn update_name(&mut self, name: String) {
         self.name = name;
     }

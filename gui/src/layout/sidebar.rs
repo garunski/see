@@ -23,7 +23,7 @@ pub fn Sidebar() -> Element {
                 }
 
                 div { class: "flex flex-1 flex-col overflow-y-auto p-4",
-                    // Primary navigation section
+
                     div { class: "flex flex-col gap-0.5",
                         Link {
                             to: Route::HomePage {},
@@ -47,7 +47,7 @@ pub fn Sidebar() -> Element {
                         }
                     }
 
-                    // Manage section
+
                     div { class: "mt-4",
                         div { class: "px-2 text-xs font-semibold text-zinc-500 dark:text-zinc-400 mb-1",
                             "Manage"

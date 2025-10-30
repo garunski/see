@@ -1,12 +1,9 @@
-//! Custom handler for unknown or user-defined function types
-
 use crate::errors::*;
 use crate::types::*;
 use async_trait::async_trait;
 use serde_json::Value;
 use tracing::{debug, error, instrument, trace};
 
-/// Custom handler for unknown function types
 pub struct CustomHandler;
 
 #[async_trait]
@@ -56,8 +53,6 @@ impl super::TaskHandler for CustomHandler {
             "Processing custom function"
         );
 
-        // For now, just echo the input
-        // In a real implementation, this would call the actual custom function
         trace!(
             execution_id = %context.execution_id,
             task_id = %task.id,

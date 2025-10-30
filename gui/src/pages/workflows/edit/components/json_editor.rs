@@ -22,26 +22,21 @@ pub fn JsonEditor(props: JsonEditorProps) -> Element {
 
     let readonly = is_readonly.unwrap_or(false);
 
-    // Track if we've formatted the content to avoid re-formatting on every change
     let mut has_formatted = use_signal(|| false);
 
-    // Format JSON on initial load
     use_effect(move || {
         if !has_formatted() {
             let content_str = content();
-            // Try to parse and pretty-print the JSON
+
             match serde_json::from_str::<serde_json::Value>(&content_str) {
                 Ok(json_value) => {
                     if let Ok(formatted) = serde_json::to_string_pretty(&json_value) {
-                        // Only update if different to avoid loops
                         if formatted != content_str {
                             on_content_change.call(formatted);
                         }
                     }
                 }
-                Err(_) => {
-                    // Not valid JSON yet, leave as-is
-                }
+                Err(_) => {}
             }
             has_formatted.set(true);
         }

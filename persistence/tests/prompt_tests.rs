@@ -1,7 +1,3 @@
-//! Tests for prompt store operations
-//!
-//! Tests save_prompt, list_prompts, delete_prompt following Single Responsibility Principle.
-
 use chrono::Utc;
 use s_e_e_persistence::{Prompt, Store};
 
@@ -39,7 +35,6 @@ async fn test_list_prompts_empty() {
 async fn test_list_prompts_multiple() {
     let store = create_test_store().await;
 
-    // Create multiple prompts
     let prompt1 = Prompt {
         id: "prompt-1".to_string(),
         name: "Prompt 1".to_string(),
@@ -54,15 +49,12 @@ async fn test_list_prompts_multiple() {
         ..Default::default()
     };
 
-    // Save prompts
     store.save_prompt(&prompt1).await.unwrap();
     store.save_prompt(&prompt2).await.unwrap();
 
-    // List prompts
     let prompts = store.list_prompts().await.unwrap();
     assert_eq!(prompts.len(), 2);
 
-    // Check that prompts are ordered by ID
     assert_eq!(prompts[0].id, "prompt-1");
     assert_eq!(prompts[1].id, "prompt-2");
 }
@@ -72,18 +64,14 @@ async fn test_delete_prompt() {
     let store = create_test_store().await;
     let prompt = create_test_prompt();
 
-    // Save prompt
     store.save_prompt(&prompt).await.unwrap();
 
-    // Verify it exists
     let prompts = store.list_prompts().await.unwrap();
     assert_eq!(prompts.len(), 1);
 
-    // Delete prompt
     let result = store.delete_prompt("prompt-1").await;
     assert!(result.is_ok());
 
-    // Verify it's gone
     let prompts = store.list_prompts().await.unwrap();
     assert!(prompts.is_empty());
 }
@@ -92,7 +80,6 @@ async fn test_delete_prompt() {
 async fn test_delete_prompt_not_found() {
     let store = create_test_store().await;
 
-    // Delete non-existent prompt should not error
     let result = store.delete_prompt("nonexistent").await;
     assert!(result.is_ok());
 }
@@ -102,17 +89,13 @@ async fn test_save_prompt_update() {
     let store = create_test_store().await;
     let mut prompt = create_test_prompt();
 
-    // Save initial prompt
     store.save_prompt(&prompt).await.unwrap();
 
-    // Update prompt
     prompt.name = "Updated Prompt".to_string();
     prompt.content = "Updated content".to_string();
 
-    // Save updated prompt
     store.save_prompt(&prompt).await.unwrap();
 
-    // Verify update
     let prompts = store.list_prompts().await.unwrap();
     assert_eq!(prompts.len(), 1);
 
@@ -131,10 +114,8 @@ async fn test_prompt_serialization() {
         created_at: Utc::now(),
     };
 
-    // Save prompt
     store.save_prompt(&prompt).await.unwrap();
 
-    // Retrieve and verify
     let prompts = store.list_prompts().await.unwrap();
     assert_eq!(prompts.len(), 1);
 

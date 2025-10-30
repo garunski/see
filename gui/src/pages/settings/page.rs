@@ -18,7 +18,6 @@ pub fn SettingsPage() -> Element {
         show: false,
     });
 
-    // Load settings via hook
     let settings_result = use_settings_query();
     let loaded_settings = match settings_result {
         Ok(s) => s,
@@ -40,18 +39,14 @@ pub fn SettingsPage() -> Element {
         }
     };
 
-    // Initialize mutations
     let mutations = use_settings_mutation();
 
-    // Form state signals
     let mut theme = use_signal(|| loaded_settings.theme.clone());
 
-    // Populate signals from loaded settings
     use_effect(move || {
         theme.set(loaded_settings.theme.clone());
     });
 
-    // Helper to save settings
     let save_settings = {
         let notification = notification;
         let mutate_fn = mutations.mutate_fn.clone();
@@ -60,7 +55,6 @@ pub fn SettingsPage() -> Element {
             tracing::info!("[SettingsPage] Starting mutation to save settings");
             mutate_fn(settings.clone());
 
-            // Show immediate feedback
             notification.set(NotificationData {
                 r#type: NotificationType::Success,
                 title: "Saving...".to_string(),
@@ -79,8 +73,7 @@ pub fn SettingsPage() -> Element {
                 match clear_database().await {
                     Ok(_) => {
                         tracing::info!("Database cleared successfully");
-                        // Show success notification
-                        // The app will need to be reloaded manually
+
                         notification.set(NotificationData {
                             r#type: NotificationType::Success,
                             title: "Database cleared".to_string(),

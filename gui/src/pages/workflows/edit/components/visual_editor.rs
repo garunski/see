@@ -16,7 +16,7 @@ pub fn VisualEditor(props: VisualEditorProps) -> Element {
     } = props;
 
     rsx! {
-        // Message listener for node clicks from iframe
+
         script {
             dangerous_inner_html: MESSAGE_LISTENER_SCRIPT.to_string()
         }
@@ -25,7 +25,7 @@ pub fn VisualEditor(props: VisualEditorProps) -> Element {
             div { class: "relative h-[calc(100vh-100px)]",
 
                 if let Some(json_str) = workflow_json_str() {
-                    // Script to send workflow data to iframe and set up click handling
+
                     script {
                         dangerous_inner_html: load_workflow_script(&json_str, &edited_workflow_name())
                     }

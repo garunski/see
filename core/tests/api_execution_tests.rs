@@ -1,5 +1,3 @@
-// Workflow execution API tests ONLY
-
 use s_e_e_core::{
     cleanup_test_db, execute_workflow_by_id, get_global_store, init_test_store, CoreError,
     OutputCallback, WorkflowDefinition,
@@ -7,7 +5,6 @@ use s_e_e_core::{
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
 
-/// Helper function to create a test workflow
 fn create_test_workflow() -> WorkflowDefinition {
     WorkflowDefinition {
         id: uuid::Uuid::new_v4().to_string(),
@@ -41,7 +38,6 @@ fn create_test_workflow() -> WorkflowDefinition {
 
 #[test]
 fn test_workflow_execution_flow() {
-    // Initialize test store
     let rt = tokio::runtime::Runtime::new().unwrap();
     let _ = cleanup_test_db();
     let init_result = rt.block_on(init_test_store());
@@ -50,32 +46,23 @@ fn test_workflow_execution_flow() {
         Ok(_) => {
             let store = get_global_store().unwrap();
 
-            // Create and save a test workflow
             let workflow = create_test_workflow();
             rt.block_on(store.save_workflow(&workflow)).unwrap();
 
-            // Execute the workflow
             let result = rt.block_on(execute_workflow_by_id(&workflow.id, None));
 
-            // Note: This test might fail if the engine doesn't have the echo command available
-            // That's expected in a test environment, so we just check that we get a result
             match result {
                 Ok(workflow_result) => {
                     assert_eq!(workflow_result.workflow_name, "Test Workflow");
                     assert!(!workflow_result.execution_id.is_empty());
                 }
-                Err(CoreError::Engine(_)) => {
-                    // Expected if echo command is not available in test environment
-                }
+                Err(CoreError::Engine(_)) => {}
                 Err(other) => {
                     panic!("Unexpected error: {:?}", other);
                 }
             }
         }
-        Err(_) => {
-            // Store initialization failed - this is acceptable in test environment
-            // We can't test workflow execution if store isn't initialized
-        }
+        Err(_) => {}
     }
 }
 
@@ -95,9 +82,7 @@ fn test_workflow_not_found() {
                 other => panic!("Expected WorkflowNotFound error, got: {:?}", other),
             }
         }
-        Err(_) => {
-            // Store initialization failed - this is acceptable in test environment
-        }
+        Err(_) => {}
     }
 }
 
@@ -110,11 +95,9 @@ fn test_workflow_execution_with_callback() {
         Ok(_) => {
             let store = get_global_store().unwrap();
 
-            // Create and save a test workflow
             let workflow = create_test_workflow();
             rt.block_on(store.save_workflow(&workflow)).unwrap();
 
-            // Test callback functionality
             let callback_called = Arc::new(AtomicBool::new(false));
             let callback_called_clone = callback_called.clone();
 
@@ -122,15 +105,9 @@ fn test_workflow_execution_with_callback() {
                 callback_called_clone.store(true, Ordering::SeqCst);
             });
 
-            // Execute with callback
             let _result = rt.block_on(execute_workflow_by_id(&workflow.id, Some(callback)));
-
-            // Note: Callback might not be called if workflow fails before execution
-            // This is expected behavior
         }
-        Err(_) => {
-            // Store initialization failed - this is acceptable in test environment
-        }
+        Err(_) => {}
     }
 }
 
@@ -143,7 +120,6 @@ fn test_invalid_workflow_execution() {
         Ok(_) => {
             let store = get_global_store().unwrap();
 
-            // Create workflow with invalid JSON
             let invalid_workflow = WorkflowDefinition {
                 id: "invalid-workflow".to_string(),
                 name: "Invalid Workflow".to_string(),
@@ -160,13 +136,11 @@ fn test_invalid_workflow_execution() {
             let result = rt.block_on(execute_workflow_by_id(&invalid_workflow.id, None));
 
             match result {
-                Err(CoreError::Execution(_)) => {} // Expected for invalid JSON
+                Err(CoreError::Execution(_)) => {}
                 Err(other) => panic!("Expected Engine error, got: {:?}", other),
                 Ok(_) => panic!("Should have failed for invalid JSON"),
             }
         }
-        Err(_) => {
-            // Store initialization failed - this is acceptable in test environment
-        }
+        Err(_) => {}
     }
 }

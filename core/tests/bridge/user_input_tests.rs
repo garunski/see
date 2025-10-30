@@ -1,6 +1,6 @@
-//! User input bridge tests
-//!
-//! Tests for user input conversions between persistence and engine layers
+
+
+
 
 #[cfg(test)]
 mod tests {
@@ -27,7 +27,7 @@ mod tests {
             fulfilled_value: None,
         };
 
-        // This test verifies that UserInputRequest can be created
+
         assert_eq!(request.id, "test-id");
         assert_eq!(request.prompt_text, "Enter your name");
         assert!(request.is_pending());
@@ -69,21 +69,21 @@ mod tests {
             fulfilled_value: None,
         };
 
-        // Valid request should pass
+
         assert!(request.validate().is_ok());
         assert!(request.is_pending());
         assert!(!request.is_fulfilled());
 
-        // Mark as fulfilled
+
         request.status = InputRequestStatus::Fulfilled;
         request.fulfilled_at = Some(Utc::now());
         request.fulfilled_value = Some("John Doe".to_string());
 
-        // Now should be fulfilled
+
         assert!(request.is_fulfilled());
         assert!(!request.is_pending());
 
-        // Validation should pass with fulfillment data
+
         assert!(request.validate().is_ok());
     }
 }

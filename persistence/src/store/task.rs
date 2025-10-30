@@ -1,7 +1,3 @@
-//! Task store operations
-//!
-//! This file contains ONLY task operations following Single Responsibility Principle.
-
 use super::Store;
 use crate::logging::{
     log_db_operation_error, log_db_operation_start, log_db_operation_success, log_deserialization,
@@ -11,7 +7,6 @@ use crate::models::TaskExecution;
 use sqlx::Row;
 
 impl Store {
-    /// Save a task execution
     pub async fn save_task_execution(&self, task: TaskExecution) -> Result<(), String> {
         log_db_operation_start("save_task_execution", "task_executions");
 
@@ -36,7 +31,6 @@ impl Store {
         Ok(())
     }
 
-    /// Get tasks for a workflow
     pub async fn get_tasks_for_workflow(
         &self,
         workflow_id: &str,
@@ -68,19 +62,14 @@ impl Store {
             }
         }
 
-        // Tasks are now in chronological order (ASC by created_at)
-        // keeping original order they were executed
-
         log_db_operation_success("get_tasks_for_workflow", "task_executions", 0);
         Ok(tasks)
     }
 
-    /// Save task with user input
     pub async fn save_task_with_input(&self, task: TaskExecution) -> Result<(), String> {
         self.save_task_execution(task).await
     }
 
-    /// Get all tasks waiting for input
     pub async fn get_tasks_waiting_for_input(&self) -> Result<Vec<TaskExecution>, String> {
         log_db_operation_start("get_tasks_waiting_for_input", "task_executions");
 
@@ -119,7 +108,6 @@ impl Store {
         Ok(tasks)
     }
 
-    /// Get tasks waiting for input in a specific workflow
     pub async fn get_tasks_waiting_for_input_in_workflow(
         &self,
         workflow_id: &str,
@@ -165,7 +153,6 @@ impl Store {
         Ok(tasks)
     }
 
-    /// Get task with input request
     pub async fn get_task_with_input_request(
         &self,
         task_id: &str,

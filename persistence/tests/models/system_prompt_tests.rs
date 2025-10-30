@@ -1,5 +1,5 @@
-// System prompt model tests ONLY
-// Tests for SystemPrompt struct and methods
+
+
 
 use s_e_e_persistence::SystemPrompt;
 
@@ -28,8 +28,8 @@ fn test_system_prompt_creation() {
 #[test]
 fn test_system_prompt_validation() {
     let now = chrono::Utc::now();
-    
-    // Valid prompt
+
+
     let prompt = SystemPrompt {
         id: "test".to_string(),
         name: "Test".to_string(),
@@ -43,10 +43,10 @@ fn test_system_prompt_validation() {
         created_at: now,
         updated_at: now,
     };
-    
+
     assert!(prompt.validate().is_ok());
-    
-    // Invalid: empty content
+
+
     let invalid = SystemPrompt {
         id: "test".to_string(),
         name: "Test".to_string(),
@@ -60,7 +60,7 @@ fn test_system_prompt_validation() {
         created_at: now,
         updated_at: now,
     };
-    
+
     assert!(invalid.validate().is_err());
 }
 
@@ -80,7 +80,7 @@ fn test_system_prompt_needs_update() {
         created_at: now,
         updated_at: now,
     };
-    
+
     assert!(prompt.needs_update("1.0.1"));
     assert!(!prompt.needs_update("1.0.0"));
 }
@@ -88,7 +88,7 @@ fn test_system_prompt_needs_update() {
 #[test]
 fn test_system_prompt_default() {
     let prompt = SystemPrompt::default();
-    
+
     assert!(!prompt.id.is_empty());
     assert!(!prompt.version.is_empty());
 }
@@ -109,10 +109,10 @@ fn test_system_prompt_serialization() {
         created_at: now,
         updated_at: now,
     };
-    
+
     let json = serde_json::to_string(&prompt).unwrap();
     let deserialized: SystemPrompt = serde_json::from_str(&json).unwrap();
-    
+
     assert_eq!(deserialized.id, prompt.id);
     assert_eq!(deserialized.name, prompt.name);
     assert_eq!(deserialized.version, prompt.version);

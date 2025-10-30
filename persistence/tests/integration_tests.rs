@@ -1,7 +1,3 @@
-//! Integration tests for complete workflow execution flow
-//!
-//! Tests multi-table operations, complete workflow execution following Single Responsibility Principle.
-
 use chrono::Utc;
 use s_e_e_persistence::{
     AppSettings, AuditEvent, Prompt, Store, TaskExecution, TaskExecutionStatus, Theme,
@@ -17,7 +13,6 @@ async fn create_test_store() -> Store {
 async fn test_complete_workflow_execution_flow() {
     let store = create_test_store().await;
 
-    // 1. Create and save a workflow
     let workflow = WorkflowDefinition {
         id: "integration-workflow".to_string(),
         name: "Integration Test Workflow".to_string(),
@@ -31,7 +26,6 @@ async fn test_complete_workflow_execution_flow() {
 
     store.save_workflow(&workflow).await.unwrap();
 
-    // 2. Create and save a workflow execution
     let execution = WorkflowExecution {
         id: "integration-exec-1".to_string(),
         workflow_name: "Integration Test Workflow".to_string(),
@@ -58,7 +52,6 @@ async fn test_complete_workflow_execution_flow() {
         .await
         .unwrap();
 
-    // 3. Create and save tasks for the execution
     let task1 = TaskExecution {
         id: "integration-task-1".to_string(),
         workflow_id: "integration-exec-1".to_string(),
@@ -90,7 +83,6 @@ async fn test_complete_workflow_execution_flow() {
     store.save_task_execution(task1.clone()).await.unwrap();
     store.save_task_execution(task2.clone()).await.unwrap();
 
-    // 4. Log audit events for tasks
     let audit1 = AuditEvent::success(
         "integration-task-1".to_string(),
         "Task 1 completed successfully".to_string(),
@@ -106,7 +98,6 @@ async fn test_complete_workflow_execution_flow() {
     store.log_audit_event(audit1).await.unwrap();
     store.log_audit_event(audit2).await.unwrap();
 
-    // 5. Update execution status to complete
     let mut updated_execution = execution;
     updated_execution.status = WorkflowExecutionStatus::Complete;
     updated_execution.completed_at = Some(Utc::now());
@@ -116,7 +107,6 @@ async fn test_complete_workflow_execution_flow() {
         .await
         .unwrap();
 
-    // 6. Verify complete workflow execution data
     let retrieved_execution = store
         .get_workflow_with_tasks("integration-exec-1")
         .await
@@ -128,7 +118,6 @@ async fn test_complete_workflow_execution_flow() {
     );
     assert_eq!(retrieved_execution.tasks.len(), 2);
 
-    // Verify task details
     let task1_retrieved = retrieved_execution
         .tasks
         .iter()
@@ -151,7 +140,6 @@ async fn test_complete_workflow_execution_flow() {
         Some("Task 2 failed with error".to_string())
     );
 
-    // 7. Verify workflow metadata
     let metadata = store.list_workflow_metadata().await.unwrap();
     assert_eq!(metadata.len(), 1);
     assert_eq!(metadata[0].id, "integration-exec-1");
@@ -163,7 +151,6 @@ async fn test_complete_workflow_execution_flow() {
 async fn test_multi_table_operations() {
     let store = create_test_store().await;
 
-    // Create data across all tables
     let workflow = WorkflowDefinition {
         id: "multi-table-workflow".to_string(),
         name: "Multi Table Workflow".to_string(),
@@ -206,7 +193,6 @@ async fn test_multi_table_operations() {
         3,
     );
 
-    // Save all data
     store.save_workflow(&workflow).await.unwrap();
     store.save_workflow_execution(execution).await.unwrap();
     store.save_task_execution(task).await.unwrap();
@@ -214,7 +200,6 @@ async fn test_multi_table_operations() {
     store.save_settings(&settings).await.unwrap();
     store.log_audit_event(audit).await.unwrap();
 
-    // Verify all data exists
     let workflows = store.list_workflows().await.unwrap();
     assert_eq!(workflows.len(), 1);
 
@@ -239,7 +224,6 @@ async fn test_multi_table_operations() {
 async fn test_workflow_execution_with_prompts_and_settings() {
     let store = create_test_store().await;
 
-    // Set up settings
     let settings = AppSettings {
         theme: Theme::Light,
         auto_save: true,
@@ -249,7 +233,6 @@ async fn test_workflow_execution_with_prompts_and_settings() {
 
     store.save_settings(&settings).await.unwrap();
 
-    // Create prompts
     let prompt1 = Prompt {
         id: "exec-prompt-1".to_string(),
         name: "Execution Prompt 1".to_string(),
@@ -267,7 +250,6 @@ async fn test_workflow_execution_with_prompts_and_settings() {
     store.save_prompt(&prompt1).await.unwrap();
     store.save_prompt(&prompt2).await.unwrap();
 
-    // Create workflow
     let workflow = WorkflowDefinition {
         id: "exec-workflow".to_string(),
         name: "Execution Workflow".to_string(),
@@ -277,7 +259,6 @@ async fn test_workflow_execution_with_prompts_and_settings() {
 
     store.save_workflow(&workflow).await.unwrap();
 
-    // Create execution
     let execution = WorkflowExecution {
         id: "exec-exec-1".to_string(),
         workflow_name: "Execution Workflow".to_string(),
@@ -287,7 +268,6 @@ async fn test_workflow_execution_with_prompts_and_settings() {
 
     store.save_workflow_execution(execution).await.unwrap();
 
-    // Verify complete state
     let workflows = store.list_workflows().await.unwrap();
     assert_eq!(workflows.len(), 1);
 
@@ -307,7 +287,6 @@ async fn test_workflow_execution_with_prompts_and_settings() {
 async fn test_data_cleanup_and_recreation() {
     let store = create_test_store().await;
 
-    // Create initial data
     let workflow = WorkflowDefinition {
         id: "cleanup-workflow".to_string(),
         name: "Cleanup Workflow".to_string(),
@@ -325,24 +304,20 @@ async fn test_data_cleanup_and_recreation() {
     store.save_workflow(&workflow).await.unwrap();
     store.save_workflow_execution(execution).await.unwrap();
 
-    // Verify data exists
     let workflows = store.list_workflows().await.unwrap();
     assert_eq!(workflows.len(), 1);
 
     let executions = store.list_workflow_executions().await.unwrap();
     assert_eq!(executions.len(), 1);
 
-    // Clear all data
     store.clear_all_data().await.unwrap();
 
-    // Verify data is cleared
     let workflows = store.list_workflows().await.unwrap();
     assert!(workflows.is_empty());
 
     let executions = store.list_workflow_executions().await.unwrap();
     assert!(executions.is_empty());
 
-    // Recreate data
     let new_workflow = WorkflowDefinition {
         id: "recreated-workflow".to_string(),
         name: "Recreated Workflow".to_string(),
@@ -360,7 +335,6 @@ async fn test_data_cleanup_and_recreation() {
     store.save_workflow(&new_workflow).await.unwrap();
     store.save_workflow_execution(new_execution).await.unwrap();
 
-    // Verify recreated data
     let workflows = store.list_workflows().await.unwrap();
     assert_eq!(workflows.len(), 1);
     assert_eq!(workflows[0].id, "recreated-workflow");

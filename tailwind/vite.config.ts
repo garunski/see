@@ -7,7 +7,7 @@ import autoprefixer from 'autoprefixer';
 export default defineConfig({
   build: {
     outDir: '../gui/assets',
-    emptyOutDir: false, // Don't clear the entire assets directory
+    emptyOutDir: false, 
     rollupOptions: {
       input: {
         'tailwind': resolve(fileURLToPath(new URL('.', import.meta.url)), 'src/tailwind.css'),

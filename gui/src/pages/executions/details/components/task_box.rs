@@ -48,7 +48,7 @@ pub fn TaskBox(props: TaskBoxProps) -> Element {
                             variant: Some("outline".to_string()),
                             class: Some("".to_string()),
                         }
-                        // Status icon badge in top-right
+
                         div {
                             class: "{task.status_color} absolute -top-1 -right-1 w-6 h-6 rounded-full flex items-center justify-center border-2 border-white dark:border-gray-900",
                             Icon {

@@ -1,5 +1,3 @@
-// Workflow conversion tests ONLY
-
 use s_e_e_core::{bridge::*, CoreError};
 use s_e_e_persistence::WorkflowDefinition;
 
@@ -66,7 +64,7 @@ fn test_workflow_definition_to_engine_valid() {
     );
 
     match result.unwrap_err() {
-        CoreError::Validation(_) => {} // Expected validation error
+        CoreError::Validation(_) => {}
         other => panic!("Expected Validation error, got: {:?}", other),
     }
 }
@@ -88,7 +86,7 @@ fn test_workflow_definition_to_engine_invalid_json() {
     assert!(result.is_err(), "Invalid JSON should fail validation");
 
     match result.unwrap_err() {
-        CoreError::Validation(_) => {} // Expected validation error
+        CoreError::Validation(_) => {}
         other => panic!("Expected Validation error, got: {:?}", other),
     }
 }
@@ -99,7 +97,7 @@ fn test_workflow_definition_to_engine_missing_fields() {
         id: "incomplete-workflow".to_string(),
         name: "Incomplete Workflow".to_string(),
         description: None,
-        content: r#"{"name": "Test"}"#.to_string(), // Missing id and tasks
+        content: r#"{"name": "Test"}"#.to_string(),
         is_default: false,
         is_edited: false,
         created_at: chrono::Utc::now(),
@@ -110,7 +108,7 @@ fn test_workflow_definition_to_engine_missing_fields() {
     assert!(result.is_err(), "Missing fields should fail validation");
 
     match result.unwrap_err() {
-        CoreError::Validation(_) => {} // Expected validation error
+        CoreError::Validation(_) => {}
         other => panic!("Expected Validation error, got: {:?}", other),
     }
 }

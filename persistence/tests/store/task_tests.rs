@@ -1,6 +1,6 @@
-//! Tests for task store operations
-//! 
-//! Tests save_task_execution, get_tasks_for_workflow following Single Responsibility Principle.
+
+
+
 
 use s_e_e_persistence::{Store, TaskExecution, TaskStatus};
 use chrono::Utc;
@@ -26,7 +26,7 @@ fn create_test_task() -> TaskExecution {
 async fn test_save_task_execution() {
     let store = create_test_store().await;
     let task = create_test_task();
-    
+
     let result = store.save_task_execution(task).await;
     assert!(result.is_ok());
 }
@@ -34,7 +34,7 @@ async fn test_save_task_execution() {
 #[tokio::test]
 async fn test_get_tasks_for_workflow_empty() {
     let store = create_test_store().await;
-    
+
     let tasks = store.get_tasks_for_workflow("workflow-1").await.unwrap();
     assert!(tasks.is_empty());
 }
@@ -43,14 +43,14 @@ async fn test_get_tasks_for_workflow_empty() {
 async fn test_get_tasks_for_workflow_single() {
     let store = create_test_store().await;
     let task = create_test_task();
-    
-    // Save task
+
+
     store.save_task_execution(task.clone()).await.unwrap();
-    
-    // Get tasks for workflow
+
+
     let tasks = store.get_tasks_for_workflow("workflow-1").await.unwrap();
     assert_eq!(tasks.len(), 1);
-    
+
     let retrieved_task = &tasks[0];
     assert_eq!(retrieved_task.id, "task-1");
     assert_eq!(retrieved_task.workflow_id, "workflow-1");
@@ -62,8 +62,8 @@ async fn test_get_tasks_for_workflow_single() {
 #[tokio::test]
 async fn test_get_tasks_for_workflow_multiple() {
     let store = create_test_store().await;
-    
-    // Create multiple tasks for same workflow
+
+
     let task1 = TaskExecution {
         id: "task-1".to_string(),
         workflow_id: "workflow-1".to_string(),
@@ -71,7 +71,7 @@ async fn test_get_tasks_for_workflow_multiple() {
         status: TaskExecutionStatus::Complete,
         ..Default::default()
     };
-    
+
     let task2 = TaskExecution {
         id: "task-2".to_string(),
         workflow_id: "workflow-1".to_string(),
@@ -79,31 +79,31 @@ async fn test_get_tasks_for_workflow_multiple() {
         status: TaskExecutionStatus::Failed,
         ..Default::default()
     };
-    
+
     let task3 = TaskExecution {
         id: "task-3".to_string(),
-        workflow_id: "workflow-2".to_string(), // Different workflow
+        workflow_id: "workflow-2".to_string(),
         name: "Task 3".to_string(),
         status: TaskExecutionStatus::Pending,
         ..Default::default()
     };
-    
-    // Save tasks
+
+
     store.save_task_execution(task1).await.unwrap();
     store.save_task_execution(task2).await.unwrap();
     store.save_task_execution(task3).await.unwrap();
-    
-    // Get tasks for workflow-1
+
+
     let tasks = store.get_tasks_for_workflow("workflow-1").await.unwrap();
     assert_eq!(tasks.len(), 2);
-    
-    // Check task IDs
+
+
     let task_ids: Vec<&str> = tasks.iter().map(|t| t.id.as_str()).collect();
     assert!(task_ids.contains(&"task-1"));
     assert!(task_ids.contains(&"task-2"));
     assert!(!task_ids.contains(&"task-3"));
-    
-    // Get tasks for workflow-2
+
+
     let tasks = store.get_tasks_for_workflow("workflow-2").await.unwrap();
     assert_eq!(tasks.len(), 1);
     assert_eq!(tasks[0].id, "task-3");
@@ -113,22 +113,22 @@ async fn test_get_tasks_for_workflow_multiple() {
 async fn test_save_task_execution_update() {
     let store = create_test_store().await;
     let mut task = create_test_task();
-    
-    // Save initial task
+
+
     store.save_task_execution(task.clone()).await.unwrap();
-    
-    // Update task
+
+
     task.status = TaskExecutionStatus::Failed;
     task.error = Some("Task failed with error".to_string());
     task.output = None;
-    
-    // Save updated task
+
+
     store.save_task_execution(task.clone()).await.unwrap();
-    
-    // Verify update
+
+
     let tasks = store.get_tasks_for_workflow("workflow-1").await.unwrap();
     assert_eq!(tasks.len(), 1);
-    
+
     let retrieved_task = &tasks[0];
     assert_eq!(retrieved_task.status, TaskExecutionStatus::Failed);
     assert_eq!(retrieved_task.error, Some("Task failed with error".to_string()));
@@ -148,14 +148,14 @@ async fn test_task_execution_serialization() {
         created_at: Utc::now(),
         completed_at: None,
     };
-    
-    // Save task
+
+
     store.save_task_execution(task.clone()).await.unwrap();
-    
-    // Retrieve and verify
+
+
     let tasks = store.get_tasks_for_workflow("workflow-1").await.unwrap();
     assert_eq!(tasks.len(), 1);
-    
+
     let retrieved_task = &tasks[0];
     assert_eq!(retrieved_task.id, task.id);
     assert_eq!(retrieved_task.workflow_id, task.workflow_id);
@@ -181,11 +181,11 @@ async fn test_save_task_with_input() {
         input_request_id: Some("request-123".to_string()),
         prompt_id: None,
     };
-    
+
     let result = store.save_task_with_input(task.clone()).await;
     assert!(result.is_ok());
-    
-    // Verify task was saved
+
+
     let tasks = store.get_tasks_for_workflow("workflow-1").await.unwrap();
     assert_eq!(tasks.len(), 1);
     assert_eq!(tasks[0].user_input, Some("user-input".to_string()));
@@ -194,8 +194,8 @@ async fn test_save_task_with_input() {
 #[tokio::test]
 async fn test_get_tasks_waiting_for_input() {
     let store = create_test_store().await;
-    
-    // Create tasks with different statuses
+
+
     let task1 = TaskExecution {
         id: "task-1".to_string(),
         workflow_id: "workflow-1".to_string(),
@@ -203,7 +203,7 @@ async fn test_get_tasks_waiting_for_input() {
         status: TaskExecutionStatus::WaitingForInput,
         ..Default::default()
     };
-    
+
     let task2 = TaskExecution {
         id: "task-2".to_string(),
         workflow_id: "workflow-1".to_string(),
@@ -212,7 +212,7 @@ async fn test_get_tasks_waiting_for_input() {
         completed_at: Some(Utc::now()),
         ..Default::default()
     };
-    
+
     let task3 = TaskExecution {
         id: "task-3".to_string(),
         workflow_id: "workflow-1".to_string(),
@@ -220,28 +220,28 @@ async fn test_get_tasks_waiting_for_input() {
         status: TaskExecutionStatus::WaitingForInput,
         ..Default::default()
     };
-    
-    // Save all tasks
+
+
     store.save_task_execution(task1).await.unwrap();
     store.save_task_execution(task2).await.unwrap();
     store.save_task_execution(task3).await.unwrap();
-    
-    // Get tasks waiting for input
+
+
     let waiting_tasks = store.get_tasks_waiting_for_input().await.unwrap();
     assert_eq!(waiting_tasks.len(), 2);
-    
-    // Verify IDs
+
+
     let task_ids: Vec<&str> = waiting_tasks.iter().map(|t| t.id.as_str()).collect();
     assert!(task_ids.contains(&"task-1"));
     assert!(task_ids.contains(&"task-3"));
-    assert!(!task_ids.contains(&"task-2")); // Complete task
+    assert!(!task_ids.contains(&"task-2"));
 }
 
 #[tokio::test]
 async fn test_get_tasks_waiting_for_input_in_workflow() {
     let store = create_test_store().await;
-    
-    // Create tasks in different workflows
+
+
     let task1 = TaskExecution {
         id: "task-1".to_string(),
         workflow_id: "workflow-1".to_string(),
@@ -249,7 +249,7 @@ async fn test_get_tasks_waiting_for_input_in_workflow() {
         status: TaskExecutionStatus::WaitingForInput,
         ..Default::default()
     };
-    
+
     let task2 = TaskExecution {
         id: "task-2".to_string(),
         workflow_id: "workflow-1".to_string(),
@@ -257,7 +257,7 @@ async fn test_get_tasks_waiting_for_input_in_workflow() {
         status: TaskExecutionStatus::WaitingForInput,
         ..Default::default()
     };
-    
+
     let task3 = TaskExecution {
         id: "task-3".to_string(),
         workflow_id: "workflow-2".to_string(),
@@ -265,16 +265,16 @@ async fn test_get_tasks_waiting_for_input_in_workflow() {
         status: TaskExecutionStatus::WaitingForInput,
         ..Default::default()
     };
-    
+
     store.save_task_execution(task1).await.unwrap();
     store.save_task_execution(task2).await.unwrap();
     store.save_task_execution(task3).await.unwrap();
-    
-    // Get waiting tasks for workflow-1
+
+
     let waiting = store.get_tasks_waiting_for_input_in_workflow("workflow-1").await.unwrap();
     assert_eq!(waiting.len(), 2);
-    
-    // Get waiting tasks for workflow-2
+
+
     let waiting = store.get_tasks_waiting_for_input_in_workflow("workflow-2").await.unwrap();
     assert_eq!(waiting.len(), 1);
     assert_eq!(waiting[0].id, "task-3");
@@ -283,7 +283,7 @@ async fn test_get_tasks_waiting_for_input_in_workflow() {
 #[tokio::test]
 async fn test_get_task_with_input_request() {
     let store = create_test_store().await;
-    
+
     let task = TaskExecution {
         id: "task-1".to_string(),
         workflow_id: "workflow-1".to_string(),
@@ -292,16 +292,16 @@ async fn test_get_task_with_input_request() {
         input_request_id: Some("request-123".to_string()),
         ..Default::default()
     };
-    
-    // Save task
+
+
     store.save_task_execution(task).await.unwrap();
-    
-    // Get task with input request
+
+
     let retrieved = store.get_task_with_input_request("task-1").await.unwrap();
     assert!(retrieved.is_some());
     assert_eq!(retrieved.unwrap().id, "task-1");
-    
-    // Try to get non-existent task
+
+
     let not_found = store.get_task_with_input_request("non-existent").await.unwrap();
     assert!(not_found.is_none());
 }

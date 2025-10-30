@@ -1,14 +1,17 @@
-import { forwardRef } from 'react'
-import * as Headless from '@headlessui/react'
+import { forwardRef } from "react";
+import * as Headless from "@headlessui/react";
 
-export const Input = forwardRef<HTMLInputElement, {
-  value: string
-  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void
-  placeholder?: string
-  className?: string
-  disabled?: boolean
-  invalid?: boolean
-}>(({ className = '', disabled = false, invalid = false, ...props }, ref) => {
+export const Input = forwardRef<
+  HTMLInputElement,
+  {
+    value: string;
+    onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+    placeholder?: string;
+    className?: string;
+    disabled?: boolean;
+    invalid?: boolean;
+  }
+>(({ className = "", disabled = false, invalid = false, ...props }, ref) => {
   return (
     <span className={`relative block w-full ${className}`}>
       <Headless.Input
@@ -21,13 +24,13 @@ export const Input = forwardRef<HTMLInputElement, {
           bg-white dark:bg-zinc-800
           focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent
           disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-zinc-50 dark:disabled:bg-zinc-900
-          ${invalid ? 'border-red-500 focus:ring-red-500 dark:border-red-600' : ''}
+          ${invalid ? "border-red-500 focus:ring-red-500 dark:border-red-600" : ""}
           transition-colors
         `}
         {...props}
       />
     </span>
-  )
-})
+  );
+});
 
-Input.displayName = 'Input'
+Input.displayName = "Input";

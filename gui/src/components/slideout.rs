@@ -17,12 +17,12 @@ pub fn Slideout(
     }
 
     rsx! {
-        // Backdrop
+
         div {
             class: format!("fixed inset-0 z-50 cursor-pointer {}", backdrop_class),
             onclick: move |_| on_close.call(()),
 
-            // Panel
+
             div {
                 class: "fixed inset-y-0 right-0 z-50 w-3/4 transform transition-transform duration-500 ease-in-out sm:duration-700",
                 onclick: move |e| e.stop_propagation(),
@@ -30,11 +30,11 @@ pub fn Slideout(
                 div {
                     class: "flex h-full flex-col divide-y divide-gray-200 bg-white shadow-xl dark:divide-white/10 dark:bg-gray-800 dark:after:absolute dark:after:inset-y-0 dark:after:left-0 dark:after:w-px dark:after:bg-white/10",
 
-                    // Header
+
                     div {
                         class: "flex items-center justify-between px-4 py-4 sm:px-6",
 
-                        // Title and subtitle
+
                         div {
                             h2 {
                                 class: "text-lg font-semibold text-gray-900 dark:text-white",
@@ -48,7 +48,7 @@ pub fn Slideout(
                             }
                         }
 
-                        // Optional close button
+
                         if show_close_button.unwrap_or(true) {
                             IconButton {
                                 variant: IconButtonVariant::Ghost,
@@ -62,7 +62,7 @@ pub fn Slideout(
                         }
                     }
 
-                    // Content
+
                     div {
                         class: "flex-1 overflow-y-auto py-6",
                         div {
@@ -71,7 +71,7 @@ pub fn Slideout(
                         }
                     }
 
-                    // Footer (optional)
+
                     if let Some(footer_content) = footer {
                         div {
                             class: "flex shrink-0 items-center justify-between px-4 py-4",

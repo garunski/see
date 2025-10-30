@@ -3,7 +3,6 @@ use tracing::{debug, info, instrument, trace};
 use crate::cache::storage::QUERY_CACHE;
 use crate::query_key::QueryKey;
 
-/// Invalidate a specific query by key
 #[instrument]
 pub fn invalidate_query(key: &QueryKey) {
     info!(key = %key, "Invalidating query");
@@ -16,7 +15,6 @@ pub fn invalidate_query(key: &QueryKey) {
     }
 }
 
-/// Invalidate all queries with a given prefix
 #[instrument]
 pub fn invalidate_queries_by_prefix(prefix: &str) {
     info!(prefix = prefix, "Invalidating queries by prefix");
@@ -32,7 +30,6 @@ pub fn invalidate_queries_by_prefix(prefix: &str) {
     );
 }
 
-/// Invalidate all queries in the cache
 #[instrument]
 pub fn invalidate_all_queries() {
     info!("Invalidating all queries");

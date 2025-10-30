@@ -1,16 +1,19 @@
-import { forwardRef } from 'react'
-import * as Headless from '@headlessui/react'
+import { forwardRef } from "react";
+import * as Headless from "@headlessui/react";
 
-export const Textarea = forwardRef<HTMLTextAreaElement, {
-  value: string
-  onChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void
-  onBlur?: (e: React.FocusEvent<HTMLTextAreaElement>) => void
-  placeholder?: string
-  rows?: number
-  className?: string
-  disabled?: boolean
-  invalid?: boolean
-}>(({ className = '', disabled = false, invalid = false, ...props }, ref) => {
+export const Textarea = forwardRef<
+  HTMLTextAreaElement,
+  {
+    value: string;
+    onChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
+    onBlur?: (e: React.FocusEvent<HTMLTextAreaElement>) => void;
+    placeholder?: string;
+    rows?: number;
+    className?: string;
+    disabled?: boolean;
+    invalid?: boolean;
+  }
+>(({ className = "", disabled = false, invalid = false, ...props }, ref) => {
   return (
     <span className={`relative block w-full ${className}`}>
       <Headless.Textarea
@@ -23,13 +26,13 @@ export const Textarea = forwardRef<HTMLTextAreaElement, {
           bg-white dark:bg-zinc-800
           focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent
           disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-zinc-50 dark:disabled:bg-zinc-900
-          ${invalid ? 'border-red-500 focus:ring-red-500 dark:border-red-600' : ''}
+          ${invalid ? "border-red-500 focus:ring-red-500 dark:border-red-600" : ""}
           resize-y transition-colors
         `}
         {...props}
       />
     </span>
-  )
-})
+  );
+});
 
-Textarea.displayName = 'Textarea'
+Textarea.displayName = "Textarea";

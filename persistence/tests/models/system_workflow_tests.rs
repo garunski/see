@@ -1,5 +1,5 @@
-// System workflow model tests ONLY
-// Tests for SystemWorkflow struct and methods
+
+
 
 use s_e_e_persistence::SystemWorkflow;
 
@@ -24,8 +24,8 @@ fn test_system_workflow_creation() {
 #[test]
 fn test_system_workflow_validation() {
     let now = chrono::Utc::now();
-    
-    // Valid workflow
+
+
     let workflow = SystemWorkflow {
         id: "test-workflow".to_string(),
         name: "Test Workflow".to_string(),
@@ -35,10 +35,10 @@ fn test_system_workflow_validation() {
         created_at: now,
         updated_at: now,
     };
-    
+
     assert!(workflow.validate().is_ok());
-    
-    // Invalid: empty content
+
+
     let invalid = SystemWorkflow {
         id: "test".to_string(),
         name: "Test".to_string(),
@@ -48,7 +48,7 @@ fn test_system_workflow_validation() {
         created_at: now,
         updated_at: now,
     };
-    
+
     assert!(invalid.validate().is_err());
 }
 
@@ -64,7 +64,7 @@ fn test_system_workflow_needs_update() {
         created_at: now,
         updated_at: now,
     };
-    
+
     assert!(workflow.needs_update("1.0.1"));
     assert!(!workflow.needs_update("1.0.0"));
 }
@@ -72,7 +72,7 @@ fn test_system_workflow_needs_update() {
 #[test]
 fn test_system_workflow_default() {
     let workflow = SystemWorkflow::default();
-    
+
     assert!(!workflow.id.is_empty());
     assert!(!workflow.version.is_empty());
 }
@@ -89,10 +89,10 @@ fn test_system_workflow_serialization() {
         created_at: now,
         updated_at: now,
     };
-    
+
     let json = serde_json::to_string(&workflow).unwrap();
     let deserialized: SystemWorkflow = serde_json::from_str(&json).unwrap();
-    
+
     assert_eq!(deserialized.id, workflow.id);
     assert_eq!(deserialized.name, workflow.name);
     assert_eq!(deserialized.version, workflow.version);

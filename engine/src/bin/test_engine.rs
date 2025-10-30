@@ -1,12 +1,9 @@
-//! Simple CLI tool to test the workflow engine
-
 use ::s_e_e_engine::*;
 use std::env;
 use std::fs;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    // Initialize tracing
     tracing_subscriber::fmt::init();
 
     let args: Vec<String> = env::args().collect();
@@ -19,7 +16,6 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let workflow_file = &args[1];
 
-    // Read workflow file
     let json = fs::read_to_string(workflow_file)
         .map_err(|e| format!("Failed to read file {}: {}", workflow_file, e))?;
 
@@ -28,7 +24,6 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("{}", json);
     println!();
 
-    // Execute workflow
     match execute_workflow_from_json(&json).await {
         Ok(result) => {
             println!("✅ Workflow execution completed!");

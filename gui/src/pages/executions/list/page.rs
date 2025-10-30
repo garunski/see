@@ -13,7 +13,6 @@ pub fn ExecutionListPage() -> Element {
 
     let (executions_result, running_result) = use_execution_list();
 
-    // Check for errors
     if executions_result.is_err() || running_result.is_err() {
         let error_msg = executions_result.err().unwrap_or_else(|| {
             running_result
@@ -40,11 +39,9 @@ pub fn ExecutionListPage() -> Element {
         };
     }
 
-    // Get the data
     let workflow_executions = executions_result.unwrap();
     let running_workflows = running_result.unwrap();
 
-    // Determine active filter based on available data; default to All
     let mut active_filter = use_signal(|| None::<WorkflowExecutionStatus>);
 
     rsx! {
@@ -59,9 +56,9 @@ pub fn ExecutionListPage() -> Element {
                 title: Some("Executions".to_string()),
                 children: rsx! {
                     div { class: "space-y-4",
-                        // Filter Badges
+
                         div { class: "flex items-center gap-2 flex-wrap",
-                            // Match Home page filters: All, Waiting for Input, Complete, Running, Failed, Pending
+
                             BadgeButton {
                                 color: BadgeColor::Zinc,
                                 active: active_filter().is_none(),
@@ -100,9 +97,9 @@ pub fn ExecutionListPage() -> Element {
                             }
                         }
 
-                        // Display based on active filter
+
                         {{
-                            // Build filtered list based on active_filter
+
                             if active_filter() == Some(WorkflowExecutionStatus::Running) {
                                 rsx! {
                                     if running_workflows.is_empty() {

@@ -4,9 +4,6 @@ use s_e_e_core::{WorkflowDefinition, WorkflowResult};
 use s_e_e_dioxus_query::prelude::*;
 use std::rc::Rc;
 
-// ==================== QUERIES ====================
-
-/// Hook to fetch all workflows
 pub fn use_workflows_query() -> (QueryState<Vec<WorkflowDefinition>>, impl Fn()) {
     let key = QueryKey::new(&["workflows", "list"]);
 
@@ -17,15 +14,14 @@ pub fn use_workflows_query() -> (QueryState<Vec<WorkflowDefinition>>, impl Fn())
     };
 
     let options = QueryOptions {
-        stale_time: Some(30_000),  // 30 seconds
-        cache_time: Some(300_000), // 5 minutes
+        stale_time: Some(30_000),
+        cache_time: Some(300_000),
         ..Default::default()
     };
 
     use_query(key, fetcher, options)
 }
 
-/// Hook to fetch a single workflow
 pub fn use_workflow_query(id: String) -> (QueryState<Option<WorkflowDefinition>>, impl Fn()) {
     let key = QueryKey::new(&["workflows", "detail", &id]);
 
@@ -48,9 +44,6 @@ pub fn use_workflow_query(id: String) -> (QueryState<Option<WorkflowDefinition>>
     use_query(key, fetcher, options)
 }
 
-// ==================== MUTATIONS ====================
-
-/// Hook to create a new workflow
 pub fn use_create_workflow_mutation() -> (Signal<MutationState<()>>, impl Fn(String)) {
     let mutation_fn = move |json: String| async move {
         let workflow: WorkflowDefinition =
@@ -74,13 +67,11 @@ pub fn use_create_workflow_mutation() -> (Signal<MutationState<()>>, impl Fn(Str
     use_mutation(mutation_fn, callbacks)
 }
 
-/// Type alias for execute workflow mutation return type
 pub type ExecuteWorkflowMutationResult = (
     Signal<MutationState<WorkflowResult>>,
     std::rc::Rc<dyn Fn(String)>,
 );
 
-/// Hook to execute a workflow
 pub fn use_execute_workflow_mutation() -> ExecuteWorkflowMutationResult {
     let mutation_fn = move |workflow_id: String| async move {
         tracing::debug!(
@@ -111,7 +102,7 @@ pub fn use_execute_workflow_mutation() -> ExecuteWorkflowMutationResult {
     let callbacks = MutationCallbacks {
         on_success: None,
         on_error: None,
-        on_settled: None, // No invalidation - UI handles refreshing via polling
+        on_settled: None,
         invalidate_keys: vec![],
         optimistic_update: None,
     };

@@ -1,12 +1,9 @@
-//! Cursor agent handler for AI-powered task execution
-
 use crate::errors::*;
 use crate::types::*;
 use async_trait::async_trait;
 use serde_json::Value;
 use tracing::{debug, error, instrument, trace};
 
-/// Cursor agent handler
 pub struct CursorAgentHandler;
 
 #[async_trait]
@@ -54,8 +51,6 @@ impl super::TaskHandler for CursorAgentHandler {
             "Processing agent prompt"
         );
 
-        // For now, simulate cursor agent execution
-        // In a real implementation, this would call the actual cursor agent
         trace!(
             execution_id = %context.execution_id,
             task_id = %task.id,

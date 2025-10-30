@@ -1,17 +1,12 @@
-//! WorkflowDefinition model
-//!
-//! This file contains ONLY WorkflowDefinition struct following Single Responsibility Principle.
-
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 
-/// Workflow template with metadata
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct WorkflowDefinition {
     pub id: String,
     pub name: String,
     pub description: Option<String>,
-    pub content: String, // JSON string
+    pub content: String,
     pub is_default: bool,
     pub is_edited: bool,
     pub created_at: DateTime<Utc>,
@@ -35,12 +30,10 @@ impl Default for WorkflowDefinition {
 }
 
 impl WorkflowDefinition {
-    /// Get the display name for a workflow
     pub fn get_name(&self) -> &str {
         &self.name
     }
 
-    /// Get default workflow templates
     pub fn get_default_workflows() -> Vec<WorkflowDefinition> {
         vec![
             WorkflowDefinition {
@@ -76,7 +69,6 @@ impl WorkflowDefinition {
         ]
     }
 
-    /// Validate workflow content
     pub fn validate(&self) -> Result<(), String> {
         if self.id.is_empty() {
             return Err("Workflow ID cannot be empty".to_string());
@@ -88,7 +80,6 @@ impl WorkflowDefinition {
             return Err("Workflow content cannot be empty".to_string());
         }
 
-        // Validate JSON content
         serde_json::from_str::<serde_json::Value>(&self.content)
             .map_err(|e| format!("Invalid JSON content: {}", e))?;
 

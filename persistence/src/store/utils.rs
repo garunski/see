@@ -1,12 +1,7 @@
-//! Utility store operations
-//!
-//! This file contains ONLY utility functions following Single Responsibility Principle.
-
 use super::Store;
 use crate::logging::{log_db_operation_error, log_db_operation_start, log_db_operation_success};
 
 impl Store {
-    /// Clear all data from all tables
     pub async fn clear_all_data(&self) -> Result<(), String> {
         log_db_operation_start("clear_all_data", "all");
 

@@ -1,25 +1,19 @@
-import { TaskFunction } from '../types';
+import { TaskFunction } from "../types";
 
-/**
- * Parse default value based on input type
- */
 export function parseDefaultValue(value: string, type: string): any {
-  if (value === '') return undefined;
-  
+  if (value === "") return undefined;
+
   switch (type) {
-    case 'number':
+    case "number":
       const num = Number(value);
       return isNaN(num) ? value : num;
-    case 'boolean':
-      return value.toLowerCase() === 'true';
+    case "boolean":
+      return value.toLowerCase() === "true";
     default:
       return value;
   }
 }
 
-/**
- * Validate JSON string
- */
 export function validateJson(jsonString: string): boolean {
   try {
     JSON.parse(jsonString);
@@ -29,11 +23,8 @@ export function validateJson(jsonString: string): boolean {
   }
 }
 
-/**
- * Build TaskFunction from form state
- */
 interface BuildFunctionParams {
-  functionType: TaskFunction['name'];
+  functionType: TaskFunction["name"];
   command?: string;
   args?: string[];
   prompt?: string;
@@ -45,53 +36,56 @@ interface BuildFunctionParams {
   customInputJson?: string;
 }
 
-export function buildTaskFunction(params: BuildFunctionParams): TaskFunction | null {
+export function buildTaskFunction(
+  params: BuildFunctionParams,
+): TaskFunction | null {
   const { functionType } = params;
 
   switch (functionType) {
-    case 'cli_command':
+    case "cli_command":
       return {
-        name: 'cli_command',
+        name: "cli_command",
         input: {
-          command: params.command || '',
-          ...(params.args && params.args.length > 0 ? { args: params.args.filter(arg => arg.trim() !== '') } : {})
-        }
+          command: params.command || "",
+          ...(params.args && params.args.length > 0
+            ? { args: params.args.filter((arg) => arg.trim() !== "") }
+            : {}),
+        },
       };
 
-    case 'cursor_agent':
+    case "cursor_agent":
       if (!params.configJson) return null;
       const config = JSON.parse(params.configJson);
       return {
-        name: 'cursor_agent',
+        name: "cursor_agent",
         input: {
-          prompt: params.prompt || '',
-          ...(Object.keys(config).length > 0 ? { config } : {})
-        }
+          prompt: params.prompt || "",
+          ...(Object.keys(config).length > 0 ? { config } : {}),
+        },
       };
 
-    case 'user_input':
-      const parsedDefault = params.defaultValue 
-        ? parseDefaultValue(params.defaultValue, params.inputType || 'string') 
+    case "user_input":
+      const parsedDefault = params.defaultValue
+        ? parseDefaultValue(params.defaultValue, params.inputType || "string")
         : undefined;
       return {
-        name: 'user_input',
+        name: "user_input",
         input: {
-          prompt: params.prompt || '',
-          input_type: params.inputType || 'string',
+          prompt: params.prompt || "",
+          input_type: params.inputType || "string",
           ...(params.required !== true ? { required: params.required } : {}),
-          ...(parsedDefault !== undefined ? { default: parsedDefault } : {})
-        }
+          ...(parsedDefault !== undefined ? { default: parsedDefault } : {}),
+        },
       };
 
-    case 'custom':
+    case "custom":
       if (!params.customInputJson) return null;
       return {
-        name: 'custom',
-        input: JSON.parse(params.customInputJson)
+        name: "custom",
+        input: JSON.parse(params.customInputJson),
       };
 
     default:
       return null;
   }
 }
-

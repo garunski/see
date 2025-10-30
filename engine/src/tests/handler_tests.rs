@@ -1,5 +1,3 @@
-//! Handler tests for the new workflow engine
-
 use crate::handlers::{
     cli_command::CliCommandHandler, cursor_agent::CursorAgentHandler, custom::CustomHandler,
     user_input::UserInputHandler, HandlerRegistry, TaskHandler,
@@ -35,7 +33,6 @@ async fn test_cli_command_handler() {
     assert!(result.output.as_str().unwrap().contains("hello"));
     assert!(context.per_task_logs.contains_key("test_task"));
 
-    // Verify logs contain expected content
     let logs = &context.per_task_logs["test_task"];
     assert!(!logs.is_empty());
     assert!(logs.iter().any(|log| log.contains("Executing CLI command")));
@@ -63,10 +60,8 @@ async fn test_cli_command_handler_error() {
         _ => panic!("Expected ExecutionFailed error"),
     }
 
-    // Verify error logs were still created
     assert!(context.per_task_logs.contains_key("test_task"));
 
-    // Verify error logs
     let logs = &context.per_task_logs["test_task"];
     assert!(!logs.is_empty());
     assert!(logs.iter().any(|log| log.contains("Executing CLI command")));
@@ -77,7 +72,6 @@ async fn test_cursor_agent_invalid_function_type() {
     let handler = CursorAgentHandler;
     let mut context = ExecutionContext::new("test".to_string(), "test_workflow".to_string());
 
-    // Create task with wrong function type (CliCommand instead of CursorAgent)
     let task = create_test_task(TaskFunction::CliCommand {
         command: "echo".to_string(),
         args: vec!["hello".to_string()],
@@ -126,7 +120,6 @@ async fn test_cli_handler_invalid_function() {
     let handler = CliCommandHandler;
     let mut context = ExecutionContext::new("test".to_string(), "test_workflow".to_string());
 
-    // Create task with wrong function type (CursorAgent instead of CliCommand)
     let task = create_test_task(TaskFunction::CursorAgent {
         prompt: "test prompt".to_string(),
         config: Value::Object(serde_json::Map::new()),
@@ -148,7 +141,6 @@ async fn test_custom_handler_invalid_function() {
     let handler = CustomHandler;
     let mut context = ExecutionContext::new("test".to_string(), "test_workflow".to_string());
 
-    // Create task with wrong function type (CliCommand instead of Custom)
     let task = create_test_task(TaskFunction::CliCommand {
         command: "echo".to_string(),
         args: vec!["hello".to_string()],
@@ -177,15 +169,12 @@ async fn test_user_input_handler() {
         default: None,
     });
 
-    // Add task to context
     context.tasks.insert("test_task".to_string(), task.clone());
 
     let result = handler.execute(&mut context, &task).await.unwrap();
 
-    // Should return success but waiting for input
     assert!(result.success);
 
-    // Check output contains waiting_for_input flag
     assert!(result
         .output
         .get("waiting_for_input")
@@ -202,13 +191,11 @@ async fn test_user_input_handler() {
     );
     assert!(result.output.get("required").unwrap().as_bool().unwrap());
 
-    // Check task status was updated
     assert_eq!(
         context.tasks.get("test_task").unwrap().status,
         TaskStatus::WaitingForInput
     );
 
-    // Check logs were created
     assert!(context.per_task_logs.contains_key("test_task"));
     let logs = &context.per_task_logs["test_task"];
     assert!(logs
@@ -238,7 +225,6 @@ async fn test_user_input_handler_with_default() {
         .as_bool()
         .unwrap());
 
-    // Check default value is included
     let default_value = result.output.get("default");
     assert!(default_value.is_some());
 }
@@ -248,7 +234,6 @@ async fn test_user_input_handler_invalid_function() {
     let handler = UserInputHandler;
     let mut context = ExecutionContext::new("test".to_string(), "test_workflow".to_string());
 
-    // Create task with wrong function type (CliCommand instead of UserInput)
     let task = create_test_task(TaskFunction::CliCommand {
         command: "echo".to_string(),
         args: vec!["hello".to_string()],

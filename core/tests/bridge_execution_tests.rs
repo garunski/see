@@ -1,5 +1,3 @@
-// Execution conversion tests ONLY
-
 use s_e_e_core::bridge::*;
 use s_e_e_engine::WorkflowResult as EngineWorkflowResult;
 

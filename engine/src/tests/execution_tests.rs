@@ -1,5 +1,3 @@
-//! Tests for workflow execution engine
-
 use crate::*;
 
 #[tokio::test]
@@ -23,7 +21,6 @@ async fn test_per_task_logs_captured() {
     let engine = WorkflowEngine::new();
     let result = engine.execute_workflow(workflow).await.unwrap();
 
-    // Verify logs contain output
     assert!(result.per_task_logs.contains_key("task1"));
     let logs = &result.per_task_logs["task1"];
     assert!(!logs.is_empty());
@@ -64,7 +61,6 @@ async fn test_parallel_tasks_separate_logs() {
     let engine = WorkflowEngine::new();
     let result = engine.execute_workflow(workflow).await.unwrap();
 
-    // Verify each task has its own logs
     assert_eq!(result.per_task_logs.len(), 2);
     assert!(result.per_task_logs["task1"]
         .iter()
@@ -95,7 +91,6 @@ async fn test_error_capture_in_logs() {
     let engine = WorkflowEngine::new();
     let result = engine.execute_workflow(workflow).await.unwrap();
 
-    // Verify error is in logs
     assert!(result.per_task_logs.contains_key("failing_task"));
     let logs = &result.per_task_logs["failing_task"];
     assert!(logs.iter().any(|log| log.contains("Error:")));

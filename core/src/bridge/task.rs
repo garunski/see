@@ -1,10 +1,7 @@
-// Task conversions ONLY
-
 use s_e_e_engine::{TaskInfo, TaskStatus as EngineTaskStatus};
 use s_e_e_persistence::{TaskExecution, TaskExecutionStatus as PersistenceTaskExecutionStatus};
 use std::collections::HashMap;
 
-/// Convert TaskInfo to TaskExecution
 pub fn task_info_to_execution(
     task: &TaskInfo,
     workflow_id: &str,
@@ -13,13 +10,11 @@ pub fn task_info_to_execution(
     workflow_created_at: chrono::DateTime<chrono::Utc>,
     workflow_completed_at: chrono::DateTime<chrono::Utc>,
 ) -> TaskExecution {
-    // Extract output from per_task_logs
     let output = per_task_logs
         .get(&task.id)
         .map(|logs| logs.join("\n"))
         .filter(|s| !s.is_empty());
 
-    // Convert engine TaskStatus to persistence TaskStatus
     let persistence_status = match task.status {
         EngineTaskStatus::Pending => PersistenceTaskExecutionStatus::Pending,
         EngineTaskStatus::InProgress => PersistenceTaskExecutionStatus::InProgress,
@@ -28,9 +23,7 @@ pub fn task_info_to_execution(
         EngineTaskStatus::WaitingForInput => PersistenceTaskExecutionStatus::WaitingForInput,
     };
 
-    // Extract error if task failed
     let error = if matches!(task.status, EngineTaskStatus::Failed) {
-        // Try to find task-specific error in errors vec
         errors
             .iter()
             .find(|e| e.contains(&task.id))
@@ -40,7 +33,6 @@ pub fn task_info_to_execution(
         None
     };
 
-    // Estimate timestamps (engine doesn't provide per-task timestamps)
     let completed_at = match task.status {
         EngineTaskStatus::Complete | EngineTaskStatus::Failed => Some(workflow_completed_at),
         EngineTaskStatus::WaitingForInput => None,
@@ -62,9 +54,7 @@ pub fn task_info_to_execution(
     }
 }
 
-/// Convert TaskExecution to TaskInfo (for GUI compatibility)
 pub fn task_execution_to_info(task: &TaskExecution) -> TaskInfo {
-    // Convert persistence TaskStatus to engine TaskStatus
     let engine_status = match task.status {
         PersistenceTaskExecutionStatus::Pending => EngineTaskStatus::Pending,
         PersistenceTaskExecutionStatus::InProgress => EngineTaskStatus::InProgress,

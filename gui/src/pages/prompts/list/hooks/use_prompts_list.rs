@@ -5,7 +5,6 @@ pub fn use_prompts_list() -> Result<Vec<Prompt>, String> {
     let (state, _refetch) = use_prompts_query();
 
     if state.is_loading {
-        // Still loading initial data
         return Err("Loading prompts...".to_string());
     }
 

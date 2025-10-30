@@ -1,9 +1,6 @@
-// Execution conversions ONLY
-
 use s_e_e_engine::WorkflowResult as EngineWorkflowResult;
 use s_e_e_persistence::{WorkflowExecution, WorkflowExecutionStatus};
 
-/// Convert WorkflowResult to WorkflowExecution
 pub fn workflow_result_to_execution(
     result: EngineWorkflowResult,
     execution_id: String,
@@ -11,7 +8,6 @@ pub fn workflow_result_to_execution(
 ) -> WorkflowExecution {
     let now = chrono::Utc::now();
 
-    // Convert tasks
     let task_executions = result
         .tasks
         .iter()
@@ -34,7 +30,7 @@ pub fn workflow_result_to_execution(
         workflow_name: result.workflow_name,
         workflow_snapshot: serde_json::json!({
             "tasks": []
-        }), // Empty structure - will be set by caller with actual snapshot
+        }),
         status: if result.success {
             WorkflowExecutionStatus::Complete
         } else {
@@ -44,7 +40,7 @@ pub fn workflow_result_to_execution(
         completed_at: Some(now),
         tasks: task_executions,
         timestamp: now,
-        audit_trail: Vec::new(), // Will be populated separately
+        audit_trail: Vec::new(),
         per_task_logs: result.per_task_logs,
         errors: result.errors,
     }

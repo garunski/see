@@ -1,5 +1,3 @@
-//! Main workflow execution engine with parallel and sequential task execution
-
 use crate::errors::*;
 use crate::handlers::{get_function_type, HandlerRegistry};
 use crate::types::*;
@@ -7,21 +5,17 @@ use std::collections::{HashMap, HashSet};
 use std::sync::Arc;
 use tracing::{debug, error, info, instrument, trace, warn};
 
-/// Main workflow execution engine
 pub struct WorkflowEngine {
     handlers: Arc<HandlerRegistry>,
 }
 
 impl WorkflowEngine {
-    /// Create a new workflow engine
     pub fn new() -> Self {
         Self {
             handlers: Arc::new(HandlerRegistry::new()),
         }
     }
 
-    /// Get tasks that are ready to execute based on tree structure
-    /// Root tasks are ready if not completed, child tasks are ready if their parent is completed
     fn get_ready_tasks_from_tree(
         &self,
         root_tasks: &[EngineTask],
@@ -30,8 +24,6 @@ impl WorkflowEngine {
     ) -> Vec<EngineTask> {
         let mut ready_tasks = Vec::new();
 
-        // Helper to collect ready tasks from a task's next_tasks
-        // Only collects direct children that are ready (no deep recursion)
         fn collect_ready_tasks(
             tasks: &[EngineTask],
             completed_tasks: &HashSet<String>,
@@ -39,7 +31,6 @@ impl WorkflowEngine {
             ready_tasks: &mut Vec<EngineTask>,
         ) {
             for task in tasks {
-                // If already completed, don't add this task, check its next_tasks recursively
                 if completed_tasks.contains(&task.id) {
                     collect_ready_tasks(
                         &task.next_tasks,
@@ -50,19 +41,15 @@ impl WorkflowEngine {
                     continue;
                 }
 
-                // Skip if waiting for input (don't recurse into next_tasks)
                 if waiting_for_input.contains(&task.id) {
                     debug!("Task {} skipped - waiting for input", task.id);
                     continue;
                 }
 
-                // This task is ready to execute - add it but DON'T recurse into next_tasks
-                // Children will be added on the next round after this task completes
                 ready_tasks.push(task.clone());
             }
         }
 
-        // Start with root tasks (filter to only tasks where is_root=true)
         let root_only_tasks: Vec<EngineTask> =
             root_tasks.iter().filter(|t| t.is_root).cloned().collect();
 
@@ -82,7 +69,6 @@ impl WorkflowEngine {
         ready_tasks
     }
 
-    /// Execute a workflow
     #[instrument(skip(self), fields(workflow_id = %workflow.id, workflow_name = %workflow.name, task_count = workflow.tasks.len()))]
     pub async fn execute_workflow(
         &self,
@@ -103,11 +89,9 @@ impl WorkflowEngine {
             workflow.tasks.iter().map(|t| &t.id).collect::<Vec<_>>()
         );
 
-        // Create execution context
         debug!(execution_id = %execution_id, "Creating execution context");
         let mut context = ExecutionContext::new(execution_id.clone(), workflow.name.clone());
 
-        // Add all tasks to context
         debug!(execution_id = %execution_id, "Adding tasks to execution context");
         for task in &workflow.tasks {
             context.tasks.insert(task.id.clone(), task.clone());
@@ -120,7 +104,6 @@ impl WorkflowEngine {
             );
         }
 
-        // Track execution state
         debug!(execution_id = %execution_id, "Initializing execution state");
         let mut completed_tasks = HashSet::new();
         let mut waiting_for_input = HashSet::new();
@@ -134,7 +117,6 @@ impl WorkflowEngine {
             "Execution state initialized"
         );
 
-        // Main execution loop - continue until no more tasks are ready
         loop {
             execution_round += 1;
 
@@ -145,7 +127,6 @@ impl WorkflowEngine {
                 "Starting execution round"
             );
 
-            // Get ready tasks from tree structure
             trace!(execution_id = %execution_id, "Determining ready tasks");
             let ready_tasks = self.get_ready_tasks_from_tree(
                 &workflow.tasks,
@@ -163,7 +144,6 @@ impl WorkflowEngine {
                 ready_tasks.len()
             );
 
-            // If no tasks are ready, check if we're done or waiting for input
             if ready_tasks.is_empty() {
                 if waiting_for_input.is_empty() {
                     debug!(
@@ -185,7 +165,6 @@ impl WorkflowEngine {
                 }
             }
 
-            // Execute all ready tasks in parallel
             debug!(
                 execution_id = %execution_id,
                 round = execution_round,
@@ -194,7 +173,6 @@ impl WorkflowEngine {
             );
             let results = self.execute_round(ready_tasks, &mut context).await?;
 
-            // Process results
             debug!(
                 execution_id = %execution_id,
                 round = execution_round,
@@ -211,7 +189,6 @@ impl WorkflowEngine {
                     "Processing task result"
                 );
 
-                // Check if task is waiting for input
                 if let Some(waiting) = result.output.get("waiting_for_input") {
                     if waiting.as_bool().unwrap_or(false) {
                         waiting_for_input.insert(task.id.clone());
@@ -233,7 +210,6 @@ impl WorkflowEngine {
                         "✅ Task completed successfully"
                     );
 
-                    // Add to audit trail
                     debug!(
                         execution_id = %execution_id,
                         task_id = %task.id,
@@ -270,7 +246,6 @@ impl WorkflowEngine {
                         "Adding failure to audit trail"
                     );
 
-                    // Add to audit trail
                     audit_trail.push(AuditEntry {
                         task_id: task.id.clone(),
                         status: AuditStatus::Failure,
@@ -281,7 +256,6 @@ impl WorkflowEngine {
 
                     errors.push(format!("Task {}: {}", task.id, error_msg));
 
-                    // For now, continue with other tasks even if one fails
                     completed_tasks.insert(task.id.clone());
 
                     trace!(
@@ -310,14 +284,13 @@ impl WorkflowEngine {
             "🏁 Workflow execution finished"
         );
 
-        // Build task info for result
         let tasks = workflow
             .tasks
             .iter()
             .map(|t| TaskInfo {
                 id: t.id.clone(),
                 name: t.name.clone(),
-                // Get the actual status from the task (preserves WaitingForInput)
+
                 status: if completed_tasks.contains(&t.id) {
                     TaskStatus::Complete
                 } else if waiting_for_input.contains(&t.id) {
@@ -340,7 +313,6 @@ impl WorkflowEngine {
         })
     }
 
-    /// Execute a round of ready tasks in parallel
     #[instrument(skip(self, context), fields(ready_count = ready_tasks.len()))]
     async fn execute_round(
         &self,
@@ -355,7 +327,6 @@ impl WorkflowEngine {
 
         let mut handles = Vec::new();
 
-        // Spawn parallel execution for each ready task
         for task in ready_tasks {
             let task_id = task.id.clone();
             let function_type = get_function_type(&task);
@@ -378,7 +349,6 @@ impl WorkflowEngine {
                 task.name
             );
 
-            // Create a task for parallel execution
             debug!(
                 execution_id = %context.execution_id,
                 task_id = %task_id,
@@ -459,7 +429,6 @@ impl WorkflowEngine {
             handles.push(handle);
         }
 
-        // Wait for all tasks to complete
         debug!(
             execution_id = %context.execution_id,
             handle_count = handles.len(),
@@ -499,7 +468,6 @@ impl WorkflowEngine {
             }
         }
 
-        // Merge context updates back
         debug!(
             execution_id = %context.execution_id,
             result_count = results.len(),
@@ -507,10 +475,8 @@ impl WorkflowEngine {
         );
 
         for (task, task_result) in &results {
-            // Extract output and error from TaskResult
             let mut logs = Vec::new();
 
-            // Add output to logs
             if let Some(output_str) = task_result.output.as_str() {
                 if !output_str.is_empty() {
                     logs.push(format!("Output: {}", output_str));
@@ -519,12 +485,10 @@ impl WorkflowEngine {
                 logs.push(format!("Output: {}", task_result.output));
             }
 
-            // Add error to logs if present
             if let Some(error) = &task_result.error {
                 logs.push(format!("Error: {}", error));
             }
 
-            // Store in original context
             if !logs.is_empty() {
                 context.per_task_logs.insert(task.id.clone(), logs);
             }
@@ -539,8 +503,6 @@ impl WorkflowEngine {
         Ok(results)
     }
 
-    /// Resume workflow execution after user input
-    /// This continues execution from where it left off, with knowledge of completed tasks
     #[instrument(skip(self), fields(execution_id = %execution_id))]
     pub async fn resume_workflow_execution(
         &self,
@@ -556,17 +518,14 @@ impl WorkflowEngine {
             "🔄 Resuming workflow execution"
         );
 
-        // Create execution context
         debug!(execution_id = %execution_id, "Creating execution context");
         let mut context = ExecutionContext::new(execution_id.clone(), workflow.name.clone());
 
-        // Add all tasks to context
         debug!(execution_id = %execution_id, "Adding tasks to execution context");
         for task in &workflow.tasks {
             context.tasks.insert(task.id.clone(), task.clone());
         }
 
-        // Track execution state - start with already completed tasks
         debug!(
             execution_id = %execution_id,
             initial_completed = completed_task_ids.len(),
@@ -574,10 +533,9 @@ impl WorkflowEngine {
         );
         let mut completed_tasks = completed_task_ids;
 
-        // For tasks that received user input, mark them as complete and store the input
         for (task_id, input_value) in &task_user_inputs {
             completed_tasks.insert(task_id.clone());
-            // Store input in context for tasks that might need it
+
             context.log_task(
                 task_id.clone(),
                 format!("User input provided: {}", input_value),
@@ -589,7 +547,6 @@ impl WorkflowEngine {
         let mut errors = Vec::new();
         let mut execution_round = 0;
 
-        // Main execution loop - continue until no more tasks are ready
         loop {
             execution_round += 1;
 
@@ -600,7 +557,6 @@ impl WorkflowEngine {
                 "Starting execution round"
             );
 
-            // Get ready tasks from tree structure
             trace!(execution_id = %execution_id, "Determining ready tasks");
             let ready_tasks = self.get_ready_tasks_from_tree(
                 &workflow.tasks,
@@ -618,7 +574,6 @@ impl WorkflowEngine {
                 ready_tasks.len()
             );
 
-            // If no tasks are ready, check if we're done or waiting for input
             if ready_tasks.is_empty() {
                 if waiting_for_input.is_empty() {
                     debug!(
@@ -640,7 +595,6 @@ impl WorkflowEngine {
                 }
             }
 
-            // Execute all ready tasks in parallel
             debug!(
                 execution_id = %execution_id,
                 round = execution_round,
@@ -649,7 +603,6 @@ impl WorkflowEngine {
             );
             let results = self.execute_round(ready_tasks, &mut context).await?;
 
-            // Process results
             debug!(
                 execution_id = %execution_id,
                 round = execution_round,
@@ -666,7 +619,6 @@ impl WorkflowEngine {
                     "Processing task result"
                 );
 
-                // Check if task is waiting for input
                 if let Some(waiting) = result.output.get("waiting_for_input") {
                     if waiting.as_bool().unwrap_or(false) {
                         waiting_for_input.insert(task.id.clone());
@@ -688,7 +640,6 @@ impl WorkflowEngine {
                         "✅ Task completed successfully"
                     );
 
-                    // Add to audit trail
                     audit_trail.push(AuditEntry {
                         task_id: task.id.clone(),
                         status: AuditStatus::Success,
@@ -739,7 +690,6 @@ impl WorkflowEngine {
             "🏁 Workflow resume execution finished"
         );
 
-        // Build task info for result
         let tasks = workflow
             .tasks
             .iter()

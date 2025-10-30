@@ -1,8 +1,3 @@
-//! JSON Schema validation module for workflow definitions
-//!
-//! This module provides comprehensive validation of workflow JSON structures
-//! using a manually-written JSON Schema (draft-07) with full function type constraints.
-
 pub mod schema;
 pub mod types;
 pub mod validator;

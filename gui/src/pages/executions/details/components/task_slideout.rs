@@ -19,10 +19,10 @@ pub fn TaskSlideout(props: TaskSlideoutProps) -> Element {
         on_close,
     } = props;
 
-    // Query task details
+
     let (task_state, refetch) = use_task_details_query(execution_id.clone(), task_id.clone());
 
-    // Refetch when task_id changes
+
     let task_id_for_invalidation = task_id.clone();
     use_effect(move || {
         if !task_id_for_invalidation.is_empty() {
@@ -30,7 +30,7 @@ pub fn TaskSlideout(props: TaskSlideoutProps) -> Element {
         }
     });
 
-    // Get task from query
+
     let task = if task_id.is_empty() {
         None
     } else {
@@ -43,7 +43,7 @@ pub fn TaskSlideout(props: TaskSlideoutProps) -> Element {
 
     let mut selected_tab = use_signal(|| "Details".to_string());
 
-    // Fetch user input request
+
     let input_request = use_signal(|| None::<s_e_e_core::UserInputRequest>);
 
     use_effect({
@@ -112,7 +112,7 @@ pub fn TaskSlideout(props: TaskSlideoutProps) -> Element {
             children: rsx! {
                 if let Some(task) = task.as_ref() {
                     div { class: "space-y-4",
-                        // Tab buttons
+
                         div { class: "border-b border-zinc-200 dark:border-zinc-700",
                             div { class: "flex space-x-8",
                                 button {
@@ -133,7 +133,7 @@ pub fn TaskSlideout(props: TaskSlideoutProps) -> Element {
                             }
                         }
 
-                        // Tab content
+
                         div { class: "mt-4",
                             if selected_tab() == "Details" {
                                 div { class: "bg-zinc-50 dark:bg-zinc-800 rounded-xl p-6",

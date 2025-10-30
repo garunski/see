@@ -26,7 +26,6 @@ pub fn build_renderable_task(
         .and_then(|v| v.as_str())
         .unwrap_or("Unknown");
 
-    // Get function type
     let function_name = task_data
         .get("function")
         .and_then(|f| f.get("name"))
@@ -35,16 +34,12 @@ pub fn build_renderable_task(
 
     let (function_icon, function_color) = get_function_style(function_name);
 
-    // Try to get task execution data
     let has_execution_data = task_map.contains_key(task_id);
     let (status_icon, status_color) = if let Some(task_exec) = task_map.get(task_id) {
-        // Task has execution data - use its status
         get_status_style(task_exec.status.as_str())
     } else if workflow_is_failed {
-        // Task has no execution data and workflow failed - show as errored (never started)
         get_status_style("errored")
     } else {
-        // Task has no execution data and workflow is still running - show as pending
         get_status_style("pending")
     };
 

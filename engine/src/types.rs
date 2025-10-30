@@ -1,10 +1,7 @@
-//! Core data types for the new workflow engine
-
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::collections::HashMap;
 
-/// Core task structure with recursive next_tasks support
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct EngineTask {
     pub id: String,
@@ -15,10 +12,9 @@ pub struct EngineTask {
     #[serde(default)]
     pub status: TaskStatus,
     #[serde(default)]
-    pub is_root: bool, // True for tasks that are root-level in the workflow
+    pub is_root: bool,
 }
 
-/// Task function types supported by the engine
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(tag = "name", content = "input")]
 pub enum TaskFunction {
@@ -37,7 +33,6 @@ pub enum TaskFunction {
     },
 }
 
-/// Workflow structure containing tasks
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct EngineWorkflow {
     pub id: String,
@@ -45,7 +40,6 @@ pub struct EngineWorkflow {
     pub tasks: Vec<EngineTask>,
 }
 
-/// Result of task execution
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct TaskResult {
     pub success: bool,
@@ -53,7 +47,6 @@ pub struct TaskResult {
     pub error: Option<String>,
 }
 
-/// Task execution status
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Default)]
 pub enum TaskStatus {
     #[serde(rename = "pending")]
@@ -70,7 +63,6 @@ pub enum TaskStatus {
 }
 
 impl TaskStatus {
-    /// Convert TaskStatus to string representation
     pub fn as_str(&self) -> &'static str {
         match self {
             TaskStatus::Pending => "pending",
@@ -129,7 +121,6 @@ impl std::fmt::Display for AuditStatus {
     }
 }
 
-/// Execution context for task handlers
 #[derive(Debug, Clone)]
 pub struct ExecutionContext {
     pub execution_id: String,

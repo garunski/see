@@ -14,7 +14,6 @@ pub fn WorkflowDetailsPage(id: String) -> Element {
 
     let (exec_state, _refetch) = use_workflow_execution_query(id.clone());
 
-    // Redirect after successful deletion
     use_effect(move || {
         if delete_state.read().is_success {
             navigator.push(Route::ExecutionListPage {});

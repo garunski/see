@@ -1,7 +1,3 @@
-//! Execution store operations
-//!
-//! This file contains ONLY execution CRUD operations following Single Responsibility Principle.
-
 use super::Store;
 use crate::logging::{
     log_db_operation_error, log_db_operation_start, log_db_operation_success, log_deserialization,
@@ -11,7 +7,6 @@ use crate::models::{TaskExecution, WorkflowExecution, WorkflowMetadata};
 use sqlx::Row;
 
 impl Store {
-    /// Save a workflow execution
     pub async fn save_workflow_execution(
         &self,
         execution: WorkflowExecution,
@@ -47,7 +42,6 @@ impl Store {
         Ok(())
     }
 
-    /// Get a workflow execution by ID
     pub async fn get_workflow_execution(
         &self,
         id: &str,
@@ -91,7 +85,6 @@ impl Store {
         }
     }
 
-    /// List all workflow executions
     pub async fn list_workflow_executions(&self) -> Result<Vec<WorkflowExecution>, String> {
         log_db_operation_start("list_workflow_executions", "workflow_executions");
 
@@ -129,7 +122,6 @@ impl Store {
         Ok(executions)
     }
 
-    /// Delete a workflow execution
     pub async fn delete_workflow_execution(&self, id: &str) -> Result<(), String> {
         log_db_operation_start("delete_workflow_execution", "workflow_executions");
 
@@ -150,7 +142,6 @@ impl Store {
         Ok(())
     }
 
-    /// List workflow metadata
     pub async fn list_workflow_metadata(&self) -> Result<Vec<WorkflowMetadata>, String> {
         log_db_operation_start("list_workflow_metadata", "workflow_executions");
 
@@ -171,14 +162,11 @@ impl Store {
         Ok(metadata)
     }
 
-    /// Delete workflow metadata and associated tasks
     pub async fn delete_workflow_metadata_and_tasks(&self, id: &str) -> Result<(), String> {
         log_db_operation_start("delete_workflow_metadata_and_tasks", "workflow_executions");
 
-        // Delete execution
         self.delete_workflow_execution(id).await?;
 
-        // Get all tasks and filter by workflow_id
         let rows = sqlx::query("SELECT id, data FROM task_executions")
             .fetch_all(self.pool())
             .await
@@ -191,7 +179,6 @@ impl Store {
                 format!("Database error: {}", e)
             })?;
 
-        // Delete tasks that belong to this workflow
         for row in rows {
             let task_id: String = row.get("id");
             let json_data: String = row.get("data");
@@ -229,7 +216,6 @@ impl Store {
         Ok(())
     }
 
-    /// Get workflow execution with tasks
     pub async fn get_workflow_with_tasks(&self, id: &str) -> Result<WorkflowExecution, String> {
         log_db_operation_start("get_workflow_with_tasks", "workflow_executions");
 
@@ -238,9 +224,6 @@ impl Store {
             .await?
             .ok_or_else(|| format!("Workflow execution not found: {}", id))?;
 
-        // Only load additional tasks from task_executions table if the execution has no tasks
-        // This handles cases where tasks might be stored separately, but preserves tasks
-        // that are already embedded in the WorkflowExecution JSON
         if execution.tasks.is_empty() {
             let additional_tasks = self.get_tasks_for_workflow(id).await?;
             execution.tasks = additional_tasks;

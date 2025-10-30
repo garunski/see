@@ -1,5 +1,3 @@
-//! Error types for the new workflow engine
-
 use thiserror::Error;
 
 #[derive(Error, Debug)]

@@ -1,8 +1,5 @@
-//! Comprehensive tests for workflow JSON schema validation
-
 use s_e_e_core::validation::{self};
 
-/// Test all example workflows from engine/examples/
 #[cfg(test)]
 mod example_tests {
     use super::*;
@@ -10,7 +7,6 @@ mod example_tests {
     use std::path::Path;
 
     fn load_example_file(name: &str) -> String {
-        // Try multiple paths for different test environments
         let paths = [
             Path::new("engine/examples").join(name),
             Path::new("../engine/examples").join(name),
@@ -554,7 +550,7 @@ mod error_message_tests {
         }"#;
 
         let result = validation::validate_workflow_json(json);
-        // Valid workflow, should pass
+
         assert!(result.is_ok());
     }
 
@@ -581,7 +577,6 @@ mod error_message_tests {
         let errors = result.unwrap_err();
         assert!(!errors.errors.is_empty());
 
-        // Check that errors have helpful suggestions
         for error in &errors.errors {
             assert!(
                 !error.message.is_empty(),

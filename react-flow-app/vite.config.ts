@@ -1,20 +1,19 @@
-import { defineConfig } from 'vite';
-import react from '@vitejs/plugin-react';
+import { defineConfig } from "vite";
+import react from "@vitejs/plugin-react";
 
 export default defineConfig({
   plugins: [react()],
-  base: '/assets/workflow-visualizer/',
+  base: "/assets/workflow-visualizer/",
   build: {
-    outDir: '../gui/assets/workflow-visualizer',
+    outDir: "../gui/assets/workflow-visualizer",
     emptyOutDir: true,
-    assetsDir: '.', // Don't nest assets in subdirectory
+    assetsDir: ".",
     rollupOptions: {
       output: {
-        entryFileNames: 'index.js',
-        chunkFileNames: '[name].js',
-        assetFileNames: '[name].[ext]',
+        entryFileNames: "index.js",
+        chunkFileNames: "[name].js",
+        assetFileNames: "[name].[ext]",
       },
     },
   },
 });
-

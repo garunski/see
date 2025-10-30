@@ -1,11 +1,8 @@
-// Error handling tests ONLY
-
 use s_e_e_core::CoreError;
 use s_e_e_engine::{EngineError, HandlerError, ParserError};
 
 #[test]
 fn test_core_error_engine_conversion() {
-    // Test Engine error conversion
     let parser_error = ParserError::MissingField("id".to_string());
     let engine_error = EngineError::Parser(parser_error);
     let core_error: CoreError = engine_error.into();
@@ -47,7 +44,6 @@ fn test_core_error_execution_conversion() {
 
 #[test]
 fn test_core_error_string_conversion() {
-    // Test String to Persistence error conversion
     let persistence_error: CoreError = "test persistence error".to_string().into();
 
     match persistence_error {
@@ -96,7 +92,6 @@ fn test_core_error_execution() {
 
 #[test]
 fn test_core_error_display() {
-    // Test that all error variants implement Display correctly
     let errors = vec![
         CoreError::Engine(EngineError::Parser(ParserError::MissingField(
             "test".to_string(),
@@ -116,7 +111,6 @@ fn test_core_error_display() {
 
 #[test]
 fn test_core_error_debug() {
-    // Test that all error variants implement Debug correctly
     let error = CoreError::WorkflowNotFound("test-workflow".to_string());
     let debug_msg = format!("{:?}", error);
 

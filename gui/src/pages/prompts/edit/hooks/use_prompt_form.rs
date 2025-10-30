@@ -14,7 +14,6 @@ pub fn use_prompt_form(id: String, loaded_prompt: Option<Prompt>) -> PromptFormS
     let mut content = use_signal(String::new);
     let validation_error = use_signal(String::new);
 
-    // Load prompt data into form fields only once
     let mut is_loaded = use_signal(|| false);
     use_effect(move || {
         if !is_loaded() && !id.is_empty() {

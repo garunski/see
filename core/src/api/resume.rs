@@ -1,5 +1,3 @@
-// Task resumption API ONLY
-
 use crate::bridge::audit::audit_entry_to_event;
 use crate::bridge::execution::workflow_result_to_execution;
 use crate::bridge::{OutputCallback, WorkflowResult};
@@ -9,26 +7,20 @@ use s_e_e_engine::WorkflowEngine;
 use s_e_e_persistence::{TaskExecutionStatus, WorkflowExecutionStatus};
 use std::collections::{HashMap, HashSet};
 
-/// Resume workflow execution after user input has been provided
-/// This continues the workflow from where it left off
 pub async fn resume_workflow_execution(
     execution_id: &str,
     callback: Option<OutputCallback>,
 ) -> Result<WorkflowResult, CoreError> {
     tracing::info!("Resuming workflow execution: {}", execution_id);
 
-    // Step 1: Load WorkflowExecution from Persistence
     let store = get_global_store()?;
 
-    // Load execution metadata (without tasks first)
     let mut execution = store
         .get_workflow_execution(execution_id)
         .await
         .map_err(CoreError::Persistence)?
         .ok_or_else(|| CoreError::WorkflowNotFound(execution_id.to_string()))?;
 
-    // Always reload tasks from the database to ensure we have the latest state
-    // This is critical because tasks are updated separately via save_task_execution
     let fresh_tasks = store
         .get_tasks_for_workflow(execution_id)
         .await
@@ -43,7 +35,6 @@ pub async fn resume_workflow_execution(
         "Loaded workflow execution with fresh tasks from database"
     );
 
-    // Step 2: Validate execution is in a state where it can be resumed
     if !matches!(
         execution.status,
         WorkflowExecutionStatus::WaitingForInput | WorkflowExecutionStatus::Running
@@ -54,7 +45,6 @@ pub async fn resume_workflow_execution(
         )));
     }
 
-    // Step 3: Parse workflow snapshot to EngineWorkflow
     let workflow_json_str = serde_json::to_string(&execution.workflow_snapshot).map_err(|e| {
         CoreError::Execution(format!("Failed to serialize workflow snapshot: {}", e))
     })?;
@@ -69,8 +59,6 @@ pub async fn resume_workflow_execution(
         "Parsed workflow from snapshot"
     );
 
-    // Step 4: Build set of completed tasks and user inputs
-    // IMPORTANT: We iterate through tasks from the database to ensure we have the latest state
     let mut completed_task_ids = HashSet::new();
     let mut task_user_inputs = HashMap::new();
 
@@ -96,7 +84,6 @@ pub async fn resume_workflow_execution(
                 completed_task_ids.insert(task_execution.id.clone());
             }
             TaskExecutionStatus::WaitingForInput => {
-                // If task has user_input, it means input was provided but workflow hasn't resumed yet
                 if let Some(ref user_input) = task_execution.user_input {
                     tracing::debug!(
                         execution_id = %execution_id,
@@ -107,9 +94,7 @@ pub async fn resume_workflow_execution(
                     task_user_inputs.insert(task_execution.id.clone(), user_input.clone());
                 }
             }
-            _ => {
-                // Tasks that are still pending or in progress
-            }
+            _ => {}
         }
     }
 
@@ -120,7 +105,6 @@ pub async fn resume_workflow_execution(
         "Built execution state"
     );
 
-    // Step 5: Resume workflow execution via Engine
     let engine = WorkflowEngine::new();
     let engine_result = engine
         .resume_workflow_execution(
@@ -139,7 +123,6 @@ pub async fn resume_workflow_execution(
         "Engine resume completed"
     );
 
-    // Step 6: Check if workflow is waiting for input again
     let has_input_waiting = engine_result
         .tasks
         .iter()
@@ -151,7 +134,6 @@ pub async fn resume_workflow_execution(
             "Workflow paused - waiting for user input again"
         );
 
-        // Create UserInputRequest records for tasks waiting for input
         for task_info in &engine_result.tasks {
             if matches!(task_info.status, s_e_e_engine::TaskStatus::WaitingForInput) {
                 if let Some(task_node) =
@@ -174,20 +156,17 @@ pub async fn resume_workflow_execution(
             }
         }
 
-        // Convert Engine Result to Persistence Types
         let waiting_execution = workflow_result_to_execution(
             engine_result.clone(),
             execution_id.to_string(),
             execution.created_at,
         );
 
-        // Preserve the workflow snapshot
         let mut updated_execution = waiting_execution.clone();
         updated_execution.workflow_snapshot = execution.workflow_snapshot;
         updated_execution.status = WorkflowExecutionStatus::WaitingForInput;
         updated_execution.completed_at = None;
 
-        // Save Task Executions to Persistence
         for task in &updated_execution.tasks {
             store
                 .save_task_execution(task.clone())
@@ -195,20 +174,17 @@ pub async fn resume_workflow_execution(
                 .map_err(CoreError::Persistence)?;
         }
 
-        // Save the execution with tasks
         store
             .save_workflow_execution(updated_execution)
             .await
             .map_err(CoreError::Persistence)?;
 
-        // Stream progress via OutputCallback
         if let Some(ref callback) = callback {
             callback("Workflow paused - waiting for user input".to_string());
         }
 
-        // Return result indicating workflow is paused for input
         return Ok(WorkflowResult {
-            success: false, // Workflow not complete, waiting for input
+            success: false,
             workflow_name: engine_result.workflow_name,
             execution_id: execution_id.to_string(),
             tasks: engine_result.tasks,
@@ -218,7 +194,6 @@ pub async fn resume_workflow_execution(
         });
     }
 
-    // Step 7: Workflow completed - save final state
     let _completed_at = chrono::Utc::now();
     let mut final_execution = workflow_result_to_execution(
         engine_result.clone(),
@@ -226,10 +201,8 @@ pub async fn resume_workflow_execution(
         execution.created_at,
     );
 
-    // Preserve the workflow snapshot
     final_execution.workflow_snapshot = execution.workflow_snapshot;
 
-    // Save Task Executions to Persistence
     for task in &final_execution.tasks {
         store
             .save_task_execution(task.clone())
@@ -237,7 +210,6 @@ pub async fn resume_workflow_execution(
             .map_err(CoreError::Persistence)?;
     }
 
-    // Save Audit Events to Persistence
     for audit_entry in &engine_result.audit_trail {
         let audit_event = audit_entry_to_event(audit_entry)?;
         store
@@ -246,18 +218,15 @@ pub async fn resume_workflow_execution(
             .map_err(CoreError::Persistence)?;
     }
 
-    // Update Final Execution Record
     store
         .save_workflow_execution(final_execution)
         .await
         .map_err(CoreError::Persistence)?;
 
-    // Stream progress via OutputCallback
     if let Some(ref callback) = callback {
         callback("Workflow execution completed".to_string());
     }
 
-    // Step 8: Return WorkflowResult
     let result = WorkflowResult {
         success: engine_result.success,
         workflow_name: engine_result.workflow_name,
@@ -277,7 +246,6 @@ pub async fn resume_workflow_execution(
     Ok(result)
 }
 
-/// Find a task in the workflow snapshot by task ID
 fn find_task_in_snapshot<'a>(
     snapshot: &'a serde_json::Value,
     task_id: &str,
@@ -306,7 +274,6 @@ fn find_task_in_snapshot<'a>(
     None
 }
 
-/// Create a UserInputRequest from a task node in the snapshot
 fn create_input_request_from_task(
     task_node: &serde_json::Value,
     task_id: &str,

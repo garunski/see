@@ -1,5 +1,3 @@
-// Audit conversion tests ONLY
-
 use chrono::Datelike;
 use s_e_e_core::{bridge::*, CoreError};
 use s_e_e_engine::{AuditEntry, AuditStatus as EngineAuditStatus};
@@ -7,7 +5,6 @@ use s_e_e_persistence::AuditStatus as PersistenceAuditStatus;
 
 #[test]
 fn test_audit_status_conversion() {
-    // Test all engine to persistence audit status conversions
     let test_cases = vec![
         (EngineAuditStatus::Success, PersistenceAuditStatus::Success),
         (EngineAuditStatus::Failure, PersistenceAuditStatus::Failure),
@@ -63,7 +60,7 @@ fn test_timestamp_parsing() {
 fn test_invalid_timestamp_parsing() {
     let invalid_timestamps = vec![
         "invalid timestamp",
-        "2024-13-45T25:70:90Z", // Invalid date/time
+        "2024-13-45T25:70:90Z",
         "not-a-timestamp",
         "",
     ];
