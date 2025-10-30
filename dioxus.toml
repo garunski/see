@@ -19,5 +19,5 @@ icon = [
     "gui/assets/branding/see.ico"
 ]
 
-[bundle.windows]
-webview_install_mode = { type = "embedBootstrapper" }
+[bundle.windows.webview_install_mode]
+type = "EmbedBootstrapper"
