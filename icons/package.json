@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "clean": "rm -rf dist",
-    "build": "npm run build:heroicons && npm run build:branding",
+    "build": "npm run build:branding && npm run build:heroicons",
     "build:heroicons": "node copy-icons.js",
     "build:branding": "node scripts/build.mjs",
     "verify": "node scripts/verify.mjs"
