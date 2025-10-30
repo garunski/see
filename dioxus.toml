@@ -18,3 +18,6 @@ icon = [
     "gui/assets/branding/see.icns",
     "gui/assets/branding/see.ico"
 ]
+
+[bundle.windows]
+webview_install_mode = "EmbedBootstrapper"
