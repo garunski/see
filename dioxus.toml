@@ -20,4 +20,4 @@ icon = [
 ]
 
 [bundle.windows]
-webview_install_mode = "EmbedBootstrapper"
+webview_install_mode = { type = "embedBootstrapper" }
