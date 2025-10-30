@@ -205,12 +205,29 @@ jobs:
         if: steps.cache-dx.outputs.cache-hit != 'true'
         run: cargo binstall dioxus-cli --no-confirm
 
-      - name: Add cargo bin to PATH
-        run: echo "$HOME/.cargo/bin" >> $GITHUB_PATH
-
       - name: Build desktop app bundle
         id: bundle
         run: |
+          # Ensure cargo bin is in PATH
+          export PATH="$HOME/.cargo/bin:$PATH"
+          
+          # Debug: Check environment
+          echo "PATH=$PATH"
+          echo "CARGO_HOME=$CARGO_HOME"
+          echo "Checking for dx..."
+          which dx || echo "dx not in PATH"
+          ls -la "$HOME/.cargo/bin/" | grep dx || echo "dx not in cargo bin"
+          
+          # If dx not found, install it
+          if ! which dx; then
+            echo "Installing dx..."
+            cargo binstall dioxus-cli --no-confirm --force
+          fi
+          
+          # Verify dx is now available
+          which dx
+          dx --version
+          
           dx bundle --package s_e_e_gui --release --json-output 2>&1 | tee bundle_output.log
           
           # Extract DMG path from the log - it's in a message like "Bundled app at: /path/to/file.dmg"
