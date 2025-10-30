@@ -27,6 +27,8 @@ const iconMap = {
   play: "play",
   stop: "stop",
   bars_3: "bars-3",
+  check_circle: "check-circle",
+  pause: "pause",
   copy: "document-duplicate",
   save: "arrow-down-on-square",
   code_bracket: "code-bracket",
