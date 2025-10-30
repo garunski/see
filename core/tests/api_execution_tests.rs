@@ -42,27 +42,24 @@ fn test_workflow_execution_flow() {
     let _ = cleanup_test_db();
     let init_result = rt.block_on(init_test_store());
 
-    match init_result {
-        Ok(_) => {
-            let store = get_global_store().unwrap();
+    if init_result.is_ok() {
+        let store = get_global_store().unwrap();
 
-            let workflow = create_test_workflow();
-            rt.block_on(store.save_workflow(&workflow)).unwrap();
+        let workflow = create_test_workflow();
+        rt.block_on(store.save_workflow(&workflow)).unwrap();
 
-            let result = rt.block_on(execute_workflow_by_id(&workflow.id, None));
+        let result = rt.block_on(execute_workflow_by_id(&workflow.id, None));
 
-            match result {
-                Ok(workflow_result) => {
-                    assert_eq!(workflow_result.workflow_name, "Test Workflow");
-                    assert!(!workflow_result.execution_id.is_empty());
-                }
-                Err(CoreError::Engine(_)) => {}
-                Err(other) => {
-                    panic!("Unexpected error: {:?}", other);
-                }
+        match result {
+            Ok(workflow_result) => {
+                assert_eq!(workflow_result.workflow_name, "Test Workflow");
+                assert!(!workflow_result.execution_id.is_empty());
+            }
+            Err(CoreError::Engine(_)) => {}
+            Err(other) => {
+                panic!("Unexpected error: {:?}", other);
             }
         }
-        Err(_) => {}
     }
 }
 
@@ -71,18 +68,15 @@ fn test_workflow_not_found() {
     let rt = tokio::runtime::Runtime::new().unwrap();
     let init_result = rt.block_on(init_test_store());
 
-    match init_result {
-        Ok(_) => {
-            let result = rt.block_on(execute_workflow_by_id("nonexistent-workflow", None));
+    if init_result.is_ok() {
+        let result = rt.block_on(execute_workflow_by_id("nonexistent-workflow", None));
 
-            match result {
-                Err(CoreError::WorkflowNotFound(id)) => {
-                    assert_eq!(id, "nonexistent-workflow");
-                }
-                other => panic!("Expected WorkflowNotFound error, got: {:?}", other),
+        match result {
+            Err(CoreError::WorkflowNotFound(id)) => {
+                assert_eq!(id, "nonexistent-workflow");
             }
+            other => panic!("Expected WorkflowNotFound error, got: {:?}", other),
         }
-        Err(_) => {}
     }
 }
 
@@ -91,23 +85,20 @@ fn test_workflow_execution_with_callback() {
     let rt = tokio::runtime::Runtime::new().unwrap();
     let init_result = rt.block_on(init_test_store());
 
-    match init_result {
-        Ok(_) => {
-            let store = get_global_store().unwrap();
+    if init_result.is_ok() {
+        let store = get_global_store().unwrap();
 
-            let workflow = create_test_workflow();
-            rt.block_on(store.save_workflow(&workflow)).unwrap();
+        let workflow = create_test_workflow();
+        rt.block_on(store.save_workflow(&workflow)).unwrap();
 
-            let callback_called = Arc::new(AtomicBool::new(false));
-            let callback_called_clone = callback_called.clone();
+        let callback_called = Arc::new(AtomicBool::new(false));
+        let callback_called_clone = callback_called.clone();
 
-            let callback: OutputCallback = Arc::new(move |_msg: String| {
-                callback_called_clone.store(true, Ordering::SeqCst);
-            });
+        let callback: OutputCallback = Arc::new(move |_msg: String| {
+            callback_called_clone.store(true, Ordering::SeqCst);
+        });
 
-            let _result = rt.block_on(execute_workflow_by_id(&workflow.id, Some(callback)));
-        }
-        Err(_) => {}
+        let _result = rt.block_on(execute_workflow_by_id(&workflow.id, Some(callback)));
     }
 }
 
@@ -116,31 +107,28 @@ fn test_invalid_workflow_execution() {
     let rt = tokio::runtime::Runtime::new().unwrap();
     let init_result = rt.block_on(init_test_store());
 
-    match init_result {
-        Ok(_) => {
-            let store = get_global_store().unwrap();
+    if init_result.is_ok() {
+        let store = get_global_store().unwrap();
 
-            let invalid_workflow = WorkflowDefinition {
-                id: "invalid-workflow".to_string(),
-                name: "Invalid Workflow".to_string(),
-                description: None,
-                content: "invalid json".to_string(),
-                is_default: false,
-                is_edited: false,
-                created_at: chrono::Utc::now(),
-                updated_at: chrono::Utc::now(),
-            };
+        let invalid_workflow = WorkflowDefinition {
+            id: "invalid-workflow".to_string(),
+            name: "Invalid Workflow".to_string(),
+            description: None,
+            content: "invalid json".to_string(),
+            is_default: false,
+            is_edited: false,
+            created_at: chrono::Utc::now(),
+            updated_at: chrono::Utc::now(),
+        };
 
-            rt.block_on(store.save_workflow(&invalid_workflow)).unwrap();
+        rt.block_on(store.save_workflow(&invalid_workflow)).unwrap();
 
-            let result = rt.block_on(execute_workflow_by_id(&invalid_workflow.id, None));
+        let result = rt.block_on(execute_workflow_by_id(&invalid_workflow.id, None));
 
-            match result {
-                Err(CoreError::Execution(_)) => {}
-                Err(other) => panic!("Expected Engine error, got: {:?}", other),
-                Ok(_) => panic!("Should have failed for invalid JSON"),
-            }
+        match result {
+            Err(CoreError::Execution(_)) => {}
+            Err(other) => panic!("Expected Engine error, got: {:?}", other),
+            Ok(_) => panic!("Should have failed for invalid JSON"),
         }
-        Err(_) => {}
     }
 }

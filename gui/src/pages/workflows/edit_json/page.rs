@@ -161,9 +161,7 @@ pub fn WorkflowJsonEditPage(id: String) -> Element {
                         variant: IconButtonVariant::Ghost,
                         size: IconButtonSize::Medium,
                         onclick: move |_| {
-                            if has_unsaved_changes() {
-
-                            }
+                            let _ = has_unsaved_changes();
                             navigator.go_back();
                         },
                         class: Some("inline-flex items-center gap-x-1.5 rounded-md bg-zinc-100 dark:bg-zinc-800 px-3 py-2 text-sm font-semibold text-zinc-900 dark:text-zinc-100 shadow-sm hover:bg-zinc-200 dark:hover:bg-zinc-700".to_string()),

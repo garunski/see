@@ -28,15 +28,12 @@ pub fn JsonEditor(props: JsonEditorProps) -> Element {
         if !has_formatted() {
             let content_str = content();
 
-            match serde_json::from_str::<serde_json::Value>(&content_str) {
-                Ok(json_value) => {
-                    if let Ok(formatted) = serde_json::to_string_pretty(&json_value) {
-                        if formatted != content_str {
-                            on_content_change.call(formatted);
-                        }
+            if let Ok(json_value) = serde_json::from_str::<serde_json::Value>(&content_str) {
+                if let Ok(formatted) = serde_json::to_string_pretty(&json_value) {
+                    if formatted != content_str {
+                        on_content_change.call(formatted);
                     }
                 }
-                Err(_) => {}
             }
             has_formatted.set(true);
         }

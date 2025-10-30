@@ -61,26 +61,23 @@ fn test_store_thread_safety() {
 
     let init_result = rt.block_on(store_singleton::init_global_store());
 
-    match init_result {
-        Ok(_) => {
-            let handles: Vec<_> = (0..10)
-                .map(|_i| {
-                    rt.spawn(async move {
-                        let store = store_singleton::get_global_store();
-                        assert!(store.is_ok(), "Failed to get store in concurrent task");
-                        store.unwrap()
-                    })
+    if init_result.is_ok() {
+        let handles: Vec<_> = (0..10)
+            .map(|_i| {
+                rt.spawn(async move {
+                    let store = store_singleton::get_global_store();
+                    assert!(store.is_ok(), "Failed to get store in concurrent task");
+                    store.unwrap()
                 })
-                .collect();
+            })
+            .collect();
 
-            for handle in handles.into_iter() {
-                let store = rt.block_on(handle).unwrap();
-                assert!(
-                    Arc::strong_count(&store) > 1,
-                    "Store should be shared across tasks"
-                );
-            }
+        for handle in handles.into_iter() {
+            let store = rt.block_on(handle).unwrap();
+            assert!(
+                Arc::strong_count(&store) > 1,
+                "Store should be shared across tasks"
+            );
         }
-        Err(_) => {}
     }
 }

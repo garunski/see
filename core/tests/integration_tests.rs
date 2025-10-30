@@ -21,59 +21,56 @@ fn test_workflow_execution_persistence() {
     let rt = tokio::runtime::Runtime::new().unwrap();
     let init_result = rt.block_on(init_test_store());
 
-    match init_result {
-        Ok(_) => {
-            let store = get_global_store().unwrap();
+    if init_result.is_ok() {
+        let store = get_global_store().unwrap();
 
-            let workflow = WorkflowDefinition {
-                id: uuid::Uuid::new_v4().to_string(),
-                name: "Test Workflow".to_string(),
-                description: Some("Test description".to_string()),
-                content: r#"{
-                    "id": "test-workflow",
-                    "name": "Test Workflow",
-                    "tasks": [
-                        {
-                            "id": "task-1",
-                            "name": "Echo Hello",
-                            "function": {
-                                "cli_command": {
-                                    "command": "echo",
-                                    "args": ["Hello, World!"]
-                                }
-                            },
-                            "next_tasks": []
-                        }
-                    ]
-                }"#
-                .to_string(),
-                is_default: false,
-                is_edited: false,
-                created_at: chrono::Utc::now(),
-                updated_at: chrono::Utc::now(),
-            };
-
-            rt.block_on(store.save_workflow(&workflow)).unwrap();
-
-            let result = rt.block_on(execute_workflow_by_id(&workflow.id, None));
-
-            if let Ok(workflow_result) = result {
-                let execution =
-                    rt.block_on(store.get_workflow_execution(&workflow_result.execution_id));
-
-                match execution {
-                    Ok(Some(exec)) => {
-                        assert_eq!(exec.id, workflow_result.execution_id);
-                        assert_eq!(exec.workflow_name, workflow_result.workflow_name);
+        let workflow = WorkflowDefinition {
+            id: uuid::Uuid::new_v4().to_string(),
+            name: "Test Workflow".to_string(),
+            description: Some("Test description".to_string()),
+            content: r#"{
+                "id": "test-workflow",
+                "name": "Test Workflow",
+                "tasks": [
+                    {
+                        "id": "task-1",
+                        "name": "Echo Hello",
+                        "function": {
+                            "cli_command": {
+                                "command": "echo",
+                                "args": ["Hello, World!"]
+                            }
+                        },
+                        "next_tasks": []
                     }
-                    Ok(None) => {}
-                    Err(e) => {
-                        println!("Database error (acceptable in tests): {}", e);
-                    }
+                ]
+            }"#
+            .to_string(),
+            is_default: false,
+            is_edited: false,
+            created_at: chrono::Utc::now(),
+            updated_at: chrono::Utc::now(),
+        };
+
+        rt.block_on(store.save_workflow(&workflow)).unwrap();
+
+        let result = rt.block_on(execute_workflow_by_id(&workflow.id, None));
+
+        if let Ok(workflow_result) = result {
+            let execution =
+                rt.block_on(store.get_workflow_execution(&workflow_result.execution_id));
+
+            match execution {
+                Ok(Some(exec)) => {
+                    assert_eq!(exec.id, workflow_result.execution_id);
+                    assert_eq!(exec.workflow_name, workflow_result.workflow_name);
+                }
+                Ok(None) => {}
+                Err(e) => {
+                    println!("Database error (acceptable in tests): {}", e);
                 }
             }
         }
-        Err(_) => {}
     }
 }
 
@@ -82,34 +79,31 @@ fn test_empty_workflow_execution() {
     let rt = tokio::runtime::Runtime::new().unwrap();
     let init_result = rt.block_on(init_test_store());
 
-    match init_result {
-        Ok(_) => {
-            let store = get_global_store().unwrap();
+    if init_result.is_ok() {
+        let store = get_global_store().unwrap();
 
-            let empty_workflow = WorkflowDefinition {
-                id: "empty-workflow".to_string(),
-                name: "Empty Workflow".to_string(),
-                description: None,
-                content: "".to_string(),
-                is_default: false,
-                is_edited: false,
-                created_at: chrono::Utc::now(),
-                updated_at: chrono::Utc::now(),
-            };
+        let empty_workflow = WorkflowDefinition {
+            id: "empty-workflow".to_string(),
+            name: "Empty Workflow".to_string(),
+            description: None,
+            content: "".to_string(),
+            is_default: false,
+            is_edited: false,
+            created_at: chrono::Utc::now(),
+            updated_at: chrono::Utc::now(),
+        };
 
-            rt.block_on(store.save_workflow(&empty_workflow)).unwrap();
+        rt.block_on(store.save_workflow(&empty_workflow)).unwrap();
 
-            let result = rt.block_on(execute_workflow_by_id(&empty_workflow.id, None));
+        let result = rt.block_on(execute_workflow_by_id(&empty_workflow.id, None));
 
-            match result {
-                Err(CoreError::Execution(msg)) => {
-                    assert!(msg.contains("empty"));
-                }
-                Err(other) => panic!("Expected Execution error, got: {:?}", other),
-                Ok(_) => panic!("Should have failed for empty content"),
+        match result {
+            Err(CoreError::Execution(msg)) => {
+                assert!(msg.contains("empty"));
             }
+            Err(other) => panic!("Expected Execution error, got: {:?}", other),
+            Ok(_) => panic!("Should have failed for empty content"),
         }
-        Err(_) => {}
     }
 }
 
@@ -118,49 +112,46 @@ fn test_embedded_data_population() {
     let rt = tokio::runtime::Runtime::new().unwrap();
     let init_result = rt.block_on(init_test_store());
 
-    match init_result {
-        Ok(_) => {
-            let populate_result = rt.block_on(populate_initial_data());
-            assert!(
-                populate_result.is_ok(),
-                "Failed to populate initial data: {:?}",
-                populate_result.err()
-            );
+    if init_result.is_ok() {
+        let populate_result = rt.block_on(populate_initial_data());
+        assert!(
+            populate_result.is_ok(),
+            "Failed to populate initial data: {:?}",
+            populate_result.err()
+        );
 
-            let store = get_global_store().unwrap();
+        let store = get_global_store().unwrap();
 
-            let workflows = rt.block_on(store.list_workflows()).unwrap();
-            assert!(
-                workflows.len() >= 4,
-                "Expected at least 4 workflows, found {}",
-                workflows.len()
-            );
+        let workflows = rt.block_on(store.list_workflows()).unwrap();
+        assert!(
+            workflows.len() >= 4,
+            "Expected at least 4 workflows, found {}",
+            workflows.len()
+        );
 
-            let prompts = rt.block_on(store.list_prompts()).unwrap();
-            assert!(
-                prompts.len() >= 3,
-                "Expected at least 3 prompts, found {}",
-                prompts.len()
-            );
+        let prompts = rt.block_on(store.list_prompts()).unwrap();
+        assert!(
+            prompts.len() >= 3,
+            "Expected at least 3 prompts, found {}",
+            prompts.len()
+        );
 
-            for workflow in &workflows {
-                if workflow.is_default {
-                    assert!(
-                        workflow.id.starts_with("system:"),
-                        "System workflow '{}' should have 'system:' prefix",
-                        workflow.id
-                    );
-                }
-            }
-
-            for prompt in &prompts {
+        for workflow in &workflows {
+            if workflow.is_default {
                 assert!(
-                    prompt.id.starts_with("system:"),
-                    "System prompt '{}' should have 'system:' prefix",
-                    prompt.id
+                    workflow.id.starts_with("system:"),
+                    "System workflow '{}' should have 'system:' prefix",
+                    workflow.id
                 );
             }
         }
-        Err(_) => {}
+
+        for prompt in &prompts {
+            assert!(
+                prompt.id.starts_with("system:"),
+                "System prompt '{}' should have 'system:' prefix",
+                prompt.id
+            );
+        }
     }
 }
