@@ -14,10 +14,7 @@
 - [Features](#features)  
 - [Usage](#usage)  
 - [Documentation](#documentation)  
-- [Contributing](#contributing)  
 - [License](#license)  
-- [Code of Conduct](#code-of-conduct)  
-- [Security](#security)  
 
 ---
 
