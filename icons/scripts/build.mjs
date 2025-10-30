@@ -45,7 +45,7 @@ async function generatePNGs(svgBuffer) {
       await sharp(svgBuffer)
         .resize(size, size, {
           fit: "contain",
-          background: { r: 0, g: 0, b: 0, alpha: 0 },
+          background: { r: 0, g: 0, b: 0, alpha: 0 }, // Transparent background
         })
         .png({
           compressionLevel: 9,
@@ -61,13 +61,17 @@ async function generatePNGs(svgBuffer) {
 async function assembleICO() {
   console.log("🪟 Assembling Windows ICO...");
 
-  // Use the 1024px PNG as input for png2icons
-  const inputPngPath = path.join(distDir, "png", "1024", "see.png");
-  const inputBuffer = await fs.readFile(inputPngPath);
+  // Generate 1024px PNG from SVG with black background for app icon
+  const svgBuffer = await fs.readFile(svgPath);
+  const tempPngBuffer = await sharp(svgBuffer)
+    .resize(1024, 1024)
+    .flatten({ background: '#000000' }) // Add black background
+    .png()
+    .toBuffer();
 
   // Create ICO with mix of BMP and PNG for Windows executables
   // usePNG=false, forWinExe=true means small icons as BMP, large as PNG
-  const icoBuffer = createICO(inputBuffer, BICUBIC, 0, false, true);
+  const icoBuffer = createICO(tempPngBuffer, BICUBIC, 0, false, true);
 
   if (!icoBuffer) {
     throw new Error("Failed to create ICO file");
@@ -83,12 +87,16 @@ async function assembleICO() {
 async function assembleICNS() {
   console.log("🍎 Assembling macOS ICNS...");
 
-  // Use the 1024px PNG as input for png2icons
-  const inputPngPath = path.join(distDir, "png", "1024", "see.png");
-  const inputBuffer = await fs.readFile(inputPngPath);
+  // Generate 1024px PNG from SVG with black background for app icon
+  const svgBuffer = await fs.readFile(svgPath);
+  const tempPngBuffer = await sharp(svgBuffer)
+    .resize(1024, 1024)
+    .flatten({ background: '#000000' }) // Add black background
+    .png()
+    .toBuffer();
 
   // Create ICNS with bicubic interpolation and no color reduction
-  const icnsBuffer = createICNS(inputBuffer, BICUBIC, 0);
+  const icnsBuffer = createICNS(tempPngBuffer, BICUBIC, 0);
 
   if (!icnsBuffer) {
     throw new Error("Failed to create ICNS file");
