@@ -1,0 +1,73 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+env:
+  CARGO_TERM_COLOR: always
+  RUST_BACKTRACE: 1
+
+jobs:
+  quality-checks:
+    name: Quality Checks
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: |
+            icons/package-lock.json
+            tailwind/package-lock.json
+            react-flow-app/package-lock.json
+
+      - name: Cache Rust dependencies
+        uses: Swatinem/rust-cache@v2
+        with:
+          shared-key: "ci-cache"
+
+      - name: Build icons
+        run: |
+          cd icons
+          npm ci
+          npm run build
+
+      - name: Build Tailwind CSS
+        run: |
+          cd tailwind
+          npm ci
+          npm run build
+
+      - name: Build React Flow visualizer
+        run: |
+          cd react-flow-app
+          npm ci
+          npm run build
+
+      - name: Check formatting
+        run: cargo fmt -- --check
+
+      - name: Run Clippy
+        run: cargo clippy --workspace --all-targets --all-features -- -D warnings
+
+      - name: Run tests
+        run: cargo test --workspace
+
+      - name: Build workspace
+        run: cargo build --workspace
+

@@ -10,4 +10,4 @@ proxy = ""
 
 [bundle]
 identifier = "com.s_e_e.workflow-engine"
-publisher = "Speculative Execution Engine"
+publisher = "Garunski"

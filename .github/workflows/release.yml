@@ -1,0 +1,248 @@
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      bump_type:
+        description: 'Version bump type'
+        required: true
+        type: choice
+        options:
+          - patch
+          - minor
+          - major
+  push:
+    tags:
+      - 'v*.*.*'
+
+env:
+  CARGO_TERM_COLOR: always
+  RUST_BACKTRACE: 1
+
+jobs:
+  version-bump:
+    name: Version Management
+    runs-on: macos-latest
+    if: github.event_name == 'workflow_dispatch'
+    outputs:
+      new_version: ${{ steps.bump.outputs.new_version }}
+      new_tag: ${{ steps.bump.outputs.new_tag }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Configure Git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install cargo-edit
+        run: cargo install cargo-edit
+
+      - name: Parse current version
+        id: current
+        run: |
+          CURRENT_VERSION=$(cargo metadata --no-deps --format-version 1 | jq -r '.packages[] | select(.name == "s_e_e_gui") | .version')
+          echo "current_version=$CURRENT_VERSION" >> $GITHUB_OUTPUT
+          echo "Current version: $CURRENT_VERSION"
+
+      - name: Calculate new version
+        id: bump
+        run: |
+          CURRENT="${{ steps.current.outputs.current_version }}"
+          BUMP_TYPE="${{ github.event.inputs.bump_type }}"
+          
+          IFS='.' read -r MAJOR MINOR PATCH <<< "$CURRENT"
+          
+          case "$BUMP_TYPE" in
+            major)
+              MAJOR=$((MAJOR + 1))
+              MINOR=0
+              PATCH=0
+              ;;
+            minor)
+              MINOR=$((MINOR + 1))
+              PATCH=0
+              ;;
+            patch)
+              PATCH=$((PATCH + 1))
+              ;;
+          esac
+          
+          NEW_VERSION="$MAJOR.$MINOR.$PATCH"
+          NEW_TAG="v$NEW_VERSION"
+          
+          echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
+          echo "new_tag=$NEW_TAG" >> $GITHUB_OUTPUT
+          echo "New version: $NEW_VERSION"
+
+      - name: Bump version in workspace
+        run: |
+          cargo set-version --workspace ${{ steps.bump.outputs.new_version }}
+
+      - name: Commit and tag version bump
+        run: |
+          git add .
+          git commit -m "chore: bump version to ${{ steps.bump.outputs.new_tag }}"
+          git tag ${{ steps.bump.outputs.new_tag }}
+          git push origin main
+          git push origin ${{ steps.bump.outputs.new_tag }}
+
+  build-and-release:
+    name: Build and Release
+    runs-on: macos-latest
+    needs: [version-bump]
+    if: |
+      always() &&
+      (needs.version-bump.result == 'success' || 
+       needs.version-bump.result == 'skipped')
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Determine version
+        id: version
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            # For manual dispatch, fetch the latest code with the new tag
+            git fetch --tags
+            VERSION="${{ needs.version-bump.outputs.new_version }}"
+            TAG="${{ needs.version-bump.outputs.new_tag }}"
+          else
+            # For tag push, extract from the tag
+            TAG="${GITHUB_REF#refs/tags/}"
+            VERSION="${TAG#v}"
+          fi
+          
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "tag=$TAG" >> $GITHUB_OUTPUT
+          echo "Building version: $VERSION (tag: $TAG)"
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: |
+            icons/package-lock.json
+            tailwind/package-lock.json
+            react-flow-app/package-lock.json
+
+      - name: Cache Rust dependencies
+        uses: Swatinem/rust-cache@v2
+        with:
+          shared-key: "release-cache"
+
+      - name: Build icons
+        run: |
+          cd icons
+          npm ci
+          npm run build
+
+      - name: Build Tailwind CSS
+        run: |
+          cd tailwind
+          npm ci
+          npm run build
+
+      - name: Build React Flow visualizer
+        run: |
+          cd react-flow-app
+          npm ci
+          npm run build
+
+      - name: Install cargo-binstall
+        run: |
+          curl -L --proto '=https' --tlsv1.2 -sSf https://raw.githubusercontent.com/cargo-bins/cargo-binstall/main/install-from-binstall-release.sh | bash
+
+      - name: Install Dioxus CLI
+        run: cargo binstall dioxus-cli --no-confirm
+
+      - name: Build desktop app bundle
+        id: bundle
+        run: |
+          dx bundle --package s_e_e_gui --release --json-output | tee bundle_output.json
+          
+          # Extract DMG path from the last line of JSON output
+          DMG_PATH=$(tail -1 bundle_output.json | jq -r '.json | fromjson | .BundleOutput.bundles[] | select(endswith(".dmg"))')
+          
+          if [ -z "$DMG_PATH" ]; then
+            echo "Error: DMG path not found in bundle output"
+            exit 1
+          fi
+          
+          echo "dmg_path=$DMG_PATH" >> $GITHUB_OUTPUT
+          echo "DMG created at: $DMG_PATH"
+          
+          # Verify DMG exists
+          if [ ! -f "$DMG_PATH" ]; then
+            echo "Error: DMG file not found at $DMG_PATH"
+            exit 1
+          fi
+          
+          # Get DMG filename
+          DMG_FILENAME=$(basename "$DMG_PATH")
+          echo "dmg_filename=$DMG_FILENAME" >> $GITHUB_OUTPUT
+
+      - name: Build CLI binary
+        run: |
+          cargo build --package s_e_e_cli --release
+          
+          # Strip binary for smaller size
+          strip target/release/s_e_e_cli
+
+      - name: Create CLI archive
+        id: cli_archive
+        run: |
+          CLI_ARCHIVE="s_e_e_cli-${{ steps.version.outputs.tag }}-macos-aarch64.tar.gz"
+          
+          cd target/release
+          tar czf "../../$CLI_ARCHIVE" s_e_e_cli
+          cd ../..
+          
+          echo "cli_archive=$CLI_ARCHIVE" >> $GITHUB_OUTPUT
+          echo "CLI archive created: $CLI_ARCHIVE"
+          
+          # Verify archive exists
+          if [ ! -f "$CLI_ARCHIVE" ]; then
+            echo "Error: CLI archive not found"
+            exit 1
+          fi
+
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create "${{ steps.version.outputs.tag }}" \
+            --title "Release ${{ steps.version.outputs.tag }}" \
+            --generate-notes \
+            "${{ steps.bundle.outputs.dmg_path }}" \
+            "${{ steps.cli_archive.outputs.cli_archive }}"
+
+      - name: Upload DMG artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.bundle.outputs.dmg_filename }}
+          path: ${{ steps.bundle.outputs.dmg_path }}
+          retention-days: 90
+
+      - name: Upload CLI artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.cli_archive.outputs.cli_archive }}
+          path: ${{ steps.cli_archive.outputs.cli_archive }}
+          retention-days: 90
+
