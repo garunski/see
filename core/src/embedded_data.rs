@@ -25,5 +25,3 @@ pub fn get_default_prompts() -> Vec<(&'static str, &'static str)> {
         ("documentation.json", DOCUMENTATION_PROMPT),
     ]
 }
-
-

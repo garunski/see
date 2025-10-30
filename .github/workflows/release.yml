@@ -304,7 +304,7 @@ jobs:
           # Sign all frameworks and dylibs first
           find "$APP_PATH/Contents" -name "*.dylib" -o -name "*.framework" | while read file; do
             echo "Signing: $file"
-            codesign --force --sign "Developer ID Application: $APPLE_TEAM_ID" \
+            codesign --force --sign "Developer ID Application: Garun N Vagidov (6UUQ92953S)" \
               --options runtime \
               --timestamp \
               --deep \
@@ -312,7 +312,7 @@ jobs:
           done
           
           # Sign the main app bundle
-          codesign --force --sign "Developer ID Application: $APPLE_TEAM_ID" \
+          codesign --force --sign "Developer ID Application: Garun N Vagidov (6UUQ92953S)" \
             --options runtime \
             --entitlements gui/Entitlements.plist \
             --timestamp \
@@ -409,7 +409,7 @@ jobs:
           DMG_PATH="${{ steps.create_dmg.outputs.dmg_path }}"
           
           echo "🔏 Signing DMG..."
-          codesign --force --sign "Developer ID Application: $APPLE_TEAM_ID" \
+          codesign --force --sign "Developer ID Application: Garun N Vagidov (6UUQ92953S)" \
             --timestamp \
             "$DMG_PATH"
           
